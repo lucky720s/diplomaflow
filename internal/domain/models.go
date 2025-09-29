@@ -1,42 +1,7 @@
 package domain
 
-// Student представляет студента с кафедрой
-type Student struct {
-	ID           string `json:"id"`
-	FullName     string `json:"full_name"`
-	DepartmentID string `json:"department_id"`
-}
+import "github.com/google/uuid"
 
-// Department представляет кафедру
-type Department struct {
-	ID           string `json:"id"`
-	Name         string `json:"name"`
-	UniversityID string `json:"university_id"`
-}
-
-// University представляет университет
-type University struct {
-	ID   string `json:"id"`
-	Name string `json:"name"`
-}
-
-// DiplomaProject представляет дипломный проект
-type DiplomaProject struct {
-	ID          string `json:"id"`
-	StudentID   string `json:"student_id"`
-	Topic       string `json:"topic"`
-	Status      string `json:"status"` // draft, approved, completed
-	Grade       int    `json:"grade"`
-	Reviewer    string `json:"reviewer"`
-	ReviewerID  string `json:"reviewer_id"`
-	Advisor     string `json:"advisor"`
-	AdvisorID   string `json:"advisor_id"`
-	DefenseDate string `json:"defense_date"`
-}
-
-// --- ДОБАВЛЕННЫЕ МОДЕЛИ ДЛЯ АВТОРИЗАЦИИ ---
-
-// Role определяет роль пользователя в системе
 type Role string
 
 const (
@@ -48,8 +13,39 @@ const (
 	RoleSysAdmin     Role = "sys_admin"
 )
 
-// User представляет пользователя в контексте запроса, извлеченного из токена
 type User struct {
-	ID   string
-	Role Role
+	ID           uuid.UUID `json:"id"`
+	Email        string    `json:"email"`
+	PasswordHash string    `json:"-"`
+	FullName     string    `json:"full_name"`
+	Role         Role      `json:"role"`
+}
+
+type University struct {
+	ID   uuid.UUID `json:"id"`
+	Name string    `json:"name"`
+}
+
+type Department struct {
+	ID           uuid.UUID `json:"id"`
+	Name         string    `json:"name"`
+	UniversityID uuid.UUID `json:"university_id"`
+}
+
+type StudentProfile struct {
+	User
+	Department Department `json:"department"`
+}
+
+type StaffProfile struct {
+	User
+	Department Department `json:"department"`
+}
+
+type DiplomaProject struct {
+	ID           uuid.UUID `json:"id"`
+	Topic        string    `json:"topic"`
+	Status       string    `json:"status"`
+	StudentID    uuid.UUID `json:"student_id"`
+	SupervisorID uuid.UUID `json:"supervisor_id"`
 }

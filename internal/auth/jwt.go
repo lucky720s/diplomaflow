@@ -2,13 +2,11 @@ package auth
 
 import (
 	"errors"
-	"time"
-
 	"github.com/golang-jwt/jwt/v5"
 	"github.com/lucky720s/diplomaflow/internal/domain"
+	"time"
 )
 
-// ВАЖНО: Для продакшена этот ключ нужно вынести в переменные окружения!
 var jwtKey = []byte("supersecretkey")
 
 type Claims struct {
@@ -19,7 +17,7 @@ type Claims struct {
 
 func GenerateToken(user *domain.User) (string, error) {
 	claims := &Claims{
-		UserID: user.ID,
+		UserID: user.ID.String(),
 		Role:   user.Role,
 		RegisteredClaims: jwt.RegisteredClaims{
 			ExpiresAt: jwt.NewNumericDate(time.Now().Add(24 * time.Hour)),
@@ -34,7 +32,6 @@ func GenerateToken(user *domain.User) (string, error) {
 func ParseToken(tokenStr string) (*Claims, error) {
 	claims := &Claims{}
 	token, err := jwt.ParseWithClaims(tokenStr, claims, func(token *jwt.Token) (interface{}, error) {
-		// Убеждаемся, что алгоритм подписи тот, который мы ожидаем
 		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
 			return nil, errors.New("unexpected signing method")
 		}

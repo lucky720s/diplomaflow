@@ -4,41 +4,45 @@ import (
 	"context"
 	"github.com/google/uuid"
 	"github.com/lucky720s/diplomaflow/internal/domain"
-	"github.com/lucky720s/diplomaflow/pkg/errors"
-	"github.com/lucky720s/diplomaflow/pkg/logger"
+	apperrors "github.com/lucky720s/diplomaflow/pkg/errors"
 )
 
 type DepartmentUsecase struct {
 	repo domain.DepartmentRepository
-	log  *logger.Logger
 }
 
-func NewDepartmentUsecase(repo domain.DepartmentRepository, log *logger.Logger) *DepartmentUsecase {
-	return &DepartmentUsecase{
-		repo: repo,
-		log:  log,
+func NewDepartmentUsecase(repo domain.DepartmentRepository) *DepartmentUsecase {
+	return &DepartmentUsecase{repo: repo}
+}
+
+func (uc *DepartmentUsecase) Create(ctx context.Context, name, universityIDStr string) (*domain.Department, error) {
+	universityID, err := uuid.Parse(universityIDStr)
+	if err != nil {
+		return nil, apperrors.WrapErrorf(err, "uuid.Parse")
 	}
-}
 
-func (uc *DepartmentUsecase) CreateDepartment(ctx context.Context, name, universityID string) (*domain.Department, error) {
 	dept := &domain.Department{
-		ID:           uuid.NewString(),
+		ID:           uuid.New(),
 		Name:         name,
 		UniversityID: universityID,
 	}
 
 	if err := uc.repo.Create(ctx, dept); err != nil {
-		return nil, errors.WrapErrorf(err, "uc.repo.Create")
+		return nil, apperrors.WrapErrorf(err, "uc.repo.Create")
 	}
 
-	uc.log.Infof("Department created: %s", dept.ID)
 	return dept, nil
 }
 
-func (uc *DepartmentUsecase) GetDepartmentByID(ctx context.Context, id string) (*domain.Department, error) {
+func (uc *DepartmentUsecase) GetByID(ctx context.Context, idStr string) (*domain.Department, error) {
+	id, err := uuid.Parse(idStr)
+	if err != nil {
+		return nil, apperrors.WrapErrorf(err, "uuid.Parse")
+	}
+
 	dept, err := uc.repo.GetByID(ctx, id)
 	if err != nil {
-		return nil, errors.WrapErrorf(err, "uc.repo.GetByID")
+		return nil, apperrors.WrapErrorf(err, "uc.repo.GetByID")
 	}
 	return dept, nil
 }
