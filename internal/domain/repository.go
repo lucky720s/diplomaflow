@@ -5,19 +5,23 @@ import "context"
 
 // StudentRepository определяет методы для работы с хранилищем студентов
 type StudentRepository interface {
-	// Create сохраняет нового студента в хранилище
 	Create(ctx context.Context, student *Student) error
-	// GetByID находит студента по его ID
 	GetByID(ctx context.Context, id string) (*Student, error)
-	// ... другие методы: Update, Delete, ListByDepartmentID и т.д.
+	List(ctx context.Context) ([]*Student, error)
+	Delete(ctx context.Context, id string) error
+	GetWithDepartment(ctx context.Context, id string) (*StudentWithDepartment, error)
 }
 
-// DiplomaProjectRepository определяет методы для работы с дипломными проектами
+// И так далее для University и Department...
+type DepartmentRepository interface {
+	Create(ctx context.Context, department *Department) error
+	GetByID(ctx context.Context, id string) (*Department, error)
+	// TODO: List, Update, Delete
+}
+
+// DiplomaProjectRepository ... (без изменений)
 type DiplomaProjectRepository interface {
 	Create(ctx context.Context, project *DiplomaProject) error
 	GetByID(ctx context.Context, id string) (*DiplomaProject, error)
 	UpdateStatus(ctx context.Context, id, status string) error
-	// ...
 }
-
-// И так далее для University и Department...

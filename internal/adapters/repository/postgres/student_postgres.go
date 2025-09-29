@@ -31,7 +31,99 @@ func (r *StudentRepo) Create(ctx context.Context, student *domain.Student) error
 }
 
 // GetByID ...
+
 func (r *StudentRepo) GetByID(ctx context.Context, id string) (*domain.Student, error) {
-	// Реализация поиска студента
-	return nil, nil // TODO
+	query := "SELECT id, full_name, department_id FROM students WHERE id = $1"
+
+	var student domain.Student
+	err := r.db.QueryRowContext(ctx, query, id).Scan(&student.ID, &student.FullName, &student.DepartmentID)
+	if err != nil {
+		// Важно обрабатывать случай, когда студент не найден
+		if err == sql.ErrNoRows {
+			// Используйте свой пакет ошибок для консистентности
+			return nil, errors.WrapErrorf(err, "student with id %s not found", id)
+		}
+		return nil, errors.WrapErrorf(err, "r.db.QueryRowContext")
+	}
+
+	return &student, nil
+}
+
+// List возвращает список всех студентов
+func (r *StudentRepo) List(ctx context.Context) ([]*domain.Student, error) {
+	query := "SELECT id, full_name, department_id FROM students"
+
+	rows, err := r.db.QueryContext(ctx, query)
+	if err != nil {
+		return nil, errors.WrapErrorf(err, "r.db.QueryContext")
+	}
+	defer rows.Close()
+
+	var students []*domain.Student
+	for rows.Next() {
+		var student domain.Student
+		if err := rows.Scan(&student.ID, &student.FullName, &student.DepartmentID); err != nil {
+			return nil, errors.WrapErrorf(err, "rows.Scan")
+		}
+		students = append(students, &student)
+	}
+
+	if err := rows.Err(); err != nil {
+		return nil, errors.WrapErrorf(err, "rows.Err")
+	}
+
+	return students, nil
+}
+
+// Delete удаляет студента по ID
+func (r *StudentRepo) Delete(ctx context.Context, id string) error {
+	query := "DELETE FROM students WHERE id = $1"
+
+	result, err := r.db.ExecContext(ctx, query, id)
+	if err != nil {
+		return errors.WrapErrorf(err, "r.db.ExecContext")
+	}
+
+	rowsAffected, err := result.RowsAffected()
+	if err != nil {
+		return errors.WrapErrorf(err, "result.RowsAffected")
+	}
+
+	if rowsAffected == 0 {
+		return errors.WrapErrorf(sql.ErrNoRows, "student with id %s not found for deletion", id)
+	}
+
+	return nil
+}
+func (r *StudentRepo) GetWithDepartment(ctx context.Context, id string) (*domain.StudentWithDepartment, error) {
+	// Запрос с LEFT JOIN для объединения таблиц students и departments
+	query := `
+		SELECT 
+			s.id, 
+			s.full_name, 
+			d.id, 
+			d.name 
+		FROM 
+			students s
+		LEFT JOIN 
+			departments d ON s.department_id = d.id
+		WHERE 
+			s.id = $1
+	`
+
+	var student domain.StudentWithDepartment
+	err := r.db.QueryRowContext(ctx, query, id).Scan(
+		&student.ID,
+		&student.FullName,
+		&student.Department.ID,
+		&student.Department.Name,
+	)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			return nil, errors.WrapErrorf(err, "student with id %s not found", id)
+		}
+		return nil, errors.WrapErrorf(err, "r.db.QueryRowContext")
+	}
+
+	return &student, nil
 }

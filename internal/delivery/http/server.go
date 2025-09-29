@@ -17,9 +17,17 @@ func (h *Handler) InitRoutes() *chi.Mux {
 
 	// Группа роутов для /api/v1
 	r.Route("/api/v1", func(r chi.Router) {
-		r.Post("/students", h.registerStudent)
-		// Здесь будут другие роуты:
-		// r.Get("/students/{id}", h.getStudentByID)
+		r.Route("/students", func(r chi.Router) {
+			r.Post("/", h.registerStudent)
+			r.Get("/", h.listStudents)
+			r.Get("/{id}", h.getStudentByID)
+			r.Delete("/{id}", h.deleteStudent)
+			// TODO: r.Put("/{id}", h.updateStudent)
+		})
+		r.Route("/departments", func(r chi.Router) {
+			r.Post("/", h.createDepartment)
+			r.Get("/{id}", h.getDepartmentByID)
+		})
 	})
 
 	return r
