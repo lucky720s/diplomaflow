@@ -95,35 +95,3 @@ func (r *StudentRepo) Delete(ctx context.Context, id string) error {
 
 	return nil
 }
-func (r *StudentRepo) GetWithDepartment(ctx context.Context, id string) (*domain.StudentWithDepartment, error) {
-	// Запрос с LEFT JOIN для объединения таблиц students и departments
-	query := `
-		SELECT 
-			s.id, 
-			s.full_name, 
-			d.id, 
-			d.name 
-		FROM 
-			students s
-		LEFT JOIN 
-			departments d ON s.department_id = d.id
-		WHERE 
-			s.id = $1
-	`
-
-	var student domain.StudentWithDepartment
-	err := r.db.QueryRowContext(ctx, query, id).Scan(
-		&student.ID,
-		&student.FullName,
-		&student.Department.ID,
-		&student.Department.Name,
-	)
-	if err != nil {
-		if err == sql.ErrNoRows {
-			return nil, errors.WrapErrorf(err, "student with id %s not found", id)
-		}
-		return nil, errors.WrapErrorf(err, "r.db.QueryRowContext")
-	}
-
-	return &student, nil
-}

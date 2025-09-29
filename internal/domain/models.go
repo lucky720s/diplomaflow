@@ -1,31 +1,31 @@
 package domain
 
-// Student представляет сущность студента
+// Student представляет студента с кафедрой
 type Student struct {
 	ID           string `json:"id"`
 	FullName     string `json:"full_name"`
-	DepartmentID string `json:"department_id"` // <-- УБЕДИТЕСЬ, ЧТО ЭТО ПОЛЕ НА МЕСТЕ
+	DepartmentID string `json:"department_id"`
 }
 
-// Department представляет сущность кафедры
+// Department представляет кафедру
 type Department struct {
 	ID           string `json:"id"`
 	Name         string `json:"name"`
 	UniversityID string `json:"university_id"`
 }
 
-// University представляет сущность университета
+// University представляет университет
 type University struct {
 	ID   string `json:"id"`
 	Name string `json:"name"`
 }
 
-// DiplomaProject представляет сущность дипломного проекта
+// DiplomaProject представляет дипломный проект
 type DiplomaProject struct {
 	ID          string `json:"id"`
 	StudentID   string `json:"student_id"`
 	Topic       string `json:"topic"`
-	Status      string `json:"status"` // например, "draft", "approved", "completed"
+	Status      string `json:"status"` // draft, approved, completed
 	Grade       int    `json:"grade"`
 	Reviewer    string `json:"reviewer"`
 	ReviewerID  string `json:"reviewer_id"`
@@ -34,13 +34,22 @@ type DiplomaProject struct {
 	DefenseDate string `json:"defense_date"`
 }
 
-// НОВАЯ СТРУКТУРА, КОТОРУЮ МЫ ЗАБЫЛИ ДОБАВИТЬ
-type StudentWithDepartment struct {
-	ID       string `json:"id"`
-	FullName string `json:"full_name"`
-	// Встраиваем информацию о кафедре
-	Department struct {
-		ID   string `json:"id"`
-		Name string `json:"name"`
-	} `json:"department"`
+// --- ДОБАВЛЕННЫЕ МОДЕЛИ ДЛЯ АВТОРИЗАЦИИ ---
+
+// Role определяет роль пользователя в системе
+type Role string
+
+const (
+	RoleStudent      Role = "student"
+	RoleSupervisor   Role = "supervisor"
+	RoleDeptReviewer Role = "dept_reviewer"
+	RoleUniReviewer  Role = "uni_reviewer"
+	RoleDeptAdmin    Role = "dept_admin"
+	RoleSysAdmin     Role = "sys_admin"
+)
+
+// User представляет пользователя в контексте запроса, извлеченного из токена
+type User struct {
+	ID   string
+	Role Role
 }

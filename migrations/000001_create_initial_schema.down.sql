@@ -1,0 +1,7 @@
+DROP TABLE IF EXISTS project_reviewers;
+DROP TABLE IF EXISTS diploma_projects;
+DROP TABLE IF EXISTS staff;
+DROP TABLE IF EXISTS students;
+DROP TABLE IF EXISTS departments;
+DROP TABLE IF EXISTS universities;
+DROP TABLE IF EXISTS users;

@@ -74,10 +74,3 @@ func (uc *StudentUsecase) DeleteStudent(ctx context.Context, id string) error {
 	uc.log.Infof("Student deleted: %s", id)
 	return nil
 }
-func (uc *StudentUsecase) GetStudentWithDetails(ctx context.Context, id string) (*domain.StudentWithDepartment, error) {
-	student, err := uc.studentRepo.GetWithDepartment(ctx, id)
-	if err != nil {
-		return nil, errors.WrapErrorf(err, "uc.studentRepo.GetWithDepartment")
-	}
-	return student, nil
-}

@@ -9,7 +9,6 @@ type StudentRepository interface {
 	GetByID(ctx context.Context, id string) (*Student, error)
 	List(ctx context.Context) ([]*Student, error)
 	Delete(ctx context.Context, id string) error
-	GetWithDepartment(ctx context.Context, id string) (*StudentWithDepartment, error)
 }
 
 // И так далее для University и Department...
