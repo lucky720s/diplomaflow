@@ -1,0 +1,38 @@
+version: '3.8'
+services:
+  # Сервис нашего приложения
+  app:
+    build: .
+    container_name: diplomaflow_app
+    ports:
+      - "8080:8080"
+    environment:
+      - POSTGRES_URL=postgres://user:password@db:5432/diplomaflow?sslmode=disable
+    # ИЗМЕНЕНИЕ ЗДЕСЬ:
+    # Запускать 'app' только после того, как 'db' станет "здоровым"
+    depends_on:
+      db:
+        condition: service_healthy
+
+  # Сервис базы данных PostgreSQL
+  db:
+    image: postgres:15-alpine
+    container_name: diplomaflow_db
+    environment:
+      - POSTGRES_USER=user
+      - POSTGRES_PASSWORD=password
+      - POSTGRES_DB=diplomaflow
+    ports:
+      - "5433:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    # ДОБАВЛЕННЫЙ БЛОК:
+    # Проверка состояния здоровья контейнера
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U user -d diplomaflow"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+volumes:
+  postgres_data:
