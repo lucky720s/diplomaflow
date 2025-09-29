@@ -2,7 +2,7 @@ package main
 
 import (
 	"context"
-	"github.com/username/diplomaflow/pkg/logger"
+	"github.com/lucky720s/diplomaflow/pkg/logger"
 )
 
 func main() {
