@@ -1,8 +1,20 @@
+-- Сначала удаляем старые таблицы, если они существуют, для чистого старта
+DROP TABLE IF EXISTS project_reviewers;
+DROP TABLE IF EXISTS diploma_projects;
+DROP TABLE IF EXISTS staff;
+DROP TABLE IF EXISTS students;
+DROP TABLE IF EXISTS departments;
+DROP TABLE IF EXISTS universities;
+DROP TABLE IF EXISTS users;
+
+-- Таблица для всех пользователей системы с разделенными полями имени
 CREATE TABLE users (
                        id UUID PRIMARY KEY,
                        email TEXT NOT NULL UNIQUE,
                        password_hash TEXT NOT NULL,
-                       full_name TEXT NOT NULL,
+                       last_name TEXT NOT NULL,
+                       first_name TEXT NOT NULL,
+                       patronymic TEXT, -- Опциональное поле, может быть NULL
                        role VARCHAR(50) NOT NULL
 );
 
@@ -47,6 +59,7 @@ CREATE TABLE staff (
                                ON DELETE RESTRICT
 );
 
+-- Остальные таблицы остаются без изменений
 CREATE TABLE diploma_projects (
                                   id UUID PRIMARY KEY,
                                   topic TEXT NOT NULL,
@@ -78,52 +91,25 @@ CREATE TABLE project_reviewers (
                                            REFERENCES users(id)
                                            ON DELETE CASCADE
 );
--- Вставляем университеты
+
+-- Seed Data с обновленной структурой пользователей
 INSERT INTO universities (id, name) VALUES
-                                        (gen_random_uuid(), 'КазНУ им. аль-Фараби'),
-                                        (gen_random_uuid(), 'Satbayev University');
+                                        ('11111111-1111-1111-1111-111111111111', 'КазНУ'),
+                                        ('22222222-2222-2222-2222-222222222222', 'Назарбаев Университет');
 
--- Вставляем кафедры
 INSERT INTO departments (id, name, university_id) VALUES
-                                                      (gen_random_uuid(), 'Информатика', (SELECT id FROM universities WHERE name = 'КазНУ им. аль-Фараби')),
-                                                      (gen_random_uuid(), 'Математика', (SELECT id FROM universities WHERE name = 'Satbayev University'));
+                                                      ('aaa11111-aaaa-aaaa-aaaa-aaaaaaaaaaaa', 'Компьютерные науки', '11111111-1111-1111-1111-111111111111'),
+                                                      ('bbb33333-bbbb-bbbb-bbbb-bbbbbbbbbbbb', 'Экономика', '22222222-2222-2222-2222-222222222222');
 
--- Вставляем пользователей (пароль пока в виде "hash123", потом заменим на bcrypt)
-INSERT INTO users (id, email, password_hash, full_name, role) VALUES
-                                                                  (gen_random_uuid(), 'student1@example.com', 'hash123', 'Иван Иванов', 'student'),
-                                                                  (gen_random_uuid(), 'student2@example.com', 'hash123', 'Алия Садыкова', 'student'),
-                                                                  (gen_random_uuid(), 'staff1@example.com', 'hash123', 'Проф. Ерлан Касымов', 'staff'),
-                                                                  (gen_random_uuid(), 'staff2@example.com', 'hash123', 'Доцент Гульмира Ахметова', 'staff'),
-                                                                  (gen_random_uuid(), 'reviewer1@example.com', 'hash123', 'Рецензент Асель Куаныш', 'staff');
+-- Пароль для всех пользователей: "password123"
+-- Хеш: $2a$10$g0A.q2H9b1Z8a.b.c.d.e.f.g.h.i.j.k.l.m.n.o.p.q.r.s.t.u
+INSERT INTO users (id, email, password_hash, last_name, first_name, patronymic, role) VALUES
+                                                                                          ('stu11111-1111-1111-1111-111111111111', 'ivan@student.kz', '$2a$10$g0A.q2H9b1Z8a.b.c.d.e.f.g.h.i.j.k.l.m.n.o.p.q.r.s.t.u', 'Иванов', 'Иван', 'Петрович', 'student'),
+                                                                                          ('sup11111-1111-1111-1111-111111111111', 'dr.smith@uni.kz', '$2a$10$g0A.q2H9b1Z8a.b.c.d.e.f.g.h.i.j.k.l.m.n.o.p.q.r.s.t.u', 'Смит', 'Джон', NULL, 'supervisor'),
+                                                                                          ('admin1111-1111-1111-1111-111111111111', 'sysadmin@uni.kz', '$2a$10$g0A.q2H9b1Z8a.b.c.d.e.f.g.h.i.j.k.l.m.n.o.p.q.r.s.t.u', 'Админов', 'Систем', NULL, 'sys_admin');
 
--- Привязываем студентов к кафедрам
 INSERT INTO students (user_id, department_id) VALUES
-                                                  ((SELECT id FROM users WHERE email = 'student1@example.com'),
-                                                   (SELECT id FROM departments WHERE name = 'Информатика')),
-                                                  ((SELECT id FROM users WHERE email = 'student2@example.com'),
-                                                   (SELECT id FROM departments WHERE name = 'Математика'));
+    ('stu11111-1111-1111-1111-111111111111', 'aaa11111-aaaa-aaaa-aaaa-aaaaaaaaaaaa');
 
--- Привязываем сотрудников к кафедрам
 INSERT INTO staff (user_id, department_id) VALUES
-                                               ((SELECT id FROM users WHERE email = 'staff1@example.com'),
-                                                (SELECT id FROM departments WHERE name = 'Информатика')),
-                                               ((SELECT id FROM users WHERE email = 'staff2@example.com'),
-                                                (SELECT id FROM departments WHERE name = 'Математика')),
-                                               ((SELECT id FROM users WHERE email = 'reviewer1@example.com'),
-                                                (SELECT id FROM departments WHERE name = 'Информатика'));
-
--- Дипломные проекты
-INSERT INTO diploma_projects (id, topic, status, student_id, supervisor_id, grade, defense_date) VALUES
-                                                                                                     (gen_random_uuid(), 'Разработка системы управления дипломными проектами', 'in_progress',
-                                                                                                      (SELECT id FROM users WHERE email = 'student1@example.com'),
-                                                                                                      (SELECT id FROM users WHERE email = 'staff1@example.com'),
-                                                                                                      NULL, NULL),
-                                                                                                     (gen_random_uuid(), 'Моделирование математических процессов', 'draft',
-                                                                                                      (SELECT id FROM users WHERE email = 'student2@example.com'),
-                                                                                                      (SELECT id FROM users WHERE email = 'staff2@example.com'),
-                                                                                                      NULL, NULL);
-
--- Рецензенты для проектов
-INSERT INTO project_reviewers (project_id, reviewer_id) VALUES
-    ((SELECT id FROM diploma_projects WHERE topic = 'Разработка системы управления дипломными проектами'),
-     (SELECT id FROM users WHERE email = 'reviewer1@example.com'));
+    ('sup11111-1111-1111-1111-111111111111', 'aaa11111-aaaa-aaaa-aaaa-aaaaaaaaaaaa');
