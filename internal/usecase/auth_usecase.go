@@ -35,7 +35,9 @@ func NewAuthUsecase(userRepo domain.UserRepository, studentRepo domain.StudentRe
 type RegisterUserInput struct {
 	Email        string
 	Password     string
-	FullName     string
+	LastName     string
+	FirstName    string
+	Patronymic   *string
 	Role         domain.Role
 	DepartmentID uuid.UUID
 }
@@ -64,7 +66,9 @@ func (uc *AuthUsecase) Register(ctx context.Context, input RegisterUserInput) (*
 		ID:           uuid.New(),
 		Email:        input.Email,
 		PasswordHash: string(hashedPassword),
-		FullName:     input.FullName,
+		LastName:     input.LastName,
+		FirstName:    input.FirstName,
+		Patronymic:   input.Patronymic,
 		Role:         input.Role,
 	}
 
@@ -78,7 +82,7 @@ func (uc *AuthUsecase) Register(ctx context.Context, input RegisterUserInput) (*
 			return nil, apperrors.WrapErrorf(err, "uc.studentRepo.CreateProfile")
 		}
 	case domain.RoleSupervisor, domain.RoleDeptAdmin, domain.RoleSysAdmin:
-		// TODO: Implement staff profile creation in a separate usecase
+		// TODO: Implement staff profile creation
 	default:
 		return nil, ErrForbiddenRole
 	}

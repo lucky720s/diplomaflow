@@ -4,7 +4,6 @@ import (
 	"context"
 	"database/sql"
 	"errors"
-
 	"github.com/google/uuid"
 	"github.com/lucky720s/diplomaflow/internal/domain"
 	apperrors "github.com/lucky720s/diplomaflow/pkg/errors"
@@ -29,17 +28,21 @@ func (r *StudentRepo) CreateProfile(ctx context.Context, userID, departmentID uu
 
 func (r *StudentRepo) GetProfile(ctx context.Context, userID uuid.UUID) (*domain.StudentProfile, error) {
 	query := `
-		SELECT u.id, u.email, u.full_name, u.role, d.id, d.name, d.university_id
+		SELECT u.id, u.email, u.last_name, u.first_name, u.patronymic, u.role, d.id, d.name, d.university_id
 		FROM users u
 		JOIN students s ON u.id = s.user_id
 		JOIN departments d ON s.department_id = d.id
 		WHERE u.id = $1
 	`
 	var profile domain.StudentProfile
+	var patronymic sql.NullString
+
 	err := r.db.QueryRowContext(ctx, query, userID).Scan(
 		&profile.User.ID,
 		&profile.User.Email,
-		&profile.User.FullName,
+		&profile.User.LastName,
+		&profile.User.FirstName,
+		&patronymic,
 		&profile.User.Role,
 		&profile.Department.ID,
 		&profile.Department.Name,
@@ -51,5 +54,10 @@ func (r *StudentRepo) GetProfile(ctx context.Context, userID uuid.UUID) (*domain
 		}
 		return nil, apperrors.WrapErrorf(err, "r.db.QueryRowContext")
 	}
+
+	if patronymic.Valid {
+		profile.User.Patronymic = &patronymic.String
+	}
+
 	return &profile, nil
 }

@@ -3,17 +3,20 @@ package http
 import (
 	"encoding/json"
 	"errors"
+	"net/http"
+
 	"github.com/go-chi/render"
 	"github.com/google/uuid"
 	"github.com/lucky720s/diplomaflow/internal/domain"
 	"github.com/lucky720s/diplomaflow/internal/usecase"
-	"net/http"
 )
 
 type registerRequest struct {
 	Email        string      `json:"email" validate:"required,email"`
 	Password     string      `json:"password" validate:"required,min=8"`
-	FullName     string      `json:"full_name" validate:"required,min=2"`
+	LastName     string      `json:"last_name" validate:"required"`
+	FirstName    string      `json:"first_name" validate:"required"`
+	Patronymic   *string     `json:"patronymic,omitempty"`
 	Role         domain.Role `json:"role" validate:"required"`
 	DepartmentID string      `json:"department_id" validate:"required,uuid"`
 }
@@ -43,7 +46,9 @@ func (h *Handler) Register(w http.ResponseWriter, r *http.Request) {
 	input := usecase.RegisterUserInput{
 		Email:        req.Email,
 		Password:     req.Password,
-		FullName:     req.FullName,
+		LastName:     req.LastName,
+		FirstName:    req.FirstName,
+		Patronymic:   req.Patronymic,
 		Role:         req.Role,
 		DepartmentID: deptID,
 	}
