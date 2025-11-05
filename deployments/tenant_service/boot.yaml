@@ -1,0 +1,16 @@
+grpc:
+  - name: tenant-service
+    port: 8081
+    enabled: true
+    reflection: true
+
+postgres:
+  - name: tenant-conn
+    enabled: true
+    addr: "tenant_db:5432"
+    user: "user"
+    pass: "password"
+    timezone: "Asia/Shanghai"
+    database:
+      - name: "tenant_db"
+        autoCreate: true

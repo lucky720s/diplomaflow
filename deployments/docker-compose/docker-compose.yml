@@ -1,0 +1,41 @@
+version: '3.8'
+
+services:
+  tenant_db:
+    image: postgres:14-alpine
+    container_name: tenant_db
+    environment:
+      - POSTGRES_USER=user
+      - POSTGRES_PASSWORD=password
+      - POSTGRES_DB=tenant_db
+    ports:
+      - "5431:5432"
+    volumes:
+      - tenant_db_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U user -d tenant_db"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+  tenant_service:
+    build:
+      context: ../../
+      dockerfile: cmd/tenant_service/Dockerfile
+    container_name: tenant_service
+    ports:
+      - "8081:8081"
+    depends_on:
+      tenant_db:
+        condition: service_healthy
+    environment:
+      DB_HOST: tenant_db
+      DB_PORT: 5432
+      DB_USER: user
+      DB_PASSWORD: password
+      DB_NAME: tenant_db
+    volumes:
+      - ../../deployments/tenant_service/boot.yaml:/boot.yaml
+
+volumes:
+  tenant_db_data:
+

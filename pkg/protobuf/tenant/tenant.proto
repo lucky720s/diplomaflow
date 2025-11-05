@@ -1,0 +1,17 @@
+syntax = "proto3";
+
+package tenant;
+option go_package = "pkg/protobuf/tenant";
+
+service TenantService{
+  rpc GetWorkflowTemplateID(GetWorkflowTemplateIDRequest)
+      returns (GetWorkflowTemplateIDResponse);
+}
+
+message GetWorkflowTemplateIDRequest{
+  int64 department_id = 1;
+}
+
+message GetWorkflowTemplateIDResponse{
+  int64 template_id = 1;
+}
