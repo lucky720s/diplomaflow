@@ -3,9 +3,11 @@ module github.com/lucky720s/diplomaflow
 go 1.25
 
 require (
+	github.com/golang-jwt/jwt/v5 v5.3.0
 	github.com/rookie-ninja/rk-boot/v2 v2.2.22
 	github.com/rookie-ninja/rk-db/postgres v1.2.24
 	github.com/rookie-ninja/rk-grpc/v2 v2.2.22
+	golang.org/x/crypto v0.43.0
 	google.golang.org/grpc v1.76.0
 	google.golang.org/protobuf v1.36.10
 	gorm.io/gorm v1.31.1
@@ -71,12 +73,11 @@ require (
 	go.uber.org/multierr v1.10.0 // indirect
 	go.uber.org/ratelimit v0.3.0 // indirect
 	go.uber.org/zap v1.25.0 // indirect
-	golang.org/x/crypto v0.40.0 // indirect
 	golang.org/x/exp v0.0.0-20230905200255-921286631fa9 // indirect
-	golang.org/x/net v0.42.0 // indirect
-	golang.org/x/sync v0.16.0 // indirect
-	golang.org/x/sys v0.34.0 // indirect
-	golang.org/x/text v0.27.0 // indirect
+	golang.org/x/net v0.45.0 // indirect
+	golang.org/x/sync v0.17.0 // indirect
+	golang.org/x/sys v0.37.0 // indirect
+	golang.org/x/text v0.30.0 // indirect
 	google.golang.org/genproto/googleapis/api v0.0.0-20250804133106-a7a43d27e69b // indirect
 	google.golang.org/genproto/googleapis/rpc v0.0.0-20250804133106-a7a43d27e69b // indirect
 	gopkg.in/ini.v1 v1.67.0 // indirect

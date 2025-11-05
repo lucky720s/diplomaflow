@@ -1,0 +1,16 @@
+grpc:
+  - name: auth-service
+    port: 8082
+    enabled: true
+    reflection: true
+
+postgres:
+  - name: auth-conn
+    enabled: true
+    addr: "auth_db:5432"
+    user: "auth_user"
+    pass: "auth_password"
+    timezone: "Asia/Shanghai"
+    database:
+      - name: "auth_db"
+        autoCreate: true

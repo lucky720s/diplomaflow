@@ -8,5 +8,6 @@ RUN CGO_ENABLED=0 GOOS=linux go build -o /tenant-service-bin ./cmd/tenant_servic
 FROM alpine:latest
 RUN apk add --no-cache tzdata bash
 COPY --from=builder /tenant-service-bin /tenant-service-bin
+COPY deployments/tenant_service/boot.yaml /boot.yaml
 
 ENTRYPOINT ["/tenant-service-bin"]
