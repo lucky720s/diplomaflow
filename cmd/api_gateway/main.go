@@ -6,6 +6,7 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"strconv"
 	"strings"
 
 	"github.com/gin-gonic/gin"
@@ -44,6 +45,10 @@ func main() {
 	api.Use(AuthMiddleware())
 	{
 		api.POST("/projects", gateWay.CreateProject)
+		api.GET("/projects", gateWay.ListProjects)
+		api.GET("/projects/:id", gateWay.GetProject)
+		api.PUT("/projects/:id", gateWay.UpdateProject)
+		api.DELETE("/projects/:id", gateWay.DeleteProject)
 	}
 	err = router.Run(":8080")
 	if err != nil {
@@ -120,4 +125,68 @@ func AuthMiddleware() gin.HandlerFunc {
 		}
 		c.Next()
 	}
+}
+
+func (g *ApiGateWay) GetProject(c *gin.Context) {
+	id := c.Param("id")
+	projectID, err := strconv.ParseUint(id, 10, 64)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+	res, err := g.projectClient.GetProject(context.Background(),
+		&project_pb.GetProjectRequest{ProjectId: int64(projectID)})
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+	c.JSON(http.StatusOK, res)
+}
+func (g *ApiGateWay) ListProjects(c *gin.Context) {
+	res, err := g.projectClient.ListProjects(context.Background(), &project_pb.ListProjectsRequest{})
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+	c.JSON(http.StatusOK, res)
+}
+func (g *ApiGateWay) UpdateProject(c *gin.Context) {
+	id := c.Param("id")
+	projectID, err := strconv.ParseUint(id, 10, 64)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+	var reqBody struct {
+		Topic string `json:"topic"`
+	}
+	if err := c.ShouldBindJSON(&reqBody); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+	req := project_pb.UpdateProjectRequest{
+		ProjectId: int64(projectID),
+		Topic:     reqBody.Topic,
+	}
+	res, err := g.projectClient.UpdateProject(context.Background(), &req)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+	c.JSON(http.StatusOK, res)
+}
+
+func (g *ApiGateWay) DeleteProject(c *gin.Context) {
+	id := c.Param("id")
+	projectID, err := strconv.ParseUint(id, 10, 64)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+	_, err = g.projectClient.DeleteProject(context.Background(), &project_pb.DeleteProjectRequest{ProjectId: int64(projectID)})
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+	c.JSON(http.StatusNoContent, gin.H{})
 }
