@@ -98,6 +98,20 @@ services:
       - PROJECT_DB_USER=project_user
       - PROJECT_DB_PASSWORD=project_password
       - PROJECT_DB_NAME=project_db
+  api_gateway:
+    build:
+      context: ../../
+      dockerfile: cmd/api_gateway/Dockerfile
+    container_name: api_gateway
+    ports:
+      - "8080:8080"
+    depends_on:
+      auth_service:
+        condition: service_started
+      project_service:
+        condition: service_started
+    environment:
+      - JWT_SECRET=Nurken222
 volumes:
   tenant_db_data:
   auth_db_data:
