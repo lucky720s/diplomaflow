@@ -3,12 +3,15 @@ package auth
 import (
 	"context"
 	"errors"
+	"os"
+	"time"
+
 	"github.com/golang-jwt/jwt/v5"
 	auth_pb "github.com/lucky720s/diplomaflow/pkg/protobuf/auth"
 	"golang.org/x/crypto/bcrypt"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 	"gorm.io/gorm"
-	"os"
-	"time"
 )
 
 type Handler struct {
@@ -48,4 +51,19 @@ func (h *Handler) Login(ctx context.Context, req *auth_pb.LoginRequest) (*auth_p
 		return nil, err
 	}
 	return &auth_pb.LoginResponse{Token: tokenString}, nil
+}
+
+func (h *Handler) GetUser(ctx context.Context, req *auth_pb.GetUserRequest) (*auth_pb.GetUserResponse, error) {
+	user, err := h.repo.GetUserByID(ctx, req.GetUserId())
+	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return nil, status.Errorf(codes.NotFound, "user with id %d not found", req.GetUserId())
+		}
+		return nil, status.Errorf(codes.Internal, "error getting user with id %d: %v", req.GetUserId(), err)
+
+	}
+	return &auth_pb.GetUserResponse{
+		Id:    user.ID,
+		Email: user.Email,
+	}, nil
 }

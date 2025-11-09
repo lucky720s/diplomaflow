@@ -44,3 +44,9 @@ func (r *AuthRepository) GetUserByEmail(ctx context.Context, email string) (*Use
 	res := r.Db.WithContext(ctx).First(&user, "email = ?", email)
 	return &user, res.Error
 }
+
+func (r *AuthRepository) GetUserByID(ctx context.Context, userID int64) (*User, error) {
+	var user User
+	res := r.Db.WithContext(ctx).First(&user, userID)
+	return &user, res.Error
+}

@@ -9,6 +9,8 @@ service AuthService{
       returns(RegisterResponse);
   rpc Login(LoginRequest)
       returns(LoginResponse);
+  rpc GetUser(GetUserRequest)
+      returns (GetUserResponse);
 }
 
 message RegisterRequest{
@@ -27,4 +29,12 @@ message LoginRequest{
 
 message LoginResponse{
   string token = 1;
+}
+
+message GetUserRequest{
+  int64 user_id=1;
+}
+message GetUserResponse{
+  int64 id=1;
+  string email=2;
 }
