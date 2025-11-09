@@ -8,8 +8,8 @@ postgres:
   - name: tenant-conn
     enabled: true
     addr: "tenant_db:5432"
-    user: "user"
-    pass: "password"
+    user: "tenant_user"
+    pass: "tenant_password"
     timezone: "Asia/Shanghai"
     database:
       - name: "tenant_db"
