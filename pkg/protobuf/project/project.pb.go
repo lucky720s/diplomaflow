@@ -305,6 +305,7 @@ type UpdateProjectRequest struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	ProjectId     int64                  `protobuf:"varint,1,opt,name=project_id,json=projectId,proto3" json:"project_id,omitempty"`
 	Topic         string                 `protobuf:"bytes,2,opt,name=topic,proto3" json:"topic,omitempty"`
+	UserId        int64                  `protobuf:"varint,3,opt,name=user_id,json=userId,proto3" json:"user_id,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -351,6 +352,13 @@ func (x *UpdateProjectRequest) GetTopic() string {
 		return x.Topic
 	}
 	return ""
+}
+
+func (x *UpdateProjectRequest) GetUserId() int64 {
+	if x != nil {
+		return x.UserId
+	}
+	return 0
 }
 
 type UpdateProjectResponse struct {
@@ -400,6 +408,7 @@ func (x *UpdateProjectResponse) GetProject() *Project {
 type DeleteProjectRequest struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	ProjectId     int64                  `protobuf:"varint,1,opt,name=project_id,json=projectId,proto3" json:"project_id,omitempty"`
+	UserId        int64                  `protobuf:"varint,2,opt,name=user_id,json=userId,proto3" json:"user_id,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -437,6 +446,13 @@ func (*DeleteProjectRequest) Descriptor() ([]byte, []int) {
 func (x *DeleteProjectRequest) GetProjectId() int64 {
 	if x != nil {
 		return x.ProjectId
+	}
+	return 0
+}
+
+func (x *DeleteProjectRequest) GetUserId() int64 {
+	if x != nil {
+		return x.UserId
 	}
 	return 0
 }
@@ -582,16 +598,18 @@ const file_pkg_protobuf_project_project_proto_rawDesc = "" +
 	"\aproject\x18\x01 \x01(\v2\x10.project.ProjectR\aproject\"\x15\n" +
 	"\x13ListProjectsRequest\"D\n" +
 	"\x14ListProjectsResponse\x12,\n" +
-	"\bprojects\x18\x01 \x03(\v2\x10.project.ProjectR\bprojects\"K\n" +
+	"\bprojects\x18\x01 \x03(\v2\x10.project.ProjectR\bprojects\"d\n" +
 	"\x14UpdateProjectRequest\x12\x1d\n" +
 	"\n" +
 	"project_id\x18\x01 \x01(\x03R\tprojectId\x12\x14\n" +
-	"\x05topic\x18\x02 \x01(\tR\x05topic\"C\n" +
+	"\x05topic\x18\x02 \x01(\tR\x05topic\x12\x17\n" +
+	"\auser_id\x18\x03 \x01(\x03R\x06userId\"C\n" +
 	"\x15UpdateProjectResponse\x12*\n" +
-	"\aproject\x18\x01 \x01(\v2\x10.project.ProjectR\aproject\"5\n" +
+	"\aproject\x18\x01 \x01(\v2\x10.project.ProjectR\aproject\"N\n" +
 	"\x14DeleteProjectRequest\x12\x1d\n" +
 	"\n" +
-	"project_id\x18\x01 \x01(\x03R\tprojectId\"1\n" +
+	"project_id\x18\x01 \x01(\x03R\tprojectId\x12\x17\n" +
+	"\auser_id\x18\x02 \x01(\x03R\x06userId\"1\n" +
 	"\x15DeleteProjectResponse\x12\x18\n" +
 	"\asuccess\x18\x01 \x01(\bR\asuccess\"\x9a\x01\n" +
 	"\aProject\x12\x0e\n" +

@@ -103,12 +103,12 @@ func AuthMiddleware() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		authHeader := c.Request.Header.Get("Authorization")
 		if authHeader == "" {
-			c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"error": "Authrization header is required"})
+			c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"error": "Authorization header is required"})
 			return
 		}
 		parts := strings.Split(authHeader, " ")
 		if len(parts) != 2 {
-			c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"error": "Authrization header is required"})
+			c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"error": "Authorization header is required"})
 			return
 		}
 		tokenString := parts[1]
@@ -123,6 +123,13 @@ func AuthMiddleware() gin.HandlerFunc {
 			c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"error": "Invalid token"})
 			return
 		}
+		claims, ok := token.Claims.(jwt.MapClaims)
+		if !ok {
+			c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"error": "Invalid token"})
+			return
+		}
+		c.Set("userId", claims["sub"])
+
 		c.Next()
 	}
 }
@@ -151,6 +158,12 @@ func (g *ApiGateWay) ListProjects(c *gin.Context) {
 	c.JSON(http.StatusOK, res)
 }
 func (g *ApiGateWay) UpdateProject(c *gin.Context) {
+	userIDClaim, exists := c.Get("userId")
+	if !exists {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "unauthorized"})
+		return
+	}
+	userID := int64(userIDClaim.(float64))
 	id := c.Param("id")
 	projectID, err := strconv.ParseUint(id, 10, 64)
 	if err != nil {
@@ -167,6 +180,7 @@ func (g *ApiGateWay) UpdateProject(c *gin.Context) {
 	req := project_pb.UpdateProjectRequest{
 		ProjectId: int64(projectID),
 		Topic:     reqBody.Topic,
+		UserId:    userID,
 	}
 	res, err := g.projectClient.UpdateProject(context.Background(), &req)
 	if err != nil {
@@ -177,13 +191,23 @@ func (g *ApiGateWay) UpdateProject(c *gin.Context) {
 }
 
 func (g *ApiGateWay) DeleteProject(c *gin.Context) {
+	userIDClaim, exists := c.Get("userId")
+	if !exists {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "unauthorized"})
+		return
+	}
+	userID := int64(userIDClaim.(float64))
 	id := c.Param("id")
 	projectID, err := strconv.ParseUint(id, 10, 64)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
-	_, err = g.projectClient.DeleteProject(context.Background(), &project_pb.DeleteProjectRequest{ProjectId: int64(projectID)})
+	req := &project_pb.DeleteProjectRequest{
+		ProjectId: int64(projectID),
+		UserId:    userID,
+	}
+	_, err = g.projectClient.DeleteProject(context.Background(), req)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return

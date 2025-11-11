@@ -2,14 +2,15 @@ package project
 
 import (
 	"context"
+	"errors"
 	"fmt"
-
 	auth_pb "github.com/lucky720s/diplomaflow/pkg/protobuf/auth"
 	project_pb "github.com/lucky720s/diplomaflow/pkg/protobuf/project"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/credentials/insecure"
 	"google.golang.org/grpc/status"
+	"gorm.io/gorm"
 )
 
 type Handler struct {
@@ -43,7 +44,7 @@ func (h *Handler) CreateProject(ctx context.Context, req *project_pb.CreateProje
 }
 
 func (h *Handler) GetProject(ctx context.Context, req *project_pb.GetProjectRequest) (*project_pb.GetProjectResponse, error) {
-	project, studentIDs, err := h.repo.GetProjectById(ctx, req.GetProjectId())
+	project, studentIDs, err := h.repo.GetProjectByID(ctx, req.GetProjectId())
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, "could not get project: %v", err)
 	}
@@ -76,26 +77,44 @@ func (h *Handler) ListProjects(ctx context.Context, req *project_pb.ListProjects
 }
 
 func (h *Handler) UpdateProject(ctx context.Context, req *project_pb.UpdateProjectRequest) (*project_pb.UpdateProjectResponse, error) {
-	project, err := h.repo.UpdateProject(ctx, req.GetProjectId(), req.GetTopic())
+	project, studentIDs, err := h.repo.GetProjectByID(ctx, req.GetProjectId())
+	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return nil, status.Errorf(codes.NotFound, "project not found")
+		}
+	}
+	if project.SupervisorID != req.GetUserId() {
+		return nil, status.Errorf(codes.PermissionDenied, "permission denied")
+	}
+	updatedProject, err := h.repo.UpdateProject(ctx, req.GetProjectId(), req.GetTopic())
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, "could not update project: %v", err)
 	}
-	_, studentIDs, _ := h.repo.GetProjectById(ctx, req.GetProjectId())
 	return &project_pb.UpdateProjectResponse{
 		Project: &project_pb.Project{
-			Id:           project.ID,
-			Topic:        project.Topic,
-			SupervisorId: project.SupervisorID,
-			DepartmentId: project.DepartmentID,
+			Id:           updatedProject.ID,
+			Topic:        updatedProject.Topic,
+			SupervisorId: updatedProject.SupervisorID,
+			DepartmentId: updatedProject.DepartmentID,
 			StudentIds:   studentIDs,
 		},
 	}, nil
 }
 
 func (h *Handler) DeleteProject(ctx context.Context, req *project_pb.DeleteProjectRequest) (*project_pb.DeleteProjectResponse, error) {
-	err := h.repo.DeleteProject(ctx, req.GetProjectId())
+	project, _, err := h.repo.GetProjectByID(ctx, req.GetProjectId())
+	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return nil, status.Errorf(codes.NotFound, "project not found")
+		}
+		return nil, status.Errorf(codes.Internal, "could not delete project: %v", err)
+	}
+	if project.SupervisorID != req.GetUserId() {
+		return nil, status.Errorf(codes.PermissionDenied, "permission denied")
+	}
+	err = h.repo.DeleteProject(ctx, req.GetProjectId())
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, "could not delete project: %v", err)
 	}
-	return &project_pb.DeleteProjectResponse{Success: true}, nil
+	return &project_pb.DeleteProjectResponse{}, nil
 }

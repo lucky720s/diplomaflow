@@ -58,7 +58,7 @@ func (r *ProjectRepository) CreateProject(ctx context.Context, topic string, sup
 	return project, err
 }
 
-func (r *ProjectRepository) GetProjectById(ctx context.Context, projectID int64) (*Project, []int64, error) {
+func (r *ProjectRepository) GetProjectByID(ctx context.Context, projectID int64) (*Project, []int64, error) {
 	var project Project
 	if err := r.Db.WithContext(ctx).First(&project, projectID).Error; err != nil {
 		return nil, nil, err

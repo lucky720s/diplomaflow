@@ -46,12 +46,14 @@ message ListProjectsResponse{
 message UpdateProjectRequest{
   int64 project_id = 1;
   string topic = 2;
+  int64 user_id=3;
 }
 message UpdateProjectResponse{
   Project project = 1;
 }
 message DeleteProjectRequest{
   int64 project_id = 1;
+  int64 user_id=2;
 }
 message DeleteProjectResponse{
   bool success = 1;
