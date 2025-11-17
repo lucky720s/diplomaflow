@@ -7,7 +7,9 @@ import (
 	"time"
 
 	"github.com/golang-jwt/jwt/v5"
-	auth_pb "github.com/lucky720s/diplomaflow/pkg/protobuf/auth"
+	authv1 "github.com/lucky720s/diplomaflow/pkg/protobuf/auth/v1"
+	rolev1 "github.com/lucky720s/diplomaflow/pkg/protobuf/role/v1"
+	universityv1 "github.com/lucky720s/diplomaflow/pkg/protobuf/university/v1"
 	"golang.org/x/crypto/bcrypt"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
@@ -15,55 +17,92 @@ import (
 )
 
 type Handler struct {
-	auth_pb.UnimplementedAuthServiceServer
-	repo *AuthRepository
+	authv1.UnimplementedAuthServiceServer
+	repo             Repository
+	universityClient universityv1.UniversityServiceClient
+	roleClient       rolev1.RoleServiceClient
 }
 
-func NewHandler() *Handler {
-	return &Handler{repo: NewAuthRepository()}
-}
-func (h *Handler) Register(ctx context.Context, req *auth_pb.RegisterRequest) (*auth_pb.RegisterResponse, error) {
-	user, err := h.repo.CreateUser(ctx, req.GetEmail(), req.GetPassword())
-	if err != nil {
-		return nil, err
+func NewHandler(repo Repository, universityClient universityv1.UniversityServiceClient, roleClient rolev1.RoleServiceClient) *Handler {
+	return &Handler{
+		repo:             repo,
+		universityClient: universityClient,
+		roleClient:       roleClient,
 	}
-	return &auth_pb.RegisterResponse{UserId: user.ID}, nil
 }
 
-func (h *Handler) Login(ctx context.Context, req *auth_pb.LoginRequest) (*auth_pb.LoginResponse, error) {
-	user, err := h.repo.GetUserByEmail(ctx, req.Email)
+func (h *Handler) Register(ctx context.Context, req *authv1.RegisterRequest) (*authv1.RegisterResponse, error) {
+	_, err := h.universityClient.GetDepartment(ctx, &universityv1.GetDepartmentRequest{
+		DepartmentId: req.GetDepartmentId()})
 	if err != nil {
-		if errors.Is(err, gorm.ErrRecordNotFound) {
-			return nil, err
-		}
+		return nil, status.Errorf(codes.FailedPrecondition, "department id does not exist")
 	}
-	if err := bcrypt.CompareHashAndPassword([]byte(user.PasswordHash),
-		[]byte(req.Password)); err != nil {
-		return nil, errors.New("invalid credentials")
+	user, err := h.repo.CreateUser(ctx, req.GetEmail(), req.GetPassword(), req.GetDepartmentId())
+	if err != nil {
+		return nil, status.Errorf(codes.FailedPrecondition, "failed to create user")
+	}
+	return &authv1.RegisterResponse{UserId: user.ID}, nil
+}
+
+func (h *Handler) Login(ctx context.Context, req *authv1.LoginRequest) (*authv1.LoginResponse, error) {
+	user, err := h.repo.GetUserByEmail(ctx, req.GetEmail())
+	if err != nil {
+		return nil, status.Errorf(codes.Unauthenticated, "failed to login")
+	}
+	if err := bcrypt.CompareHashAndPassword([]byte(user.PasswordHash), []byte(req.GetPassword())); err != nil {
+		return nil, status.Errorf(codes.Unauthenticated, "invalid password")
+	}
+	depRes, err := h.universityClient.GetDepartment(ctx, &universityv1.GetDepartmentRequest{
+		DepartmentId: user.DepartmentID})
+	if err != nil {
+		return nil, status.Errorf(codes.FailedPrecondition, "department id does not exist")
+	}
+	rolesIDs, err := h.repo.GetUserRoleIDs(ctx, user.ID)
+	if err != nil {
+		return nil, status.Errorf(codes.FailedPrecondition, "role id does not exist")
 	}
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
-		"sub": user.ID,
-		"exp": time.Now().Add(time.Hour * 24).Unix(),
+		"sub":   user.ID,
+		"did":   user.DepartmentID,
+		"uid":   depRes.Department.UniversityId,
+		"roles": rolesIDs,
+		"exp":   time.Now().Add(time.Hour * 24).Unix(),
 	})
 	jwtSecret := os.Getenv("JWT_SECRET")
 	tokenString, err := token.SignedString([]byte(jwtSecret))
 	if err != nil {
-		return nil, err
+		return nil, status.Errorf(codes.Internal, "failed to sign token")
 	}
-	return &auth_pb.LoginResponse{Token: tokenString}, nil
+	return &authv1.LoginResponse{Token: tokenString}, nil
 }
 
-func (h *Handler) GetUser(ctx context.Context, req *auth_pb.GetUserRequest) (*auth_pb.GetUserResponse, error) {
+func (h *Handler) GetUser(ctx context.Context, req *authv1.GetUserRequest) (*authv1.GetUserResponse, error) {
 	user, err := h.repo.GetUserByID(ctx, req.GetUserId())
 	if err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
-			return nil, status.Errorf(codes.NotFound, "user with id %d not found", req.GetUserId())
+			return nil, status.Errorf(codes.Internal, "user id does not exist")
 		}
-		return nil, status.Errorf(codes.Internal, "error getting user with id %d: %v", req.GetUserId(), err)
-
 	}
-	return &auth_pb.GetUserResponse{
-		Id:    user.ID,
-		Email: user.Email,
-	}, nil
+	roleIDs, err := h.repo.GetUserRoleIDs(ctx, user.ID)
+	if err != nil {
+		return nil, status.Errorf(codes.FailedPrecondition, "role id does not exist")
+	}
+	var roles []*rolev1.Role
+	for _, roleID := range roleIDs {
+		roleRes, err := h.roleClient.GetRole(ctx, &rolev1.GetRoleRequest{RoleId: roleID})
+		if err == nil {
+			roles = append(roles, roleRes.GetRole())
+		}
+	}
+	return &authv1.GetUserResponse{
+		Id:           user.ID,
+		Email:        user.Email,
+		DepartmentId: user.DepartmentID,
+		Roles:        roles}, nil
+}
+func (h *Handler) AssignRole(ctx context.Context, req *authv1.AssignRoleRequest) (*authv1.AssignRoleResponse, error) {
+	if err := h.repo.AssignRole(ctx, req.GetUserId(), req.GetRoleId()); err != nil {
+		return nil, status.Errorf(codes.FailedPrecondition, "failed to assign role")
+	}
+	return &authv1.AssignRoleResponse{Success: true}, nil
 }

@@ -1,49 +1,74 @@
 services:
-  tenant_db:
+  university_db:
     image: postgres:14-alpine
-    container_name: tenant_db
+    container_name: university_db
     environment:
-      - POSTGRES_USER=tenant_user
-      - POSTGRES_PASSWORD=tenant_password
-      - POSTGRES_DB=tenant_db
+      POSTGRES_USER: university_user
+      POSTGRES_PASSWORD: university_password
+      POSTGRES_DB: university_db
     ports:
       - "5431:5432"
     volumes:
-      - tenant_db_data:/var/lib/postgresql/data
+      - university_db_data:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U tenant_user -d tenant_db"]
+      test: [ "CMD-SHELL", "pg_isready -U university_user -d university_db" ]
       interval: 5s
       timeout: 5s
       retries: 5
-  tenant_service:
+  university_service:
     build:
       context: ../../
-      dockerfile: cmd/tenant_service/Dockerfile
-    container_name: tenant_service
+      dockerfile: cmd/university_service/Dockerfile
+    container_name: university_service
+    env_file: .env
     ports:
       - "8081:8081"
     depends_on:
-      tenant_db:
+      university_db:
         condition: service_healthy
+
+  role_db:
+    image: postgres:14-alpine
+    container_name: role_db
     environment:
-      DB_HOST: tenant_db
-      DB_PORT: 5432
-      DB_USER: tenant_user
-      DB_PASSWORD: tenant_password
-      DB_NAME: tenant_db
+      POSTGRES_USER: role_user
+      POSTGRES_PASSWORD: role_password
+      POSTGRES_DB: role_db
+    ports:
+      - "5436:5432"
+    volumes:
+      - role_db_data:/var/lib/postgresql/data
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -U role_user -d role_db" ]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+  role_service:
+    build:
+      context: ../../
+      dockerfile: cmd/role_service/Dockerfile
+    container_name: role_service
+    env_file: .env
+    ports:
+      - "8086:8086"
+    depends_on:
+      role_db:
+        condition: service_healthy
+
+
   auth_db:
     image: postgres:14-alpine
     container_name: auth_db
     environment:
-      - POSTGRES_USER=auth_user
-      - POSTGRES_PASSWORD=auth_password
-      - POSTGRES_DB=auth_db
+      POSTGRES_USER: auth_user
+      POSTGRES_PASSWORD: auth_password
+      POSTGRES_DB: auth_db
     ports:
       - "5432:5432"
     volumes:
       - auth_db_data:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL","pg_isready -U auth_user -d auth_db"]
+      test: [ "CMD-SHELL","pg_isready -U auth_user -d auth_db" ]
       interval: 5s
       timeout: 5s
       retries: 5
@@ -52,31 +77,87 @@ services:
       context: ../../
       dockerfile: cmd/auth_service/Dockerfile
     container_name: auth_service
+    env_file: .env
     ports:
       - "8082:8082"
     depends_on:
       auth_db:
         condition: service_healthy
+      role_service:
+        condition: service_started
+
+
+  team_db:
+    image: postgres:14-alpine
+    container_name: team_db
     environment:
-      - AUTH_DB_HOST=auth_db
-      - AUTH_DB_PORT=5432
-      - AUTH_DB_USER=auth_user
-      - AUTH_DB_PASSWORD=auth_password
-      - AUTH_DB_NAME=auth_db
-      - JWT_SECRET=Nurken222
+      POSTGRES_USER: team_user
+      POSTGRES_PASSWORD: team_password
+      POSTGRES_DB: team_db
+    ports:
+      - "5434:5432"
+    volumes:
+      - team_db_data:/var/lib/postgresql/data
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -U team_user -d team_db" ]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+  team_service:
+    build:
+      context: ../../
+      dockerfile: cmd/team_service/Dockerfile
+    container_name: team_service
+    env_file: .env
+    ports:
+      - "8084:8084"
+    depends_on:
+      team_db:
+        condition: service_healthy
+
+
+  workflow_db:
+    image: postgres:14-alpine
+    container_name: workflow_db
+    environment:
+      POSTGRES_USER: workflow_user
+      POSTGRES_PASSWORD: workflow_password
+      POSTGRES_DB: workflow_db
+    ports:
+      - "5435:5432"
+    volumes:
+      - workflow_db_data:/var/lib/postgresql/data
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -U workflow_user -d workflow_db" ]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+  workflow_service:
+    build:
+      context: ../../
+      dockerfile: cmd/workflow_service/Dockerfile
+    container_name: workflow_service
+    env_file: .env
+    ports:
+      - "8085:8085"
+    depends_on:
+      workflow_db:
+        condition: service_healthy
+
+
   project_db:
     image: postgres:14-alpine
     container_name: project_db
     environment:
-      - POSTGRES_USER=project_user
-      - POSTGRES_PASSWORD=project_password
-      - POSTGRES_DB=project_db
+      POSTGRES_USER: project_user
+      POSTGRES_PASSWORD: project_password
+      POSTGRES_DB: project_db
     ports:
       - "5433:5432"
     volumes:
       - project_db_data:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL","pg_isready -U project_user -d project_db"]
+      test: [ "CMD-SHELL","pg_isready -U project_user -d project_db" ]
       interval: 5s
       timeout: 5s
       retries: 5
@@ -85,6 +166,7 @@ services:
       context: ../../
       dockerfile: cmd/project_service/Dockerfile
     container_name: project_service
+    env_file: .env
     ports:
       - "8083:8083"
     depends_on:
@@ -92,17 +174,12 @@ services:
         condition: service_healthy
       auth_service:
         condition: service_started
-    environment:
-      - PROJECT_DB_HOST=project_db
-      - PROJECT_DB_PORT=5432
-      - PROJECT_DB_USER=project_user
-      - PROJECT_DB_PASSWORD=project_password
-      - PROJECT_DB_NAME=project_db
   api_gateway:
     build:
       context: ../../
       dockerfile: cmd/api_gateway/Dockerfile
     container_name: api_gateway
+    env_file: .env
     ports:
       - "8080:8080"
     depends_on:
@@ -110,10 +187,18 @@ services:
         condition: service_started
       project_service:
         condition: service_started
-    environment:
-      - JWT_SECRET=Nurken222
+      role_service:
+        condition: service_started
+      team_service:
+        condition: service_started
+      workflow_service:
+        condition: service_started
+
 volumes:
-  tenant_db_data:
+  university_db_data:
   auth_db_data:
   project_db_data:
+  team_db_data:
+  workflow_db_data:
+  role_db_data:
 

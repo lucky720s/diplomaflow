@@ -1,0 +1,16 @@
+grpc:
+  - name: workflow-service
+    port: 8085
+    enabled: true
+    reflection: true
+
+postgres:
+  - name: workflow-conn
+    enabled: true
+    addr: "workflow_db:5432"
+    user: "workflow_user"
+    pass: "workflow_password"
+    timezone: "Asia/Shanghai"
+    database:
+      - name: "workflow_db"
+        autoCreate: true

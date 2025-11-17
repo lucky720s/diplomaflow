@@ -1,0 +1,16 @@
+grpc:
+  - name: team-service
+    port: 8084
+    enabled: true
+    reflection: true
+
+postgres:
+  - name: team-conn
+    enabled: true
+    addr: "team_db:5432"
+    user: "team_user"
+    pass: "team_password"
+    timezone: "Asia/Shanghai"
+    database:
+      - name: "team_db"
+        autoCreate: true

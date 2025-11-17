@@ -1,0 +1,17 @@
+---
+grpc:
+  - name: role-service
+    port: 8086
+    enabled: true
+    reflection: true
+
+postgres:
+  - name: role-conn
+    enabled: true
+    addr: "role_db:5432"
+    user: "role_user"
+    pass: "role_password"
+    timezone: "Asia/Shanghai"
+    database:
+      - name: "role_db"
+        autoCreate: true

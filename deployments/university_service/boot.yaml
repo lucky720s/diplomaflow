@@ -1,0 +1,16 @@
+grpc:
+  - name: university-service
+    port: 8081
+    enabled: true
+    reflection: true
+
+postgres:
+  - name: university-conn
+    enabled: true
+    addr: "university_db:5432"
+    user: "university_user"
+    pass: "university_password"
+    timezone: "Asia/Shanghai"
+    database:
+      - name: "university_db"
+        autoCreate: true

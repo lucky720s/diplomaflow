@@ -1,0 +1,70 @@
+syntax = "proto3";
+
+package project.v1;
+import "google/protobuf/field_mask.proto";
+import "google/protobuf/timestamp.proto";
+option go_package = "pkg/protobuf/project/v1";
+
+
+service ProjectService{
+rpc ProposeProject(ProposeProjectRequest) returns(ProposeProjectResponse);
+rpc AcceptSupervision(AcceptSupervisionRequest) returns(AcceptSupervisionResponse);
+rpc GetProject(GetProjectRequest) returns (GetProjectResponse);
+rpc ListProjects(ListProjectsRequest) returns(ListProjectsResponse);
+rpc UpdateProject(UpdateProjectRequest) returns (UpdateProjectResponse);
+rpc DeleteProject(DeleteProjectRequest) returns (DeleteProjectResponse);
+rpc AdvanceProjectStage(AdvanceProjectStageRequest) returns (AdvanceProjectStageResponse);
+}
+
+message Project{
+  int64 id = 1;
+  string topic = 2;
+  int64 supervisor_id = 3;
+  int64 department_id = 4;
+  int64 team_id = 5;
+  int64 current_stage_id = 6;
+  google.protobuf.Timestamp completed_at = 7;
+}
+message ProposeProjectRequest{
+  string topic = 1;
+  int64 supervisor_id = 2;
+  int64 team_id = 3;
+}
+message ProposeProjectResponse{
+  Project project = 1;
+}
+message AcceptSupervisionRequest{
+  int64 project_id = 1;
+}
+message AcceptSupervisionResponse{
+  Project project = 1;
+}
+message GetProjectRequest{
+  int64 project_id = 1;
+}
+message GetProjectResponse{
+  Project project = 1;
+}
+message ListProjectsRequest{}
+message ListProjectsResponse{
+  repeated Project projects = 1;
+}
+message UpdateProjectRequest{
+  Project project = 1;
+  google.protobuf.FieldMask update_mask = 2;
+}
+message UpdateProjectResponse{
+  Project project = 1;
+}
+message DeleteProjectRequest{
+  int64 project_id = 1;
+}
+message DeleteProjectResponse{
+  bool success = 1;
+}
+message AdvanceProjectStageRequest{
+  int64 project_id = 1;
+}
+message AdvanceProjectStageResponse{
+  Project project = 1;
+}
