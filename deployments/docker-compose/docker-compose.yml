@@ -1,6 +1,6 @@
 services:
   university_db:
-    image: postgres:14-alpine
+    image: postgres:18-alpine
     container_name: university_db
     environment:
       POSTGRES_USER: university_user
@@ -28,7 +28,7 @@ services:
         condition: service_healthy
 
   role_db:
-    image: postgres:14-alpine
+    image: postgres:18-alpine
     container_name: role_db
     environment:
       POSTGRES_USER: role_user
@@ -57,7 +57,7 @@ services:
 
 
   auth_db:
-    image: postgres:14-alpine
+    image: postgres:18-alpine
     container_name: auth_db
     environment:
       POSTGRES_USER: auth_user
@@ -88,7 +88,7 @@ services:
 
 
   team_db:
-    image: postgres:14-alpine
+    image: postgres:18-alpine
     container_name: team_db
     environment:
       POSTGRES_USER: team_user
@@ -117,7 +117,7 @@ services:
 
 
   workflow_db:
-    image: postgres:14-alpine
+    image: postgres:18-alpine
     container_name: workflow_db
     environment:
       POSTGRES_USER: workflow_user
@@ -146,7 +146,7 @@ services:
 
 
   project_db:
-    image: postgres:14-alpine
+    image: postgres:18-alpine
     container_name: project_db
     environment:
       POSTGRES_USER: project_user
