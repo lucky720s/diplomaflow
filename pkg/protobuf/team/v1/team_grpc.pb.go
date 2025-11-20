@@ -36,7 +36,7 @@ type TeamServiceClient interface {
 	GetTeam(ctx context.Context, in *GetTeamRequest, opts ...grpc.CallOption) (*GetTeamResponse, error)
 	ListTeams(ctx context.Context, in *ListTeamsRequest, opts ...grpc.CallOption) (*ListTeamsResponse, error)
 	UpdateTeam(ctx context.Context, in *UpdateTeamRequest, opts ...grpc.CallOption) (*UpdateTeamResponse, error)
-	DeleteTeam(ctx context.Context, in *DeleteTeamRequest, opts ...grpc.CallOption) (*DeleteTeamRequest, error)
+	DeleteTeam(ctx context.Context, in *DeleteTeamRequest, opts ...grpc.CallOption) (*DeleteTeamResponse, error)
 	AddMember(ctx context.Context, in *AddMemberRequest, opts ...grpc.CallOption) (*AddMemberResponse, error)
 	RemoveMember(ctx context.Context, in *RemoveMemberRequest, opts ...grpc.CallOption) (*RemoveMemberResponse, error)
 }
@@ -89,9 +89,9 @@ func (c *teamServiceClient) UpdateTeam(ctx context.Context, in *UpdateTeamReques
 	return out, nil
 }
 
-func (c *teamServiceClient) DeleteTeam(ctx context.Context, in *DeleteTeamRequest, opts ...grpc.CallOption) (*DeleteTeamRequest, error) {
+func (c *teamServiceClient) DeleteTeam(ctx context.Context, in *DeleteTeamRequest, opts ...grpc.CallOption) (*DeleteTeamResponse, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
-	out := new(DeleteTeamRequest)
+	out := new(DeleteTeamResponse)
 	err := c.cc.Invoke(ctx, TeamService_DeleteTeam_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
@@ -127,7 +127,7 @@ type TeamServiceServer interface {
 	GetTeam(context.Context, *GetTeamRequest) (*GetTeamResponse, error)
 	ListTeams(context.Context, *ListTeamsRequest) (*ListTeamsResponse, error)
 	UpdateTeam(context.Context, *UpdateTeamRequest) (*UpdateTeamResponse, error)
-	DeleteTeam(context.Context, *DeleteTeamRequest) (*DeleteTeamRequest, error)
+	DeleteTeam(context.Context, *DeleteTeamRequest) (*DeleteTeamResponse, error)
 	AddMember(context.Context, *AddMemberRequest) (*AddMemberResponse, error)
 	RemoveMember(context.Context, *RemoveMemberRequest) (*RemoveMemberResponse, error)
 	mustEmbedUnimplementedTeamServiceServer()
@@ -152,7 +152,7 @@ func (UnimplementedTeamServiceServer) ListTeams(context.Context, *ListTeamsReque
 func (UnimplementedTeamServiceServer) UpdateTeam(context.Context, *UpdateTeamRequest) (*UpdateTeamResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method UpdateTeam not implemented")
 }
-func (UnimplementedTeamServiceServer) DeleteTeam(context.Context, *DeleteTeamRequest) (*DeleteTeamRequest, error) {
+func (UnimplementedTeamServiceServer) DeleteTeam(context.Context, *DeleteTeamRequest) (*DeleteTeamResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method DeleteTeam not implemented")
 }
 func (UnimplementedTeamServiceServer) AddMember(context.Context, *AddMemberRequest) (*AddMemberResponse, error) {

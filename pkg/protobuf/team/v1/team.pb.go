@@ -773,16 +773,16 @@ const file_pkg_protobuf_team_v1_team_proto_rawDesc = "" +
 	"\ateam_id\x18\x01 \x01(\x03R\x06teamId\x12\x17\n" +
 	"\auser_id\x18\x02 \x01(\x03R\x06userId\"0\n" +
 	"\x14RemoveMemberResponse\x12\x18\n" +
-	"\asuccess\x18\x01 \x01(\bR\asuccess2\xf4\x03\n" +
+	"\asuccess\x18\x01 \x01(\bR\asuccess2\xf5\x03\n" +
 	"\vTeamService\x12E\n" +
 	"\n" +
 	"CreateTeam\x12\x1a.team.v1.CreateTeamRequest\x1a\x1b.team.v1.CreateTeamResponse\x12<\n" +
 	"\aGetTeam\x12\x17.team.v1.GetTeamRequest\x1a\x18.team.v1.GetTeamResponse\x12B\n" +
 	"\tListTeams\x12\x19.team.v1.ListTeamsRequest\x1a\x1a.team.v1.ListTeamsResponse\x12E\n" +
 	"\n" +
-	"UpdateTeam\x12\x1a.team.v1.UpdateTeamRequest\x1a\x1b.team.v1.UpdateTeamResponse\x12D\n" +
+	"UpdateTeam\x12\x1a.team.v1.UpdateTeamRequest\x1a\x1b.team.v1.UpdateTeamResponse\x12E\n" +
 	"\n" +
-	"DeleteTeam\x12\x1a.team.v1.DeleteTeamRequest\x1a\x1a.team.v1.DeleteTeamRequest\x12B\n" +
+	"DeleteTeam\x12\x1a.team.v1.DeleteTeamRequest\x1a\x1b.team.v1.DeleteTeamResponse\x12B\n" +
 	"\tAddMember\x12\x19.team.v1.AddMemberRequest\x1a\x1a.team.v1.AddMemberResponse\x12K\n" +
 	"\fRemoveMember\x12\x1c.team.v1.RemoveMemberRequest\x1a\x1d.team.v1.RemoveMemberResponseB\x16Z\x14pkg/protobuf/team/v1b\x06proto3"
 
@@ -835,7 +835,7 @@ var file_pkg_protobuf_team_v1_team_proto_depIdxs = []int32{
 	4,  // 14: team.v1.TeamService.GetTeam:output_type -> team.v1.GetTeamResponse
 	6,  // 15: team.v1.TeamService.ListTeams:output_type -> team.v1.ListTeamsResponse
 	8,  // 16: team.v1.TeamService.UpdateTeam:output_type -> team.v1.UpdateTeamResponse
-	9,  // 17: team.v1.TeamService.DeleteTeam:output_type -> team.v1.DeleteTeamRequest
+	10, // 17: team.v1.TeamService.DeleteTeam:output_type -> team.v1.DeleteTeamResponse
 	12, // 18: team.v1.TeamService.AddMember:output_type -> team.v1.AddMemberResponse
 	14, // 19: team.v1.TeamService.RemoveMember:output_type -> team.v1.RemoveMemberResponse
 	13, // [13:20] is the sub-list for method output_type
