@@ -70,7 +70,16 @@ func main() {
 		admin := v1.Group("/admin")
 		//admin.Use(AuthMiddleware())
 		admin.POST("/universities", gateway.CreateUniversity)
+		admin.GET("/universities", gateway.ListUniversities)
+		admin.GET("/universities/:id", gateway.GetUniversity)
+		admin.PATCH("/universities/:id", gateway.UpdateUniversity)
+		admin.DELETE("/universities/:id", gateway.DeleteUniversity)
 		admin.POST("/departments", gateway.CreateDepartment)
+		admin.GET("/universities/:id/departments", gateway.ListDepartments)
+		admin.GET("/departments/:id", gateway.GetDepartment)
+		admin.PATCH("/departments/:id", gateway.UpdateDepartment)
+		admin.DELETE("/departments/:id", gateway.DeleteDepartment)
+
 		admin.POST("/workflows", gateway.CreateWorkflow)
 		admin.POST("/stages", gateway.CreateStage)
 		admin.POST("/roles", gateway.CreateRole)
@@ -146,6 +155,74 @@ func (g *ApiGateWay) CreateUniversity(c *gin.Context) {
 	c.JSON(http.StatusCreated, res)
 }
 
+func (g *ApiGateWay) GetUniversity(c *gin.Context) {
+	id := c.Param("id")
+	universityID, err := strconv.ParseInt(id, 10, 64)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+	res, err := g.universityClient.GetUniversity(context.Background(), &universityv1.GetUniversityRequest{
+		UniversityId: universityID})
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+	c.JSON(http.StatusOK, res)
+}
+func (g *ApiGateWay) ListUniversities(c *gin.Context) {
+	res, err := g.universityClient.ListUniversities(context.Background(), &universityv1.ListUniversitiesRequest{})
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+	c.JSON(http.StatusOK, res)
+}
+func (g *ApiGateWay) UpdateUniversity(c *gin.Context) {
+	id := c.Param("id")
+	universityID, err := strconv.ParseInt(id, 10, 64)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+	var reqBody struct {
+		Name      string `json:"name"`
+		ShortName string `json:"short_name"`
+	}
+	if err := c.ShouldBindJSON(&reqBody); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+	req := universityv1.UpdateUniversityRequest{
+		University: &universityv1.University{
+			Id:        universityID,
+			Name:      reqBody.Name,
+			ShortName: reqBody.ShortName},
+		UpdateMask: &field_mask.FieldMask{
+			Paths: []string{"name", "short_name"}}}
+	res, err := g.universityClient.UpdateUniversity(context.Background(), &req)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+	c.JSON(http.StatusOK, res)
+}
+func (g *ApiGateWay) DeleteUniversity(c *gin.Context) {
+	id := c.Param("id")
+	universityID, err := strconv.ParseInt(id, 10, 64)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+	_, err = g.universityClient.DeleteUniversity(context.Background(), &universityv1.DeleteUniversityRequest{
+		UniversityId: universityID})
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+	c.JSON(http.StatusNoContent, nil)
+}
+
 func (g *ApiGateWay) CreateDepartment(c *gin.Context) {
 	var req universityv1.CreateDepartmentRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
@@ -159,6 +236,85 @@ func (g *ApiGateWay) CreateDepartment(c *gin.Context) {
 	}
 	c.JSON(http.StatusCreated, res)
 }
+
+func (g *ApiGateWay) GetDepartment(c *gin.Context) {
+	id := c.Param("id")
+	departmentID, err := strconv.ParseInt(id, 10, 64)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+	res, err := g.universityClient.GetDepartment(context.Background(), &universityv1.GetDepartmentRequest{
+		DepartmentId: departmentID})
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+	c.JSON(http.StatusOK, res)
+}
+func (g *ApiGateWay) ListDepartments(c *gin.Context) {
+	id := c.Param("id")
+	universityID, err := strconv.ParseInt(id, 10, 64)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+
+	}
+	res, err := g.universityClient.ListDepartments(context.Background(), &universityv1.ListDepartmentsRequest{
+		UniversityId: universityID})
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+	c.JSON(http.StatusOK, res)
+}
+func (g *ApiGateWay) UpdateDepartment(c *gin.Context) {
+	id := c.Param("id")
+	departmentID, err := strconv.ParseInt(id, 10, 64)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+	var reqBody struct {
+		Name string `json:"name"`
+	}
+	if err := c.ShouldBindJSON(&reqBody); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+	req := universityv1.UpdateDepartmentRequest{
+		Department: &universityv1.Department{
+			Id:   departmentID,
+			Name: reqBody.Name,
+		},
+		UpdateMask: &field_mask.FieldMask{
+			Paths: []string{"name"},
+		},
+	}
+	res, err := g.universityClient.UpdateDepartment(context.Background(), &req)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+	c.JSON(http.StatusOK, res)
+}
+
+func (g *ApiGateWay) DeleteDepartment(c *gin.Context) {
+	id := c.Param("id")
+	departmentID, err := strconv.ParseInt(id, 10, 64)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+	_, err = g.universityClient.DeleteDepartment(context.Background(), &universityv1.DeleteDepartmentRequest{
+		DepartmentId: departmentID})
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+	c.JSON(http.StatusNoContent, nil)
+}
+
 func (g *ApiGateWay) CreateWorkflow(c *gin.Context) {
 	var req workflowv1.CreateWorkflowRequest
 	if err := c.ShouldBindJSON(&req); err != nil {

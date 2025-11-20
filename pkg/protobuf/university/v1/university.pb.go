@@ -9,6 +9,7 @@ package v1
 import (
 	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
 	protoimpl "google.golang.org/protobuf/runtime/protoimpl"
+	fieldmaskpb "google.golang.org/protobuf/types/known/fieldmaskpb"
 	reflect "reflect"
 	sync "sync"
 	unsafe "unsafe"
@@ -238,12 +239,8 @@ func (x *CreateUniversityResponse) GetUniversity() *University {
 }
 
 type GetUniversityRequest struct {
-	state protoimpl.MessageState `protogen:"open.v1"`
-	// Types that are valid to be assigned to Identifier:
-	//
-	//	*GetUniversityRequest_Id
-	//	*GetUniversityRequest_ShortName
-	Identifier    isGetUniversityRequest_Identifier `protobuf_oneof:"identifier"`
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	UniversityId  int64                  `protobuf:"varint,1,opt,name=university_id,json=universityId,proto3" json:"university_id,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -278,46 +275,12 @@ func (*GetUniversityRequest) Descriptor() ([]byte, []int) {
 	return file_pkg_protobuf_university_v1_university_proto_rawDescGZIP(), []int{4}
 }
 
-func (x *GetUniversityRequest) GetIdentifier() isGetUniversityRequest_Identifier {
+func (x *GetUniversityRequest) GetUniversityId() int64 {
 	if x != nil {
-		return x.Identifier
-	}
-	return nil
-}
-
-func (x *GetUniversityRequest) GetId() int64 {
-	if x != nil {
-		if x, ok := x.Identifier.(*GetUniversityRequest_Id); ok {
-			return x.Id
-		}
+		return x.UniversityId
 	}
 	return 0
 }
-
-func (x *GetUniversityRequest) GetShortName() string {
-	if x != nil {
-		if x, ok := x.Identifier.(*GetUniversityRequest_ShortName); ok {
-			return x.ShortName
-		}
-	}
-	return ""
-}
-
-type isGetUniversityRequest_Identifier interface {
-	isGetUniversityRequest_Identifier()
-}
-
-type GetUniversityRequest_Id struct {
-	Id int64 `protobuf:"varint,1,opt,name=id,proto3,oneof"`
-}
-
-type GetUniversityRequest_ShortName struct {
-	ShortName string `protobuf:"bytes,2,opt,name=short_name,json=shortName,proto3,oneof"`
-}
-
-func (*GetUniversityRequest_Id) isGetUniversityRequest_Identifier() {}
-
-func (*GetUniversityRequest_ShortName) isGetUniversityRequest_Identifier() {}
 
 type GetUniversityResponse struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
@@ -363,6 +326,270 @@ func (x *GetUniversityResponse) GetUniversity() *University {
 	return nil
 }
 
+type ListUniversitiesRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *ListUniversitiesRequest) Reset() {
+	*x = ListUniversitiesRequest{}
+	mi := &file_pkg_protobuf_university_v1_university_proto_msgTypes[6]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ListUniversitiesRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ListUniversitiesRequest) ProtoMessage() {}
+
+func (x *ListUniversitiesRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_pkg_protobuf_university_v1_university_proto_msgTypes[6]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ListUniversitiesRequest.ProtoReflect.Descriptor instead.
+func (*ListUniversitiesRequest) Descriptor() ([]byte, []int) {
+	return file_pkg_protobuf_university_v1_university_proto_rawDescGZIP(), []int{6}
+}
+
+type ListUniversitiesResponse struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Universities  []*University          `protobuf:"bytes,1,rep,name=universities,proto3" json:"universities,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *ListUniversitiesResponse) Reset() {
+	*x = ListUniversitiesResponse{}
+	mi := &file_pkg_protobuf_university_v1_university_proto_msgTypes[7]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ListUniversitiesResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ListUniversitiesResponse) ProtoMessage() {}
+
+func (x *ListUniversitiesResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_pkg_protobuf_university_v1_university_proto_msgTypes[7]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ListUniversitiesResponse.ProtoReflect.Descriptor instead.
+func (*ListUniversitiesResponse) Descriptor() ([]byte, []int) {
+	return file_pkg_protobuf_university_v1_university_proto_rawDescGZIP(), []int{7}
+}
+
+func (x *ListUniversitiesResponse) GetUniversities() []*University {
+	if x != nil {
+		return x.Universities
+	}
+	return nil
+}
+
+type UpdateUniversityRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	University    *University            `protobuf:"bytes,1,opt,name=university,proto3" json:"university,omitempty"`
+	UpdateMask    *fieldmaskpb.FieldMask `protobuf:"bytes,2,opt,name=update_mask,json=updateMask,proto3" json:"update_mask,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *UpdateUniversityRequest) Reset() {
+	*x = UpdateUniversityRequest{}
+	mi := &file_pkg_protobuf_university_v1_university_proto_msgTypes[8]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *UpdateUniversityRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*UpdateUniversityRequest) ProtoMessage() {}
+
+func (x *UpdateUniversityRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_pkg_protobuf_university_v1_university_proto_msgTypes[8]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use UpdateUniversityRequest.ProtoReflect.Descriptor instead.
+func (*UpdateUniversityRequest) Descriptor() ([]byte, []int) {
+	return file_pkg_protobuf_university_v1_university_proto_rawDescGZIP(), []int{8}
+}
+
+func (x *UpdateUniversityRequest) GetUniversity() *University {
+	if x != nil {
+		return x.University
+	}
+	return nil
+}
+
+func (x *UpdateUniversityRequest) GetUpdateMask() *fieldmaskpb.FieldMask {
+	if x != nil {
+		return x.UpdateMask
+	}
+	return nil
+}
+
+type UpdateUniversityResponse struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	University    *University            `protobuf:"bytes,1,opt,name=university,proto3" json:"university,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *UpdateUniversityResponse) Reset() {
+	*x = UpdateUniversityResponse{}
+	mi := &file_pkg_protobuf_university_v1_university_proto_msgTypes[9]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *UpdateUniversityResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*UpdateUniversityResponse) ProtoMessage() {}
+
+func (x *UpdateUniversityResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_pkg_protobuf_university_v1_university_proto_msgTypes[9]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use UpdateUniversityResponse.ProtoReflect.Descriptor instead.
+func (*UpdateUniversityResponse) Descriptor() ([]byte, []int) {
+	return file_pkg_protobuf_university_v1_university_proto_rawDescGZIP(), []int{9}
+}
+
+func (x *UpdateUniversityResponse) GetUniversity() *University {
+	if x != nil {
+		return x.University
+	}
+	return nil
+}
+
+type DeleteUniversityRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	UniversityId  int64                  `protobuf:"varint,1,opt,name=university_id,json=universityId,proto3" json:"university_id,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *DeleteUniversityRequest) Reset() {
+	*x = DeleteUniversityRequest{}
+	mi := &file_pkg_protobuf_university_v1_university_proto_msgTypes[10]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *DeleteUniversityRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*DeleteUniversityRequest) ProtoMessage() {}
+
+func (x *DeleteUniversityRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_pkg_protobuf_university_v1_university_proto_msgTypes[10]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use DeleteUniversityRequest.ProtoReflect.Descriptor instead.
+func (*DeleteUniversityRequest) Descriptor() ([]byte, []int) {
+	return file_pkg_protobuf_university_v1_university_proto_rawDescGZIP(), []int{10}
+}
+
+func (x *DeleteUniversityRequest) GetUniversityId() int64 {
+	if x != nil {
+		return x.UniversityId
+	}
+	return 0
+}
+
+type DeleteUniversityResponse struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Success       bool                   `protobuf:"varint,1,opt,name=success,proto3" json:"success,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *DeleteUniversityResponse) Reset() {
+	*x = DeleteUniversityResponse{}
+	mi := &file_pkg_protobuf_university_v1_university_proto_msgTypes[11]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *DeleteUniversityResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*DeleteUniversityResponse) ProtoMessage() {}
+
+func (x *DeleteUniversityResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_pkg_protobuf_university_v1_university_proto_msgTypes[11]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use DeleteUniversityResponse.ProtoReflect.Descriptor instead.
+func (*DeleteUniversityResponse) Descriptor() ([]byte, []int) {
+	return file_pkg_protobuf_university_v1_university_proto_rawDescGZIP(), []int{11}
+}
+
+func (x *DeleteUniversityResponse) GetSuccess() bool {
+	if x != nil {
+		return x.Success
+	}
+	return false
+}
+
 type CreateDepartmentRequest struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	Name          string                 `protobuf:"bytes,1,opt,name=name,proto3" json:"name,omitempty"`
@@ -373,7 +600,7 @@ type CreateDepartmentRequest struct {
 
 func (x *CreateDepartmentRequest) Reset() {
 	*x = CreateDepartmentRequest{}
-	mi := &file_pkg_protobuf_university_v1_university_proto_msgTypes[6]
+	mi := &file_pkg_protobuf_university_v1_university_proto_msgTypes[12]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -385,7 +612,7 @@ func (x *CreateDepartmentRequest) String() string {
 func (*CreateDepartmentRequest) ProtoMessage() {}
 
 func (x *CreateDepartmentRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_pkg_protobuf_university_v1_university_proto_msgTypes[6]
+	mi := &file_pkg_protobuf_university_v1_university_proto_msgTypes[12]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -398,7 +625,7 @@ func (x *CreateDepartmentRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use CreateDepartmentRequest.ProtoReflect.Descriptor instead.
 func (*CreateDepartmentRequest) Descriptor() ([]byte, []int) {
-	return file_pkg_protobuf_university_v1_university_proto_rawDescGZIP(), []int{6}
+	return file_pkg_protobuf_university_v1_university_proto_rawDescGZIP(), []int{12}
 }
 
 func (x *CreateDepartmentRequest) GetName() string {
@@ -424,7 +651,7 @@ type CreateDepartmentResponse struct {
 
 func (x *CreateDepartmentResponse) Reset() {
 	*x = CreateDepartmentResponse{}
-	mi := &file_pkg_protobuf_university_v1_university_proto_msgTypes[7]
+	mi := &file_pkg_protobuf_university_v1_university_proto_msgTypes[13]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -436,7 +663,7 @@ func (x *CreateDepartmentResponse) String() string {
 func (*CreateDepartmentResponse) ProtoMessage() {}
 
 func (x *CreateDepartmentResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_pkg_protobuf_university_v1_university_proto_msgTypes[7]
+	mi := &file_pkg_protobuf_university_v1_university_proto_msgTypes[13]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -449,7 +676,7 @@ func (x *CreateDepartmentResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use CreateDepartmentResponse.ProtoReflect.Descriptor instead.
 func (*CreateDepartmentResponse) Descriptor() ([]byte, []int) {
-	return file_pkg_protobuf_university_v1_university_proto_rawDescGZIP(), []int{7}
+	return file_pkg_protobuf_university_v1_university_proto_rawDescGZIP(), []int{13}
 }
 
 func (x *CreateDepartmentResponse) GetDepartment() *Department {
@@ -468,7 +695,7 @@ type GetDepartmentRequest struct {
 
 func (x *GetDepartmentRequest) Reset() {
 	*x = GetDepartmentRequest{}
-	mi := &file_pkg_protobuf_university_v1_university_proto_msgTypes[8]
+	mi := &file_pkg_protobuf_university_v1_university_proto_msgTypes[14]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -480,7 +707,7 @@ func (x *GetDepartmentRequest) String() string {
 func (*GetDepartmentRequest) ProtoMessage() {}
 
 func (x *GetDepartmentRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_pkg_protobuf_university_v1_university_proto_msgTypes[8]
+	mi := &file_pkg_protobuf_university_v1_university_proto_msgTypes[14]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -493,7 +720,7 @@ func (x *GetDepartmentRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetDepartmentRequest.ProtoReflect.Descriptor instead.
 func (*GetDepartmentRequest) Descriptor() ([]byte, []int) {
-	return file_pkg_protobuf_university_v1_university_proto_rawDescGZIP(), []int{8}
+	return file_pkg_protobuf_university_v1_university_proto_rawDescGZIP(), []int{14}
 }
 
 func (x *GetDepartmentRequest) GetDepartmentId() int64 {
@@ -512,7 +739,7 @@ type GetDepartmentResponse struct {
 
 func (x *GetDepartmentResponse) Reset() {
 	*x = GetDepartmentResponse{}
-	mi := &file_pkg_protobuf_university_v1_university_proto_msgTypes[9]
+	mi := &file_pkg_protobuf_university_v1_university_proto_msgTypes[15]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -524,7 +751,7 @@ func (x *GetDepartmentResponse) String() string {
 func (*GetDepartmentResponse) ProtoMessage() {}
 
 func (x *GetDepartmentResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_pkg_protobuf_university_v1_university_proto_msgTypes[9]
+	mi := &file_pkg_protobuf_university_v1_university_proto_msgTypes[15]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -537,7 +764,7 @@ func (x *GetDepartmentResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetDepartmentResponse.ProtoReflect.Descriptor instead.
 func (*GetDepartmentResponse) Descriptor() ([]byte, []int) {
-	return file_pkg_protobuf_university_v1_university_proto_rawDescGZIP(), []int{9}
+	return file_pkg_protobuf_university_v1_university_proto_rawDescGZIP(), []int{15}
 }
 
 func (x *GetDepartmentResponse) GetDepartment() *Department {
@@ -547,11 +774,283 @@ func (x *GetDepartmentResponse) GetDepartment() *Department {
 	return nil
 }
 
+type ListDepartmentsRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	UniversityId  int64                  `protobuf:"varint,1,opt,name=university_id,json=universityId,proto3" json:"university_id,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *ListDepartmentsRequest) Reset() {
+	*x = ListDepartmentsRequest{}
+	mi := &file_pkg_protobuf_university_v1_university_proto_msgTypes[16]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ListDepartmentsRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ListDepartmentsRequest) ProtoMessage() {}
+
+func (x *ListDepartmentsRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_pkg_protobuf_university_v1_university_proto_msgTypes[16]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ListDepartmentsRequest.ProtoReflect.Descriptor instead.
+func (*ListDepartmentsRequest) Descriptor() ([]byte, []int) {
+	return file_pkg_protobuf_university_v1_university_proto_rawDescGZIP(), []int{16}
+}
+
+func (x *ListDepartmentsRequest) GetUniversityId() int64 {
+	if x != nil {
+		return x.UniversityId
+	}
+	return 0
+}
+
+type ListDepartmentsResponse struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Departments   []*Department          `protobuf:"bytes,1,rep,name=departments,proto3" json:"departments,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *ListDepartmentsResponse) Reset() {
+	*x = ListDepartmentsResponse{}
+	mi := &file_pkg_protobuf_university_v1_university_proto_msgTypes[17]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ListDepartmentsResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ListDepartmentsResponse) ProtoMessage() {}
+
+func (x *ListDepartmentsResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_pkg_protobuf_university_v1_university_proto_msgTypes[17]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ListDepartmentsResponse.ProtoReflect.Descriptor instead.
+func (*ListDepartmentsResponse) Descriptor() ([]byte, []int) {
+	return file_pkg_protobuf_university_v1_university_proto_rawDescGZIP(), []int{17}
+}
+
+func (x *ListDepartmentsResponse) GetDepartments() []*Department {
+	if x != nil {
+		return x.Departments
+	}
+	return nil
+}
+
+type UpdateDepartmentRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Department    *Department            `protobuf:"bytes,1,opt,name=department,proto3" json:"department,omitempty"`
+	UpdateMask    *fieldmaskpb.FieldMask `protobuf:"bytes,2,opt,name=update_mask,json=updateMask,proto3" json:"update_mask,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *UpdateDepartmentRequest) Reset() {
+	*x = UpdateDepartmentRequest{}
+	mi := &file_pkg_protobuf_university_v1_university_proto_msgTypes[18]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *UpdateDepartmentRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*UpdateDepartmentRequest) ProtoMessage() {}
+
+func (x *UpdateDepartmentRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_pkg_protobuf_university_v1_university_proto_msgTypes[18]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use UpdateDepartmentRequest.ProtoReflect.Descriptor instead.
+func (*UpdateDepartmentRequest) Descriptor() ([]byte, []int) {
+	return file_pkg_protobuf_university_v1_university_proto_rawDescGZIP(), []int{18}
+}
+
+func (x *UpdateDepartmentRequest) GetDepartment() *Department {
+	if x != nil {
+		return x.Department
+	}
+	return nil
+}
+
+func (x *UpdateDepartmentRequest) GetUpdateMask() *fieldmaskpb.FieldMask {
+	if x != nil {
+		return x.UpdateMask
+	}
+	return nil
+}
+
+type UpdateDepartmentResponse struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Department    *Department            `protobuf:"bytes,1,opt,name=department,proto3" json:"department,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *UpdateDepartmentResponse) Reset() {
+	*x = UpdateDepartmentResponse{}
+	mi := &file_pkg_protobuf_university_v1_university_proto_msgTypes[19]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *UpdateDepartmentResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*UpdateDepartmentResponse) ProtoMessage() {}
+
+func (x *UpdateDepartmentResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_pkg_protobuf_university_v1_university_proto_msgTypes[19]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use UpdateDepartmentResponse.ProtoReflect.Descriptor instead.
+func (*UpdateDepartmentResponse) Descriptor() ([]byte, []int) {
+	return file_pkg_protobuf_university_v1_university_proto_rawDescGZIP(), []int{19}
+}
+
+func (x *UpdateDepartmentResponse) GetDepartment() *Department {
+	if x != nil {
+		return x.Department
+	}
+	return nil
+}
+
+type DeleteDepartmentRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	DepartmentId  int64                  `protobuf:"varint,1,opt,name=department_id,json=departmentId,proto3" json:"department_id,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *DeleteDepartmentRequest) Reset() {
+	*x = DeleteDepartmentRequest{}
+	mi := &file_pkg_protobuf_university_v1_university_proto_msgTypes[20]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *DeleteDepartmentRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*DeleteDepartmentRequest) ProtoMessage() {}
+
+func (x *DeleteDepartmentRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_pkg_protobuf_university_v1_university_proto_msgTypes[20]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use DeleteDepartmentRequest.ProtoReflect.Descriptor instead.
+func (*DeleteDepartmentRequest) Descriptor() ([]byte, []int) {
+	return file_pkg_protobuf_university_v1_university_proto_rawDescGZIP(), []int{20}
+}
+
+func (x *DeleteDepartmentRequest) GetDepartmentId() int64 {
+	if x != nil {
+		return x.DepartmentId
+	}
+	return 0
+}
+
+type DeleteDepartmentResponse struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Success       bool                   `protobuf:"varint,1,opt,name=success,proto3" json:"success,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *DeleteDepartmentResponse) Reset() {
+	*x = DeleteDepartmentResponse{}
+	mi := &file_pkg_protobuf_university_v1_university_proto_msgTypes[21]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *DeleteDepartmentResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*DeleteDepartmentResponse) ProtoMessage() {}
+
+func (x *DeleteDepartmentResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_pkg_protobuf_university_v1_university_proto_msgTypes[21]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use DeleteDepartmentResponse.ProtoReflect.Descriptor instead.
+func (*DeleteDepartmentResponse) Descriptor() ([]byte, []int) {
+	return file_pkg_protobuf_university_v1_university_proto_rawDescGZIP(), []int{21}
+}
+
+func (x *DeleteDepartmentResponse) GetSuccess() bool {
+	if x != nil {
+		return x.Success
+	}
+	return false
+}
+
 var File_pkg_protobuf_university_v1_university_proto protoreflect.FileDescriptor
 
 const file_pkg_protobuf_university_v1_university_proto_rawDesc = "" +
 	"\n" +
-	"+pkg/protobuf/university/v1/university.proto\x12\runiversity.v1\"O\n" +
+	"+pkg/protobuf/university/v1/university.proto\x12\runiversity.v1\x1a google/protobuf/field_mask.proto\"O\n" +
 	"\n" +
 	"University\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\x03R\x02id\x12\x12\n" +
@@ -570,17 +1069,30 @@ const file_pkg_protobuf_university_v1_university_proto_rawDesc = "" +
 	"\x18CreateUniversityResponse\x129\n" +
 	"\n" +
 	"university\x18\x01 \x01(\v2\x19.university.v1.UniversityR\n" +
-	"university\"W\n" +
-	"\x14GetUniversityRequest\x12\x10\n" +
-	"\x02id\x18\x01 \x01(\x03H\x00R\x02id\x12\x1f\n" +
-	"\n" +
-	"short_name\x18\x02 \x01(\tH\x00R\tshortNameB\f\n" +
-	"\n" +
-	"identifier\"R\n" +
+	"university\";\n" +
+	"\x14GetUniversityRequest\x12#\n" +
+	"\runiversity_id\x18\x01 \x01(\x03R\funiversityId\"R\n" +
 	"\x15GetUniversityResponse\x129\n" +
 	"\n" +
 	"university\x18\x01 \x01(\v2\x19.university.v1.UniversityR\n" +
-	"university\"R\n" +
+	"university\"\x19\n" +
+	"\x17ListUniversitiesRequest\"Y\n" +
+	"\x18ListUniversitiesResponse\x12=\n" +
+	"\funiversities\x18\x01 \x03(\v2\x19.university.v1.UniversityR\funiversities\"\x91\x01\n" +
+	"\x17UpdateUniversityRequest\x129\n" +
+	"\n" +
+	"university\x18\x01 \x01(\v2\x19.university.v1.UniversityR\n" +
+	"university\x12;\n" +
+	"\vupdate_mask\x18\x02 \x01(\v2\x1a.google.protobuf.FieldMaskR\n" +
+	"updateMask\"U\n" +
+	"\x18UpdateUniversityResponse\x129\n" +
+	"\n" +
+	"university\x18\x01 \x01(\v2\x19.university.v1.UniversityR\n" +
+	"university\">\n" +
+	"\x17DeleteUniversityRequest\x12#\n" +
+	"\runiversity_id\x18\x01 \x01(\x03R\funiversityId\"4\n" +
+	"\x18DeleteUniversityResponse\x12\x18\n" +
+	"\asuccess\x18\x01 \x01(\bR\asuccess\"R\n" +
 	"\x17CreateDepartmentRequest\x12\x12\n" +
 	"\x04name\x18\x01 \x01(\tR\x04name\x12#\n" +
 	"\runiversity_id\x18\x02 \x01(\x03R\funiversityId\"U\n" +
@@ -593,12 +1105,36 @@ const file_pkg_protobuf_university_v1_university_proto_rawDesc = "" +
 	"\x15GetDepartmentResponse\x129\n" +
 	"\n" +
 	"department\x18\x01 \x01(\v2\x19.university.v1.DepartmentR\n" +
-	"department2\x95\x03\n" +
+	"department\"=\n" +
+	"\x16ListDepartmentsRequest\x12#\n" +
+	"\runiversity_id\x18\x01 \x01(\x03R\funiversityId\"V\n" +
+	"\x17ListDepartmentsResponse\x12;\n" +
+	"\vdepartments\x18\x01 \x03(\v2\x19.university.v1.DepartmentR\vdepartments\"\x91\x01\n" +
+	"\x17UpdateDepartmentRequest\x129\n" +
+	"\n" +
+	"department\x18\x01 \x01(\v2\x19.university.v1.DepartmentR\n" +
+	"department\x12;\n" +
+	"\vupdate_mask\x18\x02 \x01(\v2\x1a.google.protobuf.FieldMaskR\n" +
+	"updateMask\"U\n" +
+	"\x18UpdateDepartmentResponse\x129\n" +
+	"\n" +
+	"department\x18\x01 \x01(\v2\x19.university.v1.DepartmentR\n" +
+	"department\">\n" +
+	"\x17DeleteDepartmentRequest\x12#\n" +
+	"\rdepartment_id\x18\x01 \x01(\x03R\fdepartmentId\"4\n" +
+	"\x18DeleteDepartmentResponse\x12\x18\n" +
+	"\asuccess\x18\x01 \x01(\bR\asuccess2\xf0\a\n" +
 	"\x11UniversityService\x12c\n" +
 	"\x10CreateUniversity\x12&.university.v1.CreateUniversityRequest\x1a'.university.v1.CreateUniversityResponse\x12Z\n" +
 	"\rGetUniversity\x12#.university.v1.GetUniversityRequest\x1a$.university.v1.GetUniversityResponse\x12c\n" +
+	"\x10ListUniversities\x12&.university.v1.ListUniversitiesRequest\x1a'.university.v1.ListUniversitiesResponse\x12c\n" +
+	"\x10UpdateUniversity\x12&.university.v1.UpdateUniversityRequest\x1a'.university.v1.UpdateUniversityResponse\x12c\n" +
+	"\x10DeleteUniversity\x12&.university.v1.DeleteUniversityRequest\x1a'.university.v1.DeleteUniversityResponse\x12c\n" +
 	"\x10CreateDepartment\x12&.university.v1.CreateDepartmentRequest\x1a'.university.v1.CreateDepartmentResponse\x12Z\n" +
-	"\rGetDepartment\x12#.university.v1.GetDepartmentRequest\x1a$.university.v1.GetDepartmentResponseB\x1cZ\x1apkg/protobuf/university/v1b\x06proto3"
+	"\rGetDepartment\x12#.university.v1.GetDepartmentRequest\x1a$.university.v1.GetDepartmentResponse\x12`\n" +
+	"\x0fListDepartments\x12%.university.v1.ListDepartmentsRequest\x1a&.university.v1.ListDepartmentsResponse\x12c\n" +
+	"\x10UpdateDepartment\x12&.university.v1.UpdateDepartmentRequest\x1a'.university.v1.UpdateDepartmentResponse\x12c\n" +
+	"\x10DeleteDepartment\x12&.university.v1.DeleteDepartmentRequest\x1a'.university.v1.DeleteDepartmentResponseB\x1cZ\x1apkg/protobuf/university/v1b\x06proto3"
 
 var (
 	file_pkg_protobuf_university_v1_university_proto_rawDescOnce sync.Once
@@ -612,7 +1148,7 @@ func file_pkg_protobuf_university_v1_university_proto_rawDescGZIP() []byte {
 	return file_pkg_protobuf_university_v1_university_proto_rawDescData
 }
 
-var file_pkg_protobuf_university_v1_university_proto_msgTypes = make([]protoimpl.MessageInfo, 10)
+var file_pkg_protobuf_university_v1_university_proto_msgTypes = make([]protoimpl.MessageInfo, 22)
 var file_pkg_protobuf_university_v1_university_proto_goTypes = []any{
 	(*University)(nil),               // 0: university.v1.University
 	(*Department)(nil),               // 1: university.v1.Department
@@ -620,29 +1156,62 @@ var file_pkg_protobuf_university_v1_university_proto_goTypes = []any{
 	(*CreateUniversityResponse)(nil), // 3: university.v1.CreateUniversityResponse
 	(*GetUniversityRequest)(nil),     // 4: university.v1.GetUniversityRequest
 	(*GetUniversityResponse)(nil),    // 5: university.v1.GetUniversityResponse
-	(*CreateDepartmentRequest)(nil),  // 6: university.v1.CreateDepartmentRequest
-	(*CreateDepartmentResponse)(nil), // 7: university.v1.CreateDepartmentResponse
-	(*GetDepartmentRequest)(nil),     // 8: university.v1.GetDepartmentRequest
-	(*GetDepartmentResponse)(nil),    // 9: university.v1.GetDepartmentResponse
+	(*ListUniversitiesRequest)(nil),  // 6: university.v1.ListUniversitiesRequest
+	(*ListUniversitiesResponse)(nil), // 7: university.v1.ListUniversitiesResponse
+	(*UpdateUniversityRequest)(nil),  // 8: university.v1.UpdateUniversityRequest
+	(*UpdateUniversityResponse)(nil), // 9: university.v1.UpdateUniversityResponse
+	(*DeleteUniversityRequest)(nil),  // 10: university.v1.DeleteUniversityRequest
+	(*DeleteUniversityResponse)(nil), // 11: university.v1.DeleteUniversityResponse
+	(*CreateDepartmentRequest)(nil),  // 12: university.v1.CreateDepartmentRequest
+	(*CreateDepartmentResponse)(nil), // 13: university.v1.CreateDepartmentResponse
+	(*GetDepartmentRequest)(nil),     // 14: university.v1.GetDepartmentRequest
+	(*GetDepartmentResponse)(nil),    // 15: university.v1.GetDepartmentResponse
+	(*ListDepartmentsRequest)(nil),   // 16: university.v1.ListDepartmentsRequest
+	(*ListDepartmentsResponse)(nil),  // 17: university.v1.ListDepartmentsResponse
+	(*UpdateDepartmentRequest)(nil),  // 18: university.v1.UpdateDepartmentRequest
+	(*UpdateDepartmentResponse)(nil), // 19: university.v1.UpdateDepartmentResponse
+	(*DeleteDepartmentRequest)(nil),  // 20: university.v1.DeleteDepartmentRequest
+	(*DeleteDepartmentResponse)(nil), // 21: university.v1.DeleteDepartmentResponse
+	(*fieldmaskpb.FieldMask)(nil),    // 22: google.protobuf.FieldMask
 }
 var file_pkg_protobuf_university_v1_university_proto_depIdxs = []int32{
-	0, // 0: university.v1.CreateUniversityResponse.university:type_name -> university.v1.University
-	0, // 1: university.v1.GetUniversityResponse.university:type_name -> university.v1.University
-	1, // 2: university.v1.CreateDepartmentResponse.department:type_name -> university.v1.Department
-	1, // 3: university.v1.GetDepartmentResponse.department:type_name -> university.v1.Department
-	2, // 4: university.v1.UniversityService.CreateUniversity:input_type -> university.v1.CreateUniversityRequest
-	4, // 5: university.v1.UniversityService.GetUniversity:input_type -> university.v1.GetUniversityRequest
-	6, // 6: university.v1.UniversityService.CreateDepartment:input_type -> university.v1.CreateDepartmentRequest
-	8, // 7: university.v1.UniversityService.GetDepartment:input_type -> university.v1.GetDepartmentRequest
-	3, // 8: university.v1.UniversityService.CreateUniversity:output_type -> university.v1.CreateUniversityResponse
-	5, // 9: university.v1.UniversityService.GetUniversity:output_type -> university.v1.GetUniversityResponse
-	7, // 10: university.v1.UniversityService.CreateDepartment:output_type -> university.v1.CreateDepartmentResponse
-	9, // 11: university.v1.UniversityService.GetDepartment:output_type -> university.v1.GetDepartmentResponse
-	8, // [8:12] is the sub-list for method output_type
-	4, // [4:8] is the sub-list for method input_type
-	4, // [4:4] is the sub-list for extension type_name
-	4, // [4:4] is the sub-list for extension extendee
-	0, // [0:4] is the sub-list for field type_name
+	0,  // 0: university.v1.CreateUniversityResponse.university:type_name -> university.v1.University
+	0,  // 1: university.v1.GetUniversityResponse.university:type_name -> university.v1.University
+	0,  // 2: university.v1.ListUniversitiesResponse.universities:type_name -> university.v1.University
+	0,  // 3: university.v1.UpdateUniversityRequest.university:type_name -> university.v1.University
+	22, // 4: university.v1.UpdateUniversityRequest.update_mask:type_name -> google.protobuf.FieldMask
+	0,  // 5: university.v1.UpdateUniversityResponse.university:type_name -> university.v1.University
+	1,  // 6: university.v1.CreateDepartmentResponse.department:type_name -> university.v1.Department
+	1,  // 7: university.v1.GetDepartmentResponse.department:type_name -> university.v1.Department
+	1,  // 8: university.v1.ListDepartmentsResponse.departments:type_name -> university.v1.Department
+	1,  // 9: university.v1.UpdateDepartmentRequest.department:type_name -> university.v1.Department
+	22, // 10: university.v1.UpdateDepartmentRequest.update_mask:type_name -> google.protobuf.FieldMask
+	1,  // 11: university.v1.UpdateDepartmentResponse.department:type_name -> university.v1.Department
+	2,  // 12: university.v1.UniversityService.CreateUniversity:input_type -> university.v1.CreateUniversityRequest
+	4,  // 13: university.v1.UniversityService.GetUniversity:input_type -> university.v1.GetUniversityRequest
+	6,  // 14: university.v1.UniversityService.ListUniversities:input_type -> university.v1.ListUniversitiesRequest
+	8,  // 15: university.v1.UniversityService.UpdateUniversity:input_type -> university.v1.UpdateUniversityRequest
+	10, // 16: university.v1.UniversityService.DeleteUniversity:input_type -> university.v1.DeleteUniversityRequest
+	12, // 17: university.v1.UniversityService.CreateDepartment:input_type -> university.v1.CreateDepartmentRequest
+	14, // 18: university.v1.UniversityService.GetDepartment:input_type -> university.v1.GetDepartmentRequest
+	16, // 19: university.v1.UniversityService.ListDepartments:input_type -> university.v1.ListDepartmentsRequest
+	18, // 20: university.v1.UniversityService.UpdateDepartment:input_type -> university.v1.UpdateDepartmentRequest
+	20, // 21: university.v1.UniversityService.DeleteDepartment:input_type -> university.v1.DeleteDepartmentRequest
+	3,  // 22: university.v1.UniversityService.CreateUniversity:output_type -> university.v1.CreateUniversityResponse
+	5,  // 23: university.v1.UniversityService.GetUniversity:output_type -> university.v1.GetUniversityResponse
+	7,  // 24: university.v1.UniversityService.ListUniversities:output_type -> university.v1.ListUniversitiesResponse
+	9,  // 25: university.v1.UniversityService.UpdateUniversity:output_type -> university.v1.UpdateUniversityResponse
+	11, // 26: university.v1.UniversityService.DeleteUniversity:output_type -> university.v1.DeleteUniversityResponse
+	13, // 27: university.v1.UniversityService.CreateDepartment:output_type -> university.v1.CreateDepartmentResponse
+	15, // 28: university.v1.UniversityService.GetDepartment:output_type -> university.v1.GetDepartmentResponse
+	17, // 29: university.v1.UniversityService.ListDepartments:output_type -> university.v1.ListDepartmentsResponse
+	19, // 30: university.v1.UniversityService.UpdateDepartment:output_type -> university.v1.UpdateDepartmentResponse
+	21, // 31: university.v1.UniversityService.DeleteDepartment:output_type -> university.v1.DeleteDepartmentResponse
+	22, // [22:32] is the sub-list for method output_type
+	12, // [12:22] is the sub-list for method input_type
+	12, // [12:12] is the sub-list for extension type_name
+	12, // [12:12] is the sub-list for extension extendee
+	0,  // [0:12] is the sub-list for field type_name
 }
 
 func init() { file_pkg_protobuf_university_v1_university_proto_init() }
@@ -650,17 +1219,13 @@ func file_pkg_protobuf_university_v1_university_proto_init() {
 	if File_pkg_protobuf_university_v1_university_proto != nil {
 		return
 	}
-	file_pkg_protobuf_university_v1_university_proto_msgTypes[4].OneofWrappers = []any{
-		(*GetUniversityRequest_Id)(nil),
-		(*GetUniversityRequest_ShortName)(nil),
-	}
 	type x struct{}
 	out := protoimpl.TypeBuilder{
 		File: protoimpl.DescBuilder{
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_pkg_protobuf_university_v1_university_proto_rawDesc), len(file_pkg_protobuf_university_v1_university_proto_rawDesc)),
 			NumEnums:      0,
-			NumMessages:   10,
+			NumMessages:   22,
 			NumExtensions: 0,
 			NumServices:   1,
 		},

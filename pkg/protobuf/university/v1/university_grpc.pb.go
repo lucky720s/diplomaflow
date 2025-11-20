@@ -21,8 +21,14 @@ const _ = grpc.SupportPackageIsVersion9
 const (
 	UniversityService_CreateUniversity_FullMethodName = "/university.v1.UniversityService/CreateUniversity"
 	UniversityService_GetUniversity_FullMethodName    = "/university.v1.UniversityService/GetUniversity"
+	UniversityService_ListUniversities_FullMethodName = "/university.v1.UniversityService/ListUniversities"
+	UniversityService_UpdateUniversity_FullMethodName = "/university.v1.UniversityService/UpdateUniversity"
+	UniversityService_DeleteUniversity_FullMethodName = "/university.v1.UniversityService/DeleteUniversity"
 	UniversityService_CreateDepartment_FullMethodName = "/university.v1.UniversityService/CreateDepartment"
 	UniversityService_GetDepartment_FullMethodName    = "/university.v1.UniversityService/GetDepartment"
+	UniversityService_ListDepartments_FullMethodName  = "/university.v1.UniversityService/ListDepartments"
+	UniversityService_UpdateDepartment_FullMethodName = "/university.v1.UniversityService/UpdateDepartment"
+	UniversityService_DeleteDepartment_FullMethodName = "/university.v1.UniversityService/DeleteDepartment"
 )
 
 // UniversityServiceClient is the client API for UniversityService service.
@@ -31,8 +37,14 @@ const (
 type UniversityServiceClient interface {
 	CreateUniversity(ctx context.Context, in *CreateUniversityRequest, opts ...grpc.CallOption) (*CreateUniversityResponse, error)
 	GetUniversity(ctx context.Context, in *GetUniversityRequest, opts ...grpc.CallOption) (*GetUniversityResponse, error)
+	ListUniversities(ctx context.Context, in *ListUniversitiesRequest, opts ...grpc.CallOption) (*ListUniversitiesResponse, error)
+	UpdateUniversity(ctx context.Context, in *UpdateUniversityRequest, opts ...grpc.CallOption) (*UpdateUniversityResponse, error)
+	DeleteUniversity(ctx context.Context, in *DeleteUniversityRequest, opts ...grpc.CallOption) (*DeleteUniversityResponse, error)
 	CreateDepartment(ctx context.Context, in *CreateDepartmentRequest, opts ...grpc.CallOption) (*CreateDepartmentResponse, error)
 	GetDepartment(ctx context.Context, in *GetDepartmentRequest, opts ...grpc.CallOption) (*GetDepartmentResponse, error)
+	ListDepartments(ctx context.Context, in *ListDepartmentsRequest, opts ...grpc.CallOption) (*ListDepartmentsResponse, error)
+	UpdateDepartment(ctx context.Context, in *UpdateDepartmentRequest, opts ...grpc.CallOption) (*UpdateDepartmentResponse, error)
+	DeleteDepartment(ctx context.Context, in *DeleteDepartmentRequest, opts ...grpc.CallOption) (*DeleteDepartmentResponse, error)
 }
 
 type universityServiceClient struct {
@@ -63,6 +75,36 @@ func (c *universityServiceClient) GetUniversity(ctx context.Context, in *GetUniv
 	return out, nil
 }
 
+func (c *universityServiceClient) ListUniversities(ctx context.Context, in *ListUniversitiesRequest, opts ...grpc.CallOption) (*ListUniversitiesResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(ListUniversitiesResponse)
+	err := c.cc.Invoke(ctx, UniversityService_ListUniversities_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *universityServiceClient) UpdateUniversity(ctx context.Context, in *UpdateUniversityRequest, opts ...grpc.CallOption) (*UpdateUniversityResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(UpdateUniversityResponse)
+	err := c.cc.Invoke(ctx, UniversityService_UpdateUniversity_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *universityServiceClient) DeleteUniversity(ctx context.Context, in *DeleteUniversityRequest, opts ...grpc.CallOption) (*DeleteUniversityResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(DeleteUniversityResponse)
+	err := c.cc.Invoke(ctx, UniversityService_DeleteUniversity_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 func (c *universityServiceClient) CreateDepartment(ctx context.Context, in *CreateDepartmentRequest, opts ...grpc.CallOption) (*CreateDepartmentResponse, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
 	out := new(CreateDepartmentResponse)
@@ -83,14 +125,50 @@ func (c *universityServiceClient) GetDepartment(ctx context.Context, in *GetDepa
 	return out, nil
 }
 
+func (c *universityServiceClient) ListDepartments(ctx context.Context, in *ListDepartmentsRequest, opts ...grpc.CallOption) (*ListDepartmentsResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(ListDepartmentsResponse)
+	err := c.cc.Invoke(ctx, UniversityService_ListDepartments_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *universityServiceClient) UpdateDepartment(ctx context.Context, in *UpdateDepartmentRequest, opts ...grpc.CallOption) (*UpdateDepartmentResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(UpdateDepartmentResponse)
+	err := c.cc.Invoke(ctx, UniversityService_UpdateDepartment_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *universityServiceClient) DeleteDepartment(ctx context.Context, in *DeleteDepartmentRequest, opts ...grpc.CallOption) (*DeleteDepartmentResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(DeleteDepartmentResponse)
+	err := c.cc.Invoke(ctx, UniversityService_DeleteDepartment_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // UniversityServiceServer is the server API for UniversityService service.
 // All implementations must embed UnimplementedUniversityServiceServer
 // for forward compatibility.
 type UniversityServiceServer interface {
 	CreateUniversity(context.Context, *CreateUniversityRequest) (*CreateUniversityResponse, error)
 	GetUniversity(context.Context, *GetUniversityRequest) (*GetUniversityResponse, error)
+	ListUniversities(context.Context, *ListUniversitiesRequest) (*ListUniversitiesResponse, error)
+	UpdateUniversity(context.Context, *UpdateUniversityRequest) (*UpdateUniversityResponse, error)
+	DeleteUniversity(context.Context, *DeleteUniversityRequest) (*DeleteUniversityResponse, error)
 	CreateDepartment(context.Context, *CreateDepartmentRequest) (*CreateDepartmentResponse, error)
 	GetDepartment(context.Context, *GetDepartmentRequest) (*GetDepartmentResponse, error)
+	ListDepartments(context.Context, *ListDepartmentsRequest) (*ListDepartmentsResponse, error)
+	UpdateDepartment(context.Context, *UpdateDepartmentRequest) (*UpdateDepartmentResponse, error)
+	DeleteDepartment(context.Context, *DeleteDepartmentRequest) (*DeleteDepartmentResponse, error)
 	mustEmbedUnimplementedUniversityServiceServer()
 }
 
@@ -107,11 +185,29 @@ func (UnimplementedUniversityServiceServer) CreateUniversity(context.Context, *C
 func (UnimplementedUniversityServiceServer) GetUniversity(context.Context, *GetUniversityRequest) (*GetUniversityResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetUniversity not implemented")
 }
+func (UnimplementedUniversityServiceServer) ListUniversities(context.Context, *ListUniversitiesRequest) (*ListUniversitiesResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method ListUniversities not implemented")
+}
+func (UnimplementedUniversityServiceServer) UpdateUniversity(context.Context, *UpdateUniversityRequest) (*UpdateUniversityResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method UpdateUniversity not implemented")
+}
+func (UnimplementedUniversityServiceServer) DeleteUniversity(context.Context, *DeleteUniversityRequest) (*DeleteUniversityResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method DeleteUniversity not implemented")
+}
 func (UnimplementedUniversityServiceServer) CreateDepartment(context.Context, *CreateDepartmentRequest) (*CreateDepartmentResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method CreateDepartment not implemented")
 }
 func (UnimplementedUniversityServiceServer) GetDepartment(context.Context, *GetDepartmentRequest) (*GetDepartmentResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetDepartment not implemented")
+}
+func (UnimplementedUniversityServiceServer) ListDepartments(context.Context, *ListDepartmentsRequest) (*ListDepartmentsResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method ListDepartments not implemented")
+}
+func (UnimplementedUniversityServiceServer) UpdateDepartment(context.Context, *UpdateDepartmentRequest) (*UpdateDepartmentResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method UpdateDepartment not implemented")
+}
+func (UnimplementedUniversityServiceServer) DeleteDepartment(context.Context, *DeleteDepartmentRequest) (*DeleteDepartmentResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method DeleteDepartment not implemented")
 }
 func (UnimplementedUniversityServiceServer) mustEmbedUnimplementedUniversityServiceServer() {}
 func (UnimplementedUniversityServiceServer) testEmbeddedByValue()                           {}
@@ -170,6 +266,60 @@ func _UniversityService_GetUniversity_Handler(srv interface{}, ctx context.Conte
 	return interceptor(ctx, in, info, handler)
 }
 
+func _UniversityService_ListUniversities_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(ListUniversitiesRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(UniversityServiceServer).ListUniversities(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: UniversityService_ListUniversities_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(UniversityServiceServer).ListUniversities(ctx, req.(*ListUniversitiesRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _UniversityService_UpdateUniversity_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(UpdateUniversityRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(UniversityServiceServer).UpdateUniversity(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: UniversityService_UpdateUniversity_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(UniversityServiceServer).UpdateUniversity(ctx, req.(*UpdateUniversityRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _UniversityService_DeleteUniversity_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(DeleteUniversityRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(UniversityServiceServer).DeleteUniversity(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: UniversityService_DeleteUniversity_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(UniversityServiceServer).DeleteUniversity(ctx, req.(*DeleteUniversityRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 func _UniversityService_CreateDepartment_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(CreateDepartmentRequest)
 	if err := dec(in); err != nil {
@@ -206,6 +356,60 @@ func _UniversityService_GetDepartment_Handler(srv interface{}, ctx context.Conte
 	return interceptor(ctx, in, info, handler)
 }
 
+func _UniversityService_ListDepartments_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(ListDepartmentsRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(UniversityServiceServer).ListDepartments(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: UniversityService_ListDepartments_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(UniversityServiceServer).ListDepartments(ctx, req.(*ListDepartmentsRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _UniversityService_UpdateDepartment_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(UpdateDepartmentRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(UniversityServiceServer).UpdateDepartment(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: UniversityService_UpdateDepartment_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(UniversityServiceServer).UpdateDepartment(ctx, req.(*UpdateDepartmentRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _UniversityService_DeleteDepartment_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(DeleteDepartmentRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(UniversityServiceServer).DeleteDepartment(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: UniversityService_DeleteDepartment_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(UniversityServiceServer).DeleteDepartment(ctx, req.(*DeleteDepartmentRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // UniversityService_ServiceDesc is the grpc.ServiceDesc for UniversityService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -222,12 +426,36 @@ var UniversityService_ServiceDesc = grpc.ServiceDesc{
 			Handler:    _UniversityService_GetUniversity_Handler,
 		},
 		{
+			MethodName: "ListUniversities",
+			Handler:    _UniversityService_ListUniversities_Handler,
+		},
+		{
+			MethodName: "UpdateUniversity",
+			Handler:    _UniversityService_UpdateUniversity_Handler,
+		},
+		{
+			MethodName: "DeleteUniversity",
+			Handler:    _UniversityService_DeleteUniversity_Handler,
+		},
+		{
 			MethodName: "CreateDepartment",
 			Handler:    _UniversityService_CreateDepartment_Handler,
 		},
 		{
 			MethodName: "GetDepartment",
 			Handler:    _UniversityService_GetDepartment_Handler,
+		},
+		{
+			MethodName: "ListDepartments",
+			Handler:    _UniversityService_ListDepartments_Handler,
+		},
+		{
+			MethodName: "UpdateDepartment",
+			Handler:    _UniversityService_UpdateDepartment_Handler,
+		},
+		{
+			MethodName: "DeleteDepartment",
+			Handler:    _UniversityService_DeleteDepartment_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},
