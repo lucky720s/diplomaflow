@@ -84,11 +84,17 @@ func main() {
 		projects.PATCH("/:id", gateway.UpdateProject)
 		projects.DELETE("/:id", gateway.DeleteProject)
 		projects.POST("/:id/accept-supervision", gateway.AcceptSupervision)
-		projects.POST("/:id/advance-stage", gateway.AdvanceProjectStage)
+		projects.POST(
+			"/:id/advance-stage", gateway.AdvanceProjectStage)
 
 		teams := v1.Group("/teams")
 		//teams.Use(AuthMiddleware())
 		teams.POST("", gateway.CreateTeam)
+		teams.GET("", gateway.ListTeams)
+		teams.GET("/:id", gateway.GetTeam)
+		teams.PATCH("/:id", gateway.UpdateTeam)
+		teams.DELETE("/:id", gateway.DeleteTeam)
+		teams.POST("/:id/members", gateway.AddMember)
 		teams.DELETE("/:id/members", gateway.RemoveMember)
 	}
 	log.Println("API GateWay is listening on :8080")
@@ -224,7 +230,101 @@ func (g *ApiGateWay) CreateTeam(c *gin.Context) {
 	}
 	c.JSON(http.StatusCreated, res)
 }
+func (g *ApiGateWay) ListTeams(c *gin.Context) {
+	ctx := newContextWithAuth(c)
+	res, err := g.teamClient.ListTeams(ctx, &teamv1.ListTeamsRequest{})
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+	}
+	c.JSON(http.StatusOK, res)
+}
+func (g *ApiGateWay) GetTeam(c *gin.Context) {
+	id := c.Param("id")
+	teamID, err := strconv.ParseInt(id, 10, 64)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+	ctx := newContextWithAuth(c)
+	res, err := g.teamClient.GetTeam(ctx, &teamv1.GetTeamRequest{TeamId: teamID})
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+	c.JSON(http.StatusOK, res)
+}
 
+func (g *ApiGateWay) UpdateTeam(c *gin.Context) {
+	id := c.Param("id")
+	teamID, err := strconv.ParseInt(id, 10, 64)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+	var reqBody struct {
+		Name string `json:"name"`
+	}
+	if err := c.ShouldBindJSON(&reqBody); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+	req := &teamv1.UpdateTeamRequest{
+		Team: &teamv1.Team{
+			Id: teamID, Name: reqBody.Name},
+		UpdateMask: &field_mask.FieldMask{
+			Paths: []string{"name"}},
+	}
+	ctx := newContextWithAuth(c)
+	res, err := g.teamClient.UpdateTeam(ctx, req)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+	c.JSON(http.StatusOK, res)
+}
+
+func (g *ApiGateWay) DeleteTeam(c *gin.Context) {
+	id := c.Param("id")
+	teamID, err := strconv.ParseInt(id, 10, 64)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+	req := &teamv1.DeleteTeamRequest{
+		TeamId: teamID}
+	ctx := newContextWithAuth(c)
+	_, err = g.teamClient.DeleteTeam(ctx, req)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+	c.JSON(http.StatusNoContent, nil)
+}
+func (g *ApiGateWay) AddMember(c *gin.Context) {
+	id := c.Param("id")
+	teamID, err := strconv.ParseInt(id, 10, 64)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+	var reqBody struct {
+		UserID int64 `json:"user_id"`
+	}
+	if err := c.ShouldBindJSON(&reqBody); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+	req := &teamv1.AddMemberRequest{
+		TeamId: teamID,
+		UserId: reqBody.UserID}
+	ctx := newContextWithAuth(c)
+	_, err = g.teamClient.AddMember(ctx, req)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+	c.Status(http.StatusNoContent)
+}
 func (g *ApiGateWay) RemoveMember(c *gin.Context) {
 	var req teamv1.RemoveMemberRequest
 	if err := c.ShouldBindJSON(&req); err != nil {

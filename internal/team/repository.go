@@ -5,7 +5,9 @@ import (
 	"fmt"
 	"os"
 
+	teamv1 "github.com/lucky720s/diplomaflow/pkg/protobuf/team/v1"
 	rkpostgres "github.com/rookie-ninja/rk-db/postgres"
+	"google.golang.org/protobuf/types/known/fieldmaskpb"
 	"gorm.io/gorm"
 )
 
@@ -23,10 +25,11 @@ type TeamMember struct {
 type Repository interface {
 	CreateTeam(ctx context.Context, name string, departmentID int64, memberIDs []int64) (*Team, error)
 	GetTeamByID(ctx context.Context, teamID int64) (*Team, []int64, error)
+	ListTeams(ctx context.Context, departmentID int64) ([]*Team, error)
+	UpdateTeam(ctx context.Context, team *teamv1.Team, mask *fieldmaskpb.FieldMask) (*Team, error)
+	DeleteTeam(ctx context.Context, teamID int64) error
 	AddMember(ctx context.Context, teamID int64, userID int64) error
 	RemoveMember(ctx context.Context, teamID int64, userID int64) error
-	ListTeams(ctx context.Context, departmentID int64) ([]*Team, error)
-	DeleteTeam(ctx context.Context, teamID int64) error
 }
 
 type repository struct {
@@ -102,4 +105,23 @@ func (r *repository) DeleteTeam(ctx context.Context, teamID int64) error {
 		}
 		return nil
 	})
+}
+func (r *repository) UpdateTeam(ctx context.Context, team *teamv1.Team, mask *fieldmaskpb.FieldMask) (*Team, error) {
+	var existingTeam Team
+	if err := r.db.WithContext(ctx).First(existingTeam, team.GetId()).Error; err != nil {
+		return nil, err
+	}
+	updateData := make(map[string]interface{})
+	for _, path := range mask.Paths {
+		switch path {
+		case "name":
+			updateData["name"] = team.GetName()
+		}
+	}
+	if len(updateData) > 0 {
+		if err := r.db.WithContext(ctx).Model(&existingTeam).Updates(updateData).Error; err != nil {
+			return nil, err
+		}
+	}
+	return &existingTeam, nil
 }

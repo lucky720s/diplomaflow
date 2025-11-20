@@ -1,9 +1,13 @@
 syntax = "proto3";
 package team.v1;
+import "google/protobuf/field_mask.proto";
 option go_package = "pkg/protobuf/team/v1";
 service TeamService{
   rpc CreateTeam(CreateTeamRequest) returns (CreateTeamResponse);
   rpc GetTeam(GetTeamRequest) returns (GetTeamResponse);
+  rpc ListTeams(ListTeamsRequest) returns (ListTeamsResponse);
+  rpc UpdateTeam(UpdateTeamRequest) returns (UpdateTeamResponse);
+  rpc DeleteTeam(DeleteTeamRequest) returns (DeleteTeamRequest);
   rpc AddMember(AddMemberRequest) returns (AddMemberResponse);
   rpc RemoveMember(RemoveMemberRequest) returns (RemoveMemberResponse);
 }
@@ -25,6 +29,23 @@ message GetTeamRequest{
 }
 message GetTeamResponse{
   Team team = 1;
+}
+message ListTeamsRequest{}
+message ListTeamsResponse{
+  repeated Team teams = 1;
+}
+message UpdateTeamRequest{
+  Team team = 1;
+  google.protobuf.FieldMask update_mask = 2;
+}
+message UpdateTeamResponse{
+  Team team = 1;
+}
+message DeleteTeamRequest{
+  int64 team_id=1;
+}
+message DeleteTeamResponse{
+  bool success=1;
 }
 message AddMemberRequest{
   int64 team_id = 1;

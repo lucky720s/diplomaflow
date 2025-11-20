@@ -76,6 +76,68 @@ func (h *Handler) GetTeam(ctx context.Context, req *teamv1.GetTeamRequest) (*tea
 			DepartmentId: team.DepartmentID,
 			MemberIds:    memberIDs}}, nil
 }
+func (h *Handler) ListTeams(ctx context.Context, req *teamv1.ListTeamsRequest) (*teamv1.ListTeamsResponse, error) {
+	departmentID, err := getDepartmentIDFromContext(ctx)
+	if err != nil {
+		return nil, err
+	}
+	teams, err := h.repo.ListTeams(ctx, departmentID)
+	if err != nil {
+		return nil, status.Errorf(codes.NotFound, "teams not found")
+	}
+	resTeams := make([]*teamv1.Team, 0, len(teams))
+	for _, team := range teams {
+		_, memberIDs, _ := h.repo.GetTeamByID(ctx, team.ID)
+		resTeams = append(resTeams, &teamv1.Team{
+			Id:           team.ID,
+			Name:         team.Name,
+			DepartmentId: team.DepartmentID,
+			MemberIds:    memberIDs,
+		})
+	}
+	return &teamv1.ListTeamsResponse{Teams: resTeams}, nil
+}
+func (h *Handler) UpdateTeam(ctx context.Context, req *teamv1.UpdateTeamRequest) (*teamv1.UpdateTeamResponse, error) {
+	departmentID, err := getDepartmentIDFromContext(ctx)
+	if err != nil {
+		return nil, err
+	}
+	team, _, err := h.repo.GetTeamByID(ctx, req.GetTeam().GetId())
+	if err != nil {
+		return nil, status.Errorf(codes.NotFound, "team not found")
+	}
+	if team.DepartmentID != departmentID {
+		return nil, status.Errorf(codes.PermissionDenied, "department_id is not match")
+	}
+	updatedTeam, err := h.repo.UpdateTeam(ctx, req.GetTeam(), req.GetUpdateMask())
+	if err != nil {
+		return nil, status.Errorf(codes.NotFound, "team not found")
+	}
+	_, memberIDs, _ := h.repo.GetTeamByID(ctx, updatedTeam.ID)
+	return &teamv1.UpdateTeamResponse{
+		Team: &teamv1.Team{
+			Id:           updatedTeam.ID,
+			Name:         updatedTeam.Name,
+			DepartmentId: updatedTeam.DepartmentID,
+			MemberIds:    memberIDs}}, nil
+}
+func (h *Handler) DeleteTeam(ctx context.Context, req *teamv1.DeleteTeamRequest) (*teamv1.DeleteTeamResponse, error) {
+	departmentID, err := getDepartmentIDFromContext(ctx)
+	if err != nil {
+		return nil, err
+	}
+	team, _, err := h.repo.GetTeamByID(ctx, req.GetTeamId())
+	if err != nil {
+		return nil, status.Errorf(codes.NotFound, "team not found")
+	}
+	if team.DepartmentID != departmentID {
+		return nil, status.Errorf(codes.PermissionDenied, "department_id is not match")
+	}
+	if err := h.repo.DeleteTeam(ctx, req.GetTeamId()); err != nil {
+		return nil, status.Errorf(codes.NotFound, "team not found")
+	}
+	return &teamv1.DeleteTeamResponse{Success: true}, nil
+}
 func (h *Handler) AddMember(ctx context.Context, req *teamv1.AddMemberRequest) (*teamv1.AddMemberResponse, error) {
 	departmentID, err := getDepartmentIDFromContext(ctx)
 	if err != nil {
