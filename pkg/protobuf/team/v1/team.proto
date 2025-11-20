@@ -7,7 +7,7 @@ service TeamService{
   rpc GetTeam(GetTeamRequest) returns (GetTeamResponse);
   rpc ListTeams(ListTeamsRequest) returns (ListTeamsResponse);
   rpc UpdateTeam(UpdateTeamRequest) returns (UpdateTeamResponse);
-  rpc DeleteTeam(DeleteTeamRequest) returns (DeleteTeamRequest);
+  rpc DeleteTeam(DeleteTeamRequest) returns (DeleteTeamResponse);
   rpc AddMember(AddMemberRequest) returns (AddMemberResponse);
   rpc RemoveMember(RemoveMemberRequest) returns (RemoveMemberResponse);
 }
