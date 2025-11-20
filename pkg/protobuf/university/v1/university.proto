@@ -38,7 +38,7 @@ message GetUniversityRequest{
   oneof identifier {
     int64 university_id = 1;
     string short_name = 2;
-
+  }
 }
 message GetUniversityResponse{
   University university = 1;

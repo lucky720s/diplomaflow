@@ -19,10 +19,11 @@ import (
 const _ = grpc.SupportPackageIsVersion9
 
 const (
-	AuthService_Register_FullMethodName   = "/auth.v1.AuthService/Register"
-	AuthService_Login_FullMethodName      = "/auth.v1.AuthService/Login"
-	AuthService_GetUser_FullMethodName    = "/auth.v1.AuthService/GetUser"
-	AuthService_AssignRole_FullMethodName = "/auth.v1.AuthService/AssignRole"
+	AuthService_Register_FullMethodName      = "/auth.v1.AuthService/Register"
+	AuthService_Login_FullMethodName         = "/auth.v1.AuthService/Login"
+	AuthService_GetUser_FullMethodName       = "/auth.v1.AuthService/GetUser"
+	AuthService_AssignRole_FullMethodName    = "/auth.v1.AuthService/AssignRole"
+	AuthService_SetDepartment_FullMethodName = "/auth.v1.AuthService/SetDepartment"
 )
 
 // AuthServiceClient is the client API for AuthService service.
@@ -33,6 +34,7 @@ type AuthServiceClient interface {
 	Login(ctx context.Context, in *LoginRequest, opts ...grpc.CallOption) (*LoginResponse, error)
 	GetUser(ctx context.Context, in *GetUserRequest, opts ...grpc.CallOption) (*GetUserResponse, error)
 	AssignRole(ctx context.Context, in *AssignRoleRequest, opts ...grpc.CallOption) (*AssignRoleResponse, error)
+	SetDepartment(ctx context.Context, in *SetDepartmentRequest, opts ...grpc.CallOption) (*SetDepartmentResponse, error)
 }
 
 type authServiceClient struct {
@@ -83,6 +85,16 @@ func (c *authServiceClient) AssignRole(ctx context.Context, in *AssignRoleReques
 	return out, nil
 }
 
+func (c *authServiceClient) SetDepartment(ctx context.Context, in *SetDepartmentRequest, opts ...grpc.CallOption) (*SetDepartmentResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(SetDepartmentResponse)
+	err := c.cc.Invoke(ctx, AuthService_SetDepartment_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // AuthServiceServer is the server API for AuthService service.
 // All implementations must embed UnimplementedAuthServiceServer
 // for forward compatibility.
@@ -91,6 +103,7 @@ type AuthServiceServer interface {
 	Login(context.Context, *LoginRequest) (*LoginResponse, error)
 	GetUser(context.Context, *GetUserRequest) (*GetUserResponse, error)
 	AssignRole(context.Context, *AssignRoleRequest) (*AssignRoleResponse, error)
+	SetDepartment(context.Context, *SetDepartmentRequest) (*SetDepartmentResponse, error)
 	mustEmbedUnimplementedAuthServiceServer()
 }
 
@@ -112,6 +125,9 @@ func (UnimplementedAuthServiceServer) GetUser(context.Context, *GetUserRequest) 
 }
 func (UnimplementedAuthServiceServer) AssignRole(context.Context, *AssignRoleRequest) (*AssignRoleResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method AssignRole not implemented")
+}
+func (UnimplementedAuthServiceServer) SetDepartment(context.Context, *SetDepartmentRequest) (*SetDepartmentResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method SetDepartment not implemented")
 }
 func (UnimplementedAuthServiceServer) mustEmbedUnimplementedAuthServiceServer() {}
 func (UnimplementedAuthServiceServer) testEmbeddedByValue()                     {}
@@ -206,6 +222,24 @@ func _AuthService_AssignRole_Handler(srv interface{}, ctx context.Context, dec f
 	return interceptor(ctx, in, info, handler)
 }
 
+func _AuthService_SetDepartment_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(SetDepartmentRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(AuthServiceServer).SetDepartment(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: AuthService_SetDepartment_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(AuthServiceServer).SetDepartment(ctx, req.(*SetDepartmentRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // AuthService_ServiceDesc is the grpc.ServiceDesc for AuthService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -228,6 +262,10 @@ var AuthService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "AssignRole",
 			Handler:    _AuthService_AssignRole_Handler,
+		},
+		{
+			MethodName: "SetDepartment",
+			Handler:    _AuthService_SetDepartment_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

@@ -32,14 +32,13 @@ func NewHandler(repo Repository, universityClient universityv1.UniversityService
 }
 
 func (h *Handler) Register(ctx context.Context, req *authv1.RegisterRequest) (*authv1.RegisterResponse, error) {
-	_, err := h.universityClient.GetDepartment(ctx, &universityv1.GetDepartmentRequest{
-		DepartmentId: req.GetDepartmentId()})
+	_, err := h.universityClient.GetUniversity(ctx, &universityv1.GetUniversityRequest{UniversityId: req.GetUniversityId()})
 	if err != nil {
-		return nil, status.Errorf(codes.FailedPrecondition, "department id does not exist")
+		return nil, status.Errorf(codes.FailedPrecondition, "University ID does not exist")
 	}
-	user, err := h.repo.CreateUser(ctx, req.GetEmail(), req.GetPassword(), req.GetDepartmentId())
+	user, err := h.repo.CreateUser(ctx, req.GetEmail(), req.GetPassword(), req.GetUniversityId())
 	if err != nil {
-		return nil, status.Errorf(codes.FailedPrecondition, "failed to create user")
+		return nil, status.Errorf(codes.FailedPrecondition, "User does not exist")
 	}
 	return &authv1.RegisterResponse{UserId: user.ID}, nil
 }
@@ -52,19 +51,13 @@ func (h *Handler) Login(ctx context.Context, req *authv1.LoginRequest) (*authv1.
 	if err := bcrypt.CompareHashAndPassword([]byte(user.PasswordHash), []byte(req.GetPassword())); err != nil {
 		return nil, status.Errorf(codes.Unauthenticated, "invalid password")
 	}
-	depRes, err := h.universityClient.GetDepartment(ctx, &universityv1.GetDepartmentRequest{
-		DepartmentId: user.DepartmentID})
-	if err != nil {
-		return nil, status.Errorf(codes.FailedPrecondition, "department id does not exist")
-	}
 	rolesIDs, err := h.repo.GetUserRoleIDs(ctx, user.ID)
 	if err != nil {
 		return nil, status.Errorf(codes.FailedPrecondition, "role id does not exist")
 	}
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
 		"sub":   user.ID,
-		"did":   user.DepartmentID,
-		"uid":   depRes.Department.UniversityId,
+		"uid":   user.UniversityID,
 		"roles": rolesIDs,
 		"exp":   time.Now().Add(time.Hour * 24).Unix(),
 	})

@@ -7,9 +7,9 @@
 package v1
 
 import (
-	v1 "github.com/lucky720s/diplomaflow/pkg/protobuf/role/v1"
 	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
 	protoimpl "google.golang.org/protobuf/runtime/protoimpl"
+	v1 "pkg/protobuf/role/v1"
 	reflect "reflect"
 	sync "sync"
 	unsafe "unsafe"
@@ -26,7 +26,7 @@ type RegisterRequest struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	Email         string                 `protobuf:"bytes,1,opt,name=email,proto3" json:"email,omitempty"`
 	Password      string                 `protobuf:"bytes,2,opt,name=password,proto3" json:"password,omitempty"`
-	DepartmentId  int64                  `protobuf:"varint,3,opt,name=department_id,json=departmentId,proto3" json:"department_id,omitempty"`
+	UniversityId  int64                  `protobuf:"varint,3,opt,name=university_id,json=universityId,proto3" json:"university_id,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -75,9 +75,9 @@ func (x *RegisterRequest) GetPassword() string {
 	return ""
 }
 
-func (x *RegisterRequest) GetDepartmentId() int64 {
+func (x *RegisterRequest) GetUniversityId() int64 {
 	if x != nil {
-		return x.DepartmentId
+		return x.UniversityId
 	}
 	return 0
 }
@@ -430,6 +430,102 @@ func (x *AssignRoleResponse) GetSuccess() bool {
 	return false
 }
 
+type SetDepartmentRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	UserId        int64                  `protobuf:"varint,1,opt,name=user_id,json=userId,proto3" json:"user_id,omitempty"`
+	DepartmentId  int64                  `protobuf:"varint,2,opt,name=department_id,json=departmentId,proto3" json:"department_id,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *SetDepartmentRequest) Reset() {
+	*x = SetDepartmentRequest{}
+	mi := &file_pkg_protobuf_auth_v1_auth_proto_msgTypes[8]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *SetDepartmentRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*SetDepartmentRequest) ProtoMessage() {}
+
+func (x *SetDepartmentRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_pkg_protobuf_auth_v1_auth_proto_msgTypes[8]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use SetDepartmentRequest.ProtoReflect.Descriptor instead.
+func (*SetDepartmentRequest) Descriptor() ([]byte, []int) {
+	return file_pkg_protobuf_auth_v1_auth_proto_rawDescGZIP(), []int{8}
+}
+
+func (x *SetDepartmentRequest) GetUserId() int64 {
+	if x != nil {
+		return x.UserId
+	}
+	return 0
+}
+
+func (x *SetDepartmentRequest) GetDepartmentId() int64 {
+	if x != nil {
+		return x.DepartmentId
+	}
+	return 0
+}
+
+type SetDepartmentResponse struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Success       bool                   `protobuf:"varint,1,opt,name=success,proto3" json:"success,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *SetDepartmentResponse) Reset() {
+	*x = SetDepartmentResponse{}
+	mi := &file_pkg_protobuf_auth_v1_auth_proto_msgTypes[9]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *SetDepartmentResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*SetDepartmentResponse) ProtoMessage() {}
+
+func (x *SetDepartmentResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_pkg_protobuf_auth_v1_auth_proto_msgTypes[9]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use SetDepartmentResponse.ProtoReflect.Descriptor instead.
+func (*SetDepartmentResponse) Descriptor() ([]byte, []int) {
+	return file_pkg_protobuf_auth_v1_auth_proto_rawDescGZIP(), []int{9}
+}
+
+func (x *SetDepartmentResponse) GetSuccess() bool {
+	if x != nil {
+		return x.Success
+	}
+	return false
+}
+
 var File_pkg_protobuf_auth_v1_auth_proto protoreflect.FileDescriptor
 
 const file_pkg_protobuf_auth_v1_auth_proto_rawDesc = "" +
@@ -438,7 +534,7 @@ const file_pkg_protobuf_auth_v1_auth_proto_rawDesc = "" +
 	"\x0fRegisterRequest\x12\x14\n" +
 	"\x05email\x18\x01 \x01(\tR\x05email\x12\x1a\n" +
 	"\bpassword\x18\x02 \x01(\tR\bpassword\x12#\n" +
-	"\rdepartment_id\x18\x03 \x01(\x03R\fdepartmentId\"+\n" +
+	"\runiversity_id\x18\x03 \x01(\x03R\funiversityId\"+\n" +
 	"\x10RegisterResponse\x12\x17\n" +
 	"\auser_id\x18\x01 \x01(\x03R\x06userId\"@\n" +
 	"\fLoginRequest\x12\x14\n" +
@@ -457,13 +553,19 @@ const file_pkg_protobuf_auth_v1_auth_proto_rawDesc = "" +
 	"\auser_id\x18\x01 \x01(\x03R\x06userId\x12\x17\n" +
 	"\arole_id\x18\x02 \x01(\x03R\x06roleId\".\n" +
 	"\x12AssignRoleResponse\x12\x18\n" +
-	"\asuccess\x18\x01 \x01(\bR\asuccess2\x8b\x02\n" +
+	"\asuccess\x18\x01 \x01(\bR\asuccess\"T\n" +
+	"\x14SetDepartmentRequest\x12\x17\n" +
+	"\auser_id\x18\x01 \x01(\x03R\x06userId\x12#\n" +
+	"\rdepartment_id\x18\x02 \x01(\x03R\fdepartmentId\"1\n" +
+	"\x15SetDepartmentResponse\x12\x18\n" +
+	"\asuccess\x18\x01 \x01(\bR\asuccess2\xdb\x02\n" +
 	"\vAuthService\x12?\n" +
 	"\bRegister\x12\x18.auth.v1.RegisterRequest\x1a\x19.auth.v1.RegisterResponse\x126\n" +
 	"\x05Login\x12\x15.auth.v1.LoginRequest\x1a\x16.auth.v1.LoginResponse\x12<\n" +
 	"\aGetUser\x12\x17.auth.v1.GetUserRequest\x1a\x18.auth.v1.GetUserResponse\x12E\n" +
 	"\n" +
-	"AssignRole\x12\x1a.auth.v1.AssignRoleRequest\x1a\x1b.auth.v1.AssignRoleResponseB\x16Z\x14pkg/protobuf/auth/v1b\x06proto3"
+	"AssignRole\x12\x1a.auth.v1.AssignRoleRequest\x1a\x1b.auth.v1.AssignRoleResponse\x12N\n" +
+	"\rSetDepartment\x12\x1d.auth.v1.SetDepartmentRequest\x1a\x1e.auth.v1.SetDepartmentResponseB\x16Z\x14pkg/protobuf/auth/v1b\x06proto3"
 
 var (
 	file_pkg_protobuf_auth_v1_auth_proto_rawDescOnce sync.Once
@@ -477,33 +579,37 @@ func file_pkg_protobuf_auth_v1_auth_proto_rawDescGZIP() []byte {
 	return file_pkg_protobuf_auth_v1_auth_proto_rawDescData
 }
 
-var file_pkg_protobuf_auth_v1_auth_proto_msgTypes = make([]protoimpl.MessageInfo, 8)
+var file_pkg_protobuf_auth_v1_auth_proto_msgTypes = make([]protoimpl.MessageInfo, 10)
 var file_pkg_protobuf_auth_v1_auth_proto_goTypes = []any{
-	(*RegisterRequest)(nil),    // 0: auth.v1.RegisterRequest
-	(*RegisterResponse)(nil),   // 1: auth.v1.RegisterResponse
-	(*LoginRequest)(nil),       // 2: auth.v1.LoginRequest
-	(*LoginResponse)(nil),      // 3: auth.v1.LoginResponse
-	(*GetUserRequest)(nil),     // 4: auth.v1.GetUserRequest
-	(*GetUserResponse)(nil),    // 5: auth.v1.GetUserResponse
-	(*AssignRoleRequest)(nil),  // 6: auth.v1.AssignRoleRequest
-	(*AssignRoleResponse)(nil), // 7: auth.v1.AssignRoleResponse
-	(*v1.Role)(nil),            // 8: role.v1.Role
+	(*RegisterRequest)(nil),       // 0: auth.v1.RegisterRequest
+	(*RegisterResponse)(nil),      // 1: auth.v1.RegisterResponse
+	(*LoginRequest)(nil),          // 2: auth.v1.LoginRequest
+	(*LoginResponse)(nil),         // 3: auth.v1.LoginResponse
+	(*GetUserRequest)(nil),        // 4: auth.v1.GetUserRequest
+	(*GetUserResponse)(nil),       // 5: auth.v1.GetUserResponse
+	(*AssignRoleRequest)(nil),     // 6: auth.v1.AssignRoleRequest
+	(*AssignRoleResponse)(nil),    // 7: auth.v1.AssignRoleResponse
+	(*SetDepartmentRequest)(nil),  // 8: auth.v1.SetDepartmentRequest
+	(*SetDepartmentResponse)(nil), // 9: auth.v1.SetDepartmentResponse
+	(*v1.Role)(nil),               // 10: role.v1.Role
 }
 var file_pkg_protobuf_auth_v1_auth_proto_depIdxs = []int32{
-	8, // 0: auth.v1.GetUserResponse.roles:type_name -> role.v1.Role
-	0, // 1: auth.v1.AuthService.Register:input_type -> auth.v1.RegisterRequest
-	2, // 2: auth.v1.AuthService.Login:input_type -> auth.v1.LoginRequest
-	4, // 3: auth.v1.AuthService.GetUser:input_type -> auth.v1.GetUserRequest
-	6, // 4: auth.v1.AuthService.AssignRole:input_type -> auth.v1.AssignRoleRequest
-	1, // 5: auth.v1.AuthService.Register:output_type -> auth.v1.RegisterResponse
-	3, // 6: auth.v1.AuthService.Login:output_type -> auth.v1.LoginResponse
-	5, // 7: auth.v1.AuthService.GetUser:output_type -> auth.v1.GetUserResponse
-	7, // 8: auth.v1.AuthService.AssignRole:output_type -> auth.v1.AssignRoleResponse
-	5, // [5:9] is the sub-list for method output_type
-	1, // [1:5] is the sub-list for method input_type
-	1, // [1:1] is the sub-list for extension type_name
-	1, // [1:1] is the sub-list for extension extendee
-	0, // [0:1] is the sub-list for field type_name
+	10, // 0: auth.v1.GetUserResponse.roles:type_name -> role.v1.Role
+	0,  // 1: auth.v1.AuthService.Register:input_type -> auth.v1.RegisterRequest
+	2,  // 2: auth.v1.AuthService.Login:input_type -> auth.v1.LoginRequest
+	4,  // 3: auth.v1.AuthService.GetUser:input_type -> auth.v1.GetUserRequest
+	6,  // 4: auth.v1.AuthService.AssignRole:input_type -> auth.v1.AssignRoleRequest
+	8,  // 5: auth.v1.AuthService.SetDepartment:input_type -> auth.v1.SetDepartmentRequest
+	1,  // 6: auth.v1.AuthService.Register:output_type -> auth.v1.RegisterResponse
+	3,  // 7: auth.v1.AuthService.Login:output_type -> auth.v1.LoginResponse
+	5,  // 8: auth.v1.AuthService.GetUser:output_type -> auth.v1.GetUserResponse
+	7,  // 9: auth.v1.AuthService.AssignRole:output_type -> auth.v1.AssignRoleResponse
+	9,  // 10: auth.v1.AuthService.SetDepartment:output_type -> auth.v1.SetDepartmentResponse
+	6,  // [6:11] is the sub-list for method output_type
+	1,  // [1:6] is the sub-list for method input_type
+	1,  // [1:1] is the sub-list for extension type_name
+	1,  // [1:1] is the sub-list for extension extendee
+	0,  // [0:1] is the sub-list for field type_name
 }
 
 func init() { file_pkg_protobuf_auth_v1_auth_proto_init() }
@@ -517,7 +623,7 @@ func file_pkg_protobuf_auth_v1_auth_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_pkg_protobuf_auth_v1_auth_proto_rawDesc), len(file_pkg_protobuf_auth_v1_auth_proto_rawDesc)),
 			NumEnums:      0,
-			NumMessages:   8,
+			NumMessages:   10,
 			NumExtensions: 0,
 			NumServices:   1,
 		},

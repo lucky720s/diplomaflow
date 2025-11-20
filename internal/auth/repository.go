@@ -14,20 +14,22 @@ type User struct {
 	ID           int64  `gorm:"primary_key"`
 	Email        string `gorm:"uniqueIndex"`
 	PasswordHash string
+	UniversityID int64
 	DepartmentID int64
 }
 type RoleAssignment struct {
 	ID     int64 `gorm:"primaryKey"`
 	UserID int64 `gorm:"index:idx_user_role,unique"`
-	RoleID int64 `gorm:"index:idx_role,unique"`
+	RoleID int64 `gorm:"index:idx_user_role,unique"`
 }
 
 type Repository interface {
-	CreateUser(ctx context.Context, email, password string, departmentID int64) (*User, error)
+	CreateUser(ctx context.Context, email, password string, universityID int64) (*User, error)
 	GetUserByEmail(ctx context.Context, email string) (*User, error)
 	GetUserByID(ctx context.Context, id int64) (*User, error)
 	AssignRole(ctx context.Context, userID, roleID int64) error
 	GetUserRoleIDs(ctx context.Context, userID int64) ([]int64, error)
+	SetDepartment(ctx context.Context, userID, departmentID int64) error
 }
 
 type repository struct {
@@ -47,7 +49,7 @@ func NewRepository() (Repository, error) {
 	return &repository{db: db}, nil
 }
 
-func (r *repository) CreateUser(ctx context.Context, email, password string, departmentID int64) (*User, error) {
+func (r *repository) CreateUser(ctx context.Context, email, password string, universityID int64) (*User, error) {
 	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
 	if err != nil {
 		return nil, err
@@ -55,7 +57,7 @@ func (r *repository) CreateUser(ctx context.Context, email, password string, dep
 	user := &User{
 		Email:        email,
 		PasswordHash: string(hashedPassword),
-		DepartmentID: departmentID,
+		UniversityID: universityID,
 	}
 	res := r.db.WithContext(ctx).Create(user)
 	return user, res.Error
@@ -85,8 +87,11 @@ func (r *repository) GetUserRoleIDs(ctx context.Context, userID int64) ([]int64,
 		return nil, err
 	}
 	roleIDs := make([]int64, 0, len(assignments))
-	for i, a := range assignments {
-		roleIDs[i] = a.RoleID
+	for _, a := range assignments {
+		roleIDs = append(roleIDs, a.RoleID)
 	}
 	return roleIDs, nil
+}
+func (r *repository) SetDepartment(ctx context.Context, userID, departmentID int64) error {
+	return r.db.WithContext(ctx).Model(&User{}).Where("id = ?", userID).Update("department_id", departmentID).Error
 }
