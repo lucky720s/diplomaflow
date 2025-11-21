@@ -3,7 +3,7 @@ syntax = "proto3";
 package project.v1;
 import "google/protobuf/field_mask.proto";
 import "google/protobuf/timestamp.proto";
-option go_package = "pkg/protobuf/project/v1";
+option go_package = "protobuf/project/v1";
 
 
 service ProjectService{

@@ -6,9 +6,9 @@ import (
 	"time"
 
 	"github.com/lucky720s/diplomaflow/internal/auth"
-	authv1 "github.com/lucky720s/diplomaflow/pkg/protobuf/auth/v1"
-	rolev1 "github.com/lucky720s/diplomaflow/pkg/protobuf/role/v1"
-	universityv1 "github.com/lucky720s/diplomaflow/pkg/protobuf/university/v1"
+	authv1 "github.com/lucky720s/diplomaflow/protobuf/auth/v1"
+	rolev1 "github.com/lucky720s/diplomaflow/protobuf/role/v1"
+	universityv1 "github.com/lucky720s/diplomaflow/protobuf/university/v1"
 	rkboot "github.com/rookie-ninja/rk-boot/v2"
 	rkgrpc "github.com/rookie-ninja/rk-grpc/v2/boot"
 	"google.golang.org/grpc"

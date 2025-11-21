@@ -5,7 +5,7 @@ import (
 	"errors"
 	"strconv"
 
-	teamv1 "github.com/lucky720s/diplomaflow/pkg/protobuf/team/v1"
+	teamv1 "github.com/lucky720s/diplomaflow/protobuf/team/v1"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/metadata"
 	"google.golang.org/grpc/status"

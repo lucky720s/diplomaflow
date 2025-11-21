@@ -6,7 +6,7 @@ import (
 	"os"
 	"time"
 
-	projectv1 "github.com/lucky720s/diplomaflow/pkg/protobuf/project/v1"
+	projectv1 "github.com/lucky720s/diplomaflow/protobuf/project/v1"
 	rkpostgres "github.com/rookie-ninja/rk-db/postgres"
 	"google.golang.org/protobuf/types/known/fieldmaskpb"
 	"gorm.io/gorm"

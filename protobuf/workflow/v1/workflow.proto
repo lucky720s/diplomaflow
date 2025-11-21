@@ -1,6 +1,6 @@
 syntax = "proto3";
 package workflow.v1;
-option go_package = "pkg/protobuf/workflow/v1";
+option go_package = "protobuf/workflow/v1";
 
 service WorkflowService{
   rpc CreateWorkflow(CreateWorkflowRequest) returns (CreateWorkflowResponse);

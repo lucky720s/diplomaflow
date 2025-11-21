@@ -4,7 +4,7 @@ import (
 	"context"
 	"errors"
 
-	universityv1 "github.com/lucky720s/diplomaflow/pkg/protobuf/university/v1"
+	universityv1 "github.com/lucky720s/diplomaflow/protobuf/university/v1"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 	"gorm.io/gorm"

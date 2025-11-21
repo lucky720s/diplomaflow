@@ -7,7 +7,7 @@
 package v1
 
 import (
-	v1 "github.com/lucky720s/diplomaflow/pkg/protobuf/role/v1"
+	v1 "github.com/lucky720s/diplomaflow/protobuf/role/v1"
 	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
 	protoimpl "google.golang.org/protobuf/runtime/protoimpl"
 	reflect "reflect"

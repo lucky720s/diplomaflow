@@ -6,7 +6,7 @@ import (
 	"time"
 
 	"github.com/lucky720s/diplomaflow/internal/role"
-	rolev1 "github.com/lucky720s/diplomaflow/pkg/protobuf/role/v1"
+	rolev1 "github.com/lucky720s/diplomaflow/protobuf/role/v1"
 	rkboot "github.com/rookie-ninja/rk-boot/v2"
 	rkgrpc "github.com/rookie-ninja/rk-grpc/v2/boot"
 	"google.golang.org/grpc"

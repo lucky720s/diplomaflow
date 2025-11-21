@@ -2,7 +2,7 @@ syntax = "proto3";
 
 package university.v1;
 import "google/protobuf/field_mask.proto";
-option go_package = "pkg/protobuf/university/v1";
+option go_package = "protobuf/university/v1";
 
 service UniversityService{
   rpc CreateUniversity(CreateUniversityRequest) returns (CreateUniversityResponse);
