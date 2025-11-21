@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"os"
 
-	universityv1 "github.com/lucky720s/diplomaflow/protobuf/university/v1"
+	universityv1 "github.com/lucky720s/diplomaflow/pkg/protobuf/university/v1"
 	rkpostgres "github.com/rookie-ninja/rk-db/postgres"
 	"google.golang.org/protobuf/types/known/fieldmaskpb"
 	"gorm.io/gorm"

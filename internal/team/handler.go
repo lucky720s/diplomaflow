@@ -5,7 +5,7 @@ import (
 	"errors"
 	"strconv"
 
-	teamv1 "github.com/lucky720s/diplomaflow/protobuf/team/v1"
+	teamv1 "github.com/lucky720s/diplomaflow/pkg/protobuf/team/v1"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/metadata"
 	"google.golang.org/grpc/status"
@@ -62,7 +62,7 @@ func (h *Handler) GetTeam(ctx context.Context, req *teamv1.GetTeamRequest) (*tea
 	team, memberIDs, err := h.repo.GetTeamByID(ctx, req.GetTeamId())
 	if err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
-			return nil, err
+			return nil, status.Errorf(codes.NotFound, "team %s not found", req.GetTeamId())
 		}
 		return nil, status.Errorf(codes.NotFound, "team not found")
 	}
@@ -149,6 +149,9 @@ func (h *Handler) AddMember(ctx context.Context, req *teamv1.AddMemberRequest) (
 	}
 	if team.DepartmentID != departmentID {
 		return nil, status.Errorf(codes.PermissionDenied, "department_id is not match")
+	}
+	if err := h.repo.AddMember(ctx, req.GetTeamId(), req.GetUserId()); err != nil {
+		return nil, status.Errorf(codes.NotFound, "team not found")
 	}
 	return &teamv1.AddMemberResponse{Success: true}, nil
 }

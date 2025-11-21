@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"os"
 
-	teamv1 "github.com/lucky720s/diplomaflow/protobuf/team/v1"
+	teamv1 "github.com/lucky720s/diplomaflow/pkg/protobuf/team/v1"
 	rkpostgres "github.com/rookie-ninja/rk-db/postgres"
 	"google.golang.org/protobuf/types/known/fieldmaskpb"
 	"gorm.io/gorm"
@@ -20,7 +20,7 @@ type Team struct {
 type TeamMember struct {
 	ID     int64 `gorm:"primaryKey"`
 	TeamID int64 `gorm:"index"`
-	UserID int64 `gorm:"index"`
+	UserID int64 `gorm:"uniqueIndex"`
 }
 type Repository interface {
 	CreateTeam(ctx context.Context, name string, departmentID int64, memberIDs []int64) (*Team, error)
@@ -88,7 +88,7 @@ func (r *repository) AddMember(ctx context.Context, teamID int64, userID int64) 
 	return r.db.WithContext(ctx).Create(member).Error
 }
 func (r *repository) RemoveMember(ctx context.Context, teamID int64, userID int64) error {
-	return r.db.WithContext(ctx).Delete(&TeamMember{TeamID: teamID, UserID: userID}).Error
+	return r.db.WithContext(ctx).Where("team_id = ? AND user_id = ?", teamID, userID).Delete(&TeamMember{}).Error
 }
 func (r *repository) ListTeams(ctx context.Context, departmentID int64) ([]*Team, error) {
 	var teams []*Team
@@ -108,7 +108,7 @@ func (r *repository) DeleteTeam(ctx context.Context, teamID int64) error {
 }
 func (r *repository) UpdateTeam(ctx context.Context, team *teamv1.Team, mask *fieldmaskpb.FieldMask) (*Team, error) {
 	var existingTeam Team
-	if err := r.db.WithContext(ctx).First(existingTeam, team.GetId()).Error; err != nil {
+	if err := r.db.WithContext(ctx).First(&existingTeam, team.GetId()).Error; err != nil {
 		return nil, err
 	}
 	updateData := make(map[string]interface{})
@@ -116,6 +116,8 @@ func (r *repository) UpdateTeam(ctx context.Context, team *teamv1.Team, mask *fi
 		switch path {
 		case "name":
 			updateData["name"] = team.GetName()
+		case "department_id":
+			updateData["department_id"] = team.GetDepartmentId()
 		}
 	}
 	if len(updateData) > 0 {

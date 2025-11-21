@@ -7,9 +7,9 @@ import (
 	"time"
 
 	"github.com/golang-jwt/jwt/v5"
-	authv1 "github.com/lucky720s/diplomaflow/protobuf/auth/v1"
-	rolev1 "github.com/lucky720s/diplomaflow/protobuf/role/v1"
-	universityv1 "github.com/lucky720s/diplomaflow/protobuf/university/v1"
+	authv1 "github.com/lucky720s/diplomaflow/pkg/protobuf/auth/v1"
+	rolev1 "github.com/lucky720s/diplomaflow/pkg/protobuf/role/v1"
+	universityv1 "github.com/lucky720s/diplomaflow/pkg/protobuf/university/v1"
 	"golang.org/x/crypto/bcrypt"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"

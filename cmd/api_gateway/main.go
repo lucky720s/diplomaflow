@@ -11,12 +11,12 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/golang-jwt/jwt/v5"
-	authv1 "github.com/lucky720s/diplomaflow/protobuf/auth/v1"
-	projectv1 "github.com/lucky720s/diplomaflow/protobuf/project/v1"
-	rolev1 "github.com/lucky720s/diplomaflow/protobuf/role/v1"
-	teamv1 "github.com/lucky720s/diplomaflow/protobuf/team/v1"
-	universityv1 "github.com/lucky720s/diplomaflow/protobuf/university/v1"
-	workflowv1 "github.com/lucky720s/diplomaflow/protobuf/workflow/v1"
+	authv1 "github.com/lucky720s/diplomaflow/pkg/protobuf/auth/v1"
+	projectv1 "github.com/lucky720s/diplomaflow/pkg/protobuf/project/v1"
+	rolev1 "github.com/lucky720s/diplomaflow/pkg/protobuf/role/v1"
+	teamv1 "github.com/lucky720s/diplomaflow/pkg/protobuf/team/v1"
+	universityv1 "github.com/lucky720s/diplomaflow/pkg/protobuf/university/v1"
+	workflowv1 "github.com/lucky720s/diplomaflow/pkg/protobuf/workflow/v1"
 	"google.golang.org/genproto/protobuf/field_mask"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
@@ -103,6 +103,7 @@ func main() {
 		teams.GET("/:id", gateway.GetTeam)
 		teams.PATCH("/:id", gateway.UpdateTeam)
 		teams.DELETE("/:id", gateway.DeleteTeam)
+		teams.GET("/available-users", gateway.ListAvailableUsers)
 		teams.POST("/:id/members", gateway.AddMember)
 		teams.DELETE("/:id/members", gateway.RemoveMember)
 	}
@@ -373,13 +374,20 @@ func (g *ApiGateWay) AssignRole(c *gin.Context) {
 }
 
 func (g *ApiGateWay) CreateTeam(c *gin.Context) {
-	var req teamv1.CreateTeamRequest
-	if err := c.ShouldBindJSON(&req); err != nil {
+	var reqBody struct {
+		Name string `json:"name"`
+	}
+	if err := c.ShouldBindJSON(&reqBody); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
+	departmentID := c.MustGet("departmentID").(int64)
+	req := &teamv1.CreateTeamRequest{
+		Name:         reqBody.Name,
+		DepartmentId: departmentID,
+	}
 	ctx := newContextWithAuth(c)
-	res, err := g.teamClient.CreateTeam(ctx, &req)
+	res, err := g.teamClient.CreateTeam(ctx, req)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
@@ -689,4 +697,17 @@ func newContextWithAuth(c *gin.Context) context.Context {
 		}
 	}
 	return metadata.NewOutgoingContext(context.Background(), md)
+}
+
+func (g *ApiGateWay) ListAvailableUsers(c *gin.Context) {
+	ctx := newContextWithAuth(c)
+	departmentId := c.MustGet("departmentId").(int64)
+	res, err := g.teamClient.ListAvailableUsers(ctx, &teamv1.ListAvailableUsersRequest{
+		DepartmentId: departmentId,
+	})
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+	c.JSON(http.StatusOK, res)
 }

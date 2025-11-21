@@ -5,7 +5,7 @@ import (
 	"errors"
 	"strconv"
 
-	rolev1 "github.com/lucky720s/diplomaflow/protobuf/role/v1"
+	rolev1 "github.com/lucky720s/diplomaflow/pkg/protobuf/role/v1"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/metadata"
 	"google.golang.org/grpc/status"

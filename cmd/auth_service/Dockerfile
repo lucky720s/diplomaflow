@@ -1,8 +1,12 @@
 FROM golang:1.25-alpine AS builder
-WORKDIR /app
+WORKDIR /go/src/github.com/lucky720s/diplomaflow
 copy go.mod go.sum ./
 RUN go mod download
-COPY . .
+
+COPY cmd/auth_service ./cmd/auth_service
+COPY internal/auth ./internal/auth
+COPY pkg/protobuf ./pkg/protobuf
+
 RUN CGO_ENABLED=0 GOOS=linux go build -o /auth-service-bin ./cmd/auth_service
 
 FROM alpine:latest

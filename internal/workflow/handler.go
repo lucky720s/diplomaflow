@@ -4,7 +4,7 @@ import (
 	"context"
 	"errors"
 
-	workflowv1 "github.com/lucky720s/diplomaflow/protobuf/workflow/v1"
+	workflowv1 "github.com/lucky720s/diplomaflow/pkg/protobuf/workflow/v1"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 	"gorm.io/gorm"

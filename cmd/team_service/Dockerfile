@@ -1,8 +1,12 @@
 FROM golang:1.25-alpine AS builder
-WORKDIR /app
+WORKDIR /go/src/github.com/lucky720s/diplomaflow
 copy go.mod go.sum ./
 RUN go mod download
-COPY . .
+
+COPY cmd/team_service ./cmd/team_service
+COPY internal/team ./internal/team
+COPY pkg/protobuf ./pkg/protobuf
+
 RUN CGO_ENABLED=0 GOOS=linux go build -o /team-service-bin ./cmd/team_service
 
 FROM alpine:latest
