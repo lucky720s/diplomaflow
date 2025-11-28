@@ -27,6 +27,7 @@ type RegisterRequest struct {
 	Email         string                 `protobuf:"bytes,1,opt,name=email,proto3" json:"email,omitempty"`
 	Password      string                 `protobuf:"bytes,2,opt,name=password,proto3" json:"password,omitempty"`
 	UniversityId  int64                  `protobuf:"varint,3,opt,name=university_id,json=universityId,proto3" json:"university_id,omitempty"`
+	DepartmentId  int64                  `protobuf:"varint,4,opt,name=department_id,json=departmentId,proto3" json:"department_id,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -78,6 +79,13 @@ func (x *RegisterRequest) GetPassword() string {
 func (x *RegisterRequest) GetUniversityId() int64 {
 	if x != nil {
 		return x.UniversityId
+	}
+	return 0
+}
+
+func (x *RegisterRequest) GetDepartmentId() int64 {
+	if x != nil {
+		return x.DepartmentId
 	}
 	return 0
 }
@@ -526,15 +534,156 @@ func (x *SetDepartmentResponse) GetSuccess() bool {
 	return false
 }
 
+type ListUsersByDepartmentRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	DepartmentId  int64                  `protobuf:"varint,1,opt,name=department_id,json=departmentId,proto3" json:"department_id,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *ListUsersByDepartmentRequest) Reset() {
+	*x = ListUsersByDepartmentRequest{}
+	mi := &file_auth_v1_auth_proto_msgTypes[10]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ListUsersByDepartmentRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ListUsersByDepartmentRequest) ProtoMessage() {}
+
+func (x *ListUsersByDepartmentRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_auth_v1_auth_proto_msgTypes[10]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ListUsersByDepartmentRequest.ProtoReflect.Descriptor instead.
+func (*ListUsersByDepartmentRequest) Descriptor() ([]byte, []int) {
+	return file_auth_v1_auth_proto_rawDescGZIP(), []int{10}
+}
+
+func (x *ListUsersByDepartmentRequest) GetDepartmentId() int64 {
+	if x != nil {
+		return x.DepartmentId
+	}
+	return 0
+}
+
+type ListUsersByDepartmentResponse struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Users         []*UserInfo            `protobuf:"bytes,1,rep,name=users,proto3" json:"users,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *ListUsersByDepartmentResponse) Reset() {
+	*x = ListUsersByDepartmentResponse{}
+	mi := &file_auth_v1_auth_proto_msgTypes[11]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ListUsersByDepartmentResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ListUsersByDepartmentResponse) ProtoMessage() {}
+
+func (x *ListUsersByDepartmentResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_auth_v1_auth_proto_msgTypes[11]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ListUsersByDepartmentResponse.ProtoReflect.Descriptor instead.
+func (*ListUsersByDepartmentResponse) Descriptor() ([]byte, []int) {
+	return file_auth_v1_auth_proto_rawDescGZIP(), []int{11}
+}
+
+func (x *ListUsersByDepartmentResponse) GetUsers() []*UserInfo {
+	if x != nil {
+		return x.Users
+	}
+	return nil
+}
+
+type UserInfo struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Id            int64                  `protobuf:"varint,1,opt,name=id,proto3" json:"id,omitempty"`
+	Email         string                 `protobuf:"bytes,2,opt,name=email,proto3" json:"email,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *UserInfo) Reset() {
+	*x = UserInfo{}
+	mi := &file_auth_v1_auth_proto_msgTypes[12]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *UserInfo) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*UserInfo) ProtoMessage() {}
+
+func (x *UserInfo) ProtoReflect() protoreflect.Message {
+	mi := &file_auth_v1_auth_proto_msgTypes[12]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use UserInfo.ProtoReflect.Descriptor instead.
+func (*UserInfo) Descriptor() ([]byte, []int) {
+	return file_auth_v1_auth_proto_rawDescGZIP(), []int{12}
+}
+
+func (x *UserInfo) GetId() int64 {
+	if x != nil {
+		return x.Id
+	}
+	return 0
+}
+
+func (x *UserInfo) GetEmail() string {
+	if x != nil {
+		return x.Email
+	}
+	return ""
+}
+
 var File_auth_v1_auth_proto protoreflect.FileDescriptor
 
 const file_auth_v1_auth_proto_rawDesc = "" +
 	"\n" +
-	"\x12auth/v1/auth.proto\x12\aauth.v1\x1a\x12role/v1/role.proto\"h\n" +
+	"\x12auth/v1/auth.proto\x12\aauth.v1\x1a\x12role/v1/role.proto\"\x8d\x01\n" +
 	"\x0fRegisterRequest\x12\x14\n" +
 	"\x05email\x18\x01 \x01(\tR\x05email\x12\x1a\n" +
 	"\bpassword\x18\x02 \x01(\tR\bpassword\x12#\n" +
-	"\runiversity_id\x18\x03 \x01(\x03R\funiversityId\"+\n" +
+	"\runiversity_id\x18\x03 \x01(\x03R\funiversityId\x12#\n" +
+	"\rdepartment_id\x18\x04 \x01(\x03R\fdepartmentId\"+\n" +
 	"\x10RegisterResponse\x12\x17\n" +
 	"\auser_id\x18\x01 \x01(\x03R\x06userId\"@\n" +
 	"\fLoginRequest\x12\x14\n" +
@@ -558,14 +707,22 @@ const file_auth_v1_auth_proto_rawDesc = "" +
 	"\auser_id\x18\x01 \x01(\x03R\x06userId\x12#\n" +
 	"\rdepartment_id\x18\x02 \x01(\x03R\fdepartmentId\"1\n" +
 	"\x15SetDepartmentResponse\x12\x18\n" +
-	"\asuccess\x18\x01 \x01(\bR\asuccess2\xdb\x02\n" +
+	"\asuccess\x18\x01 \x01(\bR\asuccess\"C\n" +
+	"\x1cListUsersByDepartmentRequest\x12#\n" +
+	"\rdepartment_id\x18\x01 \x01(\x03R\fdepartmentId\"H\n" +
+	"\x1dListUsersByDepartmentResponse\x12'\n" +
+	"\x05users\x18\x01 \x03(\v2\x11.auth.v1.UserInfoR\x05users\"0\n" +
+	"\bUserInfo\x12\x0e\n" +
+	"\x02id\x18\x01 \x01(\x03R\x02id\x12\x14\n" +
+	"\x05email\x18\x02 \x01(\tR\x05email2\xc3\x03\n" +
 	"\vAuthService\x12?\n" +
 	"\bRegister\x12\x18.auth.v1.RegisterRequest\x1a\x19.auth.v1.RegisterResponse\x126\n" +
 	"\x05Login\x12\x15.auth.v1.LoginRequest\x1a\x16.auth.v1.LoginResponse\x12<\n" +
 	"\aGetUser\x12\x17.auth.v1.GetUserRequest\x1a\x18.auth.v1.GetUserResponse\x12E\n" +
 	"\n" +
 	"AssignRole\x12\x1a.auth.v1.AssignRoleRequest\x1a\x1b.auth.v1.AssignRoleResponse\x12N\n" +
-	"\rSetDepartment\x12\x1d.auth.v1.SetDepartmentRequest\x1a\x1e.auth.v1.SetDepartmentResponseB7Z5github.com/lucky720s/diplomaflow/pkg/protobuf/auth/v1b\x06proto3"
+	"\rSetDepartment\x12\x1d.auth.v1.SetDepartmentRequest\x1a\x1e.auth.v1.SetDepartmentResponse\x12f\n" +
+	"\x15ListUsersByDepartment\x12%.auth.v1.ListUsersByDepartmentRequest\x1a&.auth.v1.ListUsersByDepartmentResponseB7Z5github.com/lucky720s/diplomaflow/pkg/protobuf/auth/v1b\x06proto3"
 
 var (
 	file_auth_v1_auth_proto_rawDescOnce sync.Once
@@ -579,37 +736,43 @@ func file_auth_v1_auth_proto_rawDescGZIP() []byte {
 	return file_auth_v1_auth_proto_rawDescData
 }
 
-var file_auth_v1_auth_proto_msgTypes = make([]protoimpl.MessageInfo, 10)
+var file_auth_v1_auth_proto_msgTypes = make([]protoimpl.MessageInfo, 13)
 var file_auth_v1_auth_proto_goTypes = []any{
-	(*RegisterRequest)(nil),       // 0: auth.v1.RegisterRequest
-	(*RegisterResponse)(nil),      // 1: auth.v1.RegisterResponse
-	(*LoginRequest)(nil),          // 2: auth.v1.LoginRequest
-	(*LoginResponse)(nil),         // 3: auth.v1.LoginResponse
-	(*GetUserRequest)(nil),        // 4: auth.v1.GetUserRequest
-	(*GetUserResponse)(nil),       // 5: auth.v1.GetUserResponse
-	(*AssignRoleRequest)(nil),     // 6: auth.v1.AssignRoleRequest
-	(*AssignRoleResponse)(nil),    // 7: auth.v1.AssignRoleResponse
-	(*SetDepartmentRequest)(nil),  // 8: auth.v1.SetDepartmentRequest
-	(*SetDepartmentResponse)(nil), // 9: auth.v1.SetDepartmentResponse
-	(*v1.Role)(nil),               // 10: role.v1.Role
+	(*RegisterRequest)(nil),               // 0: auth.v1.RegisterRequest
+	(*RegisterResponse)(nil),              // 1: auth.v1.RegisterResponse
+	(*LoginRequest)(nil),                  // 2: auth.v1.LoginRequest
+	(*LoginResponse)(nil),                 // 3: auth.v1.LoginResponse
+	(*GetUserRequest)(nil),                // 4: auth.v1.GetUserRequest
+	(*GetUserResponse)(nil),               // 5: auth.v1.GetUserResponse
+	(*AssignRoleRequest)(nil),             // 6: auth.v1.AssignRoleRequest
+	(*AssignRoleResponse)(nil),            // 7: auth.v1.AssignRoleResponse
+	(*SetDepartmentRequest)(nil),          // 8: auth.v1.SetDepartmentRequest
+	(*SetDepartmentResponse)(nil),         // 9: auth.v1.SetDepartmentResponse
+	(*ListUsersByDepartmentRequest)(nil),  // 10: auth.v1.ListUsersByDepartmentRequest
+	(*ListUsersByDepartmentResponse)(nil), // 11: auth.v1.ListUsersByDepartmentResponse
+	(*UserInfo)(nil),                      // 12: auth.v1.UserInfo
+	(*v1.Role)(nil),                       // 13: role.v1.Role
 }
 var file_auth_v1_auth_proto_depIdxs = []int32{
-	10, // 0: auth.v1.GetUserResponse.roles:type_name -> role.v1.Role
-	0,  // 1: auth.v1.AuthService.Register:input_type -> auth.v1.RegisterRequest
-	2,  // 2: auth.v1.AuthService.Login:input_type -> auth.v1.LoginRequest
-	4,  // 3: auth.v1.AuthService.GetUser:input_type -> auth.v1.GetUserRequest
-	6,  // 4: auth.v1.AuthService.AssignRole:input_type -> auth.v1.AssignRoleRequest
-	8,  // 5: auth.v1.AuthService.SetDepartment:input_type -> auth.v1.SetDepartmentRequest
-	1,  // 6: auth.v1.AuthService.Register:output_type -> auth.v1.RegisterResponse
-	3,  // 7: auth.v1.AuthService.Login:output_type -> auth.v1.LoginResponse
-	5,  // 8: auth.v1.AuthService.GetUser:output_type -> auth.v1.GetUserResponse
-	7,  // 9: auth.v1.AuthService.AssignRole:output_type -> auth.v1.AssignRoleResponse
-	9,  // 10: auth.v1.AuthService.SetDepartment:output_type -> auth.v1.SetDepartmentResponse
-	6,  // [6:11] is the sub-list for method output_type
-	1,  // [1:6] is the sub-list for method input_type
-	1,  // [1:1] is the sub-list for extension type_name
-	1,  // [1:1] is the sub-list for extension extendee
-	0,  // [0:1] is the sub-list for field type_name
+	13, // 0: auth.v1.GetUserResponse.roles:type_name -> role.v1.Role
+	12, // 1: auth.v1.ListUsersByDepartmentResponse.users:type_name -> auth.v1.UserInfo
+	0,  // 2: auth.v1.AuthService.Register:input_type -> auth.v1.RegisterRequest
+	2,  // 3: auth.v1.AuthService.Login:input_type -> auth.v1.LoginRequest
+	4,  // 4: auth.v1.AuthService.GetUser:input_type -> auth.v1.GetUserRequest
+	6,  // 5: auth.v1.AuthService.AssignRole:input_type -> auth.v1.AssignRoleRequest
+	8,  // 6: auth.v1.AuthService.SetDepartment:input_type -> auth.v1.SetDepartmentRequest
+	10, // 7: auth.v1.AuthService.ListUsersByDepartment:input_type -> auth.v1.ListUsersByDepartmentRequest
+	1,  // 8: auth.v1.AuthService.Register:output_type -> auth.v1.RegisterResponse
+	3,  // 9: auth.v1.AuthService.Login:output_type -> auth.v1.LoginResponse
+	5,  // 10: auth.v1.AuthService.GetUser:output_type -> auth.v1.GetUserResponse
+	7,  // 11: auth.v1.AuthService.AssignRole:output_type -> auth.v1.AssignRoleResponse
+	9,  // 12: auth.v1.AuthService.SetDepartment:output_type -> auth.v1.SetDepartmentResponse
+	11, // 13: auth.v1.AuthService.ListUsersByDepartment:output_type -> auth.v1.ListUsersByDepartmentResponse
+	8,  // [8:14] is the sub-list for method output_type
+	2,  // [2:8] is the sub-list for method input_type
+	2,  // [2:2] is the sub-list for extension type_name
+	2,  // [2:2] is the sub-list for extension extendee
+	0,  // [0:2] is the sub-list for field type_name
 }
 
 func init() { file_auth_v1_auth_proto_init() }
@@ -623,7 +786,7 @@ func file_auth_v1_auth_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_auth_v1_auth_proto_rawDesc), len(file_auth_v1_auth_proto_rawDesc)),
 			NumEnums:      0,
-			NumMessages:   10,
+			NumMessages:   13,
 			NumExtensions: 0,
 			NumServices:   1,
 		},

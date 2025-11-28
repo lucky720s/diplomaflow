@@ -36,9 +36,15 @@ type repository struct {
 	db *gorm.DB
 }
 
+func (Team) TableName() string {
+	return "team_schema.teams"
+}
+func (TeamMember) TableName() string {
+	return "team_schema.team_members"
+}
 func NewRepository() (Repository, error) {
 	pgEntry := rkpostgres.GetPostgresEntry("team-conn")
-	dbName := os.Getenv("TEAM_DB_NAME")
+	dbName := os.Getenv("MAIN_POSTGRES_DB_NAME")
 	db := pgEntry.GetDB(dbName)
 	if db == nil {
 		panic("Database not found")

@@ -8,10 +8,12 @@ grpc:
 postgres:
   - name: role-conn
     enabled: true
-    addr: "role_db:5432"
-    user: "role_user"
-    pass: "role_password"
+    addr: "main_postgres:5432"
+    user: "diplomaflow"
+    pass: "diplomaflow_pass"
     timezone: "Asia/Shanghai"
     database:
-      - name: "role_db"
-        autoCreate: true
+      - name: "diplomaflow"
+        autoCreate: false
+    params:
+      search_path: "role_schema"

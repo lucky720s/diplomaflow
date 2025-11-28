@@ -7,10 +7,12 @@ grpc:
 postgres:
   - name: university-conn
     enabled: true
-    addr: "university_db:5432"
-    user: "university_user"
-    pass: "university_password"
+    addr: "main_postgres:5432"
+    user: "diplomaflow"
+    pass: "diplomaflow_pass"
     timezone: "Asia/Shanghai"
     database:
-      - name: "university_db"
+      - name: "diplomaflow"
         autoCreate: true
+    params:
+      search_path: "university_schema"

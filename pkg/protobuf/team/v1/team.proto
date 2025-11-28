@@ -32,7 +32,9 @@ message GetTeamRequest{
 message GetTeamResponse{
   Team team = 1;
 }
-message ListTeamsRequest{}
+message ListTeamsRequest{
+  int64 department_id = 1;
+}
 message ListTeamsResponse{
   repeated Team teams = 1;
 }
@@ -68,5 +70,10 @@ message ListAvailableUsersRequest{
   int64 department_id = 1;
 }
 message ListAvailableUsersResponse{
-  repeated int64 user_ids = 1;
+  repeated UserInfo users = 1;
+}
+
+message UserInfo{
+  int64 id = 1;
+  string email = 2;
 }

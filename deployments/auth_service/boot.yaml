@@ -7,10 +7,12 @@ grpc:
 postgres:
   - name: auth-conn
     enabled: true
-    addr: "auth_db:5432"
-    user: "auth_user"
-    pass: "auth_password"
+    addr: "main_postgres:5432"
+    user: "diplomaflow"
+    pass: "diplomaflow_pass"
     timezone: "Asia/Shanghai"
     database:
-      - name: "auth_db"
-        autoCreate: true
+      - name: "diplomaflow"
+        autoCreate: false
+    params:
+      search_path: "auth_schema"

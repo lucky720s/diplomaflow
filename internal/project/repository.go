@@ -3,97 +3,195 @@ package project
 import (
 	"context"
 	"fmt"
+	"log"
 	"os"
 	"time"
 
+	"github.com/lucky720s/diplomaflow/internal/project/service"
 	projectv1 "github.com/lucky720s/diplomaflow/pkg/protobuf/project/v1"
+	workflowv1 "github.com/lucky720s/diplomaflow/pkg/protobuf/workflow/v1"
 	rkpostgres "github.com/rookie-ninja/rk-db/postgres"
-	"google.golang.org/protobuf/types/known/fieldmaskpb"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 	"gorm.io/gorm"
 )
 
-type Project struct {
-	ID             int64 `gorm:"primaryKey"`
-	Topic          string
-	SupervisorID   int64
-	DepartmentID   int64 `gorm:"index"`
-	TeamID         int64
-	CurrentStageID int64
-	CompletedAt    *time.Time
-}
 type Repository interface {
-	CreateProject(ctx context.Context, p *Project) (*Project, error)
-	GetProjectByID(ctx context.Context, projectID int64) (*Project, error)
-	ListProjects(ctx context.Context, departmentID int64) ([]*Project, error)
-	UpdateProject(ctx context.Context, project *projectv1.Project, mask *fieldmaskpb.FieldMask) (*Project, error)
-	DeleteProject(ctx context.Context, projectID int64) error
-	UpdateProjectStage(ctx context.Context, projectID, stageID int64) error
-	CompleteProject(ctx context.Context, projectID int64) error
-}
-type repository struct {
-	db *gorm.DB
+	CreateProject(ctx context.Context, req *projectv1.CreateProjectRequest) (*Project, error)
+	GetProject(ctx context.Context, projectID int64) (*Project, error)
+	ListProjects(ctx context.Context, req *projectv1.ListProjectsRequest) ([]*Project, error)
+	PerformStateAction(ctx context.Context, req *projectv1.PerformStateActionRequest) error
 }
 
-func NewRepository() (Repository, error) {
+type repository struct {
+	db              *gorm.DB
+	workflowClient  workflowv1.WorkflowServiceClient
+	stateProcessors map[string]service.StateProcessor
+}
+
+func (Project) TableName() string          { return "project_schema.projects" }
+func (ProjectStateData) TableName() string { return "project_schema.project_state_data" }
+
+func NewRepository(wfClient workflowv1.WorkflowServiceClient) (Repository, error) {
 	pgEntry := rkpostgres.GetPostgresEntry("project-conn")
-	dbName := os.Getenv("PROJECT_DB_NAME")
+	dbName := os.Getenv("MAIN_POSTGRES_DB_NAME")
 	db := pgEntry.GetDB(dbName)
 	if db == nil {
-		panic("Database not found")
-	}
-	if err := db.AutoMigrate(&Project{}); err != nil {
-		return nil, fmt.Errorf("AutoMigrate Project Error: %v", err)
+		return nil, fmt.Errorf("Database '%s' not found", dbName)
 	}
 
-	return &repository{db: db}, nil
-}
-
-func (r *repository) CreateProject(ctx context.Context, p *Project) (*Project, error) {
-	res := r.db.WithContext(ctx).Create(p)
-	if res.Error != nil {
-		return nil, res.Error
+	if err := db.AutoMigrate(&Project{}, &ProjectStateData{}); err != nil {
+		return nil, fmt.Errorf("AutoMigrate error: %v", err)
 	}
-	return p, nil
+	processors := map[string]service.StateProcessor{
+		workflowv1.StateType_SUPERVISOR_SELECTION.String(): &service.SupervisorSelectionProcessor{},
+		workflowv1.StateType_DOCUMENT_UPLOAD.String():      &service.DocumentUploadProcessor{},
+	}
 
+	return &repository{db: db, workflowClient: wfClient, stateProcessors: processors}, nil
 }
-func (r *repository) GetProjectByID(ctx context.Context, projectID int64) (*Project, error) {
-	var project Project
-	err := r.db.WithContext(ctx).First(&project, projectID).Error
-	return &project, err
+
+func (r *repository) CreateProject(ctx context.Context, req *projectv1.CreateProjectRequest) (*Project, error) {
+	initialStateID := int64(1)
+
+	newProject := &Project{
+		Title:          req.GetTitle(),
+		WorkflowID:     req.GetWorkflowId(),
+		CurrentStateID: initialStateID,
+		Status:         "IN_PROGRESS",
+	}
+
+	err := r.db.WithContext(ctx).Transaction(func(tx *gorm.DB) error {
+		if err := tx.Create(newProject).Error; err != nil {
+			return err
+		}
+
+		initialStateInfo, err := r.workflowClient.GetState(ctx, &workflowv1.GetStateRequest{StateId: initialStateID})
+		if err != nil {
+			return err
+		}
+
+		var deadline *time.Time
+		if duration := initialStateInfo.GetDurationDays(); duration > 0 {
+			deadlineTime := time.Now().UTC().AddDate(0, 0, int(duration))
+			deadline = &deadlineTime
+		}
+
+		initialStateData := &ProjectStateData{
+			ProjectID:  newProject.ID,
+			StateID:    initialStateID,
+			Status:     "IN_PROGRESS",
+			Data:       []byte("{}"),
+			DeadlineAt: deadline,
+		}
+		return tx.Create(initialStateData).Error
+	})
+
+	return newProject, err
 }
-func (r *repository) ListProjects(ctx context.Context, departmentID int64) ([]*Project, error) {
+
+func (r *repository) GetProject(ctx context.Context, projectID int64) (*Project, error) {
+	var p Project
+	err := r.db.WithContext(ctx).First(&p, projectID).Error
+	return &p, err
+}
+func (r *repository) ListProjects(ctx context.Context, req *projectv1.ListProjectsRequest) ([]*Project, error) {
 	var projects []*Project
-	err := r.db.WithContext(ctx).Where("department_id=?", departmentID).Find(&projects).Error
-	return projects, err
-}
-func (r *repository) UpdateProject(ctx context.Context, project *projectv1.Project, mask *fieldmaskpb.FieldMask) (*Project, error) {
-	var existingProject Project
-	if err := r.db.WithContext(ctx).First(&existingProject, project.GetId()).Error; err != nil {
+	err := r.db.WithContext(ctx).Where("department_id = ?", req.GetDepartmentId()).Find(&projects).Error
+	if err != nil {
 		return nil, err
 	}
-	updateData := make(map[string]interface{})
-	for _, path := range mask.GetPaths() {
-		switch path {
-		case "topic":
-			updateData["topic"] = project.Topic
+	return projects, nil
+}
+func (r *repository) PerformStateAction(ctx context.Context, req *projectv1.PerformStateActionRequest) error {
+	return r.db.WithContext(ctx).Transaction(func(tx *gorm.DB) error {
+		var activeStateData ProjectStateData
+		if err := tx.Where("project_id = ? AND status = ?", req.GetProjectId(), "IN_PROGRESS").First(&activeStateData).Error; err != nil {
+			return status.Errorf(codes.NotFound, "no active state found for project %d: %v", req.GetProjectId(), err)
 		}
-	}
-	if len(updateData) > 0 {
-		if err := r.db.WithContext(ctx).Model(&existingProject).Updates(updateData).Error; err != nil {
-			return nil, err
+
+		stateInfo, err := r.workflowClient.GetState(ctx, &workflowv1.GetStateRequest{StateId: activeStateData.StateID})
+		if err != nil {
+			return status.Errorf(codes.FailedPrecondition, "cannot get state info: %v", err)
 		}
-	}
-	return &existingProject, nil
+
+		processor, ok := r.stateProcessors[stateInfo.GetType().String()]
+		if !ok {
+			return status.Errorf(codes.Internal, "no processor for state type %s", stateInfo.GetType().String())
+		}
+
+		payloadMap := req.GetPayload().AsMap()
+		newData, isCompleted, err := processor.ProcessAction(ctx, activeStateData.Data, req.GetAction(), payloadMap)
+		if err != nil {
+			return status.Errorf(codes.InvalidArgument, "action processing failed: %v", err)
+		}
+
+		activeStateData.Data = newData
+		if isCompleted {
+			activeStateData.Status = "COMPLETED"
+		}
+		if err := tx.Save(&activeStateData).Error; err != nil {
+			return err
+		}
+
+		if isCompleted {
+			r.processSideEffects(ctx, activeStateData.StateID, workflowv1.StateAction_ON_EXIT)
+
+			var project Project
+			if err := tx.First(&project, req.GetProjectId()).Error; err != nil {
+				return err
+			}
+
+			eventName := "STATE_COMPLETED"
+
+			nextState, err := r.workflowClient.GetNextState(ctx, &workflowv1.GetNextStateRequest{CurrentStateId: activeStateData.StateID, EventName: eventName})
+			if err != nil {
+				if status.Code(err) == codes.NotFound {
+					project.Status = "COMPLETED"
+					return tx.Save(&project).Error
+				}
+				return err
+			}
+
+			project.CurrentStateID = nextState.GetId()
+			if err := tx.Save(&project).Error; err != nil {
+				return err
+			}
+
+			var deadline *time.Time
+			if duration := nextState.GetDurationDays(); duration > 0 {
+				deadlineTime := time.Now().UTC().AddDate(0, 0, int(duration))
+				deadline = &deadlineTime
+			}
+
+			newStateData := &ProjectStateData{
+				ProjectID:  project.ID,
+				StateID:    project.CurrentStateID,
+				Status:     "IN_PROGRESS",
+				Data:       []byte("{}"),
+				DeadlineAt: deadline,
+			}
+			if err := tx.Create(&newStateData).Error; err != nil {
+				return err
+			}
+
+			r.processSideEffects(ctx, newStateData.StateID, workflowv1.StateAction_ON_ENTER)
+		}
+		return nil
+	})
 }
 
-func (r *repository) DeleteProject(ctx context.Context, projectID int64) error {
-	return r.db.WithContext(ctx).Delete(&Project{}, projectID).Error
-}
+func (r *repository) processSideEffects(ctx context.Context, stateID int64, trigger workflowv1.StateAction_Trigger) {
+	actions, err := r.workflowClient.ListStateActions(ctx, &workflowv1.ListStateActionsRequest{StateId: stateID})
+	if err != nil {
+		log.Printf("ERROR: failed to list side effects for state %d: %v", stateID, err)
+		return
+	}
 
-func (r *repository) UpdateProjectStage(ctx context.Context, projectID, stageID int64) error {
-	return r.db.WithContext(ctx).Model(&Project{}).Where("id = ?", projectID).Update("current_stage_id", stageID).Error
-}
-func (r *repository) CompleteProject(ctx context.Context, projectID int64) error {
-	now := time.Now()
-	return r.db.WithContext(ctx).Model(&Project{}).Where("id = ?", projectID).Update("completed_at", &now).Error
+	for _, action := range actions.GetActions() {
+		if action.GetTrigger() == trigger {
+			config := action.GetConfig().AsMap()
+			log.Printf("INFO: Executing side effect: Type=%s, Trigger=%s, Config=%v", action.GetType(), trigger, config)
+		}
+	}
 }

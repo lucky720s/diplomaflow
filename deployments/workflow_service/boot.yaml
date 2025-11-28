@@ -7,10 +7,12 @@ grpc:
 postgres:
   - name: workflow-conn
     enabled: true
-    addr: "workflow_db:5432"
-    user: "workflow_user"
-    pass: "workflow_password"
+    addr: "main_postgres:5432"
+    user: "diplomaflow"
+    pass: "diplomaflow_pass"
     timezone: "Asia/Shanghai"
     database:
-      - name: "workflow_db"
-        autoCreate: true
+      - name: "diplomaflow"
+        autoCreate: false
+    params:
+      search_path: "workflow_schema"

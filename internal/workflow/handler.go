@@ -2,12 +2,13 @@ package workflow
 
 import (
 	"context"
-	"errors"
+	"encoding/json"
 
 	workflowv1 "github.com/lucky720s/diplomaflow/pkg/protobuf/workflow/v1"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
-	"gorm.io/gorm"
+	"google.golang.org/protobuf/types/known/emptypb"
+	"google.golang.org/protobuf/types/known/structpb"
 )
 
 type Handler struct {
@@ -18,86 +19,84 @@ type Handler struct {
 func NewHandler(repo Repository) *Handler {
 	return &Handler{repo: repo}
 }
-func (h *Handler) CreateWorkflow(ctx context.Context, req *workflowv1.CreateWorkflowRequest) (*workflowv1.CreateWorkflowResponse, error) {
-	workflow, err := h.repo.CreateWorkflow(ctx, req.GetName(), req.GetDepartmentId())
+
+func (h *Handler) CreateWorkflow(ctx context.Context, req *workflowv1.CreateWorkflowRequest) (*workflowv1.Workflow, error) {
+	wf, err := h.repo.CreateWorkflow(ctx, req)
 	if err != nil {
-		return nil, status.Errorf(codes.Internal, "could not create workflow: %v", err)
+		return nil, status.Errorf(codes.Internal, "failed to create workflow: %v", err)
 	}
-	return &workflowv1.CreateWorkflowResponse{
-		Workflow: &workflowv1.Workflow{
-			Id:           workflow.ID,
-			Name:         workflow.Name,
-			DepartmentId: workflow.DepartmentID,
-		}}, nil
-}
-func (h *Handler) GetWorkflow(ctx context.Context, req *workflowv1.GetWorkflowRequest) (*workflowv1.GetWorkflowResponse, error) {
-	workflow, stages, err := h.repo.GetWorkflowByDepartmentID(ctx, req.GetDepartmentId())
-	if err != nil {
-		if errors.Is(err, gorm.ErrRecordNotFound) {
-			return nil, status.Errorf(codes.NotFound, "workflow not found")
-		}
-		return nil, status.Errorf(codes.Internal, "could not get workflow: %v", err)
-	}
-	resStages := make([]*workflowv1.Stage, len(stages))
-	for i, stage := range stages {
-		resStages[i] = &workflowv1.Stage{
-			Id:                stage.ID,
-			Name:              stage.Name,
-			WorkflowId:        workflow.ID,
-			Order:             stage.Order,
-			ResponsibleRoleId: stage.ResponsibleRoleID,
-			DeadlineDays:      stage.DeadlineDays}
-	}
-	resWorkflow := &workflowv1.Workflow{
-		Id:           workflow.ID,
-		Name:         workflow.Name,
-		DepartmentId: workflow.DepartmentID}
-	return &workflowv1.GetWorkflowResponse{Workflow: resWorkflow, Stages: resStages}, nil
+	return toProtoWorkflow(wf), nil
 }
 
-func (h *Handler) CreateStage(ctx context.Context, req *workflowv1.CreateStageRequest) (*workflowv1.CreateStageResponse, error) {
-	stage, err := h.repo.CreateStage(ctx, req.GetName(), req.GetWorkflowId(), req.GetOrder(), req.GetResponsibleRoleId(), req.GetDeadlineDays())
+func (h *Handler) CreateState(ctx context.Context, req *workflowv1.CreateStateRequest) (*workflowv1.State, error) {
+	st, err := h.repo.CreateState(ctx, req)
 	if err != nil {
-		return nil, status.Errorf(codes.Internal, "could not create stage: %v", err)
+		return nil, status.Errorf(codes.Internal, "failed to create state: %v", err)
 	}
-	return &workflowv1.CreateStageResponse{
-		Stage: &workflowv1.Stage{
-			Id:                stage.ID,
-			Name:              stage.Name,
-			WorkflowId:        stage.WorkflowID,
-			Order:             stage.Order,
-			ResponsibleRoleId: stage.ResponsibleRoleID,
-			DeadlineDays:      stage.DeadlineDays}}, nil
+	return toProtoState(st), nil
 }
-func (h *Handler) GetStage(ctx context.Context, req *workflowv1.GetStageRequest) (*workflowv1.GetStageResponse, error) {
-	stage, err := h.repo.GetStageByID(ctx, req.GetStageId())
+func (h *Handler) GetState(ctx context.Context, req *workflowv1.GetStateRequest) (*workflowv1.State, error) {
+	st, err := h.repo.GetState(ctx, req.GetStateId())
 	if err != nil {
-		if errors.Is(err, gorm.ErrRecordNotFound) {
-			return nil, status.Errorf(codes.NotFound, "stage not found")
-		}
-		return nil, status.Errorf(codes.Internal, "could not get stage: %v", err)
+		return nil, status.Errorf(codes.NotFound, "state not found: %v", err)
 	}
-	return &workflowv1.GetStageResponse{
-		Stage: &workflowv1.Stage{
-			Id:                stage.ID,
-			Name:              stage.Name,
-			WorkflowId:        stage.WorkflowID,
-			Order:             stage.Order,
-			ResponsibleRoleId: stage.ResponsibleRoleID,
-			DeadlineDays:      stage.DeadlineDays}}, nil
+	return toProtoState(st), nil
 }
-func (h *Handler) GetNextStage(ctx context.Context, req *workflowv1.GetNextStageRequest) (*workflowv1.GetNextStageResponse, error) {
-	currentStage, err := h.repo.GetStageByID(ctx, req.GetCurrentStageId())
+
+func (h *Handler) CreateTransition(ctx context.Context, req *workflowv1.CreateTransitionRequest) (*workflowv1.Transition, error) {
+	tr, err := h.repo.CreateTransition(ctx, req)
 	if err != nil {
-		return nil, status.Errorf(codes.Internal, "could not get next stage: %v", err)
+		return nil, status.Errorf(codes.Internal, "failed to create transition: %v", err)
 	}
-	nextStage, err := h.repo.GetNextStage(ctx, currentStage.WorkflowID, currentStage.Order)
+	return toProtoTransition(tr), nil
+}
+func (h *Handler) DeleteTransition(ctx context.Context, req *workflowv1.DeleteTransitionRequest) (*emptypb.Empty, error) {
+	if err := h.repo.DeleteTransition(ctx, req.GetId()); err != nil {
+		return nil, status.Errorf(codes.Internal, "failed to delete transition: %v", err)
+	}
+	return &emptypb.Empty{}, nil
+}
+
+func (h *Handler) CreateStateAction(ctx context.Context, req *workflowv1.CreateStateActionRequest) (*workflowv1.StateAction, error) {
+	sa, err := h.repo.CreateStateAction(ctx, req)
 	if err != nil {
-		if errors.Is(err, gorm.ErrRecordNotFound) {
-			return nil, status.Errorf(codes.NotFound, "next stage not found")
-		}
-		return nil, status.Errorf(codes.Internal, "could not get next stage: %v", err)
+		return nil, status.Errorf(codes.Internal, "failed to create action: %v", err)
 	}
-	return &workflowv1.GetNextStageResponse{
-		NextStageId: nextStage.ID}, nil
+	return toProtoStateAction(sa), nil
+}
+func (h *Handler) ListStateActions(ctx context.Context, req *workflowv1.ListStateActionsRequest) (*workflowv1.ListStateActionsResponse, error) {
+	actions, err := h.repo.ListStateActions(ctx, req.GetStateId())
+	if err != nil {
+		return nil, status.Errorf(codes.Internal, "failed to list actions: %v", err)
+	}
+	protoActions := make([]*workflowv1.StateAction, len(actions))
+	for i, action := range actions {
+		protoActions[i] = toProtoStateAction(action)
+	}
+	return &workflowv1.ListStateActionsResponse{Actions: protoActions}, nil
+}
+
+func (h *Handler) GetNextState(ctx context.Context, req *workflowv1.GetNextStateRequest) (*workflowv1.State, error) {
+	state, err := h.repo.GetNextState(ctx, req.GetCurrentStateId(), req.GetEventName())
+	if err != nil {
+		return nil, status.Errorf(codes.NotFound, "no transition found: %v", err)
+	}
+	return toProtoState(state), nil
+}
+
+func toProtoWorkflow(wf *Workflow) *workflowv1.Workflow {
+	return &workflowv1.Workflow{Id: wf.ID, Name: wf.Name, DepartmentId: wf.DepartmentID}
+}
+func toProtoState(st *State) *workflowv1.State {
+	cfg, _ := structpb.NewStruct(nil)
+	_ = json.Unmarshal(st.Config, &cfg)
+	return &workflowv1.State{Id: st.ID, WorkflowId: st.WorkflowID, Name: st.Name, Description: st.Description, Type: workflowv1.StateType(workflowv1.StateType_value[st.Type]), Config: cfg, DurationDays: st.DurationDays}
+}
+func toProtoTransition(tr *Transition) *workflowv1.Transition {
+	return &workflowv1.Transition{Id: tr.ID, WorkflowId: tr.WorkflowID, EventName: tr.EventName, FromStateId: tr.FromStateID, ToStateId: tr.ToStateID}
+}
+func toProtoStateAction(sa *StateAction) *workflowv1.StateAction {
+	cfg, _ := structpb.NewStruct(nil)
+	_ = json.Unmarshal(sa.Config, &cfg)
+	return &workflowv1.StateAction{Id: sa.ID, StateId: sa.StateID, Type: workflowv1.StateAction_ActionType(workflowv1.StateAction_ActionType_value[sa.Type]), Trigger: workflowv1.StateAction_Trigger(workflowv1.StateAction_Trigger_value[sa.Trigger]), Config: cfg}
 }

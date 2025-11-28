@@ -7,10 +7,12 @@ grpc:
 postgres:
   - name: project-conn
     enabled: true
-    addr: "project_db:5432"
-    user: "project_user"
-    pass: "project_password"
+    addr: "main_postgres:5432"
+    user: "diplomaflow"
+    pass: "diplomaflow_pass"
     timezone: "Asia/Shanghai"
     database:
-      - name: "project_db"
-        autoCreate: true
+      - name: "diplomaflow"
+        autoCreate: false
+    params:
+      search_path: "project_schema"

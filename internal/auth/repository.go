@@ -24,21 +24,28 @@ type RoleAssignment struct {
 }
 
 type Repository interface {
-	CreateUser(ctx context.Context, email, password string, universityID int64) (*User, error)
+	CreateUser(ctx context.Context, email, password string, universityID, departmentID int64) (*User, error)
 	GetUserByEmail(ctx context.Context, email string) (*User, error)
 	GetUserByID(ctx context.Context, id int64) (*User, error)
 	AssignRole(ctx context.Context, userID, roleID int64) error
 	GetUserRoleIDs(ctx context.Context, userID int64) ([]int64, error)
 	SetDepartment(ctx context.Context, userID, departmentID int64) error
+	GetUsersByDepartment(ctx context.Context, departmentID int64) ([]*User, error)
 }
 
 type repository struct {
 	db *gorm.DB
 }
 
+func (User) TableName() string {
+	return "auth_schema.users"
+}
+func (RoleAssignment) TableName() string {
+	return "auth_schema.role_assignments"
+}
 func NewRepository() (Repository, error) {
 	pgEntry := rkpostgres.GetPostgresEntry("auth-conn")
-	dbName := os.Getenv("AUTH_DB_NAME")
+	dbName := os.Getenv("MAIN_POSTGRES_DB_NAME")
 	db := pgEntry.GetDB(dbName)
 	if db == nil {
 		panic("Database not found")
@@ -49,7 +56,7 @@ func NewRepository() (Repository, error) {
 	return &repository{db: db}, nil
 }
 
-func (r *repository) CreateUser(ctx context.Context, email, password string, universityID int64) (*User, error) {
+func (r *repository) CreateUser(ctx context.Context, email, password string, universityID, departmentID int64) (*User, error) {
 	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
 	if err != nil {
 		return nil, err
@@ -58,6 +65,7 @@ func (r *repository) CreateUser(ctx context.Context, email, password string, uni
 		Email:        email,
 		PasswordHash: string(hashedPassword),
 		UniversityID: universityID,
+		DepartmentID: departmentID,
 	}
 	res := r.db.WithContext(ctx).Create(user)
 	return user, res.Error
@@ -94,4 +102,10 @@ func (r *repository) GetUserRoleIDs(ctx context.Context, userID int64) ([]int64,
 }
 func (r *repository) SetDepartment(ctx context.Context, userID, departmentID int64) error {
 	return r.db.WithContext(ctx).Model(&User{}).Where("id = ?", userID).Update("department_id", departmentID).Error
+}
+
+func (r *repository) GetUsersByDepartment(ctx context.Context, departmentID int64) ([]*User, error) {
+	var users []*User
+	res := r.db.WithContext(ctx).Where("department_id = ?", departmentID).Find(&users)
+	return users, res.Error
 }

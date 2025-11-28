@@ -19,11 +19,12 @@ import (
 const _ = grpc.SupportPackageIsVersion7
 
 const (
-	AuthService_Register_FullMethodName      = "/auth.v1.AuthService/Register"
-	AuthService_Login_FullMethodName         = "/auth.v1.AuthService/Login"
-	AuthService_GetUser_FullMethodName       = "/auth.v1.AuthService/GetUser"
-	AuthService_AssignRole_FullMethodName    = "/auth.v1.AuthService/AssignRole"
-	AuthService_SetDepartment_FullMethodName = "/auth.v1.AuthService/SetDepartment"
+	AuthService_Register_FullMethodName              = "/auth.v1.AuthService/Register"
+	AuthService_Login_FullMethodName                 = "/auth.v1.AuthService/Login"
+	AuthService_GetUser_FullMethodName               = "/auth.v1.AuthService/GetUser"
+	AuthService_AssignRole_FullMethodName            = "/auth.v1.AuthService/AssignRole"
+	AuthService_SetDepartment_FullMethodName         = "/auth.v1.AuthService/SetDepartment"
+	AuthService_ListUsersByDepartment_FullMethodName = "/auth.v1.AuthService/ListUsersByDepartment"
 )
 
 // AuthServiceClient is the client API for AuthService service.
@@ -35,6 +36,7 @@ type AuthServiceClient interface {
 	GetUser(ctx context.Context, in *GetUserRequest, opts ...grpc.CallOption) (*GetUserResponse, error)
 	AssignRole(ctx context.Context, in *AssignRoleRequest, opts ...grpc.CallOption) (*AssignRoleResponse, error)
 	SetDepartment(ctx context.Context, in *SetDepartmentRequest, opts ...grpc.CallOption) (*SetDepartmentResponse, error)
+	ListUsersByDepartment(ctx context.Context, in *ListUsersByDepartmentRequest, opts ...grpc.CallOption) (*ListUsersByDepartmentResponse, error)
 }
 
 type authServiceClient struct {
@@ -90,6 +92,15 @@ func (c *authServiceClient) SetDepartment(ctx context.Context, in *SetDepartment
 	return out, nil
 }
 
+func (c *authServiceClient) ListUsersByDepartment(ctx context.Context, in *ListUsersByDepartmentRequest, opts ...grpc.CallOption) (*ListUsersByDepartmentResponse, error) {
+	out := new(ListUsersByDepartmentResponse)
+	err := c.cc.Invoke(ctx, AuthService_ListUsersByDepartment_FullMethodName, in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // AuthServiceServer is the server API for AuthService service.
 // All implementations must embed UnimplementedAuthServiceServer
 // for forward compatibility
@@ -99,6 +110,7 @@ type AuthServiceServer interface {
 	GetUser(context.Context, *GetUserRequest) (*GetUserResponse, error)
 	AssignRole(context.Context, *AssignRoleRequest) (*AssignRoleResponse, error)
 	SetDepartment(context.Context, *SetDepartmentRequest) (*SetDepartmentResponse, error)
+	ListUsersByDepartment(context.Context, *ListUsersByDepartmentRequest) (*ListUsersByDepartmentResponse, error)
 	mustEmbedUnimplementedAuthServiceServer()
 }
 
@@ -120,6 +132,9 @@ func (UnimplementedAuthServiceServer) AssignRole(context.Context, *AssignRoleReq
 }
 func (UnimplementedAuthServiceServer) SetDepartment(context.Context, *SetDepartmentRequest) (*SetDepartmentResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method SetDepartment not implemented")
+}
+func (UnimplementedAuthServiceServer) ListUsersByDepartment(context.Context, *ListUsersByDepartmentRequest) (*ListUsersByDepartmentResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method ListUsersByDepartment not implemented")
 }
 func (UnimplementedAuthServiceServer) mustEmbedUnimplementedAuthServiceServer() {}
 
@@ -224,6 +239,24 @@ func _AuthService_SetDepartment_Handler(srv interface{}, ctx context.Context, de
 	return interceptor(ctx, in, info, handler)
 }
 
+func _AuthService_ListUsersByDepartment_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(ListUsersByDepartmentRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(AuthServiceServer).ListUsersByDepartment(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: AuthService_ListUsersByDepartment_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(AuthServiceServer).ListUsersByDepartment(ctx, req.(*ListUsersByDepartmentRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // AuthService_ServiceDesc is the grpc.ServiceDesc for AuthService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -250,6 +283,10 @@ var AuthService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "SetDepartment",
 			Handler:    _AuthService_SetDepartment_Handler,
+		},
+		{
+			MethodName: "ListUsersByDepartment",
+			Handler:    _AuthService_ListUsersByDepartment_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

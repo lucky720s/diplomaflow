@@ -32,11 +32,7 @@ func NewHandler(repo Repository, universityClient universityv1.UniversityService
 }
 
 func (h *Handler) Register(ctx context.Context, req *authv1.RegisterRequest) (*authv1.RegisterResponse, error) {
-	_, err := h.universityClient.GetUniversity(ctx, &universityv1.GetUniversityRequest{UniversityId: req.GetUniversityId()})
-	if err != nil {
-		return nil, status.Errorf(codes.FailedPrecondition, "University ID does not exist")
-	}
-	user, err := h.repo.CreateUser(ctx, req.GetEmail(), req.GetPassword(), req.GetUniversityId())
+	user, err := h.repo.CreateUser(ctx, req.GetEmail(), req.GetPassword(), req.GetUniversityId(), req.GetDepartmentId())
 	if err != nil {
 		return nil, status.Errorf(codes.FailedPrecondition, "User does not exist")
 	}
@@ -58,6 +54,7 @@ func (h *Handler) Login(ctx context.Context, req *authv1.LoginRequest) (*authv1.
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
 		"sub":   user.ID,
 		"uid":   user.UniversityID,
+		"did":   user.DepartmentID,
 		"roles": rolesIDs,
 		"exp":   time.Now().Add(time.Hour * 24).Unix(),
 	})
@@ -98,4 +95,18 @@ func (h *Handler) AssignRole(ctx context.Context, req *authv1.AssignRoleRequest)
 		return nil, status.Errorf(codes.FailedPrecondition, "failed to assign role")
 	}
 	return &authv1.AssignRoleResponse{Success: true}, nil
+}
+func (h *Handler) ListUsersByDepartment(ctx context.Context, req *authv1.ListUsersByDepartmentRequest) (*authv1.ListUsersByDepartmentResponse, error) {
+	users, err := h.repo.GetUsersByDepartment(ctx, req.GetDepartmentId())
+	if err != nil {
+		return nil, status.Errorf(codes.Internal, "failed to list users")
+	}
+	var pbUsers []*authv1.UserInfo
+	for _, user := range users {
+		pbUsers = append(pbUsers, &authv1.UserInfo{
+			Id:    user.ID,
+			Email: user.Email,
+		})
+	}
+	return &authv1.ListUsersByDepartmentResponse{Users: pbUsers}, nil
 }

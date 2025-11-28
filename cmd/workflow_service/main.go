@@ -16,26 +16,29 @@ func main() {
 	boot := rkboot.NewBoot()
 	grpcEntry := rkgrpc.GetGrpcEntry("workflow-service")
 	if grpcEntry == nil {
-		panic(fmt.Errorf("failed to get gRPC entry"))
+		panic(fmt.Errorf("failed to get gRPC entry 'workflow-service'"))
 	}
+
 	grpcEntry.AddRegFuncGrpc(func(server *grpc.Server) {
 		var repo workflow.Repository
 		var err error
 		for i := 0; i < 10; i++ {
 			repo, err = workflow.NewRepository()
 			if err == nil {
-				fmt.Println("success connect to db")
+				fmt.Println("success connect to db for workflow_service")
 				break
 			}
-			fmt.Printf("waiting to connect db attmep %d. Error %v\n", i+1, err)
+			fmt.Printf("waiting to connect db attempt %d. Error %v\n", i+1, err)
 			time.Sleep(2 * time.Second)
 		}
 		if err != nil {
-			panic(fmt.Errorf("failed to init repo: %v", err))
+			panic(fmt.Errorf("failed to init repo for workflow_service: %v", err))
 		}
+
 		handler := workflow.NewHandler(repo)
 		workflowv1.RegisterWorkflowServiceServer(server, handler)
 	})
+
 	boot.Bootstrap(context.Background())
 	boot.WaitForShutdownSig(context.Background())
 }

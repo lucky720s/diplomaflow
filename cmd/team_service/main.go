@@ -3,13 +3,16 @@ package main
 import (
 	"context"
 	"fmt"
+	"log"
 	"time"
 
 	"github.com/lucky720s/diplomaflow/internal/team"
+	authv1 "github.com/lucky720s/diplomaflow/pkg/protobuf/auth/v1"
 	teamv1 "github.com/lucky720s/diplomaflow/pkg/protobuf/team/v1"
 	rkboot "github.com/rookie-ninja/rk-boot/v2"
 	rkgrpc "github.com/rookie-ninja/rk-grpc/v2/boot"
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/credentials/insecure"
 )
 
 func main() {
@@ -19,8 +22,14 @@ func main() {
 		panic(fmt.Errorf("failed to get gRPC entry"))
 	}
 	grpcEntry.AddRegFuncGrpc(func(server *grpc.Server) {
+		authConn, err := grpc.Dial("auth_service:8082",
+			grpc.WithTransportCredentials(insecure.NewCredentials()))
+		if err != nil {
+			log.Fatalf("did not connect: %v", err)
+		}
+		defer authConn.Close()
+		authClient := authv1.NewAuthServiceClient(authConn)
 		var repo team.Repository
-		var err error
 		for i := 0; i < 10; i++ {
 			repo, err = team.NewRepository()
 			if err == nil {
@@ -33,7 +42,7 @@ func main() {
 		if err != nil {
 			panic(fmt.Errorf("failed to init repo: %v", err))
 		}
-		handler := team.NewHandler(repo)
+		handler := team.NewHandler(repo, authClient)
 		teamv1.RegisterTeamServiceServer(server, handler)
 	})
 	boot.Bootstrap(context.Background())

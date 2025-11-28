@@ -38,9 +38,15 @@ type repository struct {
 	db *gorm.DB
 }
 
+func (University) TableName() string {
+	return "university_schema.universities"
+}
+func (Department) TableName() string {
+	return "university_schema.departments"
+}
 func NewRepository() (Repository, error) {
 	pgEntry := rkpostgres.GetPostgresEntry("university-conn")
-	dbName := os.Getenv("UNIVERSITY_DB_NAME")
+	dbName := os.Getenv("MAIN_POSTGRES_DB_NAME")
 	db := pgEntry.GetDB(dbName)
 	if db == nil {
 		panic("Database not found")
@@ -92,7 +98,7 @@ func (r *repository) UpdateUniversity(ctx context.Context, university *universit
 		}
 	}
 	if len(updateData) > 0 {
-		if err := r.db.WithContext(ctx).Model(&existingUniversity).Association("Update").Error; err != nil {
+		if err := r.db.WithContext(ctx).Model(&existingUniversity).Updates(updateData).Error; err != nil {
 			return nil, err
 		}
 	}
@@ -100,10 +106,10 @@ func (r *repository) UpdateUniversity(ctx context.Context, university *universit
 }
 func (r *repository) DeleteUniversity(ctx context.Context, universityID int64) error {
 	return r.db.WithContext(ctx).Transaction(func(tx *gorm.DB) error {
-		if err := tx.Where("university_id=?", universityID).Delete(&University{}).Error; err != nil {
+		if err := tx.Where("university_id = ?", universityID).Delete(&Department{}).Error; err != nil {
 			return err
 		}
-		if err := tx.Delete(&University{}).Error; err != nil {
+		if err := tx.Where("id = ?", universityID).Delete(&University{}).Error; err != nil {
 			return err
 		}
 		return nil
@@ -127,7 +133,7 @@ func (r *repository) GetDepartmentByID(ctx context.Context, departmentID int64) 
 }
 func (r *repository) ListDepartments(ctx context.Context, universityID int64) ([]*Department, error) {
 	var departments []*Department
-	err := r.db.WithContext(ctx).Find(&departments).Error
+	err := r.db.WithContext(ctx).Where("university_id = ?", universityID).Find(&departments).Error
 	if err != nil {
 		return nil, err
 	}
@@ -146,12 +152,12 @@ func (r *repository) UpdateDepartment(ctx context.Context, department *universit
 		}
 	}
 	if len(updateData) > 0 {
-		if err := r.db.WithContext(ctx).Model(&existingDepartment).Association("Update").Error; err != nil {
+		if err := r.db.WithContext(ctx).Model(&existingDepartment).Updates(updateData).Error; err != nil {
 			return nil, err
 		}
 	}
 	return &existingDepartment, nil
 }
 func (r *repository) DeleteDepartment(ctx context.Context, departmentID int64) error {
-	return r.db.WithContext(ctx).Delete(&Department{}).Error
+	return r.db.WithContext(ctx).Where("id = ?", departmentID).Delete(&Department{}).Error
 }

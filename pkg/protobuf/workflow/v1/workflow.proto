@@ -1,61 +1,110 @@
 syntax = "proto3";
+
 package workflow.v1;
+
+import "google/protobuf/struct.proto";
+import "google/protobuf/empty.proto";
+
 option go_package = "github.com/lucky720s/diplomaflow/pkg/protobuf/workflow/v1";
 
-service WorkflowService{
-  rpc CreateWorkflow(CreateWorkflowRequest) returns (CreateWorkflowResponse);
-  rpc GetWorkflow(GetWorkflowRequest) returns (GetWorkflowResponse);
-  rpc CreateStage(CreateStageRequest) returns (CreateStageResponse);
-  rpc GetStage(GetStageRequest) returns (GetStageResponse);
-  rpc GetNextStage(GetNextStageRequest) returns(GetNextStageResponse);
+enum StateType {
+  STATE_TYPE_UNSPECIFIED = 0;
+  TEAM_FORMATION = 1;
+  SUPERVISOR_SELECTION = 2;
+  DOCUMENT_UPLOAD = 3;
+  FORM_FILLING = 4;
+  EXTERNAL_CHECK = 5;
+  APPROVAL = 6;
 }
 
-message Workflow{
+message StateAction {
+  enum ActionType {
+    ACTION_TYPE_UNSPECIFIED = 0;
+    SEND_NOTIFICATION = 1;
+    ASSIGN_TASK = 2;
+    CALL_WEBHOOK = 3;
+  }
+  enum Trigger {
+    TRIGGER_UNSPECIFIED = 0;
+    ON_ENTER = 1;
+    ON_EXIT = 2;
+    ON_DEADLINE = 3;
+  }
+
+  int64 id = 1;
+  int64 state_id = 2;
+  ActionType type = 3;
+  Trigger trigger = 4;
+  google.protobuf.Struct config = 5;
+}
+
+message Workflow {
   int64 id = 1;
   string name = 2;
   int64 department_id = 3;
 }
-message Stage{
+
+message State {
   int64 id = 1;
-  string name = 2;
-  int64 workflow_id = 3;
-  int64 order = 4;
-  int64 responsible_role_id = 5;
-  int64 deadline_days = 6;
-}
-message CreateWorkflowRequest{
-  string name = 1;
-  int64 department_id = 2;
-}
-message CreateWorkflowResponse{
-  Workflow workflow = 1;
-}
-message GetWorkflowRequest{
-  int64 department_id = 1;
-}
-message GetWorkflowResponse{
-  Workflow workflow = 1;
-  repeated Stage stages = 2;
-}
-message CreateStageRequest{
-  string name = 1;
   int64 workflow_id = 2;
-  int64 order = 3;
-  int64 responsible_role_id = 4;
-  int64 deadline_days = 5;
+  string name = 3;
+  string description = 4;
+  StateType type = 5;
+  google.protobuf.Struct config = 6;
+  int32 duration_days = 7;
 }
-message CreateStageResponse{
-  Stage stage = 1;
+
+message Transition {
+  int64 id = 1;
+  int64 workflow_id = 2;
+  string event_name = 3;
+  int64 from_state_id = 4;
+  int64 to_state_id = 5;
 }
-message GetStageRequest{
-  int64 stage_id = 1;
+
+service WorkflowService {
+  rpc CreateWorkflow(CreateWorkflowRequest) returns (Workflow);
+  rpc GetWorkflow(GetWorkflowRequest) returns (Workflow);
+  rpc ListWorkflows(ListWorkflowsRequest) returns (ListWorkflowsResponse);
+  rpc UpdateWorkflow(UpdateWorkflowRequest) returns (Workflow);
+  rpc DeleteWorkflow(DeleteWorkflowRequest) returns (google.protobuf.Empty);
+
+  rpc CreateState(CreateStateRequest) returns (State);
+  rpc GetState(GetStateRequest) returns (State);
+  rpc ListStates(ListStatesRequest) returns (ListStatesResponse);
+  rpc UpdateState(UpdateStateRequest) returns (State);
+  rpc DeleteState(DeleteStateRequest) returns (google.protobuf.Empty);
+
+  rpc CreateTransition(CreateTransitionRequest) returns (Transition);
+  rpc DeleteTransition(DeleteTransitionRequest) returns (google.protobuf.Empty);
+
+  rpc CreateStateAction(CreateStateActionRequest) returns (StateAction);
+  rpc ListStateActions(ListStateActionsRequest) returns (ListStateActionsResponse);
+  rpc DeleteStateAction(DeleteStateActionRequest) returns (google.protobuf.Empty);
+
+  rpc GetNextState(GetNextStateRequest) returns (State);
 }
-message GetStageResponse{
-  Stage stage = 1;
-}
-message GetNextStageRequest{
-  int64 current_stage_id = 1;
-}
-message GetNextStageResponse{
-  int64 next_stage_id = 1;
-}
+
+message CreateWorkflowRequest { string name = 1; int64 department_id = 2; }
+message GetWorkflowRequest { int64 workflow_id = 1; }
+message ListWorkflowsRequest { int64 department_id = 1; }
+message ListWorkflowsResponse { repeated Workflow workflows = 1; }
+message UpdateWorkflowRequest { int64 id = 1; string name = 2; }
+message DeleteWorkflowRequest { int64 id = 1; }
+
+message CreateStateRequest { int64 workflow_id = 1; string name = 2; string description = 3; StateType type = 4; google.protobuf.Struct config = 5; int32 duration_days = 6; }
+message GetStateRequest { int64 state_id = 1; }
+message ListStatesRequest { int64 workflow_id = 1; }
+message ListStatesResponse { repeated State states = 1; }
+message UpdateStateRequest { int64 id = 1; string name = 2; string description = 3; google.protobuf.Struct config = 4; int32 duration_days = 5; }
+message DeleteStateRequest { int64 id = 1; }
+
+message CreateTransitionRequest { int64 workflow_id = 1; string event_name = 2; int64 from_state_id = 3; int64 to_state_id = 4; }
+message DeleteTransitionRequest { int64 id = 1; }
+
+message CreateStateActionRequest { int64 state_id = 1; StateAction.ActionType type = 2; StateAction.Trigger trigger = 3; google.protobuf.Struct config = 4; }
+message ListStateActionsRequest { int64 state_id = 1; }
+message ListStateActionsResponse { repeated StateAction actions = 1; }
+message DeleteStateActionRequest { int64 id = 1; }
+
+message GetNextStateRequest { int64 current_state_id = 1; string event_name = 2; }

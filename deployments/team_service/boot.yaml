@@ -7,10 +7,12 @@ grpc:
 postgres:
   - name: team-conn
     enabled: true
-    addr: "team_db:5432"
-    user: "team_user"
-    pass: "team_password"
+    addr: "main_postgres:5432"
+    user: "diplomaflow"
+    pass: "diplomaflow_pass"
     timezone: "Asia/Shanghai"
     database:
-      - name: "team_db"
-        autoCreate: true
+      - name: "diplomaflow"
+        autoCreate: false
+    params:
+      search_path: "team_schema"

@@ -1,0 +1,36 @@
+syntax = "proto3";
+
+package file;
+
+option go_package = "gen/file";
+
+service FileService {
+  rpc UploadFile(stream UploadFileRequest) returns (UploadFileResponse);
+  rpc GetFileInfo(GetFileInfoRequest) returns (GetFileInfoResponse);
+}
+
+message UploadFileRequest {
+  oneof data {
+    FileInfo info = 1;
+    bytes chunk = 2;
+  }
+}
+
+message FileInfo {
+  string file_type = 1;
+}
+
+message UploadFileResponse {
+  string id = 1;
+  uint32 size = 2;
+}
+
+message GetFileInfoRequest {
+  string id = 1;
+}
+
+message GetFileInfoResponse {
+  string id = 1;
+  string name = 2;
+  string download_url = 3;
+}

@@ -21,6 +21,7 @@ import (
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
 	"google.golang.org/grpc/metadata"
+	"google.golang.org/protobuf/types/known/structpb"
 )
 
 type UserInfo struct {
@@ -28,12 +29,17 @@ type UserInfo struct {
 	Email string `json:"email"`
 }
 type EnrichedProjectResponse struct {
-	ID           int64     `json:"id"`
-	Topic        string    `json:"topic"`
-	Supervisor   *UserInfo `json:"supervisor"`
-	TeamID       int64     `json:"team_id,omitempty"`
-	DepartmentID int64     `json:"department_id"`
-	Status       string    `json:"status"`
+	ID             int64      `json:"id"`
+	Title          string     `json:"title"`
+	WorkflowID     int64      `json:"workflow_id"`
+	CurrentStateID int64      `json:"current_state_id"`
+	CurrentState   *StateInfo `json:"current_state"`
+	Status         string     `json:"status"`
+}
+
+type StateInfo struct {
+	Name        string `json:"name"`
+	Description string `json:"description"`
 }
 
 type ApiGateWay struct {
@@ -46,12 +52,39 @@ type ApiGateWay struct {
 }
 
 func main() {
-	authConn, _ := grpc.Dial("auth_service:8082", grpc.WithTransportCredentials(insecure.NewCredentials()))
-	projectConn, _ := grpc.Dial("project_service:8083", grpc.WithTransportCredentials(insecure.NewCredentials()))
-	universityConn, _ := grpc.Dial("university_service:8081", grpc.WithTransportCredentials(insecure.NewCredentials()))
-	teamConn, _ := grpc.Dial("team_service:8084", grpc.WithTransportCredentials(insecure.NewCredentials()))
-	workflowConn, _ := grpc.Dial("workflow_service:8085", grpc.WithTransportCredentials(insecure.NewCredentials()))
-	roleConn, _ := grpc.Dial("role_service:8086", grpc.WithTransportCredentials(insecure.NewCredentials()))
+	authAddr := os.Getenv("AUTH_SERVICE_ADDR")
+	projectAddr := os.Getenv("PROJECT_SERVICE_ADDR")
+	universityAddr := os.Getenv("UNIVERSITY_SERVICE_ADDR")
+	teamAddr := os.Getenv("TEAM_SERVICE_ADDR")
+	workflowAddr := os.Getenv("WORKFLOW_SERVICE_ADDR")
+	roleAddr := os.Getenv("ROLE_SERVICE_ADDR")
+
+	if authAddr == "" {
+		authAddr = "auth_service:8082"
+	}
+	if projectAddr == "" {
+		projectAddr = "project_service:8083"
+	}
+	if universityAddr == "" {
+		universityAddr = "university_service:8081"
+	}
+	if teamAddr == "" {
+		teamAddr = "team_service:8084"
+	}
+	if workflowAddr == "" {
+		workflowAddr = "workflow_service:8085"
+	}
+	if roleAddr == "" {
+		roleAddr = "role_service:8086"
+	}
+
+	authConn, _ := grpc.Dial(authAddr, grpc.WithTransportCredentials(insecure.NewCredentials()))
+	projectConn, _ := grpc.Dial(projectAddr, grpc.WithTransportCredentials(insecure.NewCredentials()))
+	universityConn, _ := grpc.Dial(universityAddr, grpc.WithTransportCredentials(insecure.NewCredentials()))
+	teamConn, _ := grpc.Dial(teamAddr, grpc.WithTransportCredentials(insecure.NewCredentials()))
+	workflowConn, _ := grpc.Dial(workflowAddr, grpc.WithTransportCredentials(insecure.NewCredentials()))
+	roleConn, _ := grpc.Dial(roleAddr, grpc.WithTransportCredentials(insecure.NewCredentials()))
+
 	gateway := &ApiGateWay{
 		authClient:       authv1.NewAuthServiceClient(authConn),
 		projectClient:    projectv1.NewProjectServiceClient(projectConn),
@@ -68,7 +101,7 @@ func main() {
 		auth.POST("/login", gateway.Login)
 
 		admin := v1.Group("/admin")
-		//admin.Use(AuthMiddleware())
+		admin.Use(AuthMiddleware())
 		admin.POST("/universities", gateway.CreateUniversity)
 		admin.GET("/universities", gateway.ListUniversities)
 		admin.GET("/universities/:id", gateway.GetUniversity)
@@ -81,23 +114,19 @@ func main() {
 		admin.DELETE("/departments/:id", gateway.DeleteDepartment)
 
 		admin.POST("/workflows", gateway.CreateWorkflow)
-		admin.POST("/stages", gateway.CreateStage)
+		admin.POST("/states", gateway.CreateState)
 		admin.POST("/roles", gateway.CreateRole)
 		admin.POST("/assign-role", gateway.AssignRole)
 
 		projects := v1.Group("/projects")
-		//projects.Use(AuthMiddleware())
-		projects.POST("", gateway.ProposeProject)
+		projects.Use(AuthMiddleware())
+		projects.POST("", gateway.CreateProject)
 		projects.GET("", gateway.ListProjects)
 		projects.GET("/:id", gateway.GetProject)
-		projects.PATCH("/:id", gateway.UpdateProject)
-		projects.DELETE("/:id", gateway.DeleteProject)
-		projects.POST("/:id/accept-supervision", gateway.AcceptSupervision)
-		projects.POST(
-			"/:id/advance-stage", gateway.AdvanceProjectStage)
+		projects.POST("/:id/actions", gateway.PerformProjectAction)
 
 		teams := v1.Group("/teams")
-		//teams.Use(AuthMiddleware())
+		teams.Use(AuthMiddleware())
 		teams.POST("", gateway.CreateTeam)
 		teams.GET("", gateway.ListTeams)
 		teams.GET("/:id", gateway.GetTeam)
@@ -316,33 +345,6 @@ func (g *ApiGateWay) DeleteDepartment(c *gin.Context) {
 	c.JSON(http.StatusNoContent, nil)
 }
 
-func (g *ApiGateWay) CreateWorkflow(c *gin.Context) {
-	var req workflowv1.CreateWorkflowRequest
-	if err := c.ShouldBindJSON(&req); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
-		return
-	}
-	res, err := g.workflowClient.CreateWorkflow(context.Background(), &req)
-	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
-		return
-	}
-	c.JSON(http.StatusCreated, res)
-}
-
-func (g *ApiGateWay) CreateStage(c *gin.Context) {
-	var req workflowv1.CreateStageRequest
-	if err := c.ShouldBindJSON(&req); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
-	}
-	res, err := g.workflowClient.CreateStage(context.Background(), &req)
-	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
-		return
-	}
-	c.JSON(http.StatusCreated, res)
-}
-
 func (g *ApiGateWay) CreateRole(c *gin.Context) {
 	var req rolev1.CreateRoleRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
@@ -381,7 +383,7 @@ func (g *ApiGateWay) CreateTeam(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
-	departmentID := c.MustGet("departmentID").(int64)
+	departmentID := c.MustGet("departmentId").(int64)
 	req := &teamv1.CreateTeamRequest{
 		Name:         reqBody.Name,
 		DepartmentId: departmentID,
@@ -503,145 +505,7 @@ func (g *ApiGateWay) RemoveMember(c *gin.Context) {
 	}
 	c.Status(http.StatusNoContent)
 }
-func (g *ApiGateWay) ProposeProject(c *gin.Context) {
-	var req projectv1.ProposeProjectRequest
-	if err := c.ShouldBindJSON(&req); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
-		return
-	}
-	ctx := newContextWithAuth(c)
-	res, err := g.projectClient.ProposeProject(ctx, &req)
-	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
-		return
-	}
-	c.JSON(http.StatusCreated, res)
-}
-func (g *ApiGateWay) AcceptSupervision(c *gin.Context) {
-	id := c.Param("id")
-	projectID, err := strconv.ParseUint(id, 10, 64)
-	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
-		return
-	}
-	req := &projectv1.AcceptSupervisionRequest{ProjectId: int64(projectID)}
-	ctx := newContextWithAuth(c)
-	res, err := g.projectClient.AcceptSupervision(ctx, req)
-	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
-		return
-	}
-	c.JSON(http.StatusOK, res)
-}
-func (g *ApiGateWay) GetProject(c *gin.Context) {
-	id := c.Param("id")
-	projectID, err := strconv.ParseUint(id, 10, 64)
-	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
-		return
-	}
-	ctx := newContextWithAuth(c)
-	projectRes, err := g.projectClient.GetProject(ctx, &projectv1.GetProjectRequest{ProjectId: int64(projectID)})
-	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
-		return
-	}
-	supervisorInfo, _ := g.authClient.GetUser(context.Background(),
-		&authv1.GetUserRequest{UserId: projectRes.Project.GetSupervisorId()})
-	stageInfo, _ := g.workflowClient.GetStage(context.Background(),
-		&workflowv1.GetStageRequest{StageId: projectRes.Project.GetCurrentStageId()})
-	status := "UNKNOWN"
-	if stageInfo != nil {
-		status = stageInfo.Stage.GetName()
-	}
-	if projectRes.Project.GetCompletedAt() != nil {
-		status = "COMPLETED"
-	}
-	finalResponse := EnrichedProjectResponse{
-		ID:           projectRes.Project.GetId(),
-		Topic:        projectRes.Project.GetTopic(),
-		Supervisor:   &UserInfo{ID: supervisorInfo.GetId(), Email: supervisorInfo.GetEmail()},
-		TeamID:       projectRes.Project.GetTeamId(),
-		DepartmentID: projectRes.Project.GetDepartmentId(),
-		Status:       status,
-	}
-	c.JSON(http.StatusOK, finalResponse)
-}
 
-func (g *ApiGateWay) ListProjects(c *gin.Context) {
-	ctx := newContextWithAuth(c)
-	res, err := g.projectClient.ListProjects(ctx, &projectv1.ListProjectsRequest{})
-	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
-		return
-	}
-	c.JSON(http.StatusOK, res)
-}
-func (g *ApiGateWay) UpdateProject(c *gin.Context) {
-	id := c.Param("id")
-	projectID, err := strconv.ParseUint(id, 10, 64)
-	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
-		return
-	}
-	var reqBody struct {
-		Topic string `json:"topic"`
-	}
-	if err := c.ShouldBindJSON(&reqBody); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
-		return
-	}
-	req := &projectv1.UpdateProjectRequest{
-		Project: &projectv1.Project{
-			Id:    int64(projectID),
-			Topic: reqBody.Topic},
-		UpdateMask: &field_mask.FieldMask{Paths: []string{"topic"}},
-	}
-	ctx := newContextWithAuth(c)
-	res, err := g.projectClient.UpdateProject(ctx, req)
-	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
-		return
-	}
-	c.JSON(http.StatusCreated, res)
-}
-func (g *ApiGateWay) DeleteProject(c *gin.Context) {
-	id := c.Param("id")
-	projectID, err := strconv.ParseUint(id, 10, 64)
-	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
-		return
-	}
-	req := &projectv1.DeleteProjectRequest{
-		ProjectId: int64(projectID),
-	}
-	ctx := newContextWithAuth(c)
-	_, err = g.projectClient.DeleteProject(ctx, req)
-	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
-		return
-	}
-	c.Status(http.StatusNoContent)
-}
-
-func (g *ApiGateWay) AdvanceProjectStage(c *gin.Context) {
-	id := c.Param("id")
-	projectID, err := strconv.ParseInt(id, 10, 64)
-	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
-		return
-	}
-	req := &projectv1.AdvanceProjectStageRequest{
-		ProjectId: projectID,
-	}
-	ctx := newContextWithAuth(c)
-	res, err := g.projectClient.AdvanceProjectStage(ctx, req)
-	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
-		return
-	}
-	c.JSON(http.StatusOK, res)
-}
 func AuthMiddleware() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		authHeader := c.GetHeader("Authorization")
@@ -700,11 +564,164 @@ func newContextWithAuth(c *gin.Context) context.Context {
 }
 
 func (g *ApiGateWay) ListAvailableUsers(c *gin.Context) {
+	id := c.Param("did")
+	departmentId, err := strconv.ParseInt(id, 10, 64)
+	if departmentId == 0 {
+		return
+	}
+	res, err := g.teamClient.ListAvailableUsers(c, &teamv1.ListAvailableUsersRequest{DepartmentId: departmentId})
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+	c.JSON(http.StatusOK, res)
+}
+func (g *ApiGateWay) CreateWorkflow(c *gin.Context) {
+	var req workflowv1.CreateWorkflowRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+	res, err := g.workflowClient.CreateWorkflow(context.Background(), &req)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+	c.JSON(http.StatusCreated, res)
+}
+
+func (g *ApiGateWay) CreateState(c *gin.Context) {
+	var req workflowv1.CreateStateRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+	res, err := g.workflowClient.CreateState(context.Background(), &req)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+	c.JSON(http.StatusCreated, res)
+}
+
+func (g *ApiGateWay) CreateTransition(c *gin.Context) {
+	var req workflowv1.CreateTransitionRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+	res, err := g.workflowClient.CreateTransition(context.Background(), &req)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+	c.JSON(http.StatusCreated, res)
+}
+
+func (g *ApiGateWay) CreateStateAction(c *gin.Context) {
+	var req workflowv1.CreateStateActionRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+	res, err := g.workflowClient.CreateStateAction(context.Background(), &req)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+	c.JSON(http.StatusCreated, res)
+}
+
+func (g *ApiGateWay) CreateProject(c *gin.Context) {
+	var req projectv1.CreateProjectRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
 	ctx := newContextWithAuth(c)
-	departmentId := c.MustGet("departmentId").(int64)
-	res, err := g.teamClient.ListAvailableUsers(ctx, &teamv1.ListAvailableUsersRequest{
-		DepartmentId: departmentId,
-	})
+	res, err := g.projectClient.CreateProject(ctx, &req)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+	c.JSON(http.StatusCreated, res)
+}
+
+func (g *ApiGateWay) PerformProjectAction(c *gin.Context) {
+	id := c.Param("id")
+	projectID, err := strconv.ParseInt(id, 10, 64)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid project ID"})
+		return
+	}
+
+	var reqBody struct {
+		Action  string                 `json:"action"`
+		Payload map[string]interface{} `json:"payload"`
+	}
+	if err := c.ShouldBindJSON(&reqBody); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	payloadStruct, err := structpb.NewStruct(reqBody.Payload)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid payload format"})
+		return
+	}
+
+	req := &projectv1.PerformStateActionRequest{
+		ProjectId: projectID,
+		Action:    reqBody.Action,
+		Payload:   payloadStruct,
+	}
+
+	ctx := newContextWithAuth(c)
+	_, err = g.projectClient.PerformStateAction(ctx, req)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{"status": "action processed"})
+}
+
+func (g *ApiGateWay) GetProject(c *gin.Context) {
+	id := c.Param("id")
+	projectID, err := strconv.ParseInt(id, 10, 64)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid project ID"})
+		return
+	}
+	ctx := newContextWithAuth(c)
+
+	projectRes, err := g.projectClient.GetProject(ctx, &projectv1.GetProjectRequest{ProjectId: projectID})
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+	var stateInfo *StateInfo
+	stateRes, err := g.workflowClient.GetState(context.Background(), &workflowv1.GetStateRequest{StateId: projectRes.GetCurrentStateId()})
+	if err == nil && stateRes != nil {
+		stateInfo = &StateInfo{
+			Name:        stateRes.GetName(),
+			Description: stateRes.GetDescription(),
+		}
+	}
+
+	finalResponse := EnrichedProjectResponse{
+		ID:             projectRes.GetId(),
+		Title:          projectRes.GetTitle(),
+		WorkflowID:     projectRes.GetWorkflowId(),
+		CurrentStateID: projectRes.GetCurrentStateId(),
+		CurrentState:   stateInfo,
+		Status:         projectRes.GetStatus(),
+	}
+	c.JSON(http.StatusOK, finalResponse)
+}
+func (g *ApiGateWay) ListProjects(c *gin.Context) {
+	ctx := newContextWithAuth(c)
+	res, err := g.projectClient.ListProjects(ctx, &projectv1.ListProjectsRequest{})
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return

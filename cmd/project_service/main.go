@@ -3,12 +3,12 @@ package main
 import (
 	"context"
 	"fmt"
+	"log"
+	"os"
 	"time"
 
 	"github.com/lucky720s/diplomaflow/internal/project"
-	authv1 "github.com/lucky720s/diplomaflow/pkg/protobuf/auth/v1"
 	projectv1 "github.com/lucky720s/diplomaflow/pkg/protobuf/project/v1"
-	teamv1 "github.com/lucky720s/diplomaflow/pkg/protobuf/team/v1"
 	workflowv1 "github.com/lucky720s/diplomaflow/pkg/protobuf/workflow/v1"
 	rkboot "github.com/rookie-ninja/rk-boot/v2"
 	rkgrpc "github.com/rookie-ninja/rk-grpc/v2/boot"
@@ -33,32 +33,26 @@ func main() {
 	boot := rkboot.NewBoot()
 	grpcEntry := rkgrpc.GetGrpcEntry("project-service")
 	if grpcEntry == nil {
-		panic(fmt.Errorf("grpc entry not found"))
+		panic(fmt.Errorf("grpc entry 'project-service' not found"))
 	}
+
 	grpcEntry.AddRegFuncGrpc(func(server *grpc.Server) {
-		authConn := dialWithRetry("auth_service:8082")
-		authClient := authv1.NewAuthServiceClient(authConn)
-		teamConn := dialWithRetry("team_service:8084")
-		teamClient := teamv1.NewTeamServiceClient(teamConn)
-		workflowConn := dialWithRetry("workflow_service:8085")
-		workflowClient := workflowv1.NewWorkflowServiceClient(workflowConn)
-		var repo project.Repository
-		var err error
-		for i := 0; i < 10; i++ {
-			repo, err = project.NewRepository()
-			if err == nil {
-				fmt.Println("successfully created repository with db connection")
-				break
-			}
-			fmt.Printf("Waiting for DB connection attempt %d. Error was: %v\n", i+1, err)
-			time.Sleep(time.Second * 2)
+		workflowSvcAddr := os.Getenv("WORKFLOW_SERVICE_ADDR")
+		if workflowSvcAddr == "" {
+			workflowSvcAddr = "workflow_service:8085"
 		}
+		conn := dialWithRetry(workflowSvcAddr)
+		wfClient := workflowv1.NewWorkflowServiceClient(conn)
+		log.Println("Connected to workflow_service.")
+		repo, err := project.NewRepository(wfClient)
 		if err != nil {
-			panic(fmt.Errorf("failed to create repository: %v", err))
+			panic(fmt.Errorf("failed to create repository for project_service: %v", err))
 		}
-		handler := project.NewHandler(repo, authClient, teamClient, workflowClient)
+		log.Println("Repository for project_service created successfully.")
+		handler := project.NewHandler(repo)
 		projectv1.RegisterProjectServiceServer(server, handler)
 	})
+
 	boot.Bootstrap(context.Background())
 	boot.WaitForShutdownSig(context.Background())
 }

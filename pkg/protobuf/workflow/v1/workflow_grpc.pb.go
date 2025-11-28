@@ -11,6 +11,7 @@ import (
 	grpc "google.golang.org/grpc"
 	codes "google.golang.org/grpc/codes"
 	status "google.golang.org/grpc/status"
+	emptypb "google.golang.org/protobuf/types/known/emptypb"
 )
 
 // This is a compile-time assertion to ensure that this generated file
@@ -19,22 +20,44 @@ import (
 const _ = grpc.SupportPackageIsVersion7
 
 const (
-	WorkflowService_CreateWorkflow_FullMethodName = "/workflow.v1.WorkflowService/CreateWorkflow"
-	WorkflowService_GetWorkflow_FullMethodName    = "/workflow.v1.WorkflowService/GetWorkflow"
-	WorkflowService_CreateStage_FullMethodName    = "/workflow.v1.WorkflowService/CreateStage"
-	WorkflowService_GetStage_FullMethodName       = "/workflow.v1.WorkflowService/GetStage"
-	WorkflowService_GetNextStage_FullMethodName   = "/workflow.v1.WorkflowService/GetNextStage"
+	WorkflowService_CreateWorkflow_FullMethodName    = "/workflow.v1.WorkflowService/CreateWorkflow"
+	WorkflowService_GetWorkflow_FullMethodName       = "/workflow.v1.WorkflowService/GetWorkflow"
+	WorkflowService_ListWorkflows_FullMethodName     = "/workflow.v1.WorkflowService/ListWorkflows"
+	WorkflowService_UpdateWorkflow_FullMethodName    = "/workflow.v1.WorkflowService/UpdateWorkflow"
+	WorkflowService_DeleteWorkflow_FullMethodName    = "/workflow.v1.WorkflowService/DeleteWorkflow"
+	WorkflowService_CreateState_FullMethodName       = "/workflow.v1.WorkflowService/CreateState"
+	WorkflowService_GetState_FullMethodName          = "/workflow.v1.WorkflowService/GetState"
+	WorkflowService_ListStates_FullMethodName        = "/workflow.v1.WorkflowService/ListStates"
+	WorkflowService_UpdateState_FullMethodName       = "/workflow.v1.WorkflowService/UpdateState"
+	WorkflowService_DeleteState_FullMethodName       = "/workflow.v1.WorkflowService/DeleteState"
+	WorkflowService_CreateTransition_FullMethodName  = "/workflow.v1.WorkflowService/CreateTransition"
+	WorkflowService_DeleteTransition_FullMethodName  = "/workflow.v1.WorkflowService/DeleteTransition"
+	WorkflowService_CreateStateAction_FullMethodName = "/workflow.v1.WorkflowService/CreateStateAction"
+	WorkflowService_ListStateActions_FullMethodName  = "/workflow.v1.WorkflowService/ListStateActions"
+	WorkflowService_DeleteStateAction_FullMethodName = "/workflow.v1.WorkflowService/DeleteStateAction"
+	WorkflowService_GetNextState_FullMethodName      = "/workflow.v1.WorkflowService/GetNextState"
 )
 
 // WorkflowServiceClient is the client API for WorkflowService service.
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 type WorkflowServiceClient interface {
-	CreateWorkflow(ctx context.Context, in *CreateWorkflowRequest, opts ...grpc.CallOption) (*CreateWorkflowResponse, error)
-	GetWorkflow(ctx context.Context, in *GetWorkflowRequest, opts ...grpc.CallOption) (*GetWorkflowResponse, error)
-	CreateStage(ctx context.Context, in *CreateStageRequest, opts ...grpc.CallOption) (*CreateStageResponse, error)
-	GetStage(ctx context.Context, in *GetStageRequest, opts ...grpc.CallOption) (*GetStageResponse, error)
-	GetNextStage(ctx context.Context, in *GetNextStageRequest, opts ...grpc.CallOption) (*GetNextStageResponse, error)
+	CreateWorkflow(ctx context.Context, in *CreateWorkflowRequest, opts ...grpc.CallOption) (*Workflow, error)
+	GetWorkflow(ctx context.Context, in *GetWorkflowRequest, opts ...grpc.CallOption) (*Workflow, error)
+	ListWorkflows(ctx context.Context, in *ListWorkflowsRequest, opts ...grpc.CallOption) (*ListWorkflowsResponse, error)
+	UpdateWorkflow(ctx context.Context, in *UpdateWorkflowRequest, opts ...grpc.CallOption) (*Workflow, error)
+	DeleteWorkflow(ctx context.Context, in *DeleteWorkflowRequest, opts ...grpc.CallOption) (*emptypb.Empty, error)
+	CreateState(ctx context.Context, in *CreateStateRequest, opts ...grpc.CallOption) (*State, error)
+	GetState(ctx context.Context, in *GetStateRequest, opts ...grpc.CallOption) (*State, error)
+	ListStates(ctx context.Context, in *ListStatesRequest, opts ...grpc.CallOption) (*ListStatesResponse, error)
+	UpdateState(ctx context.Context, in *UpdateStateRequest, opts ...grpc.CallOption) (*State, error)
+	DeleteState(ctx context.Context, in *DeleteStateRequest, opts ...grpc.CallOption) (*emptypb.Empty, error)
+	CreateTransition(ctx context.Context, in *CreateTransitionRequest, opts ...grpc.CallOption) (*Transition, error)
+	DeleteTransition(ctx context.Context, in *DeleteTransitionRequest, opts ...grpc.CallOption) (*emptypb.Empty, error)
+	CreateStateAction(ctx context.Context, in *CreateStateActionRequest, opts ...grpc.CallOption) (*StateAction, error)
+	ListStateActions(ctx context.Context, in *ListStateActionsRequest, opts ...grpc.CallOption) (*ListStateActionsResponse, error)
+	DeleteStateAction(ctx context.Context, in *DeleteStateActionRequest, opts ...grpc.CallOption) (*emptypb.Empty, error)
+	GetNextState(ctx context.Context, in *GetNextStateRequest, opts ...grpc.CallOption) (*State, error)
 }
 
 type workflowServiceClient struct {
@@ -45,8 +68,8 @@ func NewWorkflowServiceClient(cc grpc.ClientConnInterface) WorkflowServiceClient
 	return &workflowServiceClient{cc}
 }
 
-func (c *workflowServiceClient) CreateWorkflow(ctx context.Context, in *CreateWorkflowRequest, opts ...grpc.CallOption) (*CreateWorkflowResponse, error) {
-	out := new(CreateWorkflowResponse)
+func (c *workflowServiceClient) CreateWorkflow(ctx context.Context, in *CreateWorkflowRequest, opts ...grpc.CallOption) (*Workflow, error) {
+	out := new(Workflow)
 	err := c.cc.Invoke(ctx, WorkflowService_CreateWorkflow_FullMethodName, in, out, opts...)
 	if err != nil {
 		return nil, err
@@ -54,8 +77,8 @@ func (c *workflowServiceClient) CreateWorkflow(ctx context.Context, in *CreateWo
 	return out, nil
 }
 
-func (c *workflowServiceClient) GetWorkflow(ctx context.Context, in *GetWorkflowRequest, opts ...grpc.CallOption) (*GetWorkflowResponse, error) {
-	out := new(GetWorkflowResponse)
+func (c *workflowServiceClient) GetWorkflow(ctx context.Context, in *GetWorkflowRequest, opts ...grpc.CallOption) (*Workflow, error) {
+	out := new(Workflow)
 	err := c.cc.Invoke(ctx, WorkflowService_GetWorkflow_FullMethodName, in, out, opts...)
 	if err != nil {
 		return nil, err
@@ -63,27 +86,126 @@ func (c *workflowServiceClient) GetWorkflow(ctx context.Context, in *GetWorkflow
 	return out, nil
 }
 
-func (c *workflowServiceClient) CreateStage(ctx context.Context, in *CreateStageRequest, opts ...grpc.CallOption) (*CreateStageResponse, error) {
-	out := new(CreateStageResponse)
-	err := c.cc.Invoke(ctx, WorkflowService_CreateStage_FullMethodName, in, out, opts...)
+func (c *workflowServiceClient) ListWorkflows(ctx context.Context, in *ListWorkflowsRequest, opts ...grpc.CallOption) (*ListWorkflowsResponse, error) {
+	out := new(ListWorkflowsResponse)
+	err := c.cc.Invoke(ctx, WorkflowService_ListWorkflows_FullMethodName, in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
 	return out, nil
 }
 
-func (c *workflowServiceClient) GetStage(ctx context.Context, in *GetStageRequest, opts ...grpc.CallOption) (*GetStageResponse, error) {
-	out := new(GetStageResponse)
-	err := c.cc.Invoke(ctx, WorkflowService_GetStage_FullMethodName, in, out, opts...)
+func (c *workflowServiceClient) UpdateWorkflow(ctx context.Context, in *UpdateWorkflowRequest, opts ...grpc.CallOption) (*Workflow, error) {
+	out := new(Workflow)
+	err := c.cc.Invoke(ctx, WorkflowService_UpdateWorkflow_FullMethodName, in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
 	return out, nil
 }
 
-func (c *workflowServiceClient) GetNextStage(ctx context.Context, in *GetNextStageRequest, opts ...grpc.CallOption) (*GetNextStageResponse, error) {
-	out := new(GetNextStageResponse)
-	err := c.cc.Invoke(ctx, WorkflowService_GetNextStage_FullMethodName, in, out, opts...)
+func (c *workflowServiceClient) DeleteWorkflow(ctx context.Context, in *DeleteWorkflowRequest, opts ...grpc.CallOption) (*emptypb.Empty, error) {
+	out := new(emptypb.Empty)
+	err := c.cc.Invoke(ctx, WorkflowService_DeleteWorkflow_FullMethodName, in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *workflowServiceClient) CreateState(ctx context.Context, in *CreateStateRequest, opts ...grpc.CallOption) (*State, error) {
+	out := new(State)
+	err := c.cc.Invoke(ctx, WorkflowService_CreateState_FullMethodName, in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *workflowServiceClient) GetState(ctx context.Context, in *GetStateRequest, opts ...grpc.CallOption) (*State, error) {
+	out := new(State)
+	err := c.cc.Invoke(ctx, WorkflowService_GetState_FullMethodName, in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *workflowServiceClient) ListStates(ctx context.Context, in *ListStatesRequest, opts ...grpc.CallOption) (*ListStatesResponse, error) {
+	out := new(ListStatesResponse)
+	err := c.cc.Invoke(ctx, WorkflowService_ListStates_FullMethodName, in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *workflowServiceClient) UpdateState(ctx context.Context, in *UpdateStateRequest, opts ...grpc.CallOption) (*State, error) {
+	out := new(State)
+	err := c.cc.Invoke(ctx, WorkflowService_UpdateState_FullMethodName, in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *workflowServiceClient) DeleteState(ctx context.Context, in *DeleteStateRequest, opts ...grpc.CallOption) (*emptypb.Empty, error) {
+	out := new(emptypb.Empty)
+	err := c.cc.Invoke(ctx, WorkflowService_DeleteState_FullMethodName, in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *workflowServiceClient) CreateTransition(ctx context.Context, in *CreateTransitionRequest, opts ...grpc.CallOption) (*Transition, error) {
+	out := new(Transition)
+	err := c.cc.Invoke(ctx, WorkflowService_CreateTransition_FullMethodName, in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *workflowServiceClient) DeleteTransition(ctx context.Context, in *DeleteTransitionRequest, opts ...grpc.CallOption) (*emptypb.Empty, error) {
+	out := new(emptypb.Empty)
+	err := c.cc.Invoke(ctx, WorkflowService_DeleteTransition_FullMethodName, in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *workflowServiceClient) CreateStateAction(ctx context.Context, in *CreateStateActionRequest, opts ...grpc.CallOption) (*StateAction, error) {
+	out := new(StateAction)
+	err := c.cc.Invoke(ctx, WorkflowService_CreateStateAction_FullMethodName, in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *workflowServiceClient) ListStateActions(ctx context.Context, in *ListStateActionsRequest, opts ...grpc.CallOption) (*ListStateActionsResponse, error) {
+	out := new(ListStateActionsResponse)
+	err := c.cc.Invoke(ctx, WorkflowService_ListStateActions_FullMethodName, in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *workflowServiceClient) DeleteStateAction(ctx context.Context, in *DeleteStateActionRequest, opts ...grpc.CallOption) (*emptypb.Empty, error) {
+	out := new(emptypb.Empty)
+	err := c.cc.Invoke(ctx, WorkflowService_DeleteStateAction_FullMethodName, in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *workflowServiceClient) GetNextState(ctx context.Context, in *GetNextStateRequest, opts ...grpc.CallOption) (*State, error) {
+	out := new(State)
+	err := c.cc.Invoke(ctx, WorkflowService_GetNextState_FullMethodName, in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -94,11 +216,22 @@ func (c *workflowServiceClient) GetNextStage(ctx context.Context, in *GetNextSta
 // All implementations must embed UnimplementedWorkflowServiceServer
 // for forward compatibility
 type WorkflowServiceServer interface {
-	CreateWorkflow(context.Context, *CreateWorkflowRequest) (*CreateWorkflowResponse, error)
-	GetWorkflow(context.Context, *GetWorkflowRequest) (*GetWorkflowResponse, error)
-	CreateStage(context.Context, *CreateStageRequest) (*CreateStageResponse, error)
-	GetStage(context.Context, *GetStageRequest) (*GetStageResponse, error)
-	GetNextStage(context.Context, *GetNextStageRequest) (*GetNextStageResponse, error)
+	CreateWorkflow(context.Context, *CreateWorkflowRequest) (*Workflow, error)
+	GetWorkflow(context.Context, *GetWorkflowRequest) (*Workflow, error)
+	ListWorkflows(context.Context, *ListWorkflowsRequest) (*ListWorkflowsResponse, error)
+	UpdateWorkflow(context.Context, *UpdateWorkflowRequest) (*Workflow, error)
+	DeleteWorkflow(context.Context, *DeleteWorkflowRequest) (*emptypb.Empty, error)
+	CreateState(context.Context, *CreateStateRequest) (*State, error)
+	GetState(context.Context, *GetStateRequest) (*State, error)
+	ListStates(context.Context, *ListStatesRequest) (*ListStatesResponse, error)
+	UpdateState(context.Context, *UpdateStateRequest) (*State, error)
+	DeleteState(context.Context, *DeleteStateRequest) (*emptypb.Empty, error)
+	CreateTransition(context.Context, *CreateTransitionRequest) (*Transition, error)
+	DeleteTransition(context.Context, *DeleteTransitionRequest) (*emptypb.Empty, error)
+	CreateStateAction(context.Context, *CreateStateActionRequest) (*StateAction, error)
+	ListStateActions(context.Context, *ListStateActionsRequest) (*ListStateActionsResponse, error)
+	DeleteStateAction(context.Context, *DeleteStateActionRequest) (*emptypb.Empty, error)
+	GetNextState(context.Context, *GetNextStateRequest) (*State, error)
 	mustEmbedUnimplementedWorkflowServiceServer()
 }
 
@@ -106,20 +239,53 @@ type WorkflowServiceServer interface {
 type UnimplementedWorkflowServiceServer struct {
 }
 
-func (UnimplementedWorkflowServiceServer) CreateWorkflow(context.Context, *CreateWorkflowRequest) (*CreateWorkflowResponse, error) {
+func (UnimplementedWorkflowServiceServer) CreateWorkflow(context.Context, *CreateWorkflowRequest) (*Workflow, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method CreateWorkflow not implemented")
 }
-func (UnimplementedWorkflowServiceServer) GetWorkflow(context.Context, *GetWorkflowRequest) (*GetWorkflowResponse, error) {
+func (UnimplementedWorkflowServiceServer) GetWorkflow(context.Context, *GetWorkflowRequest) (*Workflow, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetWorkflow not implemented")
 }
-func (UnimplementedWorkflowServiceServer) CreateStage(context.Context, *CreateStageRequest) (*CreateStageResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method CreateStage not implemented")
+func (UnimplementedWorkflowServiceServer) ListWorkflows(context.Context, *ListWorkflowsRequest) (*ListWorkflowsResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method ListWorkflows not implemented")
 }
-func (UnimplementedWorkflowServiceServer) GetStage(context.Context, *GetStageRequest) (*GetStageResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method GetStage not implemented")
+func (UnimplementedWorkflowServiceServer) UpdateWorkflow(context.Context, *UpdateWorkflowRequest) (*Workflow, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method UpdateWorkflow not implemented")
 }
-func (UnimplementedWorkflowServiceServer) GetNextStage(context.Context, *GetNextStageRequest) (*GetNextStageResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method GetNextStage not implemented")
+func (UnimplementedWorkflowServiceServer) DeleteWorkflow(context.Context, *DeleteWorkflowRequest) (*emptypb.Empty, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method DeleteWorkflow not implemented")
+}
+func (UnimplementedWorkflowServiceServer) CreateState(context.Context, *CreateStateRequest) (*State, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method CreateState not implemented")
+}
+func (UnimplementedWorkflowServiceServer) GetState(context.Context, *GetStateRequest) (*State, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetState not implemented")
+}
+func (UnimplementedWorkflowServiceServer) ListStates(context.Context, *ListStatesRequest) (*ListStatesResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method ListStates not implemented")
+}
+func (UnimplementedWorkflowServiceServer) UpdateState(context.Context, *UpdateStateRequest) (*State, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method UpdateState not implemented")
+}
+func (UnimplementedWorkflowServiceServer) DeleteState(context.Context, *DeleteStateRequest) (*emptypb.Empty, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method DeleteState not implemented")
+}
+func (UnimplementedWorkflowServiceServer) CreateTransition(context.Context, *CreateTransitionRequest) (*Transition, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method CreateTransition not implemented")
+}
+func (UnimplementedWorkflowServiceServer) DeleteTransition(context.Context, *DeleteTransitionRequest) (*emptypb.Empty, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method DeleteTransition not implemented")
+}
+func (UnimplementedWorkflowServiceServer) CreateStateAction(context.Context, *CreateStateActionRequest) (*StateAction, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method CreateStateAction not implemented")
+}
+func (UnimplementedWorkflowServiceServer) ListStateActions(context.Context, *ListStateActionsRequest) (*ListStateActionsResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method ListStateActions not implemented")
+}
+func (UnimplementedWorkflowServiceServer) DeleteStateAction(context.Context, *DeleteStateActionRequest) (*emptypb.Empty, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method DeleteStateAction not implemented")
+}
+func (UnimplementedWorkflowServiceServer) GetNextState(context.Context, *GetNextStateRequest) (*State, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetNextState not implemented")
 }
 func (UnimplementedWorkflowServiceServer) mustEmbedUnimplementedWorkflowServiceServer() {}
 
@@ -170,56 +336,254 @@ func _WorkflowService_GetWorkflow_Handler(srv interface{}, ctx context.Context, 
 	return interceptor(ctx, in, info, handler)
 }
 
-func _WorkflowService_CreateStage_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(CreateStageRequest)
+func _WorkflowService_ListWorkflows_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(ListWorkflowsRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(WorkflowServiceServer).CreateStage(ctx, in)
+		return srv.(WorkflowServiceServer).ListWorkflows(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: WorkflowService_CreateStage_FullMethodName,
+		FullMethod: WorkflowService_ListWorkflows_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(WorkflowServiceServer).CreateStage(ctx, req.(*CreateStageRequest))
+		return srv.(WorkflowServiceServer).ListWorkflows(ctx, req.(*ListWorkflowsRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
-func _WorkflowService_GetStage_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(GetStageRequest)
+func _WorkflowService_UpdateWorkflow_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(UpdateWorkflowRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(WorkflowServiceServer).GetStage(ctx, in)
+		return srv.(WorkflowServiceServer).UpdateWorkflow(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: WorkflowService_GetStage_FullMethodName,
+		FullMethod: WorkflowService_UpdateWorkflow_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(WorkflowServiceServer).GetStage(ctx, req.(*GetStageRequest))
+		return srv.(WorkflowServiceServer).UpdateWorkflow(ctx, req.(*UpdateWorkflowRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
-func _WorkflowService_GetNextStage_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(GetNextStageRequest)
+func _WorkflowService_DeleteWorkflow_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(DeleteWorkflowRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(WorkflowServiceServer).GetNextStage(ctx, in)
+		return srv.(WorkflowServiceServer).DeleteWorkflow(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: WorkflowService_GetNextStage_FullMethodName,
+		FullMethod: WorkflowService_DeleteWorkflow_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(WorkflowServiceServer).GetNextStage(ctx, req.(*GetNextStageRequest))
+		return srv.(WorkflowServiceServer).DeleteWorkflow(ctx, req.(*DeleteWorkflowRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _WorkflowService_CreateState_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(CreateStateRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(WorkflowServiceServer).CreateState(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: WorkflowService_CreateState_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(WorkflowServiceServer).CreateState(ctx, req.(*CreateStateRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _WorkflowService_GetState_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetStateRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(WorkflowServiceServer).GetState(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: WorkflowService_GetState_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(WorkflowServiceServer).GetState(ctx, req.(*GetStateRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _WorkflowService_ListStates_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(ListStatesRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(WorkflowServiceServer).ListStates(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: WorkflowService_ListStates_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(WorkflowServiceServer).ListStates(ctx, req.(*ListStatesRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _WorkflowService_UpdateState_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(UpdateStateRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(WorkflowServiceServer).UpdateState(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: WorkflowService_UpdateState_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(WorkflowServiceServer).UpdateState(ctx, req.(*UpdateStateRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _WorkflowService_DeleteState_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(DeleteStateRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(WorkflowServiceServer).DeleteState(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: WorkflowService_DeleteState_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(WorkflowServiceServer).DeleteState(ctx, req.(*DeleteStateRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _WorkflowService_CreateTransition_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(CreateTransitionRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(WorkflowServiceServer).CreateTransition(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: WorkflowService_CreateTransition_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(WorkflowServiceServer).CreateTransition(ctx, req.(*CreateTransitionRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _WorkflowService_DeleteTransition_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(DeleteTransitionRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(WorkflowServiceServer).DeleteTransition(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: WorkflowService_DeleteTransition_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(WorkflowServiceServer).DeleteTransition(ctx, req.(*DeleteTransitionRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _WorkflowService_CreateStateAction_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(CreateStateActionRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(WorkflowServiceServer).CreateStateAction(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: WorkflowService_CreateStateAction_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(WorkflowServiceServer).CreateStateAction(ctx, req.(*CreateStateActionRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _WorkflowService_ListStateActions_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(ListStateActionsRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(WorkflowServiceServer).ListStateActions(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: WorkflowService_ListStateActions_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(WorkflowServiceServer).ListStateActions(ctx, req.(*ListStateActionsRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _WorkflowService_DeleteStateAction_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(DeleteStateActionRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(WorkflowServiceServer).DeleteStateAction(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: WorkflowService_DeleteStateAction_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(WorkflowServiceServer).DeleteStateAction(ctx, req.(*DeleteStateActionRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _WorkflowService_GetNextState_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetNextStateRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(WorkflowServiceServer).GetNextState(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: WorkflowService_GetNextState_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(WorkflowServiceServer).GetNextState(ctx, req.(*GetNextStateRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -240,16 +604,60 @@ var WorkflowService_ServiceDesc = grpc.ServiceDesc{
 			Handler:    _WorkflowService_GetWorkflow_Handler,
 		},
 		{
-			MethodName: "CreateStage",
-			Handler:    _WorkflowService_CreateStage_Handler,
+			MethodName: "ListWorkflows",
+			Handler:    _WorkflowService_ListWorkflows_Handler,
 		},
 		{
-			MethodName: "GetStage",
-			Handler:    _WorkflowService_GetStage_Handler,
+			MethodName: "UpdateWorkflow",
+			Handler:    _WorkflowService_UpdateWorkflow_Handler,
 		},
 		{
-			MethodName: "GetNextStage",
-			Handler:    _WorkflowService_GetNextStage_Handler,
+			MethodName: "DeleteWorkflow",
+			Handler:    _WorkflowService_DeleteWorkflow_Handler,
+		},
+		{
+			MethodName: "CreateState",
+			Handler:    _WorkflowService_CreateState_Handler,
+		},
+		{
+			MethodName: "GetState",
+			Handler:    _WorkflowService_GetState_Handler,
+		},
+		{
+			MethodName: "ListStates",
+			Handler:    _WorkflowService_ListStates_Handler,
+		},
+		{
+			MethodName: "UpdateState",
+			Handler:    _WorkflowService_UpdateState_Handler,
+		},
+		{
+			MethodName: "DeleteState",
+			Handler:    _WorkflowService_DeleteState_Handler,
+		},
+		{
+			MethodName: "CreateTransition",
+			Handler:    _WorkflowService_CreateTransition_Handler,
+		},
+		{
+			MethodName: "DeleteTransition",
+			Handler:    _WorkflowService_DeleteTransition_Handler,
+		},
+		{
+			MethodName: "CreateStateAction",
+			Handler:    _WorkflowService_CreateStateAction_Handler,
+		},
+		{
+			MethodName: "ListStateActions",
+			Handler:    _WorkflowService_ListStateActions_Handler,
+		},
+		{
+			MethodName: "DeleteStateAction",
+			Handler:    _WorkflowService_DeleteStateAction_Handler,
+		},
+		{
+			MethodName: "GetNextState",
+			Handler:    _WorkflowService_GetNextState_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

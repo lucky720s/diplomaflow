@@ -1,70 +1,45 @@
 syntax = "proto3";
 
 package project.v1;
-import "google/protobuf/field_mask.proto";
-import "google/protobuf/timestamp.proto";
+
+import "google/protobuf/struct.proto";
+import "google/protobuf/empty.proto";
+
 option go_package = "github.com/lucky720s/diplomaflow/pkg/protobuf/project/v1";
 
-
-service ProjectService{
-rpc ProposeProject(ProposeProjectRequest) returns(ProposeProjectResponse);
-rpc AcceptSupervision(AcceptSupervisionRequest) returns(AcceptSupervisionResponse);
-rpc GetProject(GetProjectRequest) returns (GetProjectResponse);
-rpc ListProjects(ListProjectsRequest) returns(ListProjectsResponse);
-rpc UpdateProject(UpdateProjectRequest) returns (UpdateProjectResponse);
-rpc DeleteProject(DeleteProjectRequest) returns (DeleteProjectResponse);
-rpc AdvanceProjectStage(AdvanceProjectStageRequest) returns (AdvanceProjectStageResponse);
-}
-
-message Project{
+message Project {
   int64 id = 1;
-  string topic = 2;
-  int64 supervisor_id = 3;
-  int64 department_id = 4;
-  int64 team_id = 5;
-  int64 current_stage_id = 6;
-  google.protobuf.Timestamp completed_at = 7;
+  string title = 2;
+  int64 workflow_id = 3;
+  int64 current_state_id = 4;
+  string status = 5;
 }
-message ProposeProjectRequest{
-  string topic = 1;
-  int64 supervisor_id = 2;
-  int64 team_id = 3;
+
+service ProjectService {
+  rpc CreateProject(CreateProjectRequest) returns (Project);
+  rpc GetProject(GetProjectRequest) returns (Project);
+  rpc ListProjects(ListProjectsRequest) returns (ListProjectsResponse);
+  rpc PerformStateAction(PerformStateActionRequest) returns (google.protobuf.Empty);
 }
-message ProposeProjectResponse{
-  Project project = 1;
+
+message CreateProjectRequest {
+  string title = 1;
+  int64 workflow_id = 2;
 }
-message AcceptSupervisionRequest{
+
+message GetProjectRequest {
   int64 project_id = 1;
 }
-message AcceptSupervisionResponse{
-  Project project = 1;
-}
-message GetProjectRequest{
+
+message PerformStateActionRequest {
   int64 project_id = 1;
+  string action = 2;
+  google.protobuf.Struct payload = 3;
 }
-message GetProjectResponse{
-  Project project = 1;
+message ListProjectsRequest {
+  int64 department_id = 1;
 }
-message ListProjectsRequest{}
-message ListProjectsResponse{
+
+message ListProjectsResponse {
   repeated Project projects = 1;
-}
-message UpdateProjectRequest{
-  Project project = 1;
-  google.protobuf.FieldMask update_mask = 2;
-}
-message UpdateProjectResponse{
-  Project project = 1;
-}
-message DeleteProjectRequest{
-  int64 project_id = 1;
-}
-message DeleteProjectResponse{
-  bool success = 1;
-}
-message AdvanceProjectStageRequest{
-  int64 project_id = 1;
-}
-message AdvanceProjectStageResponse{
-  Project project = 1;
 }

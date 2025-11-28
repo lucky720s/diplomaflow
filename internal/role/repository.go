@@ -24,9 +24,12 @@ type repository struct {
 	db *gorm.DB
 }
 
+func (Role) TableName() string {
+	return "role_schema.roles"
+}
 func NewRepository() (Repository, error) {
 	pgEntry := rkpostgres.GetPostgresEntry("role-conn")
-	dbName := os.Getenv("ROLE_DB_NAME")
+	dbName := os.Getenv("MAIN_POSTGRES_DB_NAME")
 	db := pgEntry.GetDB(dbName)
 	if db == nil {
 		return nil, fmt.Errorf("DB Not Found")
