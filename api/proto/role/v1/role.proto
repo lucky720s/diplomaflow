@@ -1,12 +1,16 @@
 syntax = "proto3";
 
 package role.v1;
+
+import "google/protobuf/empty.proto";
+
+
 option go_package = "github.com/lucky720s/diplomaflow/pkg/protobuf/role/v1";
 service RoleService{
   rpc CreateRole(CreateRoleRequest) returns (CreateRoleResponse);
   rpc GetRole(GetRoleRequest) returns(GetRoleResponse);
   rpc ListRoles(ListRolesRequest) returns (ListRolesResponse);
-  rpc DeleteRole(DeleteRoleRequest) returns (DeleteRoleResponse);
+  rpc DeleteRole (DeleteRoleRequest) returns (google.protobuf.Empty);
   rpc UpdateRole(UpdateRoleRequest) returns (UpdateRoleResponse);
 }
 message Role{
@@ -16,6 +20,7 @@ message Role{
 }
 message CreateRoleRequest{
   string name = 1;
+  int64 department_id = 2;
 }
 message CreateRoleResponse{
   Role role = 1;
@@ -33,8 +38,6 @@ message ListRolesResponse{
 message DeleteRoleRequest{
   int64 role_id = 1;
 }
-message DeleteRoleResponse{
-  bool success = 1;
-}
+
 message UpdateRoleRequest{}
 message UpdateRoleResponse{}

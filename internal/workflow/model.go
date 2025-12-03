@@ -1,23 +1,33 @@
 package workflow
 
 import (
+	"time"
+
 	"gorm.io/datatypes"
+	"gorm.io/gorm"
 )
 
 type Workflow struct {
-	ID           int64 `gorm:"primaryKey"`
-	Name         string
-	DepartmentID int64
+	ID           int64  `gorm:"primaryKey"`
+	Name         string `gorm:"not null"`
+	DepartmentID int64  `gorm:"index;not null"`
+	IsActive     bool   `gorm:"default:false;index"`
+	CreatedAt    time.Time
+	UpdatedAt    time.Time
+	DeletedAt    gorm.DeletedAt `gorm:"index"`
+	Steps        []State        `gorm:"foreignKey:WorkflowID"`
 }
 
 type State struct {
 	ID           int64  `gorm:"primaryKey"`
 	WorkflowID   int64  `gorm:"not null;index"`
-	Name         string `gorm:"type:varchar(255)"`
+	Name         string `gorm:"type:varchar(255);not null"`
 	Description  string
 	Type         string         `gorm:"type:varchar(50);not null"`
 	Config       datatypes.JSON `gorm:"not null"`
 	DurationDays int32
+	CreatedAt    time.Time
+	UpdatedAt    time.Time
 }
 
 type Transition struct {

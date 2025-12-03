@@ -2,110 +2,71 @@ package auth
 
 import (
 	"context"
-	"fmt"
-	"os"
-
-	rkpostgres "github.com/rookie-ninja/rk-db/postgres"
-	"golang.org/x/crypto/bcrypt"
 	"gorm.io/gorm"
 )
 
-type User struct {
-	ID           int64  `gorm:"primary_key"`
-	Email        string `gorm:"uniqueIndex"`
-	PasswordHash string
-	UniversityID int64
-	DepartmentID int64
-}
-type RoleAssignment struct {
-	ID     int64 `gorm:"primaryKey"`
-	UserID int64 `gorm:"index:idx_user_role,unique"`
-	RoleID int64 `gorm:"index:idx_user_role,unique"`
+type Repository interface {
+	Create(ctx context.Context, user *User) error
+	GetByEmail(ctx context.Context, email string) (*User, error)
+	GetByID(ctx context.Context, id int64) (*User, error)
+	ListUsers(ctx context.Context, filter UserFilter) ([]*User, int64, error)
 }
 
-type Repository interface {
-	CreateUser(ctx context.Context, email, password string, universityID, departmentID int64) (*User, error)
-	GetUserByEmail(ctx context.Context, email string) (*User, error)
-	GetUserByID(ctx context.Context, id int64) (*User, error)
-	AssignRole(ctx context.Context, userID, roleID int64) error
-	GetUserRoleIDs(ctx context.Context, userID int64) ([]int64, error)
-	SetDepartment(ctx context.Context, userID, departmentID int64) error
-	GetUsersByDepartment(ctx context.Context, departmentID int64) ([]*User, error)
+type UserFilter struct {
+	UniversityID int64
+	Role         string
+	Limit        int
+	Offset       int
 }
 
 type repository struct {
 	db *gorm.DB
 }
 
-func (User) TableName() string {
-	return "auth_schema.users"
-}
-func (RoleAssignment) TableName() string {
-	return "auth_schema.role_assignments"
-}
-func NewRepository() (Repository, error) {
-	pgEntry := rkpostgres.GetPostgresEntry("auth-conn")
-	dbName := os.Getenv("MAIN_POSTGRES_DB_NAME")
-	db := pgEntry.GetDB(dbName)
-	if db == nil {
-		panic("Database not found")
-	}
-	if err := db.AutoMigrate(&User{}, &RoleAssignment{}); err != nil {
-		return nil, fmt.Errorf("AutoMigrate User Error: %v", err)
-	}
-	return &repository{db: db}, nil
+func NewRepository(db *gorm.DB) Repository {
+	return &repository{db: db}
 }
 
-func (r *repository) CreateUser(ctx context.Context, email, password string, universityID, departmentID int64) (*User, error) {
-	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
-	if err != nil {
+func (r *repository) Create(ctx context.Context, user *User) error {
+	return r.db.WithContext(ctx).Create(user).Error
+}
+
+func (r *repository) GetByEmail(ctx context.Context, email string) (*User, error) {
+	var user User
+	if err := r.db.WithContext(ctx).Where("email = ?", email).First(&user).Error; err != nil {
 		return nil, err
 	}
-	user := &User{
-		Email:        email,
-		PasswordHash: string(hashedPassword),
-		UniversityID: universityID,
-		DepartmentID: departmentID,
-	}
-	res := r.db.WithContext(ctx).Create(user)
-	return user, res.Error
-}
-func (r *repository) GetUserByEmail(ctx context.Context, email string) (*User, error) {
-	var user User
-	res := r.db.WithContext(ctx).Where("email = ?", email).First(&user)
-	return &user, res.Error
-}
-func (r *repository) GetUserByID(ctx context.Context, id int64) (*User, error) {
-	var user User
-	res := r.db.WithContext(ctx).Where("id = ?", id).First(&user)
-	return &user, res.Error
+	return &user, nil
 }
 
-func (r *repository) AssignRole(ctx context.Context, userID, roleID int64) error {
-	assignment := &RoleAssignment{
-		UserID: userID,
-		RoleID: roleID,
-	}
-	return r.db.WithContext(ctx).Create(assignment).Error
-}
-func (r *repository) GetUserRoleIDs(ctx context.Context, userID int64) ([]int64, error) {
-	var assignments []RoleAssignment
-	err := r.db.WithContext(ctx).Where("user_id = ?", userID).Find(&assignments).Error
-	if err != nil {
+func (r *repository) GetByID(ctx context.Context, id int64) (*User, error) {
+	var user User
+	if err := r.db.WithContext(ctx).First(&user, id).Error; err != nil {
 		return nil, err
 	}
-	roleIDs := make([]int64, 0, len(assignments))
-	for _, a := range assignments {
-		roleIDs = append(roleIDs, a.RoleID)
-	}
-	return roleIDs, nil
-}
-func (r *repository) SetDepartment(ctx context.Context, userID, departmentID int64) error {
-	return r.db.WithContext(ctx).Model(&User{}).Where("id = ?", userID).Update("department_id", departmentID).Error
+	return &user, nil
 }
 
-func (r *repository) GetUsersByDepartment(ctx context.Context, departmentID int64) ([]*User, error) {
+func (r *repository) ListUsers(ctx context.Context, filter UserFilter) ([]*User, int64, error) {
 	var users []*User
-	res := r.db.WithContext(ctx).Where("department_id = ?", departmentID).Find(&users)
-	return users, res.Error
+	var total int64
+
+	query := r.db.WithContext(ctx).Model(&User{})
+
+	if filter.UniversityID != 0 {
+		query = query.Where("university_id = ?", filter.UniversityID)
+	}
+	if filter.Role != "" {
+		query = query.Where("role = ?", filter.Role)
+	}
+
+	if err := query.Count(&total).Error; err != nil {
+		return nil, 0, err
+	}
+
+	if err := query.Limit(filter.Limit).Offset(filter.Offset).Find(&users).Error; err != nil {
+		return nil, 0, err
+	}
+
+	return users, total, nil
 }

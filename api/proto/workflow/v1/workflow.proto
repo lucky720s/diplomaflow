@@ -42,6 +42,8 @@ message Workflow {
   int64 id = 1;
   string name = 2;
   int64 department_id = 3;
+  bool is_active = 4;
+  repeated State steps = 5;
 }
 
 message State {
@@ -82,12 +84,18 @@ service WorkflowService {
   rpc ListStateActions(ListStateActionsRequest) returns (ListStateActionsResponse);
   rpc DeleteStateAction(DeleteStateActionRequest) returns (google.protobuf.Empty);
 
+  rpc SetActiveWorkflow(SetActiveWorkflowRequest) returns (Workflow);
+  rpc GetActiveWorkflowByDepartment(GetActiveWorkflowByDepartmentRequest) returns (Workflow);
   rpc GetNextState(GetNextStateRequest) returns (State);
 }
 
 message CreateWorkflowRequest { string name = 1; int64 department_id = 2; }
-message GetWorkflowRequest { int64 workflow_id = 1; }
-message ListWorkflowsRequest { int64 department_id = 1; }
+message GetWorkflowRequest {
+  oneof criteria {
+    int64 workflow_id = 1;
+    string name = 2;
+  }
+}message ListWorkflowsRequest { int64 department_id = 1; }
 message ListWorkflowsResponse { repeated Workflow workflows = 1; }
 message UpdateWorkflowRequest { int64 id = 1; string name = 2; }
 message DeleteWorkflowRequest { int64 id = 1; }
@@ -107,4 +115,6 @@ message ListStateActionsRequest { int64 state_id = 1; }
 message ListStateActionsResponse { repeated StateAction actions = 1; }
 message DeleteStateActionRequest { int64 id = 1; }
 
+message SetActiveWorkflowRequest { int64 workflow_id = 1; }
+message GetActiveWorkflowByDepartmentRequest { int64 department_id = 1; }
 message GetNextStateRequest { int64 current_state_id = 1; string event_name = 2; }

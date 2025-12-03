@@ -1,18 +1,17 @@
+---
 grpc:
   - name: university-service
     port: 8081
     enabled: true
-    reflection: true
 
 postgres:
   - name: university-conn
     enabled: true
+    domain: "*"
     addr: "main_postgres:5432"
-    user: "diplomaflow"
-    pass: "diplomaflow_pass"
-    timezone: "Asia/Shanghai"
+    user: diplomaflow
+    pass: diplomaflow_pass
+    dbType: postgres
     database:
-      - name: "diplomaflow"
+      - name: diplomaflow
         autoCreate: true
-    params:
-      search_path: "university_schema"

@@ -13,90 +13,233 @@ import (
 
 type Handler struct {
 	workflowv1.UnimplementedWorkflowServiceServer
-	repo Repository
+	service *Service
 }
 
-func NewHandler(repo Repository) *Handler {
-	return &Handler{repo: repo}
+func NewHandler(service *Service) *Handler {
+	return &Handler{service: service}
+}
+
+func toProtoWorkflow(wf *Workflow) *workflowv1.Workflow {
+	if wf == nil {
+		return nil
+	}
+	return &workflowv1.Workflow{
+		Id:           wf.ID,
+		Name:         wf.Name,
+		DepartmentId: wf.DepartmentID,
+		IsActive:     wf.IsActive,
+	}
+}
+
+func toProtoState(st *State) *workflowv1.State {
+	if st == nil {
+		return nil
+	}
+	var configMap map[string]interface{}
+	_ = json.Unmarshal(st.Config, &configMap)
+	configStruct, _ := structpb.NewStruct(configMap)
+
+	return &workflowv1.State{
+		Id:           st.ID,
+		WorkflowId:   st.WorkflowID,
+		Name:         st.Name,
+		Description:  st.Description,
+		Type:         workflowv1.StateType(workflowv1.StateType_value[st.Type]),
+		Config:       configStruct,
+		DurationDays: st.DurationDays,
+	}
+}
+
+func toProtoTransition(tr *Transition) *workflowv1.Transition {
+	if tr == nil {
+		return nil
+	}
+	return &workflowv1.Transition{
+		Id:          tr.ID,
+		WorkflowId:  tr.WorkflowID,
+		EventName:   tr.EventName,
+		FromStateId: tr.FromStateID,
+		ToStateId:   tr.ToStateID,
+	}
+}
+
+func toProtoStateAction(sa *StateAction) *workflowv1.StateAction {
+	if sa == nil {
+		return nil
+	}
+	var configMap map[string]interface{}
+	_ = json.Unmarshal(sa.Config, &configMap)
+	configStruct, _ := structpb.NewStruct(configMap)
+
+	return &workflowv1.StateAction{
+		Id:      sa.ID,
+		StateId: sa.StateID,
+		Type:    workflowv1.StateAction_ActionType(workflowv1.StateAction_ActionType_value[sa.Type]),
+		Trigger: workflowv1.StateAction_Trigger(workflowv1.StateAction_Trigger_value[sa.Trigger]),
+		Config:  configStruct,
+	}
 }
 
 func (h *Handler) CreateWorkflow(ctx context.Context, req *workflowv1.CreateWorkflowRequest) (*workflowv1.Workflow, error) {
-	wf, err := h.repo.CreateWorkflow(ctx, req)
+	wf, err := h.service.CreateWorkflow(ctx, req.Name, req.DepartmentId)
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, "failed to create workflow: %v", err)
 	}
 	return toProtoWorkflow(wf), nil
 }
 
+func (h *Handler) GetWorkflow(ctx context.Context, req *workflowv1.GetWorkflowRequest) (*workflowv1.Workflow, error) {
+	var wf *Workflow
+	var err error
+
+	switch criteria := req.Criteria.(type) {
+	case *workflowv1.GetWorkflowRequest_WorkflowId:
+		wf, err = h.service.GetWorkflow(ctx, criteria.WorkflowId)
+	case *workflowv1.GetWorkflowRequest_Name:
+		wf, err = h.service.GetWorkflowByName(ctx, criteria.Name)
+	default:
+		return nil, status.Error(codes.InvalidArgument, "workflow_id or name must be provided")
+	}
+
+	if err != nil {
+		return nil, status.Errorf(codes.NotFound, "workflow not found: %v", err)
+	}
+
+	return toProtoWorkflow(wf), nil
+}
+func (h *Handler) ListWorkflows(ctx context.Context, req *workflowv1.ListWorkflowsRequest) (*workflowv1.ListWorkflowsResponse, error) {
+	wfs, err := h.service.ListWorkflows(ctx, req.DepartmentId)
+	if err != nil {
+		return nil, status.Errorf(codes.Internal, "failed to list workflows: %v", err)
+	}
+	var pbWfs []*workflowv1.Workflow
+	for _, wf := range wfs {
+		pbWfs = append(pbWfs, toProtoWorkflow(wf))
+	}
+	return &workflowv1.ListWorkflowsResponse{Workflows: pbWfs}, nil
+}
+
+func (h *Handler) UpdateWorkflow(ctx context.Context, req *workflowv1.UpdateWorkflowRequest) (*workflowv1.Workflow, error) {
+	wf, err := h.service.UpdateWorkflow(ctx, req.Id, req.Name)
+	if err != nil {
+		return nil, status.Errorf(codes.Internal, "failed to update workflow: %v", err)
+	}
+	return toProtoWorkflow(wf), nil
+}
+
+func (h *Handler) DeleteWorkflow(ctx context.Context, req *workflowv1.DeleteWorkflowRequest) (*emptypb.Empty, error) {
+	if err := h.service.DeleteWorkflow(ctx, req.Id); err != nil {
+		return nil, status.Errorf(codes.Internal, "failed to delete workflow: %v", err)
+	}
+	return &emptypb.Empty{}, nil
+}
+
 func (h *Handler) CreateState(ctx context.Context, req *workflowv1.CreateStateRequest) (*workflowv1.State, error) {
-	st, err := h.repo.CreateState(ctx, req)
+	st, err := h.service.CreateState(ctx, req)
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, "failed to create state: %v", err)
 	}
 	return toProtoState(st), nil
 }
+
 func (h *Handler) GetState(ctx context.Context, req *workflowv1.GetStateRequest) (*workflowv1.State, error) {
-	st, err := h.repo.GetState(ctx, req.GetStateId())
+	st, err := h.service.GetState(ctx, req.StateId)
 	if err != nil {
-		return nil, status.Errorf(codes.NotFound, "state not found: %v", err)
+		return nil, status.Errorf(codes.NotFound, "state not found")
 	}
 	return toProtoState(st), nil
 }
 
+func (h *Handler) ListStates(ctx context.Context, req *workflowv1.ListStatesRequest) (*workflowv1.ListStatesResponse, error) {
+	states, err := h.service.ListStates(ctx, req.WorkflowId)
+	if err != nil {
+		return nil, status.Errorf(codes.Internal, "failed to list states: %v", err)
+	}
+	var pbStates []*workflowv1.State
+	for _, st := range states {
+		pbStates = append(pbStates, toProtoState(st))
+	}
+	return &workflowv1.ListStatesResponse{States: pbStates}, nil
+}
+
+func (h *Handler) UpdateState(ctx context.Context, req *workflowv1.UpdateStateRequest) (*workflowv1.State, error) {
+	st, err := h.service.UpdateState(ctx, req)
+	if err != nil {
+		return nil, status.Errorf(codes.Internal, "failed to update state: %v", err)
+	}
+	return toProtoState(st), nil
+}
+
+func (h *Handler) DeleteState(ctx context.Context, req *workflowv1.DeleteStateRequest) (*emptypb.Empty, error) {
+	if err := h.service.DeleteState(ctx, req.Id); err != nil {
+		return nil, status.Errorf(codes.Internal, "failed to delete state: %v", err)
+	}
+	return &emptypb.Empty{}, nil
+}
+
 func (h *Handler) CreateTransition(ctx context.Context, req *workflowv1.CreateTransitionRequest) (*workflowv1.Transition, error) {
-	tr, err := h.repo.CreateTransition(ctx, req)
+	tr, err := h.service.CreateTransition(ctx, req)
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, "failed to create transition: %v", err)
 	}
 	return toProtoTransition(tr), nil
 }
+
 func (h *Handler) DeleteTransition(ctx context.Context, req *workflowv1.DeleteTransitionRequest) (*emptypb.Empty, error) {
-	if err := h.repo.DeleteTransition(ctx, req.GetId()); err != nil {
+	if err := h.service.DeleteTransition(ctx, req.Id); err != nil {
 		return nil, status.Errorf(codes.Internal, "failed to delete transition: %v", err)
 	}
 	return &emptypb.Empty{}, nil
 }
 
 func (h *Handler) CreateStateAction(ctx context.Context, req *workflowv1.CreateStateActionRequest) (*workflowv1.StateAction, error) {
-	sa, err := h.repo.CreateStateAction(ctx, req)
+	sa, err := h.service.CreateStateAction(ctx, req)
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, "failed to create action: %v", err)
 	}
 	return toProtoStateAction(sa), nil
 }
+
 func (h *Handler) ListStateActions(ctx context.Context, req *workflowv1.ListStateActionsRequest) (*workflowv1.ListStateActionsResponse, error) {
-	actions, err := h.repo.ListStateActions(ctx, req.GetStateId())
+	actions, err := h.service.ListStateActions(ctx, req.StateId)
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, "failed to list actions: %v", err)
 	}
-	protoActions := make([]*workflowv1.StateAction, len(actions))
-	for i, action := range actions {
-		protoActions[i] = toProtoStateAction(action)
+	var pbActions []*workflowv1.StateAction
+	for _, sa := range actions {
+		pbActions = append(pbActions, toProtoStateAction(sa))
 	}
-	return &workflowv1.ListStateActionsResponse{Actions: protoActions}, nil
+	return &workflowv1.ListStateActionsResponse{Actions: pbActions}, nil
+}
+
+func (h *Handler) DeleteStateAction(ctx context.Context, req *workflowv1.DeleteStateActionRequest) (*emptypb.Empty, error) {
+	if err := h.service.DeleteStateAction(ctx, req.Id); err != nil {
+		return nil, status.Errorf(codes.Internal, "failed to delete action: %v", err)
+	}
+	return &emptypb.Empty{}, nil
+}
+
+func (h *Handler) SetActiveWorkflow(ctx context.Context, req *workflowv1.SetActiveWorkflowRequest) (*workflowv1.Workflow, error) {
+	wf, err := h.service.SetActiveWorkflow(ctx, req.WorkflowId)
+	if err != nil {
+		return nil, status.Errorf(codes.Internal, "failed to set active workflow: %v", err)
+	}
+	return toProtoWorkflow(wf), nil
+}
+
+func (h *Handler) GetActiveWorkflowByDepartment(ctx context.Context, req *workflowv1.GetActiveWorkflowByDepartmentRequest) (*workflowv1.Workflow, error) {
+	wf, err := h.service.GetActiveWorkflowByDepartment(ctx, req.DepartmentId)
+	if err != nil {
+		return nil, status.Errorf(codes.NotFound, "no active workflow found")
+	}
+	return toProtoWorkflow(wf), nil
 }
 
 func (h *Handler) GetNextState(ctx context.Context, req *workflowv1.GetNextStateRequest) (*workflowv1.State, error) {
-	state, err := h.repo.GetNextState(ctx, req.GetCurrentStateId(), req.GetEventName())
+	st, err := h.service.GetNextState(ctx, req.CurrentStateId, req.EventName)
 	if err != nil {
-		return nil, status.Errorf(codes.NotFound, "no transition found: %v", err)
+		return nil, status.Errorf(codes.NotFound, "next state not found")
 	}
-	return toProtoState(state), nil
-}
-
-func toProtoWorkflow(wf *Workflow) *workflowv1.Workflow {
-	return &workflowv1.Workflow{Id: wf.ID, Name: wf.Name, DepartmentId: wf.DepartmentID}
-}
-func toProtoState(st *State) *workflowv1.State {
-	cfg, _ := structpb.NewStruct(nil)
-	_ = json.Unmarshal(st.Config, &cfg)
-	return &workflowv1.State{Id: st.ID, WorkflowId: st.WorkflowID, Name: st.Name, Description: st.Description, Type: workflowv1.StateType(workflowv1.StateType_value[st.Type]), Config: cfg, DurationDays: st.DurationDays}
-}
-func toProtoTransition(tr *Transition) *workflowv1.Transition {
-	return &workflowv1.Transition{Id: tr.ID, WorkflowId: tr.WorkflowID, EventName: tr.EventName, FromStateId: tr.FromStateID, ToStateId: tr.ToStateID}
-}
-func toProtoStateAction(sa *StateAction) *workflowv1.StateAction {
-	cfg, _ := structpb.NewStruct(nil)
-	_ = json.Unmarshal(sa.Config, &cfg)
-	return &workflowv1.StateAction{Id: sa.ID, StateId: sa.StateID, Type: workflowv1.StateAction_ActionType(workflowv1.StateAction_ActionType_value[sa.Type]), Trigger: workflowv1.StateAction_Trigger(workflowv1.StateAction_Trigger_value[sa.Trigger]), Config: cfg}
+	return toProtoState(st), nil
 }

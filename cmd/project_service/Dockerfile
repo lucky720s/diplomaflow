@@ -1,17 +1,18 @@
 FROM golang:1.25-alpine AS builder
-WORKDIR /go/src/github.com/lucky720s/diplomaflow
+WORKDIR /app
 
 COPY go.mod go.sum ./
 RUN go mod download
 
-COPY cmd/project_service ./cmd/project_service
-COPY internal/project ./internal/project
-COPY pkg/protobuf ./pkg/protobuf
+COPY . .
 
+RUN CGO_ENABLED=0 GOOS=linux go build -o /bin/service ./cmd/project_service
 
-RUN CGO_ENABLED=0 GOOS=linux go build -o /project-service-bin ./cmd/project_service
 FROM alpine:latest
-RUN apk add --no-cache tzdata bash
-COPY --from=builder /project-service-bin /project-service-bin
-COPY deployments/project_service/boot.yaml /boot.yaml
-ENTRYPOINT ["/project-service-bin"]
+WORKDIR /app
+RUN apk --no-cache add ca-certificates tzdata
+
+COPY --from=builder /bin/service /app/service
+COPY deployments/project_service/boot.yaml /app/boot.yaml
+
+ENTRYPOINT ["/app/service"]

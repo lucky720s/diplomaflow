@@ -2,40 +2,38 @@ package main
 
 import (
 	"context"
-	"fmt"
-	"time"
+	"log"
 
 	"github.com/lucky720s/diplomaflow/internal/role"
 	rolev1 "github.com/lucky720s/diplomaflow/pkg/protobuf/role/v1"
 	rkboot "github.com/rookie-ninja/rk-boot/v2"
+	rkpostgres "github.com/rookie-ninja/rk-db/postgres"
 	rkgrpc "github.com/rookie-ninja/rk-grpc/v2/boot"
 	"google.golang.org/grpc"
 )
 
 func main() {
-	boot := rkboot.NewBoot()
-	grpcEntry := rkgrpc.GetGrpcEntry("role-service")
-	if grpcEntry == nil {
-		panic(fmt.Errorf("grpc entry 'role-service' not found in boot.yaml"))
+	boot := rkboot.NewBoot(rkboot.WithBootConfigPath("boot.yaml", nil))
+
+	postgresEntry := rkpostgres.GetPostgresEntry("role-conn")
+	postgresEntry.Bootstrap(context.Background())
+	if postgresEntry == nil {
+		log.Fatal("Missing 'role-conn' in boot.yaml")
 	}
-	grpcEntry.AddRegFuncGrpc(func(server *grpc.Server) {
-		var repo role.Repository
-		var err error
-		for i := 0; i < 10; i++ {
-			repo, err = role.NewRepository()
-			if err == nil {
-				fmt.Println("Successfully created repository with DB connection")
-				break
-			}
-			fmt.Printf("Waiting for DB connection to be ready... attempt %d. Error: %v\n", i+1, err)
-			time.Sleep(2 * time.Second)
-		}
-		if err != nil {
-			panic(fmt.Errorf("failed to create repository after multiple attempts: %w", err))
-		}
-		handler := role.NewHandler(repo)
-		rolev1.RegisterRoleServiceServer(server, handler)
+	db := postgresEntry.GetDB("diplomaflow")
+	if db == nil {
+		log.Fatal("Database 'diplomaflow' not found")
+	}
+
+	repo := role.NewRepository(db)
+	svc := role.NewService(repo)
+	handler := role.NewHandler(svc)
+
+	grpcEntry := rkgrpc.GetGrpcEntry("role-service")
+	grpcEntry.AddRegFuncGrpc(func(s *grpc.Server) {
+		rolev1.RegisterRoleServiceServer(s, handler)
 	})
+
 	boot.Bootstrap(context.Background())
 	boot.WaitForShutdownSig(context.Background())
 }

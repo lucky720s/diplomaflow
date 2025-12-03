@@ -19,14 +19,9 @@ import (
 const _ = grpc.SupportPackageIsVersion7
 
 const (
-	TeamService_CreateTeam_FullMethodName         = "/team.v1.TeamService/CreateTeam"
-	TeamService_GetTeam_FullMethodName            = "/team.v1.TeamService/GetTeam"
-	TeamService_ListTeams_FullMethodName          = "/team.v1.TeamService/ListTeams"
-	TeamService_UpdateTeam_FullMethodName         = "/team.v1.TeamService/UpdateTeam"
-	TeamService_DeleteTeam_FullMethodName         = "/team.v1.TeamService/DeleteTeam"
-	TeamService_AddMember_FullMethodName          = "/team.v1.TeamService/AddMember"
-	TeamService_RemoveMember_FullMethodName       = "/team.v1.TeamService/RemoveMember"
-	TeamService_ListAvailableUsers_FullMethodName = "/team.v1.TeamService/ListAvailableUsers"
+	TeamService_CreateTeam_FullMethodName           = "/team.TeamService/CreateTeam"
+	TeamService_GetTeam_FullMethodName              = "/team.TeamService/GetTeam"
+	TeamService_GetAvailableStudents_FullMethodName = "/team.TeamService/GetAvailableStudents"
 )
 
 // TeamServiceClient is the client API for TeamService service.
@@ -35,12 +30,7 @@ const (
 type TeamServiceClient interface {
 	CreateTeam(ctx context.Context, in *CreateTeamRequest, opts ...grpc.CallOption) (*CreateTeamResponse, error)
 	GetTeam(ctx context.Context, in *GetTeamRequest, opts ...grpc.CallOption) (*GetTeamResponse, error)
-	ListTeams(ctx context.Context, in *ListTeamsRequest, opts ...grpc.CallOption) (*ListTeamsResponse, error)
-	UpdateTeam(ctx context.Context, in *UpdateTeamRequest, opts ...grpc.CallOption) (*UpdateTeamResponse, error)
-	DeleteTeam(ctx context.Context, in *DeleteTeamRequest, opts ...grpc.CallOption) (*DeleteTeamResponse, error)
-	AddMember(ctx context.Context, in *AddMemberRequest, opts ...grpc.CallOption) (*AddMemberResponse, error)
-	RemoveMember(ctx context.Context, in *RemoveMemberRequest, opts ...grpc.CallOption) (*RemoveMemberResponse, error)
-	ListAvailableUsers(ctx context.Context, in *ListAvailableUsersRequest, opts ...grpc.CallOption) (*ListAvailableUsersResponse, error)
+	GetAvailableStudents(ctx context.Context, in *GetAvailableStudentsRequest, opts ...grpc.CallOption) (*GetAvailableStudentsResponse, error)
 }
 
 type teamServiceClient struct {
@@ -69,54 +59,9 @@ func (c *teamServiceClient) GetTeam(ctx context.Context, in *GetTeamRequest, opt
 	return out, nil
 }
 
-func (c *teamServiceClient) ListTeams(ctx context.Context, in *ListTeamsRequest, opts ...grpc.CallOption) (*ListTeamsResponse, error) {
-	out := new(ListTeamsResponse)
-	err := c.cc.Invoke(ctx, TeamService_ListTeams_FullMethodName, in, out, opts...)
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
-}
-
-func (c *teamServiceClient) UpdateTeam(ctx context.Context, in *UpdateTeamRequest, opts ...grpc.CallOption) (*UpdateTeamResponse, error) {
-	out := new(UpdateTeamResponse)
-	err := c.cc.Invoke(ctx, TeamService_UpdateTeam_FullMethodName, in, out, opts...)
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
-}
-
-func (c *teamServiceClient) DeleteTeam(ctx context.Context, in *DeleteTeamRequest, opts ...grpc.CallOption) (*DeleteTeamResponse, error) {
-	out := new(DeleteTeamResponse)
-	err := c.cc.Invoke(ctx, TeamService_DeleteTeam_FullMethodName, in, out, opts...)
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
-}
-
-func (c *teamServiceClient) AddMember(ctx context.Context, in *AddMemberRequest, opts ...grpc.CallOption) (*AddMemberResponse, error) {
-	out := new(AddMemberResponse)
-	err := c.cc.Invoke(ctx, TeamService_AddMember_FullMethodName, in, out, opts...)
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
-}
-
-func (c *teamServiceClient) RemoveMember(ctx context.Context, in *RemoveMemberRequest, opts ...grpc.CallOption) (*RemoveMemberResponse, error) {
-	out := new(RemoveMemberResponse)
-	err := c.cc.Invoke(ctx, TeamService_RemoveMember_FullMethodName, in, out, opts...)
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
-}
-
-func (c *teamServiceClient) ListAvailableUsers(ctx context.Context, in *ListAvailableUsersRequest, opts ...grpc.CallOption) (*ListAvailableUsersResponse, error) {
-	out := new(ListAvailableUsersResponse)
-	err := c.cc.Invoke(ctx, TeamService_ListAvailableUsers_FullMethodName, in, out, opts...)
+func (c *teamServiceClient) GetAvailableStudents(ctx context.Context, in *GetAvailableStudentsRequest, opts ...grpc.CallOption) (*GetAvailableStudentsResponse, error) {
+	out := new(GetAvailableStudentsResponse)
+	err := c.cc.Invoke(ctx, TeamService_GetAvailableStudents_FullMethodName, in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -129,12 +74,7 @@ func (c *teamServiceClient) ListAvailableUsers(ctx context.Context, in *ListAvai
 type TeamServiceServer interface {
 	CreateTeam(context.Context, *CreateTeamRequest) (*CreateTeamResponse, error)
 	GetTeam(context.Context, *GetTeamRequest) (*GetTeamResponse, error)
-	ListTeams(context.Context, *ListTeamsRequest) (*ListTeamsResponse, error)
-	UpdateTeam(context.Context, *UpdateTeamRequest) (*UpdateTeamResponse, error)
-	DeleteTeam(context.Context, *DeleteTeamRequest) (*DeleteTeamResponse, error)
-	AddMember(context.Context, *AddMemberRequest) (*AddMemberResponse, error)
-	RemoveMember(context.Context, *RemoveMemberRequest) (*RemoveMemberResponse, error)
-	ListAvailableUsers(context.Context, *ListAvailableUsersRequest) (*ListAvailableUsersResponse, error)
+	GetAvailableStudents(context.Context, *GetAvailableStudentsRequest) (*GetAvailableStudentsResponse, error)
 	mustEmbedUnimplementedTeamServiceServer()
 }
 
@@ -148,23 +88,8 @@ func (UnimplementedTeamServiceServer) CreateTeam(context.Context, *CreateTeamReq
 func (UnimplementedTeamServiceServer) GetTeam(context.Context, *GetTeamRequest) (*GetTeamResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetTeam not implemented")
 }
-func (UnimplementedTeamServiceServer) ListTeams(context.Context, *ListTeamsRequest) (*ListTeamsResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method ListTeams not implemented")
-}
-func (UnimplementedTeamServiceServer) UpdateTeam(context.Context, *UpdateTeamRequest) (*UpdateTeamResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method UpdateTeam not implemented")
-}
-func (UnimplementedTeamServiceServer) DeleteTeam(context.Context, *DeleteTeamRequest) (*DeleteTeamResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method DeleteTeam not implemented")
-}
-func (UnimplementedTeamServiceServer) AddMember(context.Context, *AddMemberRequest) (*AddMemberResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method AddMember not implemented")
-}
-func (UnimplementedTeamServiceServer) RemoveMember(context.Context, *RemoveMemberRequest) (*RemoveMemberResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method RemoveMember not implemented")
-}
-func (UnimplementedTeamServiceServer) ListAvailableUsers(context.Context, *ListAvailableUsersRequest) (*ListAvailableUsersResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method ListAvailableUsers not implemented")
+func (UnimplementedTeamServiceServer) GetAvailableStudents(context.Context, *GetAvailableStudentsRequest) (*GetAvailableStudentsResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetAvailableStudents not implemented")
 }
 func (UnimplementedTeamServiceServer) mustEmbedUnimplementedTeamServiceServer() {}
 
@@ -215,110 +140,20 @@ func _TeamService_GetTeam_Handler(srv interface{}, ctx context.Context, dec func
 	return interceptor(ctx, in, info, handler)
 }
 
-func _TeamService_ListTeams_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(ListTeamsRequest)
+func _TeamService_GetAvailableStudents_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetAvailableStudentsRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(TeamServiceServer).ListTeams(ctx, in)
+		return srv.(TeamServiceServer).GetAvailableStudents(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: TeamService_ListTeams_FullMethodName,
+		FullMethod: TeamService_GetAvailableStudents_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(TeamServiceServer).ListTeams(ctx, req.(*ListTeamsRequest))
-	}
-	return interceptor(ctx, in, info, handler)
-}
-
-func _TeamService_UpdateTeam_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(UpdateTeamRequest)
-	if err := dec(in); err != nil {
-		return nil, err
-	}
-	if interceptor == nil {
-		return srv.(TeamServiceServer).UpdateTeam(ctx, in)
-	}
-	info := &grpc.UnaryServerInfo{
-		Server:     srv,
-		FullMethod: TeamService_UpdateTeam_FullMethodName,
-	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(TeamServiceServer).UpdateTeam(ctx, req.(*UpdateTeamRequest))
-	}
-	return interceptor(ctx, in, info, handler)
-}
-
-func _TeamService_DeleteTeam_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(DeleteTeamRequest)
-	if err := dec(in); err != nil {
-		return nil, err
-	}
-	if interceptor == nil {
-		return srv.(TeamServiceServer).DeleteTeam(ctx, in)
-	}
-	info := &grpc.UnaryServerInfo{
-		Server:     srv,
-		FullMethod: TeamService_DeleteTeam_FullMethodName,
-	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(TeamServiceServer).DeleteTeam(ctx, req.(*DeleteTeamRequest))
-	}
-	return interceptor(ctx, in, info, handler)
-}
-
-func _TeamService_AddMember_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(AddMemberRequest)
-	if err := dec(in); err != nil {
-		return nil, err
-	}
-	if interceptor == nil {
-		return srv.(TeamServiceServer).AddMember(ctx, in)
-	}
-	info := &grpc.UnaryServerInfo{
-		Server:     srv,
-		FullMethod: TeamService_AddMember_FullMethodName,
-	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(TeamServiceServer).AddMember(ctx, req.(*AddMemberRequest))
-	}
-	return interceptor(ctx, in, info, handler)
-}
-
-func _TeamService_RemoveMember_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(RemoveMemberRequest)
-	if err := dec(in); err != nil {
-		return nil, err
-	}
-	if interceptor == nil {
-		return srv.(TeamServiceServer).RemoveMember(ctx, in)
-	}
-	info := &grpc.UnaryServerInfo{
-		Server:     srv,
-		FullMethod: TeamService_RemoveMember_FullMethodName,
-	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(TeamServiceServer).RemoveMember(ctx, req.(*RemoveMemberRequest))
-	}
-	return interceptor(ctx, in, info, handler)
-}
-
-func _TeamService_ListAvailableUsers_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(ListAvailableUsersRequest)
-	if err := dec(in); err != nil {
-		return nil, err
-	}
-	if interceptor == nil {
-		return srv.(TeamServiceServer).ListAvailableUsers(ctx, in)
-	}
-	info := &grpc.UnaryServerInfo{
-		Server:     srv,
-		FullMethod: TeamService_ListAvailableUsers_FullMethodName,
-	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(TeamServiceServer).ListAvailableUsers(ctx, req.(*ListAvailableUsersRequest))
+		return srv.(TeamServiceServer).GetAvailableStudents(ctx, req.(*GetAvailableStudentsRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -327,7 +162,7 @@ func _TeamService_ListAvailableUsers_Handler(srv interface{}, ctx context.Contex
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
 var TeamService_ServiceDesc = grpc.ServiceDesc{
-	ServiceName: "team.v1.TeamService",
+	ServiceName: "team.TeamService",
 	HandlerType: (*TeamServiceServer)(nil),
 	Methods: []grpc.MethodDesc{
 		{
@@ -339,28 +174,8 @@ var TeamService_ServiceDesc = grpc.ServiceDesc{
 			Handler:    _TeamService_GetTeam_Handler,
 		},
 		{
-			MethodName: "ListTeams",
-			Handler:    _TeamService_ListTeams_Handler,
-		},
-		{
-			MethodName: "UpdateTeam",
-			Handler:    _TeamService_UpdateTeam_Handler,
-		},
-		{
-			MethodName: "DeleteTeam",
-			Handler:    _TeamService_DeleteTeam_Handler,
-		},
-		{
-			MethodName: "AddMember",
-			Handler:    _TeamService_AddMember_Handler,
-		},
-		{
-			MethodName: "RemoveMember",
-			Handler:    _TeamService_RemoveMember_Handler,
-		},
-		{
-			MethodName: "ListAvailableUsers",
-			Handler:    _TeamService_ListAvailableUsers_Handler,
+			MethodName: "GetAvailableStudents",
+			Handler:    _TeamService_GetAvailableStudents_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

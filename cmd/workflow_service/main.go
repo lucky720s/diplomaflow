@@ -2,41 +2,36 @@ package main
 
 import (
 	"context"
-	"fmt"
-	"time"
+	"log"
 
 	"github.com/lucky720s/diplomaflow/internal/workflow"
 	workflowv1 "github.com/lucky720s/diplomaflow/pkg/protobuf/workflow/v1"
 	rkboot "github.com/rookie-ninja/rk-boot/v2"
+	rkpostgres "github.com/rookie-ninja/rk-db/postgres"
 	rkgrpc "github.com/rookie-ninja/rk-grpc/v2/boot"
 	"google.golang.org/grpc"
 )
 
 func main() {
-	boot := rkboot.NewBoot()
-	grpcEntry := rkgrpc.GetGrpcEntry("workflow-service")
-	if grpcEntry == nil {
-		panic(fmt.Errorf("failed to get gRPC entry 'workflow-service'"))
+	boot := rkboot.NewBoot(rkboot.WithBootConfigPath("boot.yaml", nil))
+
+	postgresEntry := rkpostgres.GetPostgresEntry("workflow-conn")
+	postgresEntry.Bootstrap(context.Background())
+	if postgresEntry == nil {
+		log.Fatal("Missing 'workflow-conn' in boot.yaml")
+	}
+	db := postgresEntry.GetDB("diplomaflow")
+	if db == nil {
+		log.Fatal("Database 'diplomaflow' not found")
 	}
 
-	grpcEntry.AddRegFuncGrpc(func(server *grpc.Server) {
-		var repo workflow.Repository
-		var err error
-		for i := 0; i < 10; i++ {
-			repo, err = workflow.NewRepository()
-			if err == nil {
-				fmt.Println("success connect to db for workflow_service")
-				break
-			}
-			fmt.Printf("waiting to connect db attempt %d. Error %v\n", i+1, err)
-			time.Sleep(2 * time.Second)
-		}
-		if err != nil {
-			panic(fmt.Errorf("failed to init repo for workflow_service: %v", err))
-		}
+	repo := workflow.NewRepository(db)
+	svc := workflow.NewService(repo)
+	handler := workflow.NewHandler(svc)
 
-		handler := workflow.NewHandler(repo)
-		workflowv1.RegisterWorkflowServiceServer(server, handler)
+	grpcEntry := rkgrpc.GetGrpcEntry("workflow-service")
+	grpcEntry.AddRegFuncGrpc(func(s *grpc.Server) {
+		workflowv1.RegisterWorkflowServiceServer(s, handler)
 	})
 
 	boot.Bootstrap(context.Background())

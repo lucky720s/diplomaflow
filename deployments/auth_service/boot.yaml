@@ -1,18 +1,17 @@
+---
 grpc:
   - name: auth-service
     port: 8082
     enabled: true
-    reflection: true
 
 postgres:
   - name: auth-conn
     enabled: true
+    domain: "*"
     addr: "main_postgres:5432"
-    user: "diplomaflow"
-    pass: "diplomaflow_pass"
-    timezone: "Asia/Shanghai"
+    user: diplomaflow
+    pass: diplomaflow_pass
+    dbType: postgres
     database:
-      - name: "diplomaflow"
-        autoCreate: false
-    params:
-      search_path: "auth_schema"
+      - name: diplomaflow
+        autoCreate: true

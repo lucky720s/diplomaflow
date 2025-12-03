@@ -1,17 +1,18 @@
 FROM golang:1.25-alpine AS builder
-WORKDIR /go/src/github.com/lucky720s/diplomaflow
-copy go.mod go.sum ./
+WORKDIR /app
+
+COPY go.mod go.sum ./
 RUN go mod download
 
-COPY cmd/university_service ./cmd/university_service
-COPY internal/university ./internal/university
-COPY pkg/protobuf ./pkg/protobuf
+COPY . .
 
-RUN CGO_ENABLED=0 GOOS=linux go build -o /university-service-bin ./cmd/university_service
+RUN CGO_ENABLED=0 GOOS=linux go build -o /bin/service ./cmd/university_service
 
 FROM alpine:latest
-RUN apk add --no-cache tzdata bash
-COPY --from=builder /university-service-bin /university-service-bin
-COPY deployments/university_service/boot.yaml /boot.yaml
+WORKDIR /app
+RUN apk --no-cache add ca-certificates tzdata
 
-ENTRYPOINT ["/university-service-bin"]
+COPY --from=builder /bin/service /app/service
+COPY deployments/university_service/boot.yaml /app/boot.yaml
+
+ENTRYPOINT ["/app/service"]

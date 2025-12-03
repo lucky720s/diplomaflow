@@ -1,0 +1,71 @@
+syntax = "proto3";
+
+package auth;
+
+option go_package = "github.com/lucky720s/diplomaflow/pkg/protobuf/auth/v1";
+
+service AuthService {
+  rpc Register (RegisterRequest) returns (RegisterResponse);
+  rpc Login (LoginRequest) returns (LoginResponse);
+  rpc ValidateToken (ValidateTokenRequest) returns (ValidateTokenResponse);
+  rpc ListUsers (ListUsersRequest) returns (ListUsersResponse);
+}
+
+message RegisterRequest {
+  string email = 1;
+  string password = 2;
+  string first_name = 3;
+  string last_name = 4;
+  string role = 5;
+  int64 university_id = 6;
+}
+
+message RegisterResponse {
+  int64 status = 1;
+  string error = 2;
+  int64 user_id = 3;
+}
+
+message LoginRequest {
+  string email = 1;
+  string password = 2;
+}
+
+message LoginResponse {
+  int64 status = 1;
+  string error = 2;
+  string token = 3;
+}
+
+message ValidateTokenRequest {
+  string token = 1;
+}
+
+message ValidateTokenResponse {
+  int64 status = 1;
+  string error = 2;
+  int64 user_id = 3;
+  string role = 4;
+  int64 university_id = 5;
+}
+
+message ListUsersRequest {
+  int64 university_id = 1;
+  string role = 2;
+  int32 page = 3;
+  int32 page_size = 4;
+}
+
+message UserPreview {
+  int64 id = 1;
+  string email = 2;
+  string first_name = 3;
+  string last_name = 4;
+  string role = 5;
+  int64 university_id = 6;
+}
+
+message ListUsersResponse {
+  repeated UserPreview users = 1;
+  int64 total_count = 2;
+}

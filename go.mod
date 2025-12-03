@@ -9,7 +9,6 @@ require (
 	github.com/rookie-ninja/rk-db/postgres v1.2.24
 	github.com/rookie-ninja/rk-grpc/v2 v2.2.22
 	golang.org/x/crypto v0.43.0
-	google.golang.org/genproto v0.0.0-20251111163417-95abcf5c77ba
 	google.golang.org/grpc v1.76.0
 	google.golang.org/protobuf v1.36.10
 	gorm.io/datatypes v1.2.7

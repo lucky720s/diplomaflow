@@ -269,6 +269,8 @@ type Workflow struct {
 	Id            int64                  `protobuf:"varint,1,opt,name=id,proto3" json:"id,omitempty"`
 	Name          string                 `protobuf:"bytes,2,opt,name=name,proto3" json:"name,omitempty"`
 	DepartmentId  int64                  `protobuf:"varint,3,opt,name=department_id,json=departmentId,proto3" json:"department_id,omitempty"`
+	IsActive      bool                   `protobuf:"varint,4,opt,name=is_active,json=isActive,proto3" json:"is_active,omitempty"`
+	Steps         []*State               `protobuf:"bytes,5,rep,name=steps,proto3" json:"steps,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -322,6 +324,20 @@ func (x *Workflow) GetDepartmentId() int64 {
 		return x.DepartmentId
 	}
 	return 0
+}
+
+func (x *Workflow) GetIsActive() bool {
+	if x != nil {
+		return x.IsActive
+	}
+	return false
+}
+
+func (x *Workflow) GetSteps() []*State {
+	if x != nil {
+		return x.Steps
+	}
+	return nil
 }
 
 type State struct {
@@ -545,8 +561,12 @@ func (x *CreateWorkflowRequest) GetDepartmentId() int64 {
 }
 
 type GetWorkflowRequest struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	WorkflowId    int64                  `protobuf:"varint,1,opt,name=workflow_id,json=workflowId,proto3" json:"workflow_id,omitempty"`
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// Types that are valid to be assigned to Criteria:
+	//
+	//	*GetWorkflowRequest_WorkflowId
+	//	*GetWorkflowRequest_Name
+	Criteria      isGetWorkflowRequest_Criteria `protobuf_oneof:"criteria"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -581,12 +601,46 @@ func (*GetWorkflowRequest) Descriptor() ([]byte, []int) {
 	return file_workflow_v1_workflow_proto_rawDescGZIP(), []int{5}
 }
 
+func (x *GetWorkflowRequest) GetCriteria() isGetWorkflowRequest_Criteria {
+	if x != nil {
+		return x.Criteria
+	}
+	return nil
+}
+
 func (x *GetWorkflowRequest) GetWorkflowId() int64 {
 	if x != nil {
-		return x.WorkflowId
+		if x, ok := x.Criteria.(*GetWorkflowRequest_WorkflowId); ok {
+			return x.WorkflowId
+		}
 	}
 	return 0
 }
+
+func (x *GetWorkflowRequest) GetName() string {
+	if x != nil {
+		if x, ok := x.Criteria.(*GetWorkflowRequest_Name); ok {
+			return x.Name
+		}
+	}
+	return ""
+}
+
+type isGetWorkflowRequest_Criteria interface {
+	isGetWorkflowRequest_Criteria()
+}
+
+type GetWorkflowRequest_WorkflowId struct {
+	WorkflowId int64 `protobuf:"varint,1,opt,name=workflow_id,json=workflowId,proto3,oneof"`
+}
+
+type GetWorkflowRequest_Name struct {
+	Name string `protobuf:"bytes,2,opt,name=name,proto3,oneof"`
+}
+
+func (*GetWorkflowRequest_WorkflowId) isGetWorkflowRequest_Criteria() {}
+
+func (*GetWorkflowRequest_Name) isGetWorkflowRequest_Criteria() {}
 
 type ListWorkflowsRequest struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
@@ -1420,6 +1474,94 @@ func (x *DeleteStateActionRequest) GetId() int64 {
 	return 0
 }
 
+type SetActiveWorkflowRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	WorkflowId    int64                  `protobuf:"varint,1,opt,name=workflow_id,json=workflowId,proto3" json:"workflow_id,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *SetActiveWorkflowRequest) Reset() {
+	*x = SetActiveWorkflowRequest{}
+	mi := &file_workflow_v1_workflow_proto_msgTypes[22]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *SetActiveWorkflowRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*SetActiveWorkflowRequest) ProtoMessage() {}
+
+func (x *SetActiveWorkflowRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_workflow_v1_workflow_proto_msgTypes[22]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use SetActiveWorkflowRequest.ProtoReflect.Descriptor instead.
+func (*SetActiveWorkflowRequest) Descriptor() ([]byte, []int) {
+	return file_workflow_v1_workflow_proto_rawDescGZIP(), []int{22}
+}
+
+func (x *SetActiveWorkflowRequest) GetWorkflowId() int64 {
+	if x != nil {
+		return x.WorkflowId
+	}
+	return 0
+}
+
+type GetActiveWorkflowByDepartmentRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	DepartmentId  int64                  `protobuf:"varint,1,opt,name=department_id,json=departmentId,proto3" json:"department_id,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *GetActiveWorkflowByDepartmentRequest) Reset() {
+	*x = GetActiveWorkflowByDepartmentRequest{}
+	mi := &file_workflow_v1_workflow_proto_msgTypes[23]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *GetActiveWorkflowByDepartmentRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*GetActiveWorkflowByDepartmentRequest) ProtoMessage() {}
+
+func (x *GetActiveWorkflowByDepartmentRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_workflow_v1_workflow_proto_msgTypes[23]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use GetActiveWorkflowByDepartmentRequest.ProtoReflect.Descriptor instead.
+func (*GetActiveWorkflowByDepartmentRequest) Descriptor() ([]byte, []int) {
+	return file_workflow_v1_workflow_proto_rawDescGZIP(), []int{23}
+}
+
+func (x *GetActiveWorkflowByDepartmentRequest) GetDepartmentId() int64 {
+	if x != nil {
+		return x.DepartmentId
+	}
+	return 0
+}
+
 type GetNextStateRequest struct {
 	state          protoimpl.MessageState `protogen:"open.v1"`
 	CurrentStateId int64                  `protobuf:"varint,1,opt,name=current_state_id,json=currentStateId,proto3" json:"current_state_id,omitempty"`
@@ -1430,7 +1572,7 @@ type GetNextStateRequest struct {
 
 func (x *GetNextStateRequest) Reset() {
 	*x = GetNextStateRequest{}
-	mi := &file_workflow_v1_workflow_proto_msgTypes[22]
+	mi := &file_workflow_v1_workflow_proto_msgTypes[24]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1442,7 +1584,7 @@ func (x *GetNextStateRequest) String() string {
 func (*GetNextStateRequest) ProtoMessage() {}
 
 func (x *GetNextStateRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_workflow_v1_workflow_proto_msgTypes[22]
+	mi := &file_workflow_v1_workflow_proto_msgTypes[24]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1455,7 +1597,7 @@ func (x *GetNextStateRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetNextStateRequest.ProtoReflect.Descriptor instead.
 func (*GetNextStateRequest) Descriptor() ([]byte, []int) {
-	return file_workflow_v1_workflow_proto_rawDescGZIP(), []int{22}
+	return file_workflow_v1_workflow_proto_rawDescGZIP(), []int{24}
 }
 
 func (x *GetNextStateRequest) GetCurrentStateId() int64 {
@@ -1493,11 +1635,13 @@ const file_workflow_v1_workflow_proto_rawDesc = "" +
 	"\x13TRIGGER_UNSPECIFIED\x10\x00\x12\f\n" +
 	"\bON_ENTER\x10\x01\x12\v\n" +
 	"\aON_EXIT\x10\x02\x12\x0f\n" +
-	"\vON_DEADLINE\x10\x03\"S\n" +
+	"\vON_DEADLINE\x10\x03\"\x9a\x01\n" +
 	"\bWorkflow\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\x03R\x02id\x12\x12\n" +
 	"\x04name\x18\x02 \x01(\tR\x04name\x12#\n" +
-	"\rdepartment_id\x18\x03 \x01(\x03R\fdepartmentId\"\xf0\x01\n" +
+	"\rdepartment_id\x18\x03 \x01(\x03R\fdepartmentId\x12\x1b\n" +
+	"\tis_active\x18\x04 \x01(\bR\bisActive\x12(\n" +
+	"\x05steps\x18\x05 \x03(\v2\x12.workflow.v1.StateR\x05steps\"\xf0\x01\n" +
 	"\x05State\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\x03R\x02id\x12\x1f\n" +
 	"\vworkflow_id\x18\x02 \x01(\x03R\n" +
@@ -1518,10 +1662,13 @@ const file_workflow_v1_workflow_proto_rawDesc = "" +
 	"\vto_state_id\x18\x05 \x01(\x03R\ttoStateId\"P\n" +
 	"\x15CreateWorkflowRequest\x12\x12\n" +
 	"\x04name\x18\x01 \x01(\tR\x04name\x12#\n" +
-	"\rdepartment_id\x18\x02 \x01(\x03R\fdepartmentId\"5\n" +
-	"\x12GetWorkflowRequest\x12\x1f\n" +
-	"\vworkflow_id\x18\x01 \x01(\x03R\n" +
-	"workflowId\";\n" +
+	"\rdepartment_id\x18\x02 \x01(\x03R\fdepartmentId\"Y\n" +
+	"\x12GetWorkflowRequest\x12!\n" +
+	"\vworkflow_id\x18\x01 \x01(\x03H\x00R\n" +
+	"workflowId\x12\x14\n" +
+	"\x04name\x18\x02 \x01(\tH\x00R\x04nameB\n" +
+	"\n" +
+	"\bcriteria\";\n" +
 	"\x14ListWorkflowsRequest\x12#\n" +
 	"\rdepartment_id\x18\x01 \x01(\x03R\fdepartmentId\"L\n" +
 	"\x15ListWorkflowsResponse\x123\n" +
@@ -1573,7 +1720,12 @@ const file_workflow_v1_workflow_proto_rawDesc = "" +
 	"\x18ListStateActionsResponse\x122\n" +
 	"\aactions\x18\x01 \x03(\v2\x18.workflow.v1.StateActionR\aactions\"*\n" +
 	"\x18DeleteStateActionRequest\x12\x0e\n" +
-	"\x02id\x18\x01 \x01(\x03R\x02id\"^\n" +
+	"\x02id\x18\x01 \x01(\x03R\x02id\";\n" +
+	"\x18SetActiveWorkflowRequest\x12\x1f\n" +
+	"\vworkflow_id\x18\x01 \x01(\x03R\n" +
+	"workflowId\"K\n" +
+	"$GetActiveWorkflowByDepartmentRequest\x12#\n" +
+	"\rdepartment_id\x18\x01 \x01(\x03R\fdepartmentId\"^\n" +
 	"\x13GetNextStateRequest\x12(\n" +
 	"\x10current_state_id\x18\x01 \x01(\x03R\x0ecurrentStateId\x12\x1d\n" +
 	"\n" +
@@ -1585,7 +1737,7 @@ const file_workflow_v1_workflow_proto_rawDesc = "" +
 	"\x0fDOCUMENT_UPLOAD\x10\x03\x12\x10\n" +
 	"\fFORM_FILLING\x10\x04\x12\x12\n" +
 	"\x0eEXTERNAL_CHECK\x10\x05\x12\f\n" +
-	"\bAPPROVAL\x10\x062\xeb\t\n" +
+	"\bAPPROVAL\x10\x062\xa9\v\n" +
 	"\x0fWorkflowService\x12K\n" +
 	"\x0eCreateWorkflow\x12\".workflow.v1.CreateWorkflowRequest\x1a\x15.workflow.v1.Workflow\x12E\n" +
 	"\vGetWorkflow\x12\x1f.workflow.v1.GetWorkflowRequest\x1a\x15.workflow.v1.Workflow\x12V\n" +
@@ -1602,7 +1754,9 @@ const file_workflow_v1_workflow_proto_rawDesc = "" +
 	"\x10DeleteTransition\x12$.workflow.v1.DeleteTransitionRequest\x1a\x16.google.protobuf.Empty\x12T\n" +
 	"\x11CreateStateAction\x12%.workflow.v1.CreateStateActionRequest\x1a\x18.workflow.v1.StateAction\x12_\n" +
 	"\x10ListStateActions\x12$.workflow.v1.ListStateActionsRequest\x1a%.workflow.v1.ListStateActionsResponse\x12R\n" +
-	"\x11DeleteStateAction\x12%.workflow.v1.DeleteStateActionRequest\x1a\x16.google.protobuf.Empty\x12D\n" +
+	"\x11DeleteStateAction\x12%.workflow.v1.DeleteStateActionRequest\x1a\x16.google.protobuf.Empty\x12Q\n" +
+	"\x11SetActiveWorkflow\x12%.workflow.v1.SetActiveWorkflowRequest\x1a\x15.workflow.v1.Workflow\x12i\n" +
+	"\x1dGetActiveWorkflowByDepartment\x121.workflow.v1.GetActiveWorkflowByDepartmentRequest\x1a\x15.workflow.v1.Workflow\x12D\n" +
 	"\fGetNextState\x12 .workflow.v1.GetNextStateRequest\x1a\x12.workflow.v1.StateB;Z9github.com/lucky720s/diplomaflow/pkg/protobuf/workflow/v1b\x06proto3"
 
 var (
@@ -1618,89 +1772,96 @@ func file_workflow_v1_workflow_proto_rawDescGZIP() []byte {
 }
 
 var file_workflow_v1_workflow_proto_enumTypes = make([]protoimpl.EnumInfo, 3)
-var file_workflow_v1_workflow_proto_msgTypes = make([]protoimpl.MessageInfo, 23)
+var file_workflow_v1_workflow_proto_msgTypes = make([]protoimpl.MessageInfo, 25)
 var file_workflow_v1_workflow_proto_goTypes = []any{
-	(StateType)(0),                   // 0: workflow.v1.StateType
-	(StateAction_ActionType)(0),      // 1: workflow.v1.StateAction.ActionType
-	(StateAction_Trigger)(0),         // 2: workflow.v1.StateAction.Trigger
-	(*StateAction)(nil),              // 3: workflow.v1.StateAction
-	(*Workflow)(nil),                 // 4: workflow.v1.Workflow
-	(*State)(nil),                    // 5: workflow.v1.State
-	(*Transition)(nil),               // 6: workflow.v1.Transition
-	(*CreateWorkflowRequest)(nil),    // 7: workflow.v1.CreateWorkflowRequest
-	(*GetWorkflowRequest)(nil),       // 8: workflow.v1.GetWorkflowRequest
-	(*ListWorkflowsRequest)(nil),     // 9: workflow.v1.ListWorkflowsRequest
-	(*ListWorkflowsResponse)(nil),    // 10: workflow.v1.ListWorkflowsResponse
-	(*UpdateWorkflowRequest)(nil),    // 11: workflow.v1.UpdateWorkflowRequest
-	(*DeleteWorkflowRequest)(nil),    // 12: workflow.v1.DeleteWorkflowRequest
-	(*CreateStateRequest)(nil),       // 13: workflow.v1.CreateStateRequest
-	(*GetStateRequest)(nil),          // 14: workflow.v1.GetStateRequest
-	(*ListStatesRequest)(nil),        // 15: workflow.v1.ListStatesRequest
-	(*ListStatesResponse)(nil),       // 16: workflow.v1.ListStatesResponse
-	(*UpdateStateRequest)(nil),       // 17: workflow.v1.UpdateStateRequest
-	(*DeleteStateRequest)(nil),       // 18: workflow.v1.DeleteStateRequest
-	(*CreateTransitionRequest)(nil),  // 19: workflow.v1.CreateTransitionRequest
-	(*DeleteTransitionRequest)(nil),  // 20: workflow.v1.DeleteTransitionRequest
-	(*CreateStateActionRequest)(nil), // 21: workflow.v1.CreateStateActionRequest
-	(*ListStateActionsRequest)(nil),  // 22: workflow.v1.ListStateActionsRequest
-	(*ListStateActionsResponse)(nil), // 23: workflow.v1.ListStateActionsResponse
-	(*DeleteStateActionRequest)(nil), // 24: workflow.v1.DeleteStateActionRequest
-	(*GetNextStateRequest)(nil),      // 25: workflow.v1.GetNextStateRequest
-	(*structpb.Struct)(nil),          // 26: google.protobuf.Struct
-	(*emptypb.Empty)(nil),            // 27: google.protobuf.Empty
+	(StateType)(0),                               // 0: workflow.v1.StateType
+	(StateAction_ActionType)(0),                  // 1: workflow.v1.StateAction.ActionType
+	(StateAction_Trigger)(0),                     // 2: workflow.v1.StateAction.Trigger
+	(*StateAction)(nil),                          // 3: workflow.v1.StateAction
+	(*Workflow)(nil),                             // 4: workflow.v1.Workflow
+	(*State)(nil),                                // 5: workflow.v1.State
+	(*Transition)(nil),                           // 6: workflow.v1.Transition
+	(*CreateWorkflowRequest)(nil),                // 7: workflow.v1.CreateWorkflowRequest
+	(*GetWorkflowRequest)(nil),                   // 8: workflow.v1.GetWorkflowRequest
+	(*ListWorkflowsRequest)(nil),                 // 9: workflow.v1.ListWorkflowsRequest
+	(*ListWorkflowsResponse)(nil),                // 10: workflow.v1.ListWorkflowsResponse
+	(*UpdateWorkflowRequest)(nil),                // 11: workflow.v1.UpdateWorkflowRequest
+	(*DeleteWorkflowRequest)(nil),                // 12: workflow.v1.DeleteWorkflowRequest
+	(*CreateStateRequest)(nil),                   // 13: workflow.v1.CreateStateRequest
+	(*GetStateRequest)(nil),                      // 14: workflow.v1.GetStateRequest
+	(*ListStatesRequest)(nil),                    // 15: workflow.v1.ListStatesRequest
+	(*ListStatesResponse)(nil),                   // 16: workflow.v1.ListStatesResponse
+	(*UpdateStateRequest)(nil),                   // 17: workflow.v1.UpdateStateRequest
+	(*DeleteStateRequest)(nil),                   // 18: workflow.v1.DeleteStateRequest
+	(*CreateTransitionRequest)(nil),              // 19: workflow.v1.CreateTransitionRequest
+	(*DeleteTransitionRequest)(nil),              // 20: workflow.v1.DeleteTransitionRequest
+	(*CreateStateActionRequest)(nil),             // 21: workflow.v1.CreateStateActionRequest
+	(*ListStateActionsRequest)(nil),              // 22: workflow.v1.ListStateActionsRequest
+	(*ListStateActionsResponse)(nil),             // 23: workflow.v1.ListStateActionsResponse
+	(*DeleteStateActionRequest)(nil),             // 24: workflow.v1.DeleteStateActionRequest
+	(*SetActiveWorkflowRequest)(nil),             // 25: workflow.v1.SetActiveWorkflowRequest
+	(*GetActiveWorkflowByDepartmentRequest)(nil), // 26: workflow.v1.GetActiveWorkflowByDepartmentRequest
+	(*GetNextStateRequest)(nil),                  // 27: workflow.v1.GetNextStateRequest
+	(*structpb.Struct)(nil),                      // 28: google.protobuf.Struct
+	(*emptypb.Empty)(nil),                        // 29: google.protobuf.Empty
 }
 var file_workflow_v1_workflow_proto_depIdxs = []int32{
 	1,  // 0: workflow.v1.StateAction.type:type_name -> workflow.v1.StateAction.ActionType
 	2,  // 1: workflow.v1.StateAction.trigger:type_name -> workflow.v1.StateAction.Trigger
-	26, // 2: workflow.v1.StateAction.config:type_name -> google.protobuf.Struct
-	0,  // 3: workflow.v1.State.type:type_name -> workflow.v1.StateType
-	26, // 4: workflow.v1.State.config:type_name -> google.protobuf.Struct
-	4,  // 5: workflow.v1.ListWorkflowsResponse.workflows:type_name -> workflow.v1.Workflow
-	0,  // 6: workflow.v1.CreateStateRequest.type:type_name -> workflow.v1.StateType
-	26, // 7: workflow.v1.CreateStateRequest.config:type_name -> google.protobuf.Struct
-	5,  // 8: workflow.v1.ListStatesResponse.states:type_name -> workflow.v1.State
-	26, // 9: workflow.v1.UpdateStateRequest.config:type_name -> google.protobuf.Struct
-	1,  // 10: workflow.v1.CreateStateActionRequest.type:type_name -> workflow.v1.StateAction.ActionType
-	2,  // 11: workflow.v1.CreateStateActionRequest.trigger:type_name -> workflow.v1.StateAction.Trigger
-	26, // 12: workflow.v1.CreateStateActionRequest.config:type_name -> google.protobuf.Struct
-	3,  // 13: workflow.v1.ListStateActionsResponse.actions:type_name -> workflow.v1.StateAction
-	7,  // 14: workflow.v1.WorkflowService.CreateWorkflow:input_type -> workflow.v1.CreateWorkflowRequest
-	8,  // 15: workflow.v1.WorkflowService.GetWorkflow:input_type -> workflow.v1.GetWorkflowRequest
-	9,  // 16: workflow.v1.WorkflowService.ListWorkflows:input_type -> workflow.v1.ListWorkflowsRequest
-	11, // 17: workflow.v1.WorkflowService.UpdateWorkflow:input_type -> workflow.v1.UpdateWorkflowRequest
-	12, // 18: workflow.v1.WorkflowService.DeleteWorkflow:input_type -> workflow.v1.DeleteWorkflowRequest
-	13, // 19: workflow.v1.WorkflowService.CreateState:input_type -> workflow.v1.CreateStateRequest
-	14, // 20: workflow.v1.WorkflowService.GetState:input_type -> workflow.v1.GetStateRequest
-	15, // 21: workflow.v1.WorkflowService.ListStates:input_type -> workflow.v1.ListStatesRequest
-	17, // 22: workflow.v1.WorkflowService.UpdateState:input_type -> workflow.v1.UpdateStateRequest
-	18, // 23: workflow.v1.WorkflowService.DeleteState:input_type -> workflow.v1.DeleteStateRequest
-	19, // 24: workflow.v1.WorkflowService.CreateTransition:input_type -> workflow.v1.CreateTransitionRequest
-	20, // 25: workflow.v1.WorkflowService.DeleteTransition:input_type -> workflow.v1.DeleteTransitionRequest
-	21, // 26: workflow.v1.WorkflowService.CreateStateAction:input_type -> workflow.v1.CreateStateActionRequest
-	22, // 27: workflow.v1.WorkflowService.ListStateActions:input_type -> workflow.v1.ListStateActionsRequest
-	24, // 28: workflow.v1.WorkflowService.DeleteStateAction:input_type -> workflow.v1.DeleteStateActionRequest
-	25, // 29: workflow.v1.WorkflowService.GetNextState:input_type -> workflow.v1.GetNextStateRequest
-	4,  // 30: workflow.v1.WorkflowService.CreateWorkflow:output_type -> workflow.v1.Workflow
-	4,  // 31: workflow.v1.WorkflowService.GetWorkflow:output_type -> workflow.v1.Workflow
-	10, // 32: workflow.v1.WorkflowService.ListWorkflows:output_type -> workflow.v1.ListWorkflowsResponse
-	4,  // 33: workflow.v1.WorkflowService.UpdateWorkflow:output_type -> workflow.v1.Workflow
-	27, // 34: workflow.v1.WorkflowService.DeleteWorkflow:output_type -> google.protobuf.Empty
-	5,  // 35: workflow.v1.WorkflowService.CreateState:output_type -> workflow.v1.State
-	5,  // 36: workflow.v1.WorkflowService.GetState:output_type -> workflow.v1.State
-	16, // 37: workflow.v1.WorkflowService.ListStates:output_type -> workflow.v1.ListStatesResponse
-	5,  // 38: workflow.v1.WorkflowService.UpdateState:output_type -> workflow.v1.State
-	27, // 39: workflow.v1.WorkflowService.DeleteState:output_type -> google.protobuf.Empty
-	6,  // 40: workflow.v1.WorkflowService.CreateTransition:output_type -> workflow.v1.Transition
-	27, // 41: workflow.v1.WorkflowService.DeleteTransition:output_type -> google.protobuf.Empty
-	3,  // 42: workflow.v1.WorkflowService.CreateStateAction:output_type -> workflow.v1.StateAction
-	23, // 43: workflow.v1.WorkflowService.ListStateActions:output_type -> workflow.v1.ListStateActionsResponse
-	27, // 44: workflow.v1.WorkflowService.DeleteStateAction:output_type -> google.protobuf.Empty
-	5,  // 45: workflow.v1.WorkflowService.GetNextState:output_type -> workflow.v1.State
-	30, // [30:46] is the sub-list for method output_type
-	14, // [14:30] is the sub-list for method input_type
-	14, // [14:14] is the sub-list for extension type_name
-	14, // [14:14] is the sub-list for extension extendee
-	0,  // [0:14] is the sub-list for field type_name
+	28, // 2: workflow.v1.StateAction.config:type_name -> google.protobuf.Struct
+	5,  // 3: workflow.v1.Workflow.steps:type_name -> workflow.v1.State
+	0,  // 4: workflow.v1.State.type:type_name -> workflow.v1.StateType
+	28, // 5: workflow.v1.State.config:type_name -> google.protobuf.Struct
+	4,  // 6: workflow.v1.ListWorkflowsResponse.workflows:type_name -> workflow.v1.Workflow
+	0,  // 7: workflow.v1.CreateStateRequest.type:type_name -> workflow.v1.StateType
+	28, // 8: workflow.v1.CreateStateRequest.config:type_name -> google.protobuf.Struct
+	5,  // 9: workflow.v1.ListStatesResponse.states:type_name -> workflow.v1.State
+	28, // 10: workflow.v1.UpdateStateRequest.config:type_name -> google.protobuf.Struct
+	1,  // 11: workflow.v1.CreateStateActionRequest.type:type_name -> workflow.v1.StateAction.ActionType
+	2,  // 12: workflow.v1.CreateStateActionRequest.trigger:type_name -> workflow.v1.StateAction.Trigger
+	28, // 13: workflow.v1.CreateStateActionRequest.config:type_name -> google.protobuf.Struct
+	3,  // 14: workflow.v1.ListStateActionsResponse.actions:type_name -> workflow.v1.StateAction
+	7,  // 15: workflow.v1.WorkflowService.CreateWorkflow:input_type -> workflow.v1.CreateWorkflowRequest
+	8,  // 16: workflow.v1.WorkflowService.GetWorkflow:input_type -> workflow.v1.GetWorkflowRequest
+	9,  // 17: workflow.v1.WorkflowService.ListWorkflows:input_type -> workflow.v1.ListWorkflowsRequest
+	11, // 18: workflow.v1.WorkflowService.UpdateWorkflow:input_type -> workflow.v1.UpdateWorkflowRequest
+	12, // 19: workflow.v1.WorkflowService.DeleteWorkflow:input_type -> workflow.v1.DeleteWorkflowRequest
+	13, // 20: workflow.v1.WorkflowService.CreateState:input_type -> workflow.v1.CreateStateRequest
+	14, // 21: workflow.v1.WorkflowService.GetState:input_type -> workflow.v1.GetStateRequest
+	15, // 22: workflow.v1.WorkflowService.ListStates:input_type -> workflow.v1.ListStatesRequest
+	17, // 23: workflow.v1.WorkflowService.UpdateState:input_type -> workflow.v1.UpdateStateRequest
+	18, // 24: workflow.v1.WorkflowService.DeleteState:input_type -> workflow.v1.DeleteStateRequest
+	19, // 25: workflow.v1.WorkflowService.CreateTransition:input_type -> workflow.v1.CreateTransitionRequest
+	20, // 26: workflow.v1.WorkflowService.DeleteTransition:input_type -> workflow.v1.DeleteTransitionRequest
+	21, // 27: workflow.v1.WorkflowService.CreateStateAction:input_type -> workflow.v1.CreateStateActionRequest
+	22, // 28: workflow.v1.WorkflowService.ListStateActions:input_type -> workflow.v1.ListStateActionsRequest
+	24, // 29: workflow.v1.WorkflowService.DeleteStateAction:input_type -> workflow.v1.DeleteStateActionRequest
+	25, // 30: workflow.v1.WorkflowService.SetActiveWorkflow:input_type -> workflow.v1.SetActiveWorkflowRequest
+	26, // 31: workflow.v1.WorkflowService.GetActiveWorkflowByDepartment:input_type -> workflow.v1.GetActiveWorkflowByDepartmentRequest
+	27, // 32: workflow.v1.WorkflowService.GetNextState:input_type -> workflow.v1.GetNextStateRequest
+	4,  // 33: workflow.v1.WorkflowService.CreateWorkflow:output_type -> workflow.v1.Workflow
+	4,  // 34: workflow.v1.WorkflowService.GetWorkflow:output_type -> workflow.v1.Workflow
+	10, // 35: workflow.v1.WorkflowService.ListWorkflows:output_type -> workflow.v1.ListWorkflowsResponse
+	4,  // 36: workflow.v1.WorkflowService.UpdateWorkflow:output_type -> workflow.v1.Workflow
+	29, // 37: workflow.v1.WorkflowService.DeleteWorkflow:output_type -> google.protobuf.Empty
+	5,  // 38: workflow.v1.WorkflowService.CreateState:output_type -> workflow.v1.State
+	5,  // 39: workflow.v1.WorkflowService.GetState:output_type -> workflow.v1.State
+	16, // 40: workflow.v1.WorkflowService.ListStates:output_type -> workflow.v1.ListStatesResponse
+	5,  // 41: workflow.v1.WorkflowService.UpdateState:output_type -> workflow.v1.State
+	29, // 42: workflow.v1.WorkflowService.DeleteState:output_type -> google.protobuf.Empty
+	6,  // 43: workflow.v1.WorkflowService.CreateTransition:output_type -> workflow.v1.Transition
+	29, // 44: workflow.v1.WorkflowService.DeleteTransition:output_type -> google.protobuf.Empty
+	3,  // 45: workflow.v1.WorkflowService.CreateStateAction:output_type -> workflow.v1.StateAction
+	23, // 46: workflow.v1.WorkflowService.ListStateActions:output_type -> workflow.v1.ListStateActionsResponse
+	29, // 47: workflow.v1.WorkflowService.DeleteStateAction:output_type -> google.protobuf.Empty
+	4,  // 48: workflow.v1.WorkflowService.SetActiveWorkflow:output_type -> workflow.v1.Workflow
+	4,  // 49: workflow.v1.WorkflowService.GetActiveWorkflowByDepartment:output_type -> workflow.v1.Workflow
+	5,  // 50: workflow.v1.WorkflowService.GetNextState:output_type -> workflow.v1.State
+	33, // [33:51] is the sub-list for method output_type
+	15, // [15:33] is the sub-list for method input_type
+	15, // [15:15] is the sub-list for extension type_name
+	15, // [15:15] is the sub-list for extension extendee
+	0,  // [0:15] is the sub-list for field type_name
 }
 
 func init() { file_workflow_v1_workflow_proto_init() }
@@ -1708,13 +1869,17 @@ func file_workflow_v1_workflow_proto_init() {
 	if File_workflow_v1_workflow_proto != nil {
 		return
 	}
+	file_workflow_v1_workflow_proto_msgTypes[5].OneofWrappers = []any{
+		(*GetWorkflowRequest_WorkflowId)(nil),
+		(*GetWorkflowRequest_Name)(nil),
+	}
 	type x struct{}
 	out := protoimpl.TypeBuilder{
 		File: protoimpl.DescBuilder{
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_workflow_v1_workflow_proto_rawDesc), len(file_workflow_v1_workflow_proto_rawDesc)),
 			NumEnums:      3,
-			NumMessages:   23,
+			NumMessages:   25,
 			NumExtensions: 0,
 			NumServices:   1,
 		},

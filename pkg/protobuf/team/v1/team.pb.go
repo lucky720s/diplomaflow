@@ -9,7 +9,6 @@ package v1
 import (
 	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
 	protoimpl "google.golang.org/protobuf/runtime/protoimpl"
-	fieldmaskpb "google.golang.org/protobuf/types/known/fieldmaskpb"
 	reflect "reflect"
 	sync "sync"
 	unsafe "unsafe"
@@ -22,78 +21,10 @@ const (
 	_ = protoimpl.EnforceVersion(protoimpl.MaxVersion - 20)
 )
 
-type Team struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	Id            int64                  `protobuf:"varint,1,opt,name=id,proto3" json:"id,omitempty"`
-	Name          string                 `protobuf:"bytes,2,opt,name=name,proto3" json:"name,omitempty"`
-	DepartmentId  int64                  `protobuf:"varint,3,opt,name=department_id,json=departmentId,proto3" json:"department_id,omitempty"`
-	MemberIds     []int64                `protobuf:"varint,4,rep,packed,name=member_ids,json=memberIds,proto3" json:"member_ids,omitempty"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
-}
-
-func (x *Team) Reset() {
-	*x = Team{}
-	mi := &file_team_v1_team_proto_msgTypes[0]
-	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-	ms.StoreMessageInfo(mi)
-}
-
-func (x *Team) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*Team) ProtoMessage() {}
-
-func (x *Team) ProtoReflect() protoreflect.Message {
-	mi := &file_team_v1_team_proto_msgTypes[0]
-	if x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-// Deprecated: Use Team.ProtoReflect.Descriptor instead.
-func (*Team) Descriptor() ([]byte, []int) {
-	return file_team_v1_team_proto_rawDescGZIP(), []int{0}
-}
-
-func (x *Team) GetId() int64 {
-	if x != nil {
-		return x.Id
-	}
-	return 0
-}
-
-func (x *Team) GetName() string {
-	if x != nil {
-		return x.Name
-	}
-	return ""
-}
-
-func (x *Team) GetDepartmentId() int64 {
-	if x != nil {
-		return x.DepartmentId
-	}
-	return 0
-}
-
-func (x *Team) GetMemberIds() []int64 {
-	if x != nil {
-		return x.MemberIds
-	}
-	return nil
-}
-
 type CreateTeamRequest struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	Name          string                 `protobuf:"bytes,1,opt,name=name,proto3" json:"name,omitempty"`
-	DepartmentId  int64                  `protobuf:"varint,2,opt,name=department_id,json=departmentId,proto3" json:"department_id,omitempty"`
+	ProjectId     int64                  `protobuf:"varint,2,opt,name=project_id,json=projectId,proto3" json:"project_id,omitempty"`
 	MemberIds     []int64                `protobuf:"varint,3,rep,packed,name=member_ids,json=memberIds,proto3" json:"member_ids,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
@@ -101,7 +32,7 @@ type CreateTeamRequest struct {
 
 func (x *CreateTeamRequest) Reset() {
 	*x = CreateTeamRequest{}
-	mi := &file_team_v1_team_proto_msgTypes[1]
+	mi := &file_team_v1_team_proto_msgTypes[0]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -113,7 +44,7 @@ func (x *CreateTeamRequest) String() string {
 func (*CreateTeamRequest) ProtoMessage() {}
 
 func (x *CreateTeamRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_team_v1_team_proto_msgTypes[1]
+	mi := &file_team_v1_team_proto_msgTypes[0]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -126,7 +57,7 @@ func (x *CreateTeamRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use CreateTeamRequest.ProtoReflect.Descriptor instead.
 func (*CreateTeamRequest) Descriptor() ([]byte, []int) {
-	return file_team_v1_team_proto_rawDescGZIP(), []int{1}
+	return file_team_v1_team_proto_rawDescGZIP(), []int{0}
 }
 
 func (x *CreateTeamRequest) GetName() string {
@@ -136,9 +67,9 @@ func (x *CreateTeamRequest) GetName() string {
 	return ""
 }
 
-func (x *CreateTeamRequest) GetDepartmentId() int64 {
+func (x *CreateTeamRequest) GetProjectId() int64 {
 	if x != nil {
-		return x.DepartmentId
+		return x.ProjectId
 	}
 	return 0
 }
@@ -152,14 +83,14 @@ func (x *CreateTeamRequest) GetMemberIds() []int64 {
 
 type CreateTeamResponse struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
-	Team          *Team                  `protobuf:"bytes,1,opt,name=team,proto3" json:"team,omitempty"`
+	TeamId        int64                  `protobuf:"varint,1,opt,name=team_id,json=teamId,proto3" json:"team_id,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
 
 func (x *CreateTeamResponse) Reset() {
 	*x = CreateTeamResponse{}
-	mi := &file_team_v1_team_proto_msgTypes[2]
+	mi := &file_team_v1_team_proto_msgTypes[1]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -171,7 +102,7 @@ func (x *CreateTeamResponse) String() string {
 func (*CreateTeamResponse) ProtoMessage() {}
 
 func (x *CreateTeamResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_team_v1_team_proto_msgTypes[2]
+	mi := &file_team_v1_team_proto_msgTypes[1]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -184,14 +115,14 @@ func (x *CreateTeamResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use CreateTeamResponse.ProtoReflect.Descriptor instead.
 func (*CreateTeamResponse) Descriptor() ([]byte, []int) {
-	return file_team_v1_team_proto_rawDescGZIP(), []int{2}
+	return file_team_v1_team_proto_rawDescGZIP(), []int{1}
 }
 
-func (x *CreateTeamResponse) GetTeam() *Team {
+func (x *CreateTeamResponse) GetTeamId() int64 {
 	if x != nil {
-		return x.Team
+		return x.TeamId
 	}
-	return nil
+	return 0
 }
 
 type GetTeamRequest struct {
@@ -203,7 +134,7 @@ type GetTeamRequest struct {
 
 func (x *GetTeamRequest) Reset() {
 	*x = GetTeamRequest{}
-	mi := &file_team_v1_team_proto_msgTypes[3]
+	mi := &file_team_v1_team_proto_msgTypes[2]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -215,7 +146,7 @@ func (x *GetTeamRequest) String() string {
 func (*GetTeamRequest) ProtoMessage() {}
 
 func (x *GetTeamRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_team_v1_team_proto_msgTypes[3]
+	mi := &file_team_v1_team_proto_msgTypes[2]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -228,7 +159,7 @@ func (x *GetTeamRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetTeamRequest.ProtoReflect.Descriptor instead.
 func (*GetTeamRequest) Descriptor() ([]byte, []int) {
-	return file_team_v1_team_proto_rawDescGZIP(), []int{3}
+	return file_team_v1_team_proto_rawDescGZIP(), []int{2}
 }
 
 func (x *GetTeamRequest) GetTeamId() int64 {
@@ -238,9 +169,64 @@ func (x *GetTeamRequest) GetTeamId() int64 {
 	return 0
 }
 
+type TeamMember struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	UserId        int64                  `protobuf:"varint,1,opt,name=user_id,json=userId,proto3" json:"user_id,omitempty"`
+	Role          string                 `protobuf:"bytes,2,opt,name=role,proto3" json:"role,omitempty"` // e.g., "leader", "member"
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *TeamMember) Reset() {
+	*x = TeamMember{}
+	mi := &file_team_v1_team_proto_msgTypes[3]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *TeamMember) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*TeamMember) ProtoMessage() {}
+
+func (x *TeamMember) ProtoReflect() protoreflect.Message {
+	mi := &file_team_v1_team_proto_msgTypes[3]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use TeamMember.ProtoReflect.Descriptor instead.
+func (*TeamMember) Descriptor() ([]byte, []int) {
+	return file_team_v1_team_proto_rawDescGZIP(), []int{3}
+}
+
+func (x *TeamMember) GetUserId() int64 {
+	if x != nil {
+		return x.UserId
+	}
+	return 0
+}
+
+func (x *TeamMember) GetRole() string {
+	if x != nil {
+		return x.Role
+	}
+	return ""
+}
+
 type GetTeamResponse struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
-	Team          *Team                  `protobuf:"bytes,1,opt,name=team,proto3" json:"team,omitempty"`
+	TeamId        int64                  `protobuf:"varint,1,opt,name=team_id,json=teamId,proto3" json:"team_id,omitempty"`
+	Name          string                 `protobuf:"bytes,2,opt,name=name,proto3" json:"name,omitempty"`
+	ProjectId     int64                  `protobuf:"varint,3,opt,name=project_id,json=projectId,proto3" json:"project_id,omitempty"`
+	Members       []*TeamMember          `protobuf:"bytes,4,rep,name=members,proto3" json:"members,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -275,34 +261,55 @@ func (*GetTeamResponse) Descriptor() ([]byte, []int) {
 	return file_team_v1_team_proto_rawDescGZIP(), []int{4}
 }
 
-func (x *GetTeamResponse) GetTeam() *Team {
+func (x *GetTeamResponse) GetTeamId() int64 {
 	if x != nil {
-		return x.Team
+		return x.TeamId
+	}
+	return 0
+}
+
+func (x *GetTeamResponse) GetName() string {
+	if x != nil {
+		return x.Name
+	}
+	return ""
+}
+
+func (x *GetTeamResponse) GetProjectId() int64 {
+	if x != nil {
+		return x.ProjectId
+	}
+	return 0
+}
+
+func (x *GetTeamResponse) GetMembers() []*TeamMember {
+	if x != nil {
+		return x.Members
 	}
 	return nil
 }
 
-type ListTeamsRequest struct {
+type GetAvailableStudentsRequest struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
-	DepartmentId  int64                  `protobuf:"varint,1,opt,name=department_id,json=departmentId,proto3" json:"department_id,omitempty"`
+	UniversityId  int64                  `protobuf:"varint,1,opt,name=university_id,json=universityId,proto3" json:"university_id,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
 
-func (x *ListTeamsRequest) Reset() {
-	*x = ListTeamsRequest{}
+func (x *GetAvailableStudentsRequest) Reset() {
+	*x = GetAvailableStudentsRequest{}
 	mi := &file_team_v1_team_proto_msgTypes[5]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
 
-func (x *ListTeamsRequest) String() string {
+func (x *GetAvailableStudentsRequest) String() string {
 	return protoimpl.X.MessageStringOf(x)
 }
 
-func (*ListTeamsRequest) ProtoMessage() {}
+func (*GetAvailableStudentsRequest) ProtoMessage() {}
 
-func (x *ListTeamsRequest) ProtoReflect() protoreflect.Message {
+func (x *GetAvailableStudentsRequest) ProtoReflect() protoreflect.Message {
 	mi := &file_team_v1_team_proto_msgTypes[5]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
@@ -314,39 +321,41 @@ func (x *ListTeamsRequest) ProtoReflect() protoreflect.Message {
 	return mi.MessageOf(x)
 }
 
-// Deprecated: Use ListTeamsRequest.ProtoReflect.Descriptor instead.
-func (*ListTeamsRequest) Descriptor() ([]byte, []int) {
+// Deprecated: Use GetAvailableStudentsRequest.ProtoReflect.Descriptor instead.
+func (*GetAvailableStudentsRequest) Descriptor() ([]byte, []int) {
 	return file_team_v1_team_proto_rawDescGZIP(), []int{5}
 }
 
-func (x *ListTeamsRequest) GetDepartmentId() int64 {
+func (x *GetAvailableStudentsRequest) GetUniversityId() int64 {
 	if x != nil {
-		return x.DepartmentId
+		return x.UniversityId
 	}
 	return 0
 }
 
-type ListTeamsResponse struct {
+type StudentPreview struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
-	Teams         []*Team                `protobuf:"bytes,1,rep,name=teams,proto3" json:"teams,omitempty"`
+	Id            int64                  `protobuf:"varint,1,opt,name=id,proto3" json:"id,omitempty"`
+	FullName      string                 `protobuf:"bytes,2,opt,name=full_name,json=fullName,proto3" json:"full_name,omitempty"`
+	Email         string                 `protobuf:"bytes,3,opt,name=email,proto3" json:"email,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
 
-func (x *ListTeamsResponse) Reset() {
-	*x = ListTeamsResponse{}
+func (x *StudentPreview) Reset() {
+	*x = StudentPreview{}
 	mi := &file_team_v1_team_proto_msgTypes[6]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
 
-func (x *ListTeamsResponse) String() string {
+func (x *StudentPreview) String() string {
 	return protoimpl.X.MessageStringOf(x)
 }
 
-func (*ListTeamsResponse) ProtoMessage() {}
+func (*StudentPreview) ProtoMessage() {}
 
-func (x *ListTeamsResponse) ProtoReflect() protoreflect.Message {
+func (x *StudentPreview) ProtoReflect() protoreflect.Message {
 	mi := &file_team_v1_team_proto_msgTypes[6]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
@@ -358,599 +367,114 @@ func (x *ListTeamsResponse) ProtoReflect() protoreflect.Message {
 	return mi.MessageOf(x)
 }
 
-// Deprecated: Use ListTeamsResponse.ProtoReflect.Descriptor instead.
-func (*ListTeamsResponse) Descriptor() ([]byte, []int) {
+// Deprecated: Use StudentPreview.ProtoReflect.Descriptor instead.
+func (*StudentPreview) Descriptor() ([]byte, []int) {
 	return file_team_v1_team_proto_rawDescGZIP(), []int{6}
 }
 
-func (x *ListTeamsResponse) GetTeams() []*Team {
-	if x != nil {
-		return x.Teams
-	}
-	return nil
-}
-
-type UpdateTeamRequest struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	Team          *Team                  `protobuf:"bytes,1,opt,name=team,proto3" json:"team,omitempty"`
-	UpdateMask    *fieldmaskpb.FieldMask `protobuf:"bytes,2,opt,name=update_mask,json=updateMask,proto3" json:"update_mask,omitempty"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
-}
-
-func (x *UpdateTeamRequest) Reset() {
-	*x = UpdateTeamRequest{}
-	mi := &file_team_v1_team_proto_msgTypes[7]
-	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-	ms.StoreMessageInfo(mi)
-}
-
-func (x *UpdateTeamRequest) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*UpdateTeamRequest) ProtoMessage() {}
-
-func (x *UpdateTeamRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_team_v1_team_proto_msgTypes[7]
-	if x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-// Deprecated: Use UpdateTeamRequest.ProtoReflect.Descriptor instead.
-func (*UpdateTeamRequest) Descriptor() ([]byte, []int) {
-	return file_team_v1_team_proto_rawDescGZIP(), []int{7}
-}
-
-func (x *UpdateTeamRequest) GetTeam() *Team {
-	if x != nil {
-		return x.Team
-	}
-	return nil
-}
-
-func (x *UpdateTeamRequest) GetUpdateMask() *fieldmaskpb.FieldMask {
-	if x != nil {
-		return x.UpdateMask
-	}
-	return nil
-}
-
-type UpdateTeamResponse struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	Team          *Team                  `protobuf:"bytes,1,opt,name=team,proto3" json:"team,omitempty"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
-}
-
-func (x *UpdateTeamResponse) Reset() {
-	*x = UpdateTeamResponse{}
-	mi := &file_team_v1_team_proto_msgTypes[8]
-	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-	ms.StoreMessageInfo(mi)
-}
-
-func (x *UpdateTeamResponse) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*UpdateTeamResponse) ProtoMessage() {}
-
-func (x *UpdateTeamResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_team_v1_team_proto_msgTypes[8]
-	if x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-// Deprecated: Use UpdateTeamResponse.ProtoReflect.Descriptor instead.
-func (*UpdateTeamResponse) Descriptor() ([]byte, []int) {
-	return file_team_v1_team_proto_rawDescGZIP(), []int{8}
-}
-
-func (x *UpdateTeamResponse) GetTeam() *Team {
-	if x != nil {
-		return x.Team
-	}
-	return nil
-}
-
-type DeleteTeamRequest struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	TeamId        int64                  `protobuf:"varint,1,opt,name=team_id,json=teamId,proto3" json:"team_id,omitempty"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
-}
-
-func (x *DeleteTeamRequest) Reset() {
-	*x = DeleteTeamRequest{}
-	mi := &file_team_v1_team_proto_msgTypes[9]
-	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-	ms.StoreMessageInfo(mi)
-}
-
-func (x *DeleteTeamRequest) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*DeleteTeamRequest) ProtoMessage() {}
-
-func (x *DeleteTeamRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_team_v1_team_proto_msgTypes[9]
-	if x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-// Deprecated: Use DeleteTeamRequest.ProtoReflect.Descriptor instead.
-func (*DeleteTeamRequest) Descriptor() ([]byte, []int) {
-	return file_team_v1_team_proto_rawDescGZIP(), []int{9}
-}
-
-func (x *DeleteTeamRequest) GetTeamId() int64 {
-	if x != nil {
-		return x.TeamId
-	}
-	return 0
-}
-
-type DeleteTeamResponse struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	Success       bool                   `protobuf:"varint,1,opt,name=success,proto3" json:"success,omitempty"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
-}
-
-func (x *DeleteTeamResponse) Reset() {
-	*x = DeleteTeamResponse{}
-	mi := &file_team_v1_team_proto_msgTypes[10]
-	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-	ms.StoreMessageInfo(mi)
-}
-
-func (x *DeleteTeamResponse) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*DeleteTeamResponse) ProtoMessage() {}
-
-func (x *DeleteTeamResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_team_v1_team_proto_msgTypes[10]
-	if x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-// Deprecated: Use DeleteTeamResponse.ProtoReflect.Descriptor instead.
-func (*DeleteTeamResponse) Descriptor() ([]byte, []int) {
-	return file_team_v1_team_proto_rawDescGZIP(), []int{10}
-}
-
-func (x *DeleteTeamResponse) GetSuccess() bool {
-	if x != nil {
-		return x.Success
-	}
-	return false
-}
-
-type AddMemberRequest struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	TeamId        int64                  `protobuf:"varint,1,opt,name=team_id,json=teamId,proto3" json:"team_id,omitempty"`
-	UserId        int64                  `protobuf:"varint,2,opt,name=user_id,json=userId,proto3" json:"user_id,omitempty"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
-}
-
-func (x *AddMemberRequest) Reset() {
-	*x = AddMemberRequest{}
-	mi := &file_team_v1_team_proto_msgTypes[11]
-	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-	ms.StoreMessageInfo(mi)
-}
-
-func (x *AddMemberRequest) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*AddMemberRequest) ProtoMessage() {}
-
-func (x *AddMemberRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_team_v1_team_proto_msgTypes[11]
-	if x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-// Deprecated: Use AddMemberRequest.ProtoReflect.Descriptor instead.
-func (*AddMemberRequest) Descriptor() ([]byte, []int) {
-	return file_team_v1_team_proto_rawDescGZIP(), []int{11}
-}
-
-func (x *AddMemberRequest) GetTeamId() int64 {
-	if x != nil {
-		return x.TeamId
-	}
-	return 0
-}
-
-func (x *AddMemberRequest) GetUserId() int64 {
-	if x != nil {
-		return x.UserId
-	}
-	return 0
-}
-
-type AddMemberResponse struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	Success       bool                   `protobuf:"varint,1,opt,name=success,proto3" json:"success,omitempty"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
-}
-
-func (x *AddMemberResponse) Reset() {
-	*x = AddMemberResponse{}
-	mi := &file_team_v1_team_proto_msgTypes[12]
-	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-	ms.StoreMessageInfo(mi)
-}
-
-func (x *AddMemberResponse) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*AddMemberResponse) ProtoMessage() {}
-
-func (x *AddMemberResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_team_v1_team_proto_msgTypes[12]
-	if x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-// Deprecated: Use AddMemberResponse.ProtoReflect.Descriptor instead.
-func (*AddMemberResponse) Descriptor() ([]byte, []int) {
-	return file_team_v1_team_proto_rawDescGZIP(), []int{12}
-}
-
-func (x *AddMemberResponse) GetSuccess() bool {
-	if x != nil {
-		return x.Success
-	}
-	return false
-}
-
-type RemoveMemberRequest struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	TeamId        int64                  `protobuf:"varint,1,opt,name=team_id,json=teamId,proto3" json:"team_id,omitempty"`
-	UserId        int64                  `protobuf:"varint,2,opt,name=user_id,json=userId,proto3" json:"user_id,omitempty"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
-}
-
-func (x *RemoveMemberRequest) Reset() {
-	*x = RemoveMemberRequest{}
-	mi := &file_team_v1_team_proto_msgTypes[13]
-	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-	ms.StoreMessageInfo(mi)
-}
-
-func (x *RemoveMemberRequest) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*RemoveMemberRequest) ProtoMessage() {}
-
-func (x *RemoveMemberRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_team_v1_team_proto_msgTypes[13]
-	if x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-// Deprecated: Use RemoveMemberRequest.ProtoReflect.Descriptor instead.
-func (*RemoveMemberRequest) Descriptor() ([]byte, []int) {
-	return file_team_v1_team_proto_rawDescGZIP(), []int{13}
-}
-
-func (x *RemoveMemberRequest) GetTeamId() int64 {
-	if x != nil {
-		return x.TeamId
-	}
-	return 0
-}
-
-func (x *RemoveMemberRequest) GetUserId() int64 {
-	if x != nil {
-		return x.UserId
-	}
-	return 0
-}
-
-type RemoveMemberResponse struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	Success       bool                   `protobuf:"varint,1,opt,name=success,proto3" json:"success,omitempty"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
-}
-
-func (x *RemoveMemberResponse) Reset() {
-	*x = RemoveMemberResponse{}
-	mi := &file_team_v1_team_proto_msgTypes[14]
-	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-	ms.StoreMessageInfo(mi)
-}
-
-func (x *RemoveMemberResponse) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*RemoveMemberResponse) ProtoMessage() {}
-
-func (x *RemoveMemberResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_team_v1_team_proto_msgTypes[14]
-	if x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-// Deprecated: Use RemoveMemberResponse.ProtoReflect.Descriptor instead.
-func (*RemoveMemberResponse) Descriptor() ([]byte, []int) {
-	return file_team_v1_team_proto_rawDescGZIP(), []int{14}
-}
-
-func (x *RemoveMemberResponse) GetSuccess() bool {
-	if x != nil {
-		return x.Success
-	}
-	return false
-}
-
-type ListAvailableUsersRequest struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	DepartmentId  int64                  `protobuf:"varint,1,opt,name=department_id,json=departmentId,proto3" json:"department_id,omitempty"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
-}
-
-func (x *ListAvailableUsersRequest) Reset() {
-	*x = ListAvailableUsersRequest{}
-	mi := &file_team_v1_team_proto_msgTypes[15]
-	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-	ms.StoreMessageInfo(mi)
-}
-
-func (x *ListAvailableUsersRequest) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*ListAvailableUsersRequest) ProtoMessage() {}
-
-func (x *ListAvailableUsersRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_team_v1_team_proto_msgTypes[15]
-	if x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-// Deprecated: Use ListAvailableUsersRequest.ProtoReflect.Descriptor instead.
-func (*ListAvailableUsersRequest) Descriptor() ([]byte, []int) {
-	return file_team_v1_team_proto_rawDescGZIP(), []int{15}
-}
-
-func (x *ListAvailableUsersRequest) GetDepartmentId() int64 {
-	if x != nil {
-		return x.DepartmentId
-	}
-	return 0
-}
-
-type ListAvailableUsersResponse struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	Users         []*UserInfo            `protobuf:"bytes,1,rep,name=users,proto3" json:"users,omitempty"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
-}
-
-func (x *ListAvailableUsersResponse) Reset() {
-	*x = ListAvailableUsersResponse{}
-	mi := &file_team_v1_team_proto_msgTypes[16]
-	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-	ms.StoreMessageInfo(mi)
-}
-
-func (x *ListAvailableUsersResponse) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*ListAvailableUsersResponse) ProtoMessage() {}
-
-func (x *ListAvailableUsersResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_team_v1_team_proto_msgTypes[16]
-	if x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-// Deprecated: Use ListAvailableUsersResponse.ProtoReflect.Descriptor instead.
-func (*ListAvailableUsersResponse) Descriptor() ([]byte, []int) {
-	return file_team_v1_team_proto_rawDescGZIP(), []int{16}
-}
-
-func (x *ListAvailableUsersResponse) GetUsers() []*UserInfo {
-	if x != nil {
-		return x.Users
-	}
-	return nil
-}
-
-type UserInfo struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	Id            int64                  `protobuf:"varint,1,opt,name=id,proto3" json:"id,omitempty"`
-	Email         string                 `protobuf:"bytes,2,opt,name=email,proto3" json:"email,omitempty"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
-}
-
-func (x *UserInfo) Reset() {
-	*x = UserInfo{}
-	mi := &file_team_v1_team_proto_msgTypes[17]
-	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-	ms.StoreMessageInfo(mi)
-}
-
-func (x *UserInfo) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*UserInfo) ProtoMessage() {}
-
-func (x *UserInfo) ProtoReflect() protoreflect.Message {
-	mi := &file_team_v1_team_proto_msgTypes[17]
-	if x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-// Deprecated: Use UserInfo.ProtoReflect.Descriptor instead.
-func (*UserInfo) Descriptor() ([]byte, []int) {
-	return file_team_v1_team_proto_rawDescGZIP(), []int{17}
-}
-
-func (x *UserInfo) GetId() int64 {
+func (x *StudentPreview) GetId() int64 {
 	if x != nil {
 		return x.Id
 	}
 	return 0
 }
 
-func (x *UserInfo) GetEmail() string {
+func (x *StudentPreview) GetFullName() string {
+	if x != nil {
+		return x.FullName
+	}
+	return ""
+}
+
+func (x *StudentPreview) GetEmail() string {
 	if x != nil {
 		return x.Email
 	}
 	return ""
 }
 
+type GetAvailableStudentsResponse struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Students      []*StudentPreview      `protobuf:"bytes,1,rep,name=students,proto3" json:"students,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *GetAvailableStudentsResponse) Reset() {
+	*x = GetAvailableStudentsResponse{}
+	mi := &file_team_v1_team_proto_msgTypes[7]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *GetAvailableStudentsResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*GetAvailableStudentsResponse) ProtoMessage() {}
+
+func (x *GetAvailableStudentsResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_team_v1_team_proto_msgTypes[7]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use GetAvailableStudentsResponse.ProtoReflect.Descriptor instead.
+func (*GetAvailableStudentsResponse) Descriptor() ([]byte, []int) {
+	return file_team_v1_team_proto_rawDescGZIP(), []int{7}
+}
+
+func (x *GetAvailableStudentsResponse) GetStudents() []*StudentPreview {
+	if x != nil {
+		return x.Students
+	}
+	return nil
+}
+
 var File_team_v1_team_proto protoreflect.FileDescriptor
 
 const file_team_v1_team_proto_rawDesc = "" +
 	"\n" +
-	"\x12team/v1/team.proto\x12\ateam.v1\x1a google/protobuf/field_mask.proto\"n\n" +
-	"\x04Team\x12\x0e\n" +
-	"\x02id\x18\x01 \x01(\x03R\x02id\x12\x12\n" +
-	"\x04name\x18\x02 \x01(\tR\x04name\x12#\n" +
-	"\rdepartment_id\x18\x03 \x01(\x03R\fdepartmentId\x12\x1d\n" +
-	"\n" +
-	"member_ids\x18\x04 \x03(\x03R\tmemberIds\"k\n" +
+	"\x12team/v1/team.proto\x12\x04team\"e\n" +
 	"\x11CreateTeamRequest\x12\x12\n" +
-	"\x04name\x18\x01 \x01(\tR\x04name\x12#\n" +
-	"\rdepartment_id\x18\x02 \x01(\x03R\fdepartmentId\x12\x1d\n" +
+	"\x04name\x18\x01 \x01(\tR\x04name\x12\x1d\n" +
 	"\n" +
-	"member_ids\x18\x03 \x03(\x03R\tmemberIds\"7\n" +
-	"\x12CreateTeamResponse\x12!\n" +
-	"\x04team\x18\x01 \x01(\v2\r.team.v1.TeamR\x04team\")\n" +
+	"project_id\x18\x02 \x01(\x03R\tprojectId\x12\x1d\n" +
+	"\n" +
+	"member_ids\x18\x03 \x03(\x03R\tmemberIds\"-\n" +
+	"\x12CreateTeamResponse\x12\x17\n" +
+	"\ateam_id\x18\x01 \x01(\x03R\x06teamId\")\n" +
 	"\x0eGetTeamRequest\x12\x17\n" +
-	"\ateam_id\x18\x01 \x01(\x03R\x06teamId\"4\n" +
-	"\x0fGetTeamResponse\x12!\n" +
-	"\x04team\x18\x01 \x01(\v2\r.team.v1.TeamR\x04team\"7\n" +
-	"\x10ListTeamsRequest\x12#\n" +
-	"\rdepartment_id\x18\x01 \x01(\x03R\fdepartmentId\"8\n" +
-	"\x11ListTeamsResponse\x12#\n" +
-	"\x05teams\x18\x01 \x03(\v2\r.team.v1.TeamR\x05teams\"s\n" +
-	"\x11UpdateTeamRequest\x12!\n" +
-	"\x04team\x18\x01 \x01(\v2\r.team.v1.TeamR\x04team\x12;\n" +
-	"\vupdate_mask\x18\x02 \x01(\v2\x1a.google.protobuf.FieldMaskR\n" +
-	"updateMask\"7\n" +
-	"\x12UpdateTeamResponse\x12!\n" +
-	"\x04team\x18\x01 \x01(\v2\r.team.v1.TeamR\x04team\",\n" +
-	"\x11DeleteTeamRequest\x12\x17\n" +
-	"\ateam_id\x18\x01 \x01(\x03R\x06teamId\".\n" +
-	"\x12DeleteTeamResponse\x12\x18\n" +
-	"\asuccess\x18\x01 \x01(\bR\asuccess\"D\n" +
-	"\x10AddMemberRequest\x12\x17\n" +
-	"\ateam_id\x18\x01 \x01(\x03R\x06teamId\x12\x17\n" +
-	"\auser_id\x18\x02 \x01(\x03R\x06userId\"-\n" +
-	"\x11AddMemberResponse\x12\x18\n" +
-	"\asuccess\x18\x01 \x01(\bR\asuccess\"G\n" +
-	"\x13RemoveMemberRequest\x12\x17\n" +
-	"\ateam_id\x18\x01 \x01(\x03R\x06teamId\x12\x17\n" +
-	"\auser_id\x18\x02 \x01(\x03R\x06userId\"0\n" +
-	"\x14RemoveMemberResponse\x12\x18\n" +
-	"\asuccess\x18\x01 \x01(\bR\asuccess\"@\n" +
-	"\x19ListAvailableUsersRequest\x12#\n" +
-	"\rdepartment_id\x18\x01 \x01(\x03R\fdepartmentId\"E\n" +
-	"\x1aListAvailableUsersResponse\x12'\n" +
-	"\x05users\x18\x01 \x03(\v2\x11.team.v1.UserInfoR\x05users\"0\n" +
-	"\bUserInfo\x12\x0e\n" +
-	"\x02id\x18\x01 \x01(\x03R\x02id\x12\x14\n" +
-	"\x05email\x18\x02 \x01(\tR\x05email2\xd4\x04\n" +
-	"\vTeamService\x12E\n" +
+	"\ateam_id\x18\x01 \x01(\x03R\x06teamId\"9\n" +
 	"\n" +
-	"CreateTeam\x12\x1a.team.v1.CreateTeamRequest\x1a\x1b.team.v1.CreateTeamResponse\x12<\n" +
-	"\aGetTeam\x12\x17.team.v1.GetTeamRequest\x1a\x18.team.v1.GetTeamResponse\x12B\n" +
-	"\tListTeams\x12\x19.team.v1.ListTeamsRequest\x1a\x1a.team.v1.ListTeamsResponse\x12E\n" +
+	"TeamMember\x12\x17\n" +
+	"\auser_id\x18\x01 \x01(\x03R\x06userId\x12\x12\n" +
+	"\x04role\x18\x02 \x01(\tR\x04role\"\x89\x01\n" +
+	"\x0fGetTeamResponse\x12\x17\n" +
+	"\ateam_id\x18\x01 \x01(\x03R\x06teamId\x12\x12\n" +
+	"\x04name\x18\x02 \x01(\tR\x04name\x12\x1d\n" +
 	"\n" +
-	"UpdateTeam\x12\x1a.team.v1.UpdateTeamRequest\x1a\x1b.team.v1.UpdateTeamResponse\x12E\n" +
+	"project_id\x18\x03 \x01(\x03R\tprojectId\x12*\n" +
+	"\amembers\x18\x04 \x03(\v2\x10.team.TeamMemberR\amembers\"B\n" +
+	"\x1bGetAvailableStudentsRequest\x12#\n" +
+	"\runiversity_id\x18\x01 \x01(\x03R\funiversityId\"S\n" +
+	"\x0eStudentPreview\x12\x0e\n" +
+	"\x02id\x18\x01 \x01(\x03R\x02id\x12\x1b\n" +
+	"\tfull_name\x18\x02 \x01(\tR\bfullName\x12\x14\n" +
+	"\x05email\x18\x03 \x01(\tR\x05email\"P\n" +
+	"\x1cGetAvailableStudentsResponse\x120\n" +
+	"\bstudents\x18\x01 \x03(\v2\x14.team.StudentPreviewR\bstudents2\xe5\x01\n" +
+	"\vTeamService\x12?\n" +
 	"\n" +
-	"DeleteTeam\x12\x1a.team.v1.DeleteTeamRequest\x1a\x1b.team.v1.DeleteTeamResponse\x12B\n" +
-	"\tAddMember\x12\x19.team.v1.AddMemberRequest\x1a\x1a.team.v1.AddMemberResponse\x12K\n" +
-	"\fRemoveMember\x12\x1c.team.v1.RemoveMemberRequest\x1a\x1d.team.v1.RemoveMemberResponse\x12]\n" +
-	"\x12ListAvailableUsers\x12\".team.v1.ListAvailableUsersRequest\x1a#.team.v1.ListAvailableUsersResponseB7Z5github.com/lucky720s/diplomaflow/pkg/protobuf/team/v1b\x06proto3"
+	"CreateTeam\x12\x17.team.CreateTeamRequest\x1a\x18.team.CreateTeamResponse\x126\n" +
+	"\aGetTeam\x12\x14.team.GetTeamRequest\x1a\x15.team.GetTeamResponse\x12]\n" +
+	"\x14GetAvailableStudents\x12!.team.GetAvailableStudentsRequest\x1a\".team.GetAvailableStudentsResponseB7Z5github.com/lucky720s/diplomaflow/pkg/protobuf/team/v1b\x06proto3"
 
 var (
 	file_team_v1_team_proto_rawDescOnce sync.Once
@@ -964,57 +488,31 @@ func file_team_v1_team_proto_rawDescGZIP() []byte {
 	return file_team_v1_team_proto_rawDescData
 }
 
-var file_team_v1_team_proto_msgTypes = make([]protoimpl.MessageInfo, 18)
+var file_team_v1_team_proto_msgTypes = make([]protoimpl.MessageInfo, 8)
 var file_team_v1_team_proto_goTypes = []any{
-	(*Team)(nil),                       // 0: team.v1.Team
-	(*CreateTeamRequest)(nil),          // 1: team.v1.CreateTeamRequest
-	(*CreateTeamResponse)(nil),         // 2: team.v1.CreateTeamResponse
-	(*GetTeamRequest)(nil),             // 3: team.v1.GetTeamRequest
-	(*GetTeamResponse)(nil),            // 4: team.v1.GetTeamResponse
-	(*ListTeamsRequest)(nil),           // 5: team.v1.ListTeamsRequest
-	(*ListTeamsResponse)(nil),          // 6: team.v1.ListTeamsResponse
-	(*UpdateTeamRequest)(nil),          // 7: team.v1.UpdateTeamRequest
-	(*UpdateTeamResponse)(nil),         // 8: team.v1.UpdateTeamResponse
-	(*DeleteTeamRequest)(nil),          // 9: team.v1.DeleteTeamRequest
-	(*DeleteTeamResponse)(nil),         // 10: team.v1.DeleteTeamResponse
-	(*AddMemberRequest)(nil),           // 11: team.v1.AddMemberRequest
-	(*AddMemberResponse)(nil),          // 12: team.v1.AddMemberResponse
-	(*RemoveMemberRequest)(nil),        // 13: team.v1.RemoveMemberRequest
-	(*RemoveMemberResponse)(nil),       // 14: team.v1.RemoveMemberResponse
-	(*ListAvailableUsersRequest)(nil),  // 15: team.v1.ListAvailableUsersRequest
-	(*ListAvailableUsersResponse)(nil), // 16: team.v1.ListAvailableUsersResponse
-	(*UserInfo)(nil),                   // 17: team.v1.UserInfo
-	(*fieldmaskpb.FieldMask)(nil),      // 18: google.protobuf.FieldMask
+	(*CreateTeamRequest)(nil),            // 0: team.CreateTeamRequest
+	(*CreateTeamResponse)(nil),           // 1: team.CreateTeamResponse
+	(*GetTeamRequest)(nil),               // 2: team.GetTeamRequest
+	(*TeamMember)(nil),                   // 3: team.TeamMember
+	(*GetTeamResponse)(nil),              // 4: team.GetTeamResponse
+	(*GetAvailableStudentsRequest)(nil),  // 5: team.GetAvailableStudentsRequest
+	(*StudentPreview)(nil),               // 6: team.StudentPreview
+	(*GetAvailableStudentsResponse)(nil), // 7: team.GetAvailableStudentsResponse
 }
 var file_team_v1_team_proto_depIdxs = []int32{
-	0,  // 0: team.v1.CreateTeamResponse.team:type_name -> team.v1.Team
-	0,  // 1: team.v1.GetTeamResponse.team:type_name -> team.v1.Team
-	0,  // 2: team.v1.ListTeamsResponse.teams:type_name -> team.v1.Team
-	0,  // 3: team.v1.UpdateTeamRequest.team:type_name -> team.v1.Team
-	18, // 4: team.v1.UpdateTeamRequest.update_mask:type_name -> google.protobuf.FieldMask
-	0,  // 5: team.v1.UpdateTeamResponse.team:type_name -> team.v1.Team
-	17, // 6: team.v1.ListAvailableUsersResponse.users:type_name -> team.v1.UserInfo
-	1,  // 7: team.v1.TeamService.CreateTeam:input_type -> team.v1.CreateTeamRequest
-	3,  // 8: team.v1.TeamService.GetTeam:input_type -> team.v1.GetTeamRequest
-	5,  // 9: team.v1.TeamService.ListTeams:input_type -> team.v1.ListTeamsRequest
-	7,  // 10: team.v1.TeamService.UpdateTeam:input_type -> team.v1.UpdateTeamRequest
-	9,  // 11: team.v1.TeamService.DeleteTeam:input_type -> team.v1.DeleteTeamRequest
-	11, // 12: team.v1.TeamService.AddMember:input_type -> team.v1.AddMemberRequest
-	13, // 13: team.v1.TeamService.RemoveMember:input_type -> team.v1.RemoveMemberRequest
-	15, // 14: team.v1.TeamService.ListAvailableUsers:input_type -> team.v1.ListAvailableUsersRequest
-	2,  // 15: team.v1.TeamService.CreateTeam:output_type -> team.v1.CreateTeamResponse
-	4,  // 16: team.v1.TeamService.GetTeam:output_type -> team.v1.GetTeamResponse
-	6,  // 17: team.v1.TeamService.ListTeams:output_type -> team.v1.ListTeamsResponse
-	8,  // 18: team.v1.TeamService.UpdateTeam:output_type -> team.v1.UpdateTeamResponse
-	10, // 19: team.v1.TeamService.DeleteTeam:output_type -> team.v1.DeleteTeamResponse
-	12, // 20: team.v1.TeamService.AddMember:output_type -> team.v1.AddMemberResponse
-	14, // 21: team.v1.TeamService.RemoveMember:output_type -> team.v1.RemoveMemberResponse
-	16, // 22: team.v1.TeamService.ListAvailableUsers:output_type -> team.v1.ListAvailableUsersResponse
-	15, // [15:23] is the sub-list for method output_type
-	7,  // [7:15] is the sub-list for method input_type
-	7,  // [7:7] is the sub-list for extension type_name
-	7,  // [7:7] is the sub-list for extension extendee
-	0,  // [0:7] is the sub-list for field type_name
+	3, // 0: team.GetTeamResponse.members:type_name -> team.TeamMember
+	6, // 1: team.GetAvailableStudentsResponse.students:type_name -> team.StudentPreview
+	0, // 2: team.TeamService.CreateTeam:input_type -> team.CreateTeamRequest
+	2, // 3: team.TeamService.GetTeam:input_type -> team.GetTeamRequest
+	5, // 4: team.TeamService.GetAvailableStudents:input_type -> team.GetAvailableStudentsRequest
+	1, // 5: team.TeamService.CreateTeam:output_type -> team.CreateTeamResponse
+	4, // 6: team.TeamService.GetTeam:output_type -> team.GetTeamResponse
+	7, // 7: team.TeamService.GetAvailableStudents:output_type -> team.GetAvailableStudentsResponse
+	5, // [5:8] is the sub-list for method output_type
+	2, // [2:5] is the sub-list for method input_type
+	2, // [2:2] is the sub-list for extension type_name
+	2, // [2:2] is the sub-list for extension extendee
+	0, // [0:2] is the sub-list for field type_name
 }
 
 func init() { file_team_v1_team_proto_init() }
@@ -1028,7 +526,7 @@ func file_team_v1_team_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_team_v1_team_proto_rawDesc), len(file_team_v1_team_proto_rawDesc)),
 			NumEnums:      0,
-			NumMessages:   18,
+			NumMessages:   8,
 			NumExtensions: 0,
 			NumServices:   1,
 		},

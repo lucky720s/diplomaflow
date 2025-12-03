@@ -2,134 +2,47 @@ package team
 
 import (
 	"context"
-	"fmt"
-	"os"
+	"errors"
 
-	teamv1 "github.com/lucky720s/diplomaflow/pkg/protobuf/team/v1"
-	rkpostgres "github.com/rookie-ninja/rk-db/postgres"
-	"google.golang.org/protobuf/types/known/fieldmaskpb"
 	"gorm.io/gorm"
 )
 
-type Team struct {
-	ID           int64 `gorm:"primaryKey"`
-	Name         string
-	DepartmentID int64 `gorm:"index"`
-}
-
-type TeamMember struct {
-	ID     int64 `gorm:"primaryKey"`
-	TeamID int64 `gorm:"index"`
-	UserID int64 `gorm:"uniqueIndex"`
-}
 type Repository interface {
-	CreateTeam(ctx context.Context, name string, departmentID int64, memberIDs []int64) (*Team, error)
-	GetTeamByID(ctx context.Context, teamID int64) (*Team, []int64, error)
-	ListTeams(ctx context.Context, departmentID int64) ([]*Team, error)
-	UpdateTeam(ctx context.Context, team *teamv1.Team, mask *fieldmaskpb.FieldMask) (*Team, error)
-	DeleteTeam(ctx context.Context, teamID int64) error
-	AddMember(ctx context.Context, teamID int64, userID int64) error
-	RemoveMember(ctx context.Context, teamID int64, userID int64) error
+	Create(ctx context.Context, team *Team) error
+	GetByID(ctx context.Context, id uint64) (*Team, error)
+	AddMember(ctx context.Context, member *TeamMember) error
+	RemoveMember(ctx context.Context, teamID uint64, userID int64) error
 }
 
 type repository struct {
 	db *gorm.DB
 }
 
-func (Team) TableName() string {
-	return "team_schema.teams"
-}
-func (TeamMember) TableName() string {
-	return "team_schema.team_members"
-}
-func NewRepository() (Repository, error) {
-	pgEntry := rkpostgres.GetPostgresEntry("team-conn")
-	dbName := os.Getenv("MAIN_POSTGRES_DB_NAME")
-	db := pgEntry.GetDB(dbName)
-	if db == nil {
-		panic("Database not found")
-	}
-	if err := db.AutoMigrate(&Team{}, &TeamMember{}); err != nil {
-		return nil, fmt.Errorf("auto migrate team err: %w", err)
-	}
-	return &repository{db: db}, nil
-}
-func (r *repository) CreateTeam(ctx context.Context, name string, departmentID int64, memberIDs []int64) (*Team, error) {
-	team := &Team{Name: name, DepartmentID: departmentID}
-	err := r.db.WithContext(ctx).Transaction(func(tx *gorm.DB) error {
-		if err := tx.Create(team).Error; err != nil {
-			return err
-		}
-		if len(memberIDs) > 0 {
-			var members []*TeamMember
-			for _, id := range memberIDs {
-				members = append(members, &TeamMember{TeamID: team.ID, UserID: id})
-			}
-			if err := tx.Create(&members).Error; err != nil {
-				return err
-			}
-		}
-		return nil
-	})
-	return team, err
+func NewRepository(db *gorm.DB) Repository {
+	return &repository{db: db}
 }
 
-func (r *repository) GetTeamByID(ctx context.Context, teamID int64) (*Team, []int64, error) {
+func (r *repository) Create(ctx context.Context, team *Team) error {
+	return r.db.WithContext(ctx).Create(team).Error
+}
+
+func (r *repository) GetByID(ctx context.Context, id uint64) (*Team, error) {
 	var team Team
-	if err := r.db.WithContext(ctx).First(&team, teamID).Error; err != nil {
-		return nil, nil, err
-	}
-	var members []*TeamMember
-	if err := r.db.WithContext(ctx).Where("team_id = ?", teamID).Find(&members).Error; err != nil {
-		return nil, nil, err
-	}
-	var memberIDs []int64
-	for _, member := range members {
-		memberIDs = append(memberIDs, member.UserID)
-	}
-	return &team, memberIDs, nil
-}
-func (r *repository) AddMember(ctx context.Context, teamID int64, userID int64) error {
-	member := &TeamMember{TeamID: teamID, UserID: userID}
-	return r.db.WithContext(ctx).Create(member).Error
-}
-func (r *repository) RemoveMember(ctx context.Context, teamID int64, userID int64) error {
-	return r.db.WithContext(ctx).Where("team_id = ? AND user_id = ?", teamID, userID).Delete(&TeamMember{}).Error
-}
-func (r *repository) ListTeams(ctx context.Context, departmentID int64) ([]*Team, error) {
-	var teams []*Team
-	err := r.db.WithContext(ctx).Where("department_id = ?", departmentID).Find(&teams).Error
-	return teams, err
-}
-func (r *repository) DeleteTeam(ctx context.Context, teamID int64) error {
-	return r.db.WithContext(ctx).Transaction(func(tx *gorm.DB) error {
-		if err := tx.Where("team_id = ?", teamID).Delete(&TeamMember{}).Error; err != nil {
-			return err
+	if err := r.db.WithContext(ctx).Preload("Members").First(&team, id).Error; err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return nil, errors.New("team not found")
 		}
-		if err := tx.Delete(&Team{}, teamID).Error; err != nil {
-			return err
-		}
-		return nil
-	})
-}
-func (r *repository) UpdateTeam(ctx context.Context, team *teamv1.Team, mask *fieldmaskpb.FieldMask) (*Team, error) {
-	var existingTeam Team
-	if err := r.db.WithContext(ctx).First(&existingTeam, team.GetId()).Error; err != nil {
 		return nil, err
 	}
-	updateData := make(map[string]interface{})
-	for _, path := range mask.Paths {
-		switch path {
-		case "name":
-			updateData["name"] = team.GetName()
-		case "department_id":
-			updateData["department_id"] = team.GetDepartmentId()
-		}
-	}
-	if len(updateData) > 0 {
-		if err := r.db.WithContext(ctx).Model(&existingTeam).Updates(updateData).Error; err != nil {
-			return nil, err
-		}
-	}
-	return &existingTeam, nil
+	return &team, nil
+}
+
+func (r *repository) AddMember(ctx context.Context, member *TeamMember) error {
+	return r.db.WithContext(ctx).Create(member).Error
+}
+
+func (r *repository) RemoveMember(ctx context.Context, teamID uint64, userID int64) error {
+	return r.db.WithContext(ctx).
+		Where("team_id = ? AND user_id = ?", teamID, userID).
+		Delete(&TeamMember{}).Error
 }

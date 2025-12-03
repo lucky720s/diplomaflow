@@ -1,0 +1,155 @@
+version: '3.8'
+
+services:
+  # --- Database ---
+  main_postgres:
+    image: postgres:16-alpine
+    container_name: main_postgres
+    environment:
+      POSTGRES_USER: diplomaflow
+      POSTGRES_PASSWORD: diplomaflow_pass
+      POSTGRES_DB: diplomaflow
+    ports:
+      - "5432:5432"
+    volumes:
+      - diplomaflow_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U diplomaflow -d diplomaflow"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    networks:
+      - app_network
+
+  # --- Microservices ---
+
+  university_service:
+    build:
+      context: .
+      dockerfile: cmd/university_service/Dockerfile
+    container_name: university_service
+    ports:
+      - "8081:8081"
+    depends_on:
+      main_postgres:
+        condition: service_healthy
+    networks:
+      - app_network
+
+  role_service:
+    build:
+      context: .
+      dockerfile: cmd/role_service/Dockerfile
+    container_name: role_service
+    ports:
+      - "8086:8086"
+    depends_on:
+      main_postgres:
+        condition: service_healthy
+    networks:
+      - app_network
+
+  auth_service:
+    build:
+      context: .
+      dockerfile: cmd/auth_service/Dockerfile
+    container_name: auth_service
+    environment:
+      - UNIVERSITY_SERVICE_ADDR=university_service:8081
+      - ROLE_SERVICE_ADDR=role_service:8086
+      - JWT_SECRET=super_secret_key_change_me
+    ports:
+      - "8082:8082"
+    depends_on:
+      main_postgres:
+        condition: service_healthy
+      university_service:
+        condition: service_started
+      role_service:
+        condition: service_started
+    networks:
+      - app_network
+  workflow_service:
+    build:
+      context: .
+      dockerfile: cmd/workflow_service/Dockerfile
+    container_name: workflow_service
+    ports:
+      - "8085:8085"
+    depends_on:
+      main_postgres:
+        condition: service_healthy
+    networks:
+      - app_network
+
+  team_service:
+    build:
+      context: .
+      dockerfile: cmd/team_service/Dockerfile
+    container_name: team_service
+    environment:
+      - AUTH_SERVICE_ADDR=auth_service:8082
+    ports:
+      - "8084:8084"
+    depends_on:
+      main_postgres:
+        condition: service_healthy
+      auth_service:
+        condition: service_started
+    networks:
+      - app_network
+
+  project_service:
+    build:
+      context: .
+      dockerfile: cmd/project_service/Dockerfile
+    container_name: project_service
+    environment:
+      - WORKFLOW_SERVICE_ADDR=workflow_service:8085
+      - TEAM_SERVICE_ADDR=team_service:8084
+    ports:
+      - "8083:8083"
+    depends_on:
+      main_postgres:
+        condition: service_healthy
+      workflow_service:
+        condition: service_started
+      team_service:
+        condition: service_started
+    networks:
+      - app_network
+
+  # --- API Gateway ---
+
+  api_gateway:
+    build:
+      context: .
+      dockerfile: cmd/api_gateway/Dockerfile
+    container_name: api_gateway
+    environment:
+      - PORT=8080
+      - JWT_SECRET=super_secret_key_change_me
+      - AUTH_SERVICE_ADDR=auth_service:8082
+      - PROJECT_SERVICE_ADDR=project_service:8083
+      - TEAM_SERVICE_ADDR=team_service:8084
+      - WORKFLOW_SERVICE_ADDR=workflow_service:8085
+      - UNIVERSITY_SERVICE_ADDR=university_service:8081
+      - ROLE_SERVICE_ADDR=role_service:8086
+    ports:
+      - "8080:8080"
+    depends_on:
+      - auth_service
+      - project_service
+      - team_service
+      - workflow_service
+      - university_service
+      - role_service
+    networks:
+      - app_network
+
+volumes:
+  diplomaflow_data:
+
+networks:
+  app_network:
+    driver: bridge

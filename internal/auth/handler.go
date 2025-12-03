@@ -2,111 +2,110 @@ package auth
 
 import (
 	"context"
-	"errors"
-	"os"
-	"time"
+	"net/http"
 
-	"github.com/golang-jwt/jwt/v5"
-	authv1 "github.com/lucky720s/diplomaflow/pkg/protobuf/auth/v1"
-	rolev1 "github.com/lucky720s/diplomaflow/pkg/protobuf/role/v1"
-	universityv1 "github.com/lucky720s/diplomaflow/pkg/protobuf/university/v1"
-	"golang.org/x/crypto/bcrypt"
+	pb "github.com/lucky720s/diplomaflow/pkg/protobuf/auth/v1"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
-	"gorm.io/gorm"
 )
 
 type Handler struct {
-	authv1.UnimplementedAuthServiceServer
-	repo             Repository
-	universityClient universityv1.UniversityServiceClient
-	roleClient       rolev1.RoleServiceClient
+	pb.UnimplementedAuthServiceServer
+	service *Service
 }
 
-func NewHandler(repo Repository, universityClient universityv1.UniversityServiceClient, roleClient rolev1.RoleServiceClient) *Handler {
-	return &Handler{
-		repo:             repo,
-		universityClient: universityClient,
-		roleClient:       roleClient,
-	}
+func NewHandler(service *Service) *Handler {
+	return &Handler{service: service}
 }
 
-func (h *Handler) Register(ctx context.Context, req *authv1.RegisterRequest) (*authv1.RegisterResponse, error) {
-	user, err := h.repo.CreateUser(ctx, req.GetEmail(), req.GetPassword(), req.GetUniversityId(), req.GetDepartmentId())
-	if err != nil {
-		return nil, status.Errorf(codes.FailedPrecondition, "User does not exist")
+func (h *Handler) Register(ctx context.Context, req *pb.RegisterRequest) (*pb.RegisterResponse, error) {
+	if req.Email == "" || req.Password == "" {
+		return &pb.RegisterResponse{
+			Status: http.StatusBadRequest,
+			Error:  "email and password are required",
+		}, nil
 	}
-	return &authv1.RegisterResponse{UserId: user.ID}, nil
+
+	userID, err := h.service.Register(ctx, req.Email, req.Password, req.FirstName, req.LastName, req.Role, req.UniversityId)
+	if err != nil {
+		return &pb.RegisterResponse{
+			Status: http.StatusConflict,
+			Error:  err.Error(),
+		}, nil
+	}
+
+	return &pb.RegisterResponse{
+		Status: http.StatusCreated,
+		UserId: userID,
+	}, nil
 }
 
-func (h *Handler) Login(ctx context.Context, req *authv1.LoginRequest) (*authv1.LoginResponse, error) {
-	user, err := h.repo.GetUserByEmail(ctx, req.GetEmail())
+func (h *Handler) Login(ctx context.Context, req *pb.LoginRequest) (*pb.LoginResponse, error) {
+	if req.Email == "" || req.Password == "" {
+		return &pb.LoginResponse{
+			Status: http.StatusBadRequest,
+			Error:  "email and password are required",
+		}, nil
+	}
+
+	token, err := h.service.Login(ctx, req.Email, req.Password)
 	if err != nil {
-		return nil, status.Errorf(codes.Unauthenticated, "failed to login")
+		return &pb.LoginResponse{
+			Status: http.StatusUnauthorized,
+			Error:  err.Error(),
+		}, nil
 	}
-	if err := bcrypt.CompareHashAndPassword([]byte(user.PasswordHash), []byte(req.GetPassword())); err != nil {
-		return nil, status.Errorf(codes.Unauthenticated, "invalid password")
-	}
-	rolesIDs, err := h.repo.GetUserRoleIDs(ctx, user.ID)
-	if err != nil {
-		return nil, status.Errorf(codes.FailedPrecondition, "role id does not exist")
-	}
-	token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
-		"sub":   user.ID,
-		"uid":   user.UniversityID,
-		"did":   user.DepartmentID,
-		"roles": rolesIDs,
-		"exp":   time.Now().Add(time.Hour * 24).Unix(),
-	})
-	jwtSecret := os.Getenv("JWT_SECRET")
-	tokenString, err := token.SignedString([]byte(jwtSecret))
-	if err != nil {
-		return nil, status.Errorf(codes.Internal, "failed to sign token")
-	}
-	return &authv1.LoginResponse{Token: tokenString}, nil
+
+	return &pb.LoginResponse{
+		Status: http.StatusOK,
+		Token:  token,
+	}, nil
 }
 
-func (h *Handler) GetUser(ctx context.Context, req *authv1.GetUserRequest) (*authv1.GetUserResponse, error) {
-	user, err := h.repo.GetUserByID(ctx, req.GetUserId())
+func (h *Handler) ValidateToken(ctx context.Context, req *pb.ValidateTokenRequest) (*pb.ValidateTokenResponse, error) {
+	if req.Token == "" {
+		return &pb.ValidateTokenResponse{
+			Status: http.StatusBadRequest,
+			Error:  "token is required",
+		}, nil
+	}
+
+	claims, err := h.service.Validate(ctx, req.Token)
 	if err != nil {
-		if errors.Is(err, gorm.ErrRecordNotFound) {
-			return nil, status.Errorf(codes.Internal, "user id does not exist")
-		}
+		return &pb.ValidateTokenResponse{
+			Status: http.StatusUnauthorized,
+			Error:  err.Error(),
+		}, nil
 	}
-	roleIDs, err := h.repo.GetUserRoleIDs(ctx, user.ID)
-	if err != nil {
-		return nil, status.Errorf(codes.FailedPrecondition, "role id does not exist")
-	}
-	var roles []*rolev1.Role
-	for _, roleID := range roleIDs {
-		roleRes, err := h.roleClient.GetRole(ctx, &rolev1.GetRoleRequest{RoleId: roleID})
-		if err == nil {
-			roles = append(roles, roleRes.GetRole())
-		}
-	}
-	return &authv1.GetUserResponse{
-		Id:           user.ID,
-		Email:        user.Email,
-		DepartmentId: user.DepartmentID,
-		Roles:        roles}, nil
+
+	return &pb.ValidateTokenResponse{
+		Status:       http.StatusOK,
+		UserId:       claims.Id,
+		Role:         claims.Role,
+		UniversityId: claims.UniversityID,
+	}, nil
 }
-func (h *Handler) AssignRole(ctx context.Context, req *authv1.AssignRoleRequest) (*authv1.AssignRoleResponse, error) {
-	if err := h.repo.AssignRole(ctx, req.GetUserId(), req.GetRoleId()); err != nil {
-		return nil, status.Errorf(codes.FailedPrecondition, "failed to assign role")
-	}
-	return &authv1.AssignRoleResponse{Success: true}, nil
-}
-func (h *Handler) ListUsersByDepartment(ctx context.Context, req *authv1.ListUsersByDepartmentRequest) (*authv1.ListUsersByDepartmentResponse, error) {
-	users, err := h.repo.GetUsersByDepartment(ctx, req.GetDepartmentId())
+
+func (h *Handler) ListUsers(ctx context.Context, req *pb.ListUsersRequest) (*pb.ListUsersResponse, error) {
+	users, total, err := h.service.ListUsers(ctx, req.UniversityId, req.Role, req.Page, req.PageSize)
 	if err != nil {
-		return nil, status.Errorf(codes.Internal, "failed to list users")
+		return nil, status.Errorf(codes.Internal, "failed to list users: %v", err)
 	}
-	var pbUsers []*authv1.UserInfo
-	for _, user := range users {
-		pbUsers = append(pbUsers, &authv1.UserInfo{
-			Id:    user.ID,
-			Email: user.Email,
+
+	var pbUsers []*pb.UserPreview
+	for _, u := range users {
+		pbUsers = append(pbUsers, &pb.UserPreview{
+			Id:           u.ID,
+			Email:        u.Email,
+			FirstName:    u.FirstName,
+			LastName:     u.LastName,
+			Role:         u.Role,
+			UniversityId: u.UniversityID,
 		})
 	}
-	return &authv1.ListUsersByDepartmentResponse{Users: pbUsers}, nil
+
+	return &pb.ListUsersResponse{
+		Users:      pbUsers,
+		TotalCount: total,
+	}, nil
 }

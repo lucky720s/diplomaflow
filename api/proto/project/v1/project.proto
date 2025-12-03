@@ -1,0 +1,62 @@
+syntax = "proto3";
+
+package project;
+
+option go_package = "github.com/lucky720s/diplomaflow/pkg/protobuf/project/v1";
+
+service ProjectService {
+  rpc CreateProject (CreateProjectRequest) returns (CreateProjectResponse);
+  rpc GetProject (GetProjectRequest) returns (GetProjectResponse);
+  rpc GetStudentProjects (GetStudentProjectsRequest) returns (GetStudentProjectsResponse);
+}
+
+message CreateProjectRequest {
+  string title = 1;
+  string description = 2;
+  int64 student_id = 3;
+  string workflow_name = 4;
+}
+
+message CreateProjectResponse {
+  int64 project_id = 1;
+  string status = 2;
+}
+
+message GetProjectRequest {
+  int64 project_id = 1;
+}
+
+message StateHistory {
+  string state_name = 1;
+  string status = 2;
+  int64 changed_by = 3;
+  string comment = 4;
+  string timestamp = 5;
+}
+
+message GetProjectResponse {
+  int64 project_id = 1;
+  string title = 2;
+  string description = 3;
+  int64 student_id = 4;
+  int64 team_id = 5;
+  string workflow_name = 6;
+  string current_state = 7;
+  string status = 8;
+  repeated StateHistory history = 9;
+}
+
+message GetStudentProjectsRequest {
+  int64 student_id = 1;
+}
+
+message ProjectPreview {
+  int64 project_id = 1;
+  string title = 2;
+  string status = 3;
+  string current_state = 4;
+}
+
+message GetStudentProjectsResponse {
+  repeated ProjectPreview projects = 1;
+}

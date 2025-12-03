@@ -20,22 +20,24 @@ import (
 const _ = grpc.SupportPackageIsVersion7
 
 const (
-	WorkflowService_CreateWorkflow_FullMethodName    = "/workflow.v1.WorkflowService/CreateWorkflow"
-	WorkflowService_GetWorkflow_FullMethodName       = "/workflow.v1.WorkflowService/GetWorkflow"
-	WorkflowService_ListWorkflows_FullMethodName     = "/workflow.v1.WorkflowService/ListWorkflows"
-	WorkflowService_UpdateWorkflow_FullMethodName    = "/workflow.v1.WorkflowService/UpdateWorkflow"
-	WorkflowService_DeleteWorkflow_FullMethodName    = "/workflow.v1.WorkflowService/DeleteWorkflow"
-	WorkflowService_CreateState_FullMethodName       = "/workflow.v1.WorkflowService/CreateState"
-	WorkflowService_GetState_FullMethodName          = "/workflow.v1.WorkflowService/GetState"
-	WorkflowService_ListStates_FullMethodName        = "/workflow.v1.WorkflowService/ListStates"
-	WorkflowService_UpdateState_FullMethodName       = "/workflow.v1.WorkflowService/UpdateState"
-	WorkflowService_DeleteState_FullMethodName       = "/workflow.v1.WorkflowService/DeleteState"
-	WorkflowService_CreateTransition_FullMethodName  = "/workflow.v1.WorkflowService/CreateTransition"
-	WorkflowService_DeleteTransition_FullMethodName  = "/workflow.v1.WorkflowService/DeleteTransition"
-	WorkflowService_CreateStateAction_FullMethodName = "/workflow.v1.WorkflowService/CreateStateAction"
-	WorkflowService_ListStateActions_FullMethodName  = "/workflow.v1.WorkflowService/ListStateActions"
-	WorkflowService_DeleteStateAction_FullMethodName = "/workflow.v1.WorkflowService/DeleteStateAction"
-	WorkflowService_GetNextState_FullMethodName      = "/workflow.v1.WorkflowService/GetNextState"
+	WorkflowService_CreateWorkflow_FullMethodName                = "/workflow.v1.WorkflowService/CreateWorkflow"
+	WorkflowService_GetWorkflow_FullMethodName                   = "/workflow.v1.WorkflowService/GetWorkflow"
+	WorkflowService_ListWorkflows_FullMethodName                 = "/workflow.v1.WorkflowService/ListWorkflows"
+	WorkflowService_UpdateWorkflow_FullMethodName                = "/workflow.v1.WorkflowService/UpdateWorkflow"
+	WorkflowService_DeleteWorkflow_FullMethodName                = "/workflow.v1.WorkflowService/DeleteWorkflow"
+	WorkflowService_CreateState_FullMethodName                   = "/workflow.v1.WorkflowService/CreateState"
+	WorkflowService_GetState_FullMethodName                      = "/workflow.v1.WorkflowService/GetState"
+	WorkflowService_ListStates_FullMethodName                    = "/workflow.v1.WorkflowService/ListStates"
+	WorkflowService_UpdateState_FullMethodName                   = "/workflow.v1.WorkflowService/UpdateState"
+	WorkflowService_DeleteState_FullMethodName                   = "/workflow.v1.WorkflowService/DeleteState"
+	WorkflowService_CreateTransition_FullMethodName              = "/workflow.v1.WorkflowService/CreateTransition"
+	WorkflowService_DeleteTransition_FullMethodName              = "/workflow.v1.WorkflowService/DeleteTransition"
+	WorkflowService_CreateStateAction_FullMethodName             = "/workflow.v1.WorkflowService/CreateStateAction"
+	WorkflowService_ListStateActions_FullMethodName              = "/workflow.v1.WorkflowService/ListStateActions"
+	WorkflowService_DeleteStateAction_FullMethodName             = "/workflow.v1.WorkflowService/DeleteStateAction"
+	WorkflowService_SetActiveWorkflow_FullMethodName             = "/workflow.v1.WorkflowService/SetActiveWorkflow"
+	WorkflowService_GetActiveWorkflowByDepartment_FullMethodName = "/workflow.v1.WorkflowService/GetActiveWorkflowByDepartment"
+	WorkflowService_GetNextState_FullMethodName                  = "/workflow.v1.WorkflowService/GetNextState"
 )
 
 // WorkflowServiceClient is the client API for WorkflowService service.
@@ -57,6 +59,8 @@ type WorkflowServiceClient interface {
 	CreateStateAction(ctx context.Context, in *CreateStateActionRequest, opts ...grpc.CallOption) (*StateAction, error)
 	ListStateActions(ctx context.Context, in *ListStateActionsRequest, opts ...grpc.CallOption) (*ListStateActionsResponse, error)
 	DeleteStateAction(ctx context.Context, in *DeleteStateActionRequest, opts ...grpc.CallOption) (*emptypb.Empty, error)
+	SetActiveWorkflow(ctx context.Context, in *SetActiveWorkflowRequest, opts ...grpc.CallOption) (*Workflow, error)
+	GetActiveWorkflowByDepartment(ctx context.Context, in *GetActiveWorkflowByDepartmentRequest, opts ...grpc.CallOption) (*Workflow, error)
 	GetNextState(ctx context.Context, in *GetNextStateRequest, opts ...grpc.CallOption) (*State, error)
 }
 
@@ -203,6 +207,24 @@ func (c *workflowServiceClient) DeleteStateAction(ctx context.Context, in *Delet
 	return out, nil
 }
 
+func (c *workflowServiceClient) SetActiveWorkflow(ctx context.Context, in *SetActiveWorkflowRequest, opts ...grpc.CallOption) (*Workflow, error) {
+	out := new(Workflow)
+	err := c.cc.Invoke(ctx, WorkflowService_SetActiveWorkflow_FullMethodName, in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *workflowServiceClient) GetActiveWorkflowByDepartment(ctx context.Context, in *GetActiveWorkflowByDepartmentRequest, opts ...grpc.CallOption) (*Workflow, error) {
+	out := new(Workflow)
+	err := c.cc.Invoke(ctx, WorkflowService_GetActiveWorkflowByDepartment_FullMethodName, in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 func (c *workflowServiceClient) GetNextState(ctx context.Context, in *GetNextStateRequest, opts ...grpc.CallOption) (*State, error) {
 	out := new(State)
 	err := c.cc.Invoke(ctx, WorkflowService_GetNextState_FullMethodName, in, out, opts...)
@@ -231,6 +253,8 @@ type WorkflowServiceServer interface {
 	CreateStateAction(context.Context, *CreateStateActionRequest) (*StateAction, error)
 	ListStateActions(context.Context, *ListStateActionsRequest) (*ListStateActionsResponse, error)
 	DeleteStateAction(context.Context, *DeleteStateActionRequest) (*emptypb.Empty, error)
+	SetActiveWorkflow(context.Context, *SetActiveWorkflowRequest) (*Workflow, error)
+	GetActiveWorkflowByDepartment(context.Context, *GetActiveWorkflowByDepartmentRequest) (*Workflow, error)
 	GetNextState(context.Context, *GetNextStateRequest) (*State, error)
 	mustEmbedUnimplementedWorkflowServiceServer()
 }
@@ -283,6 +307,12 @@ func (UnimplementedWorkflowServiceServer) ListStateActions(context.Context, *Lis
 }
 func (UnimplementedWorkflowServiceServer) DeleteStateAction(context.Context, *DeleteStateActionRequest) (*emptypb.Empty, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method DeleteStateAction not implemented")
+}
+func (UnimplementedWorkflowServiceServer) SetActiveWorkflow(context.Context, *SetActiveWorkflowRequest) (*Workflow, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method SetActiveWorkflow not implemented")
+}
+func (UnimplementedWorkflowServiceServer) GetActiveWorkflowByDepartment(context.Context, *GetActiveWorkflowByDepartmentRequest) (*Workflow, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetActiveWorkflowByDepartment not implemented")
 }
 func (UnimplementedWorkflowServiceServer) GetNextState(context.Context, *GetNextStateRequest) (*State, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetNextState not implemented")
@@ -570,6 +600,42 @@ func _WorkflowService_DeleteStateAction_Handler(srv interface{}, ctx context.Con
 	return interceptor(ctx, in, info, handler)
 }
 
+func _WorkflowService_SetActiveWorkflow_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(SetActiveWorkflowRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(WorkflowServiceServer).SetActiveWorkflow(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: WorkflowService_SetActiveWorkflow_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(WorkflowServiceServer).SetActiveWorkflow(ctx, req.(*SetActiveWorkflowRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _WorkflowService_GetActiveWorkflowByDepartment_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetActiveWorkflowByDepartmentRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(WorkflowServiceServer).GetActiveWorkflowByDepartment(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: WorkflowService_GetActiveWorkflowByDepartment_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(WorkflowServiceServer).GetActiveWorkflowByDepartment(ctx, req.(*GetActiveWorkflowByDepartmentRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 func _WorkflowService_GetNextState_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(GetNextStateRequest)
 	if err := dec(in); err != nil {
@@ -654,6 +720,14 @@ var WorkflowService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "DeleteStateAction",
 			Handler:    _WorkflowService_DeleteStateAction_Handler,
+		},
+		{
+			MethodName: "SetActiveWorkflow",
+			Handler:    _WorkflowService_SetActiveWorkflow_Handler,
+		},
+		{
+			MethodName: "GetActiveWorkflowByDepartment",
+			Handler:    _WorkflowService_GetActiveWorkflowByDepartment_Handler,
 		},
 		{
 			MethodName: "GetNextState",

@@ -11,7 +11,6 @@ import (
 	grpc "google.golang.org/grpc"
 	codes "google.golang.org/grpc/codes"
 	status "google.golang.org/grpc/status"
-	emptypb "google.golang.org/protobuf/types/known/emptypb"
 )
 
 // This is a compile-time assertion to ensure that this generated file
@@ -20,20 +19,18 @@ import (
 const _ = grpc.SupportPackageIsVersion7
 
 const (
-	ProjectService_CreateProject_FullMethodName      = "/project.v1.ProjectService/CreateProject"
-	ProjectService_GetProject_FullMethodName         = "/project.v1.ProjectService/GetProject"
-	ProjectService_ListProjects_FullMethodName       = "/project.v1.ProjectService/ListProjects"
-	ProjectService_PerformStateAction_FullMethodName = "/project.v1.ProjectService/PerformStateAction"
+	ProjectService_CreateProject_FullMethodName      = "/project.ProjectService/CreateProject"
+	ProjectService_GetProject_FullMethodName         = "/project.ProjectService/GetProject"
+	ProjectService_GetStudentProjects_FullMethodName = "/project.ProjectService/GetStudentProjects"
 )
 
 // ProjectServiceClient is the client API for ProjectService service.
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 type ProjectServiceClient interface {
-	CreateProject(ctx context.Context, in *CreateProjectRequest, opts ...grpc.CallOption) (*Project, error)
-	GetProject(ctx context.Context, in *GetProjectRequest, opts ...grpc.CallOption) (*Project, error)
-	ListProjects(ctx context.Context, in *ListProjectsRequest, opts ...grpc.CallOption) (*ListProjectsResponse, error)
-	PerformStateAction(ctx context.Context, in *PerformStateActionRequest, opts ...grpc.CallOption) (*emptypb.Empty, error)
+	CreateProject(ctx context.Context, in *CreateProjectRequest, opts ...grpc.CallOption) (*CreateProjectResponse, error)
+	GetProject(ctx context.Context, in *GetProjectRequest, opts ...grpc.CallOption) (*GetProjectResponse, error)
+	GetStudentProjects(ctx context.Context, in *GetStudentProjectsRequest, opts ...grpc.CallOption) (*GetStudentProjectsResponse, error)
 }
 
 type projectServiceClient struct {
@@ -44,8 +41,8 @@ func NewProjectServiceClient(cc grpc.ClientConnInterface) ProjectServiceClient {
 	return &projectServiceClient{cc}
 }
 
-func (c *projectServiceClient) CreateProject(ctx context.Context, in *CreateProjectRequest, opts ...grpc.CallOption) (*Project, error) {
-	out := new(Project)
+func (c *projectServiceClient) CreateProject(ctx context.Context, in *CreateProjectRequest, opts ...grpc.CallOption) (*CreateProjectResponse, error) {
+	out := new(CreateProjectResponse)
 	err := c.cc.Invoke(ctx, ProjectService_CreateProject_FullMethodName, in, out, opts...)
 	if err != nil {
 		return nil, err
@@ -53,8 +50,8 @@ func (c *projectServiceClient) CreateProject(ctx context.Context, in *CreateProj
 	return out, nil
 }
 
-func (c *projectServiceClient) GetProject(ctx context.Context, in *GetProjectRequest, opts ...grpc.CallOption) (*Project, error) {
-	out := new(Project)
+func (c *projectServiceClient) GetProject(ctx context.Context, in *GetProjectRequest, opts ...grpc.CallOption) (*GetProjectResponse, error) {
+	out := new(GetProjectResponse)
 	err := c.cc.Invoke(ctx, ProjectService_GetProject_FullMethodName, in, out, opts...)
 	if err != nil {
 		return nil, err
@@ -62,18 +59,9 @@ func (c *projectServiceClient) GetProject(ctx context.Context, in *GetProjectReq
 	return out, nil
 }
 
-func (c *projectServiceClient) ListProjects(ctx context.Context, in *ListProjectsRequest, opts ...grpc.CallOption) (*ListProjectsResponse, error) {
-	out := new(ListProjectsResponse)
-	err := c.cc.Invoke(ctx, ProjectService_ListProjects_FullMethodName, in, out, opts...)
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
-}
-
-func (c *projectServiceClient) PerformStateAction(ctx context.Context, in *PerformStateActionRequest, opts ...grpc.CallOption) (*emptypb.Empty, error) {
-	out := new(emptypb.Empty)
-	err := c.cc.Invoke(ctx, ProjectService_PerformStateAction_FullMethodName, in, out, opts...)
+func (c *projectServiceClient) GetStudentProjects(ctx context.Context, in *GetStudentProjectsRequest, opts ...grpc.CallOption) (*GetStudentProjectsResponse, error) {
+	out := new(GetStudentProjectsResponse)
+	err := c.cc.Invoke(ctx, ProjectService_GetStudentProjects_FullMethodName, in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -84,10 +72,9 @@ func (c *projectServiceClient) PerformStateAction(ctx context.Context, in *Perfo
 // All implementations must embed UnimplementedProjectServiceServer
 // for forward compatibility
 type ProjectServiceServer interface {
-	CreateProject(context.Context, *CreateProjectRequest) (*Project, error)
-	GetProject(context.Context, *GetProjectRequest) (*Project, error)
-	ListProjects(context.Context, *ListProjectsRequest) (*ListProjectsResponse, error)
-	PerformStateAction(context.Context, *PerformStateActionRequest) (*emptypb.Empty, error)
+	CreateProject(context.Context, *CreateProjectRequest) (*CreateProjectResponse, error)
+	GetProject(context.Context, *GetProjectRequest) (*GetProjectResponse, error)
+	GetStudentProjects(context.Context, *GetStudentProjectsRequest) (*GetStudentProjectsResponse, error)
 	mustEmbedUnimplementedProjectServiceServer()
 }
 
@@ -95,17 +82,14 @@ type ProjectServiceServer interface {
 type UnimplementedProjectServiceServer struct {
 }
 
-func (UnimplementedProjectServiceServer) CreateProject(context.Context, *CreateProjectRequest) (*Project, error) {
+func (UnimplementedProjectServiceServer) CreateProject(context.Context, *CreateProjectRequest) (*CreateProjectResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method CreateProject not implemented")
 }
-func (UnimplementedProjectServiceServer) GetProject(context.Context, *GetProjectRequest) (*Project, error) {
+func (UnimplementedProjectServiceServer) GetProject(context.Context, *GetProjectRequest) (*GetProjectResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetProject not implemented")
 }
-func (UnimplementedProjectServiceServer) ListProjects(context.Context, *ListProjectsRequest) (*ListProjectsResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method ListProjects not implemented")
-}
-func (UnimplementedProjectServiceServer) PerformStateAction(context.Context, *PerformStateActionRequest) (*emptypb.Empty, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method PerformStateAction not implemented")
+func (UnimplementedProjectServiceServer) GetStudentProjects(context.Context, *GetStudentProjectsRequest) (*GetStudentProjectsResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetStudentProjects not implemented")
 }
 func (UnimplementedProjectServiceServer) mustEmbedUnimplementedProjectServiceServer() {}
 
@@ -156,38 +140,20 @@ func _ProjectService_GetProject_Handler(srv interface{}, ctx context.Context, de
 	return interceptor(ctx, in, info, handler)
 }
 
-func _ProjectService_ListProjects_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(ListProjectsRequest)
+func _ProjectService_GetStudentProjects_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetStudentProjectsRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(ProjectServiceServer).ListProjects(ctx, in)
+		return srv.(ProjectServiceServer).GetStudentProjects(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: ProjectService_ListProjects_FullMethodName,
+		FullMethod: ProjectService_GetStudentProjects_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(ProjectServiceServer).ListProjects(ctx, req.(*ListProjectsRequest))
-	}
-	return interceptor(ctx, in, info, handler)
-}
-
-func _ProjectService_PerformStateAction_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(PerformStateActionRequest)
-	if err := dec(in); err != nil {
-		return nil, err
-	}
-	if interceptor == nil {
-		return srv.(ProjectServiceServer).PerformStateAction(ctx, in)
-	}
-	info := &grpc.UnaryServerInfo{
-		Server:     srv,
-		FullMethod: ProjectService_PerformStateAction_FullMethodName,
-	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(ProjectServiceServer).PerformStateAction(ctx, req.(*PerformStateActionRequest))
+		return srv.(ProjectServiceServer).GetStudentProjects(ctx, req.(*GetStudentProjectsRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -196,7 +162,7 @@ func _ProjectService_PerformStateAction_Handler(srv interface{}, ctx context.Con
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
 var ProjectService_ServiceDesc = grpc.ServiceDesc{
-	ServiceName: "project.v1.ProjectService",
+	ServiceName: "project.ProjectService",
 	HandlerType: (*ProjectServiceServer)(nil),
 	Methods: []grpc.MethodDesc{
 		{
@@ -208,12 +174,8 @@ var ProjectService_ServiceDesc = grpc.ServiceDesc{
 			Handler:    _ProjectService_GetProject_Handler,
 		},
 		{
-			MethodName: "ListProjects",
-			Handler:    _ProjectService_ListProjects_Handler,
-		},
-		{
-			MethodName: "PerformStateAction",
-			Handler:    _ProjectService_PerformStateAction_Handler,
+			MethodName: "GetStudentProjects",
+			Handler:    _ProjectService_GetStudentProjects_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},
