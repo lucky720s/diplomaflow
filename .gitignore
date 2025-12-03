@@ -1,2 +1,13 @@
+.git
+.idea
+.vscode
+bin
+vendor
+*.exe
+*.exe~
+*.dll
+*.so
+*.dylib
+testdata
 scripts.js
 collected.txt

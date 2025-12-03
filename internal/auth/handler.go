@@ -4,13 +4,13 @@ import (
 	"context"
 	"net/http"
 
-	pb "github.com/lucky720s/diplomaflow/pkg/protobuf/auth/v1"
+	authv1 "github.com/lucky720s/diplomaflow/pkg/protobuf/auth/v1"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 )
 
 type Handler struct {
-	pb.UnimplementedAuthServiceServer
+	authv1.UnimplementedAuthServiceServer
 	service *Service
 }
 
@@ -18,53 +18,32 @@ func NewHandler(service *Service) *Handler {
 	return &Handler{service: service}
 }
 
-func (h *Handler) Register(ctx context.Context, req *pb.RegisterRequest) (*pb.RegisterResponse, error) {
+func (h *Handler) Register(ctx context.Context, req *authv1.RegisterRequest) (*authv1.RegisterResponse, error) {
 	if req.Email == "" || req.Password == "" {
-		return &pb.RegisterResponse{
-			Status: http.StatusBadRequest,
-			Error:  "email and password are required",
-		}, nil
+		return nil, status.Error(codes.InvalidArgument, "email and password are required")
 	}
-
 	userID, err := h.service.Register(ctx, req.Email, req.Password, req.FirstName, req.LastName, req.Role, req.UniversityId)
 	if err != nil {
-		return &pb.RegisterResponse{
-			Status: http.StatusConflict,
-			Error:  err.Error(),
-		}, nil
+		return nil, status.Errorf(codes.Internal, "failed to register: %v", err)
 	}
-
-	return &pb.RegisterResponse{
-		Status: http.StatusCreated,
+	return &authv1.RegisterResponse{
 		UserId: userID,
 	}, nil
 }
 
-func (h *Handler) Login(ctx context.Context, req *pb.LoginRequest) (*pb.LoginResponse, error) {
-	if req.Email == "" || req.Password == "" {
-		return &pb.LoginResponse{
-			Status: http.StatusBadRequest,
-			Error:  "email and password are required",
-		}, nil
-	}
-
+func (h *Handler) Login(ctx context.Context, req *authv1.LoginRequest) (*authv1.LoginResponse, error) {
 	token, err := h.service.Login(ctx, req.Email, req.Password)
 	if err != nil {
-		return &pb.LoginResponse{
-			Status: http.StatusUnauthorized,
-			Error:  err.Error(),
-		}, nil
+		return nil, status.Error(codes.Unauthenticated, "invalid credentials")
 	}
-
-	return &pb.LoginResponse{
-		Status: http.StatusOK,
-		Token:  token,
+	return &authv1.LoginResponse{
+		Token: token,
 	}, nil
 }
 
-func (h *Handler) ValidateToken(ctx context.Context, req *pb.ValidateTokenRequest) (*pb.ValidateTokenResponse, error) {
+func (h *Handler) ValidateToken(ctx context.Context, req *authv1.ValidateTokenRequest) (*authv1.ValidateTokenResponse, error) {
 	if req.Token == "" {
-		return &pb.ValidateTokenResponse{
+		return &authv1.ValidateTokenResponse{
 			Status: http.StatusBadRequest,
 			Error:  "token is required",
 		}, nil
@@ -72,13 +51,13 @@ func (h *Handler) ValidateToken(ctx context.Context, req *pb.ValidateTokenReques
 
 	claims, err := h.service.Validate(ctx, req.Token)
 	if err != nil {
-		return &pb.ValidateTokenResponse{
+		return &authv1.ValidateTokenResponse{
 			Status: http.StatusUnauthorized,
 			Error:  err.Error(),
 		}, nil
 	}
 
-	return &pb.ValidateTokenResponse{
+	return &authv1.ValidateTokenResponse{
 		Status:       http.StatusOK,
 		UserId:       claims.Id,
 		Role:         claims.Role,
@@ -86,15 +65,15 @@ func (h *Handler) ValidateToken(ctx context.Context, req *pb.ValidateTokenReques
 	}, nil
 }
 
-func (h *Handler) ListUsers(ctx context.Context, req *pb.ListUsersRequest) (*pb.ListUsersResponse, error) {
+func (h *Handler) ListUsers(ctx context.Context, req *authv1.ListUsersRequest) (*authv1.ListUsersResponse, error) {
 	users, total, err := h.service.ListUsers(ctx, req.UniversityId, req.Role, req.Page, req.PageSize)
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, "failed to list users: %v", err)
 	}
 
-	var pbUsers []*pb.UserPreview
+	var pbUsers []*authv1.UserPreview
 	for _, u := range users {
-		pbUsers = append(pbUsers, &pb.UserPreview{
+		pbUsers = append(pbUsers, &authv1.UserPreview{
 			Id:           u.ID,
 			Email:        u.Email,
 			FirstName:    u.FirstName,
@@ -104,7 +83,7 @@ func (h *Handler) ListUsers(ctx context.Context, req *pb.ListUsersRequest) (*pb.
 		})
 	}
 
-	return &pb.ListUsersResponse{
+	return &authv1.ListUsersResponse{
 		Users:      pbUsers,
 		TotalCount: total,
 	}, nil

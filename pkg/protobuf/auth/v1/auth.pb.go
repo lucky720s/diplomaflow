@@ -107,9 +107,7 @@ func (x *RegisterRequest) GetUniversityId() int64 {
 
 type RegisterResponse struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
-	Status        int64                  `protobuf:"varint,1,opt,name=status,proto3" json:"status,omitempty"`
-	Error         string                 `protobuf:"bytes,2,opt,name=error,proto3" json:"error,omitempty"`
-	UserId        int64                  `protobuf:"varint,3,opt,name=user_id,json=userId,proto3" json:"user_id,omitempty"`
+	UserId        int64                  `protobuf:"varint,1,opt,name=user_id,json=userId,proto3" json:"user_id,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -142,20 +140,6 @@ func (x *RegisterResponse) ProtoReflect() protoreflect.Message {
 // Deprecated: Use RegisterResponse.ProtoReflect.Descriptor instead.
 func (*RegisterResponse) Descriptor() ([]byte, []int) {
 	return file_auth_v1_auth_proto_rawDescGZIP(), []int{1}
-}
-
-func (x *RegisterResponse) GetStatus() int64 {
-	if x != nil {
-		return x.Status
-	}
-	return 0
-}
-
-func (x *RegisterResponse) GetError() string {
-	if x != nil {
-		return x.Error
-	}
-	return ""
 }
 
 func (x *RegisterResponse) GetUserId() int64 {
@@ -219,9 +203,7 @@ func (x *LoginRequest) GetPassword() string {
 
 type LoginResponse struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
-	Status        int64                  `protobuf:"varint,1,opt,name=status,proto3" json:"status,omitempty"`
-	Error         string                 `protobuf:"bytes,2,opt,name=error,proto3" json:"error,omitempty"`
-	Token         string                 `protobuf:"bytes,3,opt,name=token,proto3" json:"token,omitempty"`
+	Token         string                 `protobuf:"bytes,1,opt,name=token,proto3" json:"token,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -254,20 +236,6 @@ func (x *LoginResponse) ProtoReflect() protoreflect.Message {
 // Deprecated: Use LoginResponse.ProtoReflect.Descriptor instead.
 func (*LoginResponse) Descriptor() ([]byte, []int) {
 	return file_auth_v1_auth_proto_rawDescGZIP(), []int{3}
-}
-
-func (x *LoginResponse) GetStatus() int64 {
-	if x != nil {
-		return x.Status
-	}
-	return 0
-}
-
-func (x *LoginResponse) GetError() string {
-	if x != nil {
-		return x.Error
-	}
-	return ""
 }
 
 func (x *LoginResponse) GetToken() string {
@@ -613,18 +581,14 @@ const file_auth_v1_auth_proto_rawDesc = "" +
 	"first_name\x18\x03 \x01(\tR\tfirstName\x12\x1b\n" +
 	"\tlast_name\x18\x04 \x01(\tR\blastName\x12\x12\n" +
 	"\x04role\x18\x05 \x01(\tR\x04role\x12#\n" +
-	"\runiversity_id\x18\x06 \x01(\x03R\funiversityId\"Y\n" +
-	"\x10RegisterResponse\x12\x16\n" +
-	"\x06status\x18\x01 \x01(\x03R\x06status\x12\x14\n" +
-	"\x05error\x18\x02 \x01(\tR\x05error\x12\x17\n" +
-	"\auser_id\x18\x03 \x01(\x03R\x06userId\"@\n" +
+	"\runiversity_id\x18\x06 \x01(\x03R\funiversityId\"+\n" +
+	"\x10RegisterResponse\x12\x17\n" +
+	"\auser_id\x18\x01 \x01(\x03R\x06userId\"@\n" +
 	"\fLoginRequest\x12\x14\n" +
 	"\x05email\x18\x01 \x01(\tR\x05email\x12\x1a\n" +
-	"\bpassword\x18\x02 \x01(\tR\bpassword\"S\n" +
-	"\rLoginResponse\x12\x16\n" +
-	"\x06status\x18\x01 \x01(\x03R\x06status\x12\x14\n" +
-	"\x05error\x18\x02 \x01(\tR\x05error\x12\x14\n" +
-	"\x05token\x18\x03 \x01(\tR\x05token\",\n" +
+	"\bpassword\x18\x02 \x01(\tR\bpassword\"%\n" +
+	"\rLoginResponse\x12\x14\n" +
+	"\x05token\x18\x01 \x01(\tR\x05token\",\n" +
 	"\x14ValidateTokenRequest\x12\x14\n" +
 	"\x05token\x18\x01 \x01(\tR\x05token\"\x97\x01\n" +
 	"\x15ValidateTokenResponse\x12\x16\n" +

@@ -3,23 +3,24 @@ package project
 import (
 	"context"
 	"fmt"
+	"log"
 	"time"
 
-	teamv1 "github.com/lucky720s/diplomaflow/pkg/protobuf/team/v1"
+	"github.com/lucky720s/diplomaflow/pkg/broker"
 	workflowv1 "github.com/lucky720s/diplomaflow/pkg/protobuf/workflow/v1"
 )
 
 type Service struct {
 	repo           Repository
 	workflowClient workflowv1.WorkflowServiceClient
-	teamClient     teamv1.TeamServiceClient
+	kafkaProducer  *broker.Producer
 }
 
-func NewService(repo Repository, wfClient workflowv1.WorkflowServiceClient, tClient teamv1.TeamServiceClient) *Service {
+func NewService(repo Repository, wfClient workflowv1.WorkflowServiceClient, producer *broker.Producer) *Service {
 	return &Service{
 		repo:           repo,
 		workflowClient: wfClient,
-		teamClient:     tClient,
+		kafkaProducer:  producer,
 	}
 }
 
@@ -51,22 +52,14 @@ func (s *Service) CreateProject(ctx context.Context, title, description string, 
 		return nil, fmt.Errorf("failed to create project in db: %w", err)
 	}
 
-	teamResp, err := s.teamClient.CreateTeam(ctx, &teamv1.CreateTeamRequest{
-		Name:      fmt.Sprintf("Team: %s", title),
-		ProjectId: int64(project.ID),
-		MemberIds: []int64{studentID},
-	})
-
-	if err != nil {
-		if delErr := s.repo.Delete(ctx, project.ID); delErr != nil {
-			fmt.Printf("CRITICAL: Failed to rollback project %d after team creation failure: %v\n", project.ID, delErr)
-		}
-		return nil, fmt.Errorf("failed to create team, project rolled back: %w", err)
+	payload := map[string]interface{}{
+		"project_id": project.ID,
+		"title":      title,
+		"student_id": studentID,
 	}
 
-	project.TeamID = teamResp.TeamId
-	if err := s.repo.Update(ctx, project); err != nil {
-		return nil, fmt.Errorf("failed to link team to project: %w", err)
+	if err := s.kafkaProducer.Publish("project-events", "ProjectCreated", payload); err != nil {
+		log.Printf("CRITICAL: Failed to publish ProjectCreated event: %v", err)
 	}
 
 	return project, nil

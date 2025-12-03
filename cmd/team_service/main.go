@@ -6,6 +6,7 @@ import (
 	"os"
 
 	"github.com/lucky720s/diplomaflow/internal/team"
+	"github.com/lucky720s/diplomaflow/pkg/broker"
 	authv1 "github.com/lucky720s/diplomaflow/pkg/protobuf/auth/v1"
 	teamv1 "github.com/lucky720s/diplomaflow/pkg/protobuf/team/v1"
 	rkboot "github.com/rookie-ninja/rk-boot/v2"
@@ -40,6 +41,22 @@ func main() {
 
 	repo := team.NewRepository(db)
 	svc := team.NewService(repo, authClient)
+	kafkaAddr := os.Getenv("KAFKA_ADDR")
+	if kafkaAddr == "" {
+		kafkaAddr = "kafka:9092"
+	}
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+
+	broker.StartConsumer(ctx, []string{kafkaAddr}, "team-service-group", "project-events", func(event broker.Event) error {
+		if event.Type == "ProjectCreated" {
+			// Парсим payload и создаем команду
+			// Тут нужно привести типы map[string]interface{} к конкретным
+			// svc.CreateTeam(...)
+			log.Println("Received ProjectCreated event, creating team...")
+		}
+		return nil
+	})
 	handler := team.NewHandler(svc)
 
 	grpcEntry := rkgrpc.GetGrpcEntry("team-service")
