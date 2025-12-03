@@ -35,7 +35,6 @@ func (h *Handler) GetTeam(c *gin.Context) {
 }
 
 func (h *Handler) GetAvailableStudents(c *gin.Context) {
-	// Берем UniversityID из токена админа/преподавателя
 	uniID := c.GetInt64("universityId")
 
 	res, err := h.teamClient.GetAvailableStudents(context.Background(), &teamv1.GetAvailableStudentsRequest{UniversityId: uniID})

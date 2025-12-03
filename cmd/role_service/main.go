@@ -2,38 +2,61 @@ package main
 
 import (
 	"context"
-	"log"
+	"fmt"
+	"net"
+	"os"
+	"os/signal"
+	"syscall"
+	"time"
 
 	"github.com/lucky720s/diplomaflow/internal/role"
+	"github.com/lucky720s/diplomaflow/pkg/config"
+	"github.com/lucky720s/diplomaflow/pkg/logger"
 	rolev1 "github.com/lucky720s/diplomaflow/pkg/protobuf/role/v1"
-	rkboot "github.com/rookie-ninja/rk-boot/v2"
-	rkpostgres "github.com/rookie-ninja/rk-db/postgres"
-	rkgrpc "github.com/rookie-ninja/rk-grpc/v2/boot"
+	"go.uber.org/zap"
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/reflection"
 )
 
 func main() {
-	boot := rkboot.NewBoot(rkboot.WithBootConfigPath("boot.yaml", nil))
-
-	postgresEntry := rkpostgres.GetPostgresEntry("role-conn")
-	postgresEntry.Bootstrap(context.Background())
-	if postgresEntry == nil {
-		log.Fatal("Missing 'role-conn' in boot.yaml")
-	}
-	db := postgresEntry.GetDB("diplomaflow")
-	if db == nil {
-		log.Fatal("Database 'diplomaflow' not found")
+	var cfg role.Config
+	if err := config.Load("config.yaml", &cfg); err != nil {
+		panic(fmt.Sprintf("failed to load config: %v", err))
 	}
 
-	repo := role.NewRepository(db)
-	svc := role.NewService(repo)
-	handler := role.NewHandler(svc)
+	log := logger.New(cfg.Env)
+	defer log.Sync()
 
-	grpcEntry := rkgrpc.GetGrpcEntry("role-service")
-	grpcEntry.AddRegFuncGrpc(func(s *grpc.Server) {
-		rolev1.RegisterRoleServiceServer(s, handler)
-	})
+	h, cleanup, err := role.InitializeApp(&cfg, log)
+	if err != nil {
+		log.Fatal("failed to initialize app", zap.Error(err))
+	}
+	defer cleanup()
 
-	boot.Bootstrap(context.Background())
-	boot.WaitForShutdownSig(context.Background())
+	lis, err := net.Listen("tcp", ":"+cfg.GRPCPort)
+	if err != nil {
+		log.Fatal("failed to listen", zap.Error(err))
+	}
+
+	grpcServer := grpc.NewServer()
+	rolev1.RegisterRoleServiceServer(grpcServer, h)
+	reflection.Register(grpcServer)
+
+	go func() {
+		log.Info("Role Service starting", zap.String("port", cfg.GRPCPort))
+		if err := grpcServer.Serve(lis); err != nil {
+			log.Fatal("failed to serve", zap.Error(err))
+		}
+	}()
+
+	quit := make(chan os.Signal, 1)
+	signal.Notify(quit, syscall.SIGINT, syscall.SIGTERM)
+	<-quit
+
+	log.Info("Shutting down Role Service...")
+	_, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+
+	grpcServer.GracefulStop()
+	log.Info("Role Service exited")
 }

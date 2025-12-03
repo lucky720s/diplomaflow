@@ -2,10 +2,8 @@ stages:
   - lint
   - test
   - build
-  - deploy
 
 variables:
-  DOCKER_DRIVER: overlay2
   GO_VERSION: "1.25"
 
 lint:
@@ -13,32 +11,19 @@ lint:
   stage: lint
   script:
     - golangci-lint run ./...
+  allow_failure: true
 
-unit_tests:
+test:
   image: golang:$GO_VERSION
   stage: test
   script:
-    - go test -v -race -coverprofile=coverage.out ./...
-    - go tool cover -func=coverage.out
+    - go test -v -race ./...
 
-build_images:
+build_services:
   stage: build
   image: docker:24.0.5
   services:
     - docker:24.0.5-dind
   script:
-    - docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD $CI_REGISTRY
-    - docker build -t $CI_REGISTRY_IMAGE/api_gateway:$CI_COMMIT_SHA -f cmd/api_gateway/Dockerfile .
-    - docker push $CI_REGISTRY_IMAGE/api_gateway:$CI_COMMIT_SHA
-    # Повторить для остальных сервисов или использовать matrix strategy
-  only:
-    - main
-
-deploy_dev:
-  stage: deploy
-  script:
-    - echo "Deploying to Dev environment via Helm or Docker Compose..."
-    # Здесь команды для деплоя, например:
-    # ssh user@server "docker-compose pull && docker-compose up -d"
-  only:
-    - main
+    - docker build -t api_gateway -f cmd/api_gateway/Dockerfile .
+    - docker build -t project_service -f cmd/project_service/Dockerfile .

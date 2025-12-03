@@ -1,34 +1,31 @@
 package config
 
-import "os"
+import (
+	"strings"
+
+	"github.com/spf13/viper"
+)
 
 type Config struct {
-	Port                  string
-	JWTSecret             string
-	AuthServiceAddr       string
-	ProjectServiceAddr    string
-	TeamServiceAddr       string
-	WorkflowServiceAddr   string
-	UniversityServiceAddr string
-	RoleServiceAddr       string
+	Env                   string `mapstructure:"env"`
+	Port                  string `mapstructure:"port"`
+	JWTSecret             string `mapstructure:"jwt_secret"`
+	AuthServiceAddr       string `mapstructure:"services_auth_addr"`
+	ProjectServiceAddr    string `mapstructure:"services_project_addr"`
+	TeamServiceAddr       string `mapstructure:"services_team_addr"`
+	UniversityServiceAddr string `mapstructure:"services_university_addr"`
+	RoleServiceAddr       string `mapstructure:"services_role_addr"`
+	WorkflowServiceAddr   string `mapstructure:"services_workflow_addr"`
 }
 
-func Load() *Config {
-	return &Config{
-		Port:                  getEnv("PORT", "8080"),
-		JWTSecret:             getEnv("JWT_SECRET", "secret_key_change_me"),
-		AuthServiceAddr:       getEnv("AUTH_SERVICE_ADDR", "auth_service:8082"),
-		ProjectServiceAddr:    getEnv("PROJECT_SERVICE_ADDR", "project_service:8083"),
-		TeamServiceAddr:       getEnv("TEAM_SERVICE_ADDR", "team_service:8084"),
-		WorkflowServiceAddr:   getEnv("WORKFLOW_SERVICE_ADDR", "workflow_service:8085"),
-		UniversityServiceAddr: getEnv("UNIVERSITY_SERVICE_ADDR", "university_service:8081"),
-		RoleServiceAddr:       getEnv("ROLE_SERVICE_ADDR", "role_service:8086"),
-	}
-}
+func Load(path string, cfg interface{}) error {
+	viper.SetConfigFile(path)
+	viper.SetConfigType("yaml")
+	viper.AutomaticEnv()
+	viper.SetEnvKeyReplacer(strings.NewReplacer(".", "_"))
 
-func getEnv(key, fallback string) string {
-	if value, exists := os.LookupEnv(key); exists {
-		return value
+	if err := viper.ReadInConfig(); err != nil {
+		return err
 	}
-	return fallback
+	return viper.Unmarshal(cfg)
 }

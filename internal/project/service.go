@@ -49,22 +49,24 @@ func (s *Service) CreateProject(ctx context.Context, title, description string, 
 	}
 
 	if err := s.repo.Create(ctx, project); err != nil {
-		return nil, fmt.Errorf("failed to create project in db: %w", err)
+		return nil, err
 	}
-
-	payload := map[string]interface{}{
+	eventPayload := map[string]interface{}{
 		"project_id": project.ID,
-		"title":      title,
-		"student_id": studentID,
+		"title":      project.Title,
+		"student_id": project.StudentID,
 	}
-
-	if err := s.kafkaProducer.Publish("project-events", "ProjectCreated", payload); err != nil {
-		log.Printf("CRITICAL: Failed to publish ProjectCreated event: %v", err)
-	}
+	go func() {
+		err := s.kafkaProducer.Publish("project-events", "ProjectCreated", eventPayload)
+		if err != nil {
+			log.Printf("ERROR: Failed to publish ProjectCreated event: %v", err)
+		} else {
+			log.Printf("Event ProjectCreated published for project %d", project.ID)
+		}
+	}()
 
 	return project, nil
 }
-
 func (s *Service) GetProject(ctx context.Context, id uint64) (*Project, error) {
 	return s.repo.GetByID(ctx, id)
 }

@@ -1,7 +1,7 @@
 syntax = "proto3";
 
 package auth;
-
+import "validate/validate.proto";
 option go_package = "github.com/lucky720s/diplomaflow/pkg/protobuf/auth/v1";
 
 service AuthService {
@@ -12,8 +12,8 @@ service AuthService {
 }
 
 message RegisterRequest {
-  string email = 1;
-  string password = 2;
+  string email = 1 [(validate.rules).string.email = true];
+  string password = 2 [(validate.rules).string.min_len = 8];
   string first_name = 3;
   string last_name = 4;
   string role = 5;

@@ -2,68 +2,69 @@ package main
 
 import (
 	"context"
-	"log"
+	"net"
 	"os"
+	"os/signal"
+	"syscall"
+	"time"
 
 	"github.com/lucky720s/diplomaflow/internal/team"
 	"github.com/lucky720s/diplomaflow/pkg/broker"
-	authv1 "github.com/lucky720s/diplomaflow/pkg/protobuf/auth/v1"
+	"github.com/lucky720s/diplomaflow/pkg/config"
+	"github.com/lucky720s/diplomaflow/pkg/logger"
 	teamv1 "github.com/lucky720s/diplomaflow/pkg/protobuf/team/v1"
-	rkboot "github.com/rookie-ninja/rk-boot/v2"
-	rkpostgres "github.com/rookie-ninja/rk-db/postgres"
-	rkgrpc "github.com/rookie-ninja/rk-grpc/v2/boot"
+	"go.uber.org/zap"
 	"google.golang.org/grpc"
-	"google.golang.org/grpc/credentials/insecure"
 )
 
 func main() {
-	boot := rkboot.NewBoot(rkboot.WithBootConfigPath("boot.yaml", nil))
-
-	postgresEntry := rkpostgres.GetPostgresEntry("team-conn")
-	postgresEntry.Bootstrap(context.Background())
-	if postgresEntry == nil {
-		log.Fatal("Missing 'team-conn' in boot.yaml")
-	}
-	db := postgresEntry.GetDB("diplomaflow")
-	if db == nil {
-		log.Fatal("Database 'diplomaflow' not found")
+	var cfg team.Config
+	if err := config.Load("config.yaml", &cfg); err != nil {
+		panic(err)
 	}
 
-	authAddr := os.Getenv("AUTH_SERVICE_ADDR")
-	if authAddr == "" {
-		authAddr = "auth_service:8082"
-	}
-	authConn, err := grpc.Dial(authAddr, grpc.WithTransportCredentials(insecure.NewCredentials()))
+	log := logger.New(cfg.Env)
+	defer log.Sync()
+
+	app, cleanup, err := team.InitializeApp(&cfg, log)
 	if err != nil {
-		log.Fatalf("Failed to connect to Auth Service: %v", err)
+		log.Fatal("failed to initialize app", zap.Error(err))
 	}
-	authClient := authv1.NewAuthServiceClient(authConn)
+	defer cleanup()
 
-	repo := team.NewRepository(db)
-	svc := team.NewService(repo, authClient)
-	kafkaAddr := os.Getenv("KAFKA_ADDR")
-	if kafkaAddr == "" {
-		kafkaAddr = "kafka:9092"
-	}
-	ctx, cancel := context.WithCancel(context.Background())
-	defer cancel()
-
-	broker.StartConsumer(ctx, []string{kafkaAddr}, "team-service-group", "project-events", func(event broker.Event) error {
+	ctx, cancelCtx := context.WithCancel(context.Background())
+	app.Consumer.Start(ctx, []string{"project-events"}, func(ctx context.Context, event broker.Event) error {
 		if event.Type == "ProjectCreated" {
-			// Парсим payload и создаем команду
-			// Тут нужно привести типы map[string]interface{} к конкретным
-			// svc.CreateTeam(...)
-			log.Println("Received ProjectCreated event, creating team...")
+			return app.EventHandler.HandleProjectCreated(event)
 		}
 		return nil
 	})
-	handler := team.NewHandler(svc)
 
-	grpcEntry := rkgrpc.GetGrpcEntry("team-service")
-	grpcEntry.AddRegFuncGrpc(func(s *grpc.Server) {
-		teamv1.RegisterTeamServiceServer(s, handler)
-	})
+	lis, err := net.Listen("tcp", ":"+cfg.GRPCPort)
+	if err != nil {
+		log.Fatal("listen error", zap.Error(err))
+	}
+	grpcServer := grpc.NewServer()
+	teamv1.RegisterTeamServiceServer(grpcServer, app.Handler)
 
-	boot.Bootstrap(context.Background())
-	boot.WaitForShutdownSig(context.Background())
+	go func() {
+		log.Info("Team Service starting", zap.String("port", cfg.GRPCPort))
+		if err := grpcServer.Serve(lis); err != nil {
+			log.Fatal("serve error", zap.Error(err))
+		}
+	}()
+
+	quit := make(chan os.Signal, 1)
+	signal.Notify(quit, syscall.SIGINT, syscall.SIGTERM)
+	<-quit
+
+	log.Info("Shutting down Team Service...")
+
+	cancelCtx()
+
+	_, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+	grpcServer.GracefulStop()
+
+	log.Info("Team Service exited")
 }

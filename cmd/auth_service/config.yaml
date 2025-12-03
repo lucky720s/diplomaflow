@@ -1,0 +1,9 @@
+env: "local"
+grpc_port: 8082
+database:
+  dsn: ""
+jwt:
+  secret: "secret_from_env_var_is_better"
+services:
+  university_addr: "university_service:8081"
+  role_addr: "role_service:8086"

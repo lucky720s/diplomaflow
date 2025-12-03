@@ -9,5 +9,11 @@ vendor
 *.so
 *.dylib
 testdata
+.env
+.idea/
+bin/
+wire_gen.go
 scripts.js
 collected.txt
+go.work
+go.work.sum

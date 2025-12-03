@@ -1,59 +1,67 @@
 version: '3.8'
 
 services:
-  zookeeper:
-    image: confluentinc/cp-zookeeper:7.5.0
-    environment:
-      ZOOKEEPER_CLIENT_PORT: 2181
-      ZOOKEEPER_TICK_TIME: 2000
-    networks:
-      - app_network
-
   kafka:
-    image: confluentinc/cp-kafka:7.5.0
-    depends_on:
-      - zookeeper
+    image: confluentinc/cp-kafka:7.6.0
+    container_name: kafka
     ports:
       - "9092:9092"
     environment:
-      KAFKA_BROKER_ID: 1
-      KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
-      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:9092,PLAINTEXT_HOST://localhost:29092
-      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,PLAINTEXT_HOST:PLAINTEXT
-      KAFKA_INTER_BROKER_LISTENER_NAME: PLAINTEXT
+      KAFKA_NODE_ID: 1
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: 'CONTROLLER:PLAINTEXT,PLAINTEXT:PLAINTEXT,PLAINTEXT_HOST:PLAINTEXT'
+      KAFKA_ADVERTISED_LISTENERS: 'PLAINTEXT://kafka:29092,PLAINTEXT_HOST://localhost:9092'
       KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+      KAFKA_GROUP_INITIAL_REBALANCE_DELAY_MS: 0
+      KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 1
+      KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 1
+      KAFKA_JMX_PORT: 9101
+      KAFKA_JMX_HOSTNAME: localhost
+      KAFKA_PROCESS_ROLES: 'broker,controller'
+      KAFKA_CONTROLLER_QUORUM_VOTERS: '1@kafka:29093'
+      KAFKA_LISTENERS: 'PLAINTEXT://kafka:29092,CONTROLLER://kafka:29093,PLAINTEXT_HOST://0.0.0.0:9092'
+      KAFKA_INTER_BROKER_LISTENER_NAME: 'PLAINTEXT'
+      KAFKA_CONTROLLER_LISTENER_NAMES: 'CONTROLLER'
+      KAFKA_LOG_DIRS: '/tmp/kraft-combined-logs'
+      KAFKA_CLUSTER_ID: 'MkU3OEVBNTcwNTJENDM2Qk'
+    healthcheck:
+      test: nc -z localhost 9092 || exit 1
+      interval: 10s
+      retries: 5
+      start_period: 10s
     networks:
       - app_network
 
-  # --- Database ---
   main_postgres:
     image: postgres:16-alpine
     container_name: main_postgres
     environment:
-      POSTGRES_USER: diplomaflow
-      POSTGRES_PASSWORD: diplomaflow_pass
-      POSTGRES_DB: diplomaflow
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB}
     ports:
-      - "5432:5432"
+      - "${POSTGRES_PORT}:5432"
     volumes:
       - diplomaflow_data:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U diplomaflow -d diplomaflow"]
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}"]
       interval: 5s
       timeout: 5s
       retries: 5
     networks:
       - app_network
 
-  # --- Microservices ---
 
   university_service:
     build:
       context: .
       dockerfile: cmd/university_service/Dockerfile
     container_name: university_service
+    env_file:
+      - .env
+    environment:
+      - APP_GRPC_PORT=${PORT_UNIVERSITY}
     ports:
-      - "8081:8081"
+      - "${PORT_UNIVERSITY}:${PORT_UNIVERSITY}"
     depends_on:
       main_postgres:
         condition: service_healthy
@@ -65,8 +73,12 @@ services:
       context: .
       dockerfile: cmd/role_service/Dockerfile
     container_name: role_service
+    env_file:
+      - .env
+    environment:
+      - APP_GRPC_PORT=${PORT_ROLE}
     ports:
-      - "8086:8086"
+      - "${PORT_ROLE}:${PORT_ROLE}"
     depends_on:
       main_postgres:
         condition: service_healthy
@@ -78,12 +90,12 @@ services:
       context: .
       dockerfile: cmd/auth_service/Dockerfile
     container_name: auth_service
+    env_file:
+      - .env
     environment:
-      - UNIVERSITY_SERVICE_ADDR=university_service:8081
-      - ROLE_SERVICE_ADDR=role_service:8086
-      - JWT_SECRET=super_secret_key_change_me
+      - APP_GRPC_PORT=${PORT_AUTH}
     ports:
-      - "8082:8082"
+      - "${PORT_AUTH}:${PORT_AUTH}"
     depends_on:
       main_postgres:
         condition: service_healthy
@@ -93,13 +105,18 @@ services:
         condition: service_started
     networks:
       - app_network
+
   workflow_service:
     build:
       context: .
       dockerfile: cmd/workflow_service/Dockerfile
     container_name: workflow_service
+    env_file:
+      - .env
+    environment:
+      - APP_GRPC_PORT=${PORT_WORKFLOW}
     ports:
-      - "8085:8085"
+      - "${PORT_WORKFLOW}:${PORT_WORKFLOW}"
     depends_on:
       main_postgres:
         condition: service_healthy
@@ -111,15 +128,19 @@ services:
       context: .
       dockerfile: cmd/team_service/Dockerfile
     container_name: team_service
+    env_file:
+      - .env
     environment:
-      - AUTH_SERVICE_ADDR=auth_service:8082
+      - APP_GRPC_PORT=${PORT_TEAM}
     ports:
-      - "8084:8084"
+      - "${PORT_TEAM}:${PORT_TEAM}"
     depends_on:
       main_postgres:
         condition: service_healthy
       auth_service:
         condition: service_started
+      kafka:
+        condition: service_healthy
     networks:
       - app_network
 
@@ -128,11 +149,12 @@ services:
       context: .
       dockerfile: cmd/project_service/Dockerfile
     container_name: project_service
+    env_file:
+      - .env
     environment:
-      - WORKFLOW_SERVICE_ADDR=workflow_service:8085
-      - TEAM_SERVICE_ADDR=team_service:8084
+      - APP_GRPC_PORT=${PORT_PROJECT}
     ports:
-      - "8083:8083"
+      - "${PORT_PROJECT}:${PORT_PROJECT}"
     depends_on:
       main_postgres:
         condition: service_healthy
@@ -140,27 +162,22 @@ services:
         condition: service_started
       team_service:
         condition: service_started
+      kafka:
+        condition: service_healthy
     networks:
       - app_network
-
-  # --- API Gateway ---
 
   api_gateway:
     build:
       context: .
       dockerfile: cmd/api_gateway/Dockerfile
     container_name: api_gateway
+    env_file:
+      - .env
     environment:
-      - PORT=8080
-      - JWT_SECRET=super_secret_key_change_me
-      - AUTH_SERVICE_ADDR=auth_service:8082
-      - PROJECT_SERVICE_ADDR=project_service:8083
-      - TEAM_SERVICE_ADDR=team_service:8084
-      - WORKFLOW_SERVICE_ADDR=workflow_service:8085
-      - UNIVERSITY_SERVICE_ADDR=university_service:8081
-      - ROLE_SERVICE_ADDR=role_service:8086
+      - APP_PORT=${PORT_GATEWAY}
     ports:
-      - "8080:8080"
+      - "${PORT_GATEWAY}:${PORT_GATEWAY}"
     depends_on:
       - auth_service
       - project_service

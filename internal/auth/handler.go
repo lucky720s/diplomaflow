@@ -22,6 +22,9 @@ func (h *Handler) Register(ctx context.Context, req *authv1.RegisterRequest) (*a
 	if req.Email == "" || req.Password == "" {
 		return nil, status.Error(codes.InvalidArgument, "email and password are required")
 	}
+	if err := req.Validate(); err != nil {
+		return nil, status.Errorf(codes.InvalidArgument, "validation error: %v", err)
+	}
 	userID, err := h.service.Register(ctx, req.Email, req.Password, req.FirstName, req.LastName, req.Role, req.UniversityId)
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, "failed to register: %v", err)

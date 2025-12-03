@@ -2,38 +2,61 @@ package main
 
 import (
 	"context"
-	"log"
+	"fmt"
+	"net"
+	"os"
+	"os/signal"
+	"syscall"
+	"time"
 
 	"github.com/lucky720s/diplomaflow/internal/workflow"
+	"github.com/lucky720s/diplomaflow/pkg/config"
+	"github.com/lucky720s/diplomaflow/pkg/logger"
 	workflowv1 "github.com/lucky720s/diplomaflow/pkg/protobuf/workflow/v1"
-	rkboot "github.com/rookie-ninja/rk-boot/v2"
-	rkpostgres "github.com/rookie-ninja/rk-db/postgres"
-	rkgrpc "github.com/rookie-ninja/rk-grpc/v2/boot"
+	"go.uber.org/zap"
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/reflection"
 )
 
 func main() {
-	boot := rkboot.NewBoot(rkboot.WithBootConfigPath("boot.yaml", nil))
-
-	postgresEntry := rkpostgres.GetPostgresEntry("workflow-conn")
-	postgresEntry.Bootstrap(context.Background())
-	if postgresEntry == nil {
-		log.Fatal("Missing 'workflow-conn' in boot.yaml")
-	}
-	db := postgresEntry.GetDB("diplomaflow")
-	if db == nil {
-		log.Fatal("Database 'diplomaflow' not found")
+	var cfg workflow.Config
+	if err := config.Load("config.yaml", &cfg); err != nil {
+		panic(fmt.Sprintf("failed to load config: %v", err))
 	}
 
-	repo := workflow.NewRepository(db)
-	svc := workflow.NewService(repo)
-	handler := workflow.NewHandler(svc)
+	log := logger.New(cfg.Env)
+	defer log.Sync()
 
-	grpcEntry := rkgrpc.GetGrpcEntry("workflow-service")
-	grpcEntry.AddRegFuncGrpc(func(s *grpc.Server) {
-		workflowv1.RegisterWorkflowServiceServer(s, handler)
-	})
+	h, cleanup, err := workflow.InitializeApp(&cfg, log)
+	if err != nil {
+		log.Fatal("failed to initialize app", zap.Error(err))
+	}
+	defer cleanup()
 
-	boot.Bootstrap(context.Background())
-	boot.WaitForShutdownSig(context.Background())
+	lis, err := net.Listen("tcp", ":"+cfg.GRPCPort)
+	if err != nil {
+		log.Fatal("failed to listen", zap.Error(err))
+	}
+
+	grpcServer := grpc.NewServer()
+	workflowv1.RegisterWorkflowServiceServer(grpcServer, h)
+	reflection.Register(grpcServer)
+
+	go func() {
+		log.Info("Workflow Service starting", zap.String("port", cfg.GRPCPort))
+		if err := grpcServer.Serve(lis); err != nil {
+			log.Fatal("failed to serve", zap.Error(err))
+		}
+	}()
+
+	quit := make(chan os.Signal, 1)
+	signal.Notify(quit, syscall.SIGINT, syscall.SIGTERM)
+	<-quit
+
+	log.Info("Shutting down Workflow Service...")
+	_, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+
+	grpcServer.GracefulStop()
+	log.Info("Workflow Service exited")
 }

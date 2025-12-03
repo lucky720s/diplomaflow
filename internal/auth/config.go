@@ -1,0 +1,16 @@
+package auth
+
+type Config struct {
+	Env      string `mapstructure:"env"`
+	GRPCPort string `mapstructure:"grpc_port"`
+	Database struct {
+		DSN string `mapstructure:"dsn"`
+	} `mapstructure:"database"`
+	JWT struct {
+		Secret string `mapstructure:"secret"`
+	} `mapstructure:"jwt"`
+	Services struct {
+		UniversityAddr string `mapstructure:"university_addr"`
+		RoleAddr       string `mapstructure:"role_addr"`
+	} `mapstructure:"services"`
+}

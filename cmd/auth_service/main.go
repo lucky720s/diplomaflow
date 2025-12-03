@@ -2,73 +2,61 @@ package main
 
 import (
 	"context"
-	"log"
+	"fmt"
+	"net"
 	"os"
+	"os/signal"
+	"syscall"
+	"time"
 
 	"github.com/lucky720s/diplomaflow/internal/auth"
+	"github.com/lucky720s/diplomaflow/pkg/config"
+	"github.com/lucky720s/diplomaflow/pkg/logger"
 	authv1 "github.com/lucky720s/diplomaflow/pkg/protobuf/auth/v1"
-	rolev1 "github.com/lucky720s/diplomaflow/pkg/protobuf/role/v1"
-	universityv1 "github.com/lucky720s/diplomaflow/pkg/protobuf/university/v1"
-	rkboot "github.com/rookie-ninja/rk-boot/v2"
-	rkpostgres "github.com/rookie-ninja/rk-db/postgres"
-	rkgrpc "github.com/rookie-ninja/rk-grpc/v2/boot"
+	"go.uber.org/zap"
 	"google.golang.org/grpc"
-	"google.golang.org/grpc/credentials/insecure"
+	"google.golang.org/grpc/reflection"
 )
 
 func main() {
-	boot := rkboot.NewBoot(rkboot.WithBootConfigPath("boot.yaml", nil))
-	postgresEntry := rkpostgres.GetPostgresEntry("auth-conn")
-	postgresEntry.Bootstrap(context.Background())
-	if postgresEntry == nil {
-		log.Fatal("Missing 'auth-conn' in boot.yaml ")
+	var cfg auth.Config
+	if err := config.Load("config.yaml", &cfg); err != nil {
+		panic(fmt.Sprintf("failed to load config: %v", err))
 	}
 
-	db := postgresEntry.GetDB("diplomaflow")
-	if db == nil {
-		log.Fatal("Database 'diplomaflow' not found in postgres entry")
-	}
+	log := logger.New(cfg.Env)
+	defer log.Sync()
 
-	univAddr := os.Getenv("UNIVERSITY_SERVICE_ADDR")
-	if univAddr == "" {
-		univAddr = "university_service:8081"
-	}
-	univConn, err := grpc.Dial(univAddr, grpc.WithTransportCredentials(insecure.NewCredentials()))
+	h, cleanup, err := auth.InitializeApp(&cfg, log)
 	if err != nil {
-		log.Fatalf("Failed to connect to University Service: %v", err)
+		log.Fatal("failed to initialize app", zap.Error(err))
 	}
-	univClient := universityv1.NewUniversityServiceClient(univConn)
+	defer cleanup()
 
-	roleAddr := os.Getenv("ROLE_SERVICE_ADDR")
-	if roleAddr == "" {
-		roleAddr = "role_service:8086"
-	}
-	roleConn, err := grpc.Dial(roleAddr, grpc.WithTransportCredentials(insecure.NewCredentials()))
+	lis, err := net.Listen("tcp", ":"+cfg.GRPCPort)
 	if err != nil {
-		log.Fatalf("Failed to connect to Role Service: %v", err)
-	}
-	roleClient := rolev1.NewRoleServiceClient(roleConn)
-
-	repo := auth.NewRepository(db)
-
-	jwtSecret := os.Getenv("JWT_SECRET")
-	if jwtSecret == "" {
-		jwtSecret = "default_secret"
-	}
-	jwtWrapper := auth.JwtWrapper{
-		SecretKey:       jwtSecret,
-		Issuer:          "diplomaflow",
-		ExpirationHours: 24,
+		log.Fatal("failed to listen", zap.Error(err))
 	}
 
-	svc := auth.NewService(repo, jwtWrapper, univClient, roleClient)
-	handler := auth.NewHandler(svc)
+	grpcServer := grpc.NewServer()
+	authv1.RegisterAuthServiceServer(grpcServer, h)
+	reflection.Register(grpcServer)
 
-	grpcEntry := rkgrpc.GetGrpcEntry("auth-service")
-	grpcEntry.AddRegFuncGrpc(func(s *grpc.Server) {
-		authv1.RegisterAuthServiceServer(s, handler)
-	})
+	go func() {
+		log.Info("Auth Service starting", zap.String("port", cfg.GRPCPort))
+		if err := grpcServer.Serve(lis); err != nil {
+			log.Fatal("failed to serve", zap.Error(err))
+		}
+	}()
 
-	boot.Bootstrap(context.Background())
-	boot.WaitForShutdownSig(context.Background())
+	quit := make(chan os.Signal, 1)
+	signal.Notify(quit, syscall.SIGINT, syscall.SIGTERM)
+	<-quit
+
+	log.Info("Shutting down Auth Service...")
+	_, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	defer cancel()
+
+	grpcServer.GracefulStop()
+	log.Info("Auth Service exited")
 }
