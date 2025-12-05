@@ -1,0 +1,4 @@
+env: "local"
+grpc_port: 8085
+database:
+  dsn: ""
