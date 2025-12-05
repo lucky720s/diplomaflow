@@ -1,13 +1,15 @@
 syntax = "proto3";
 
 package project;
-
+import "google/protobuf/struct.proto";
 option go_package = "github.com/lucky720s/diplomaflow/pkg/protobuf/project/v1";
 
 service ProjectService {
   rpc CreateProject (CreateProjectRequest) returns (CreateProjectResponse);
   rpc GetProject (GetProjectRequest) returns (GetProjectResponse);
   rpc GetStudentProjects (GetStudentProjectsRequest) returns (GetStudentProjectsResponse);
+  rpc PerformAction (PerformActionRequest) returns (PerformActionResponse);
+
 }
 
 message CreateProjectRequest {
@@ -59,4 +61,14 @@ message ProjectPreview {
 
 message GetStudentProjectsResponse {
   repeated ProjectPreview projects = 1;
+}
+
+message PerformActionRequest {
+  int64 project_id = 1;
+  string action_name = 2;
+  google.protobuf.Struct payload = 3;
+}
+message PerformActionResponse {
+  int64 project_id = 1;
+  string new_state = 2;
 }

@@ -2,75 +2,128 @@ package project
 
 import (
 	"context"
+	"encoding/json"
+	"errors"
 	"fmt"
-	"log"
+	"strconv"
 	"time"
 
-	"github.com/lucky720s/diplomaflow/pkg/broker"
+	projectv1 "github.com/lucky720s/diplomaflow/pkg/protobuf/project/v1"
 	workflowv1 "github.com/lucky720s/diplomaflow/pkg/protobuf/workflow/v1"
+	"go.uber.org/zap"
+	"gorm.io/datatypes"
 )
 
 type Service struct {
 	repo           Repository
 	workflowClient workflowv1.WorkflowServiceClient
-	kafkaProducer  *broker.Producer
+	registry       *ProcessorRegistry
+	logger         *zap.Logger
 }
 
-func NewService(repo Repository, wfClient workflowv1.WorkflowServiceClient, producer *broker.Producer) *Service {
+func NewService(repo Repository, wfClient workflowv1.WorkflowServiceClient, registry *ProcessorRegistry, logger *zap.Logger) *Service {
 	return &Service{
 		repo:           repo,
 		workflowClient: wfClient,
-		kafkaProducer:  producer,
+		registry:       registry,
+		logger:         logger,
 	}
 }
 
-func (s *Service) CreateProject(ctx context.Context, title, description string, studentID int64, workflowName string) (*Project, error) {
-	wfResp, err := s.workflowClient.GetWorkflow(ctx, &workflowv1.GetWorkflowRequest{
-		Criteria: &workflowv1.GetWorkflowRequest_Name{
-			Name: workflowName,
-		},
+func (s *Service) CreateProject(ctx context.Context, req *projectv1.CreateProjectRequest, universityID int64) (*projectv1.CreateProjectResponse, error) {
+	wf, err := s.workflowClient.GetActiveWorkflowByDepartment(ctx, &workflowv1.GetActiveWorkflowByDepartmentRequest{
+		DepartmentId: universityID,
 	})
 	if err != nil {
-		return nil, fmt.Errorf("failed to get workflow: %w", err)
+		s.logger.Error("Failed to get active workflow", zap.Error(err))
+		return nil, errors.New("failed to fetch workflow configuration")
 	}
-	if len(wfResp.Steps) == 0 {
-		return nil, fmt.Errorf("workflow %s has no steps", workflowName)
+	if len(wf.Steps) == 0 {
+		return nil, errors.New("workflow has no steps")
 	}
+	initialStep := wf.Steps[0]
 
 	project := &Project{
-		Title:        title,
-		Description:  description,
-		StudentID:    studentID,
-		WorkflowName: workflowName,
-		CurrentState: wfResp.Steps[0].Name,
-		Status:       "CREATED",
-		CreatedAt:    time.Now(),
-		UpdatedAt:    time.Now(),
+		Title:         req.Title,
+		Description:   req.Description,
+		StudentID:     req.StudentId,
+		UniversityID:  universityID,
+		WorkflowID:    uint(wf.Id),
+		WorkflowName:  wf.Name,
+		CurrentStepID: strconv.FormatInt(initialStep.Id, 10),
+		CurrentState:  initialStep.Name,
+		Status:        "active",
+		CreatedAt:     time.Now(),
+		UpdatedAt:     time.Now(),
 	}
 
-	if err := s.repo.Create(ctx, project); err != nil {
+	eventPayload := map[string]interface{}{
+		"student_id":    req.StudentId,
+		"university_id": universityID,
+		"title":         req.Title,
+	}
+
+	if err := s.repo.CreateWithOutbox(ctx, project, "ProjectCreated", "project-events", eventPayload); err != nil {
+		s.logger.Error("Failed to create project", zap.Error(err))
 		return nil, err
 	}
-	eventPayload := map[string]interface{}{
-		"project_id": project.ID,
-		"title":      project.Title,
-		"student_id": project.StudentID,
-	}
-	go func() {
-		err := s.kafkaProducer.Publish("project-events", "ProjectCreated", eventPayload)
-		if err != nil {
-			log.Printf("ERROR: Failed to publish ProjectCreated event: %v", err)
-		} else {
-			log.Printf("Event ProjectCreated published for project %d", project.ID)
-		}
-	}()
 
-	return project, nil
+	return &projectv1.CreateProjectResponse{ProjectId: int64(project.ID), Status: "active"}, nil
 }
+
 func (s *Service) GetProject(ctx context.Context, id uint64) (*Project, error) {
 	return s.repo.GetByID(ctx, id)
 }
 
 func (s *Service) GetStudentProjects(ctx context.Context, studentID int64) ([]*Project, error) {
 	return s.repo.ListByStudent(ctx, studentID)
+}
+
+func (s *Service) PerformAction(ctx context.Context, projectID int64, actionName string, payload map[string]interface{}) (*Project, error) {
+	project, err := s.repo.GetByID(ctx, uint64(projectID))
+	if err != nil {
+		return nil, fmt.Errorf("project not found: %w", err)
+	}
+	currentStateID, _ := strconv.ParseInt(project.CurrentStepID, 10, 64)
+	stateInfo, err := s.workflowClient.GetState(ctx, &workflowv1.GetStateRequest{StateId: currentStateID})
+	if err != nil {
+		return nil, fmt.Errorf("failed to get state info: %w", err)
+	}
+
+	handler, err := s.registry.Get(actionName)
+	if err != nil {
+		return nil, err
+	}
+
+	currentData, _ := JSONToMap(project.Data)
+
+	stepConfig := make(map[string]interface{})
+	if stateInfo.Config != nil {
+		bytes, _ := stateInfo.Config.MarshalJSON()
+		json.Unmarshal(bytes, &stepConfig)
+	}
+
+	newData, err := handler.Handle(ctx, currentData, payload, stepConfig)
+	if err != nil {
+		return nil, fmt.Errorf("action failed: %w", err)
+	}
+
+	jsonBytes, _ := json.Marshal(newData)
+	project.Data = datatypes.JSON(jsonBytes)
+
+	nextState, err := s.workflowClient.GetNextState(ctx, &workflowv1.GetNextStateRequest{
+		CurrentStateId: currentStateID,
+		EventName:      actionName,
+	})
+
+	if err == nil && nextState != nil {
+		project.CurrentStepID = strconv.FormatInt(nextState.Id, 10)
+		project.CurrentState = nextState.Name
+	}
+
+	if err := s.repo.Update(ctx, project); err != nil {
+		return nil, err
+	}
+
+	return project, nil
 }

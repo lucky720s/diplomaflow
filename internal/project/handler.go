@@ -2,9 +2,12 @@ package project
 
 import (
 	"context"
+	"encoding/json"
+	"strconv"
 
 	projectv1 "github.com/lucky720s/diplomaflow/pkg/protobuf/project/v1"
 	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/metadata"
 	"google.golang.org/grpc/status"
 )
 
@@ -24,19 +27,24 @@ func (h *Handler) CreateProject(ctx context.Context, req *projectv1.CreateProjec
 	if req.StudentId == 0 {
 		return nil, status.Error(codes.InvalidArgument, "student_id is required")
 	}
-	if req.WorkflowName == "" {
-		return nil, status.Error(codes.InvalidArgument, "workflow_name is required")
+
+	var universityID int64
+	if md, ok := metadata.FromIncomingContext(ctx); ok {
+		if values := md.Get("x-university-id"); len(values) > 0 {
+			universityID, _ = strconv.ParseInt(values[0], 10, 64)
+		}
 	}
 
-	project, err := h.service.CreateProject(ctx, req.Title, req.Description, req.StudentId, req.WorkflowName)
+	if universityID == 0 {
+		return nil, status.Error(codes.Unauthenticated, "university_id missing in context")
+	}
+
+	resp, err := h.service.CreateProject(ctx, req, universityID)
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, "failed to create project: %v", err)
 	}
 
-	return &projectv1.CreateProjectResponse{
-		ProjectId: int64(project.ID),
-		Status:    project.Status,
-	}, nil
+	return resp, nil
 }
 
 func (h *Handler) GetProject(ctx context.Context, req *projectv1.GetProjectRequest) (*projectv1.GetProjectResponse, error) {
@@ -95,5 +103,20 @@ func (h *Handler) GetStudentProjects(ctx context.Context, req *projectv1.GetStud
 
 	return &projectv1.GetStudentProjectsResponse{
 		Projects: responseProjects,
+	}, nil
+}
+func (h *Handler) PerformAction(ctx context.Context, req *projectv1.PerformActionRequest) (*projectv1.PerformActionResponse, error) {
+	payloadBytes, _ := req.Payload.MarshalJSON()
+	var payloadMap map[string]interface{}
+	json.Unmarshal(payloadBytes, &payloadMap)
+
+	project, err := h.service.PerformAction(ctx, req.ProjectId, req.ActionName, payloadMap)
+	if err != nil {
+		return nil, status.Errorf(codes.Internal, "failed to perform action: %v", err)
+	}
+
+	return &projectv1.PerformActionResponse{
+		ProjectId: int64(project.ID),
+		NewState:  project.CurrentState,
 	}, nil
 }

@@ -963,3 +963,244 @@ var _ interface {
 	Cause() error
 	ErrorName() string
 } = GetStudentProjectsResponseValidationError{}
+
+// Validate checks the field values on PerformActionRequest with the rules
+// defined in the proto definition for this message. If any rules are
+// violated, the first error encountered is returned, or nil if there are no violations.
+func (m *PerformActionRequest) Validate() error {
+	return m.validate(false)
+}
+
+// ValidateAll checks the field values on PerformActionRequest with the rules
+// defined in the proto definition for this message. If any rules are
+// violated, the result is a list of violation errors wrapped in
+// PerformActionRequestMultiError, or nil if none found.
+func (m *PerformActionRequest) ValidateAll() error {
+	return m.validate(true)
+}
+
+func (m *PerformActionRequest) validate(all bool) error {
+	if m == nil {
+		return nil
+	}
+
+	var errors []error
+
+	// no validation rules for ProjectId
+
+	// no validation rules for ActionName
+
+	if all {
+		switch v := interface{}(m.GetPayload()).(type) {
+		case interface{ ValidateAll() error }:
+			if err := v.ValidateAll(); err != nil {
+				errors = append(errors, PerformActionRequestValidationError{
+					field:  "Payload",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		case interface{ Validate() error }:
+			if err := v.Validate(); err != nil {
+				errors = append(errors, PerformActionRequestValidationError{
+					field:  "Payload",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		}
+	} else if v, ok := interface{}(m.GetPayload()).(interface{ Validate() error }); ok {
+		if err := v.Validate(); err != nil {
+			return PerformActionRequestValidationError{
+				field:  "Payload",
+				reason: "embedded message failed validation",
+				cause:  err,
+			}
+		}
+	}
+
+	if len(errors) > 0 {
+		return PerformActionRequestMultiError(errors)
+	}
+
+	return nil
+}
+
+// PerformActionRequestMultiError is an error wrapping multiple validation
+// errors returned by PerformActionRequest.ValidateAll() if the designated
+// constraints aren't met.
+type PerformActionRequestMultiError []error
+
+// Error returns a concatenation of all the error messages it wraps.
+func (m PerformActionRequestMultiError) Error() string {
+	msgs := make([]string, 0, len(m))
+	for _, err := range m {
+		msgs = append(msgs, err.Error())
+	}
+	return strings.Join(msgs, "; ")
+}
+
+// AllErrors returns a list of validation violation errors.
+func (m PerformActionRequestMultiError) AllErrors() []error { return m }
+
+// PerformActionRequestValidationError is the validation error returned by
+// PerformActionRequest.Validate if the designated constraints aren't met.
+type PerformActionRequestValidationError struct {
+	field  string
+	reason string
+	cause  error
+	key    bool
+}
+
+// Field function returns field value.
+func (e PerformActionRequestValidationError) Field() string { return e.field }
+
+// Reason function returns reason value.
+func (e PerformActionRequestValidationError) Reason() string { return e.reason }
+
+// Cause function returns cause value.
+func (e PerformActionRequestValidationError) Cause() error { return e.cause }
+
+// Key function returns key value.
+func (e PerformActionRequestValidationError) Key() bool { return e.key }
+
+// ErrorName returns error name.
+func (e PerformActionRequestValidationError) ErrorName() string {
+	return "PerformActionRequestValidationError"
+}
+
+// Error satisfies the builtin error interface
+func (e PerformActionRequestValidationError) Error() string {
+	cause := ""
+	if e.cause != nil {
+		cause = fmt.Sprintf(" | caused by: %v", e.cause)
+	}
+
+	key := ""
+	if e.key {
+		key = "key for "
+	}
+
+	return fmt.Sprintf(
+		"invalid %sPerformActionRequest.%s: %s%s",
+		key,
+		e.field,
+		e.reason,
+		cause)
+}
+
+var _ error = PerformActionRequestValidationError{}
+
+var _ interface {
+	Field() string
+	Reason() string
+	Key() bool
+	Cause() error
+	ErrorName() string
+} = PerformActionRequestValidationError{}
+
+// Validate checks the field values on PerformActionResponse with the rules
+// defined in the proto definition for this message. If any rules are
+// violated, the first error encountered is returned, or nil if there are no violations.
+func (m *PerformActionResponse) Validate() error {
+	return m.validate(false)
+}
+
+// ValidateAll checks the field values on PerformActionResponse with the rules
+// defined in the proto definition for this message. If any rules are
+// violated, the result is a list of violation errors wrapped in
+// PerformActionResponseMultiError, or nil if none found.
+func (m *PerformActionResponse) ValidateAll() error {
+	return m.validate(true)
+}
+
+func (m *PerformActionResponse) validate(all bool) error {
+	if m == nil {
+		return nil
+	}
+
+	var errors []error
+
+	// no validation rules for ProjectId
+
+	// no validation rules for NewState
+
+	if len(errors) > 0 {
+		return PerformActionResponseMultiError(errors)
+	}
+
+	return nil
+}
+
+// PerformActionResponseMultiError is an error wrapping multiple validation
+// errors returned by PerformActionResponse.ValidateAll() if the designated
+// constraints aren't met.
+type PerformActionResponseMultiError []error
+
+// Error returns a concatenation of all the error messages it wraps.
+func (m PerformActionResponseMultiError) Error() string {
+	msgs := make([]string, 0, len(m))
+	for _, err := range m {
+		msgs = append(msgs, err.Error())
+	}
+	return strings.Join(msgs, "; ")
+}
+
+// AllErrors returns a list of validation violation errors.
+func (m PerformActionResponseMultiError) AllErrors() []error { return m }
+
+// PerformActionResponseValidationError is the validation error returned by
+// PerformActionResponse.Validate if the designated constraints aren't met.
+type PerformActionResponseValidationError struct {
+	field  string
+	reason string
+	cause  error
+	key    bool
+}
+
+// Field function returns field value.
+func (e PerformActionResponseValidationError) Field() string { return e.field }
+
+// Reason function returns reason value.
+func (e PerformActionResponseValidationError) Reason() string { return e.reason }
+
+// Cause function returns cause value.
+func (e PerformActionResponseValidationError) Cause() error { return e.cause }
+
+// Key function returns key value.
+func (e PerformActionResponseValidationError) Key() bool { return e.key }
+
+// ErrorName returns error name.
+func (e PerformActionResponseValidationError) ErrorName() string {
+	return "PerformActionResponseValidationError"
+}
+
+// Error satisfies the builtin error interface
+func (e PerformActionResponseValidationError) Error() string {
+	cause := ""
+	if e.cause != nil {
+		cause = fmt.Sprintf(" | caused by: %v", e.cause)
+	}
+
+	key := ""
+	if e.key {
+		key = "key for "
+	}
+
+	return fmt.Sprintf(
+		"invalid %sPerformActionResponse.%s: %s%s",
+		key,
+		e.field,
+		e.reason,
+		cause)
+}
+
+var _ error = PerformActionResponseValidationError{}
+
+var _ interface {
+	Field() string
+	Reason() string
+	Key() bool
+	Cause() error
+	ErrorName() string
+} = PerformActionResponseValidationError{}

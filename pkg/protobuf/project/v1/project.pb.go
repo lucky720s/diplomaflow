@@ -9,6 +9,7 @@ package v1
 import (
 	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
 	protoimpl "google.golang.org/protobuf/runtime/protoimpl"
+	structpb "google.golang.org/protobuf/types/known/structpb"
 	reflect "reflect"
 	sync "sync"
 	unsafe "unsafe"
@@ -525,11 +526,123 @@ func (x *GetStudentProjectsResponse) GetProjects() []*ProjectPreview {
 	return nil
 }
 
+type PerformActionRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	ProjectId     int64                  `protobuf:"varint,1,opt,name=project_id,json=projectId,proto3" json:"project_id,omitempty"`
+	ActionName    string                 `protobuf:"bytes,2,opt,name=action_name,json=actionName,proto3" json:"action_name,omitempty"`
+	Payload       *structpb.Struct       `protobuf:"bytes,3,opt,name=payload,proto3" json:"payload,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *PerformActionRequest) Reset() {
+	*x = PerformActionRequest{}
+	mi := &file_project_v1_project_proto_msgTypes[8]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *PerformActionRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*PerformActionRequest) ProtoMessage() {}
+
+func (x *PerformActionRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_project_v1_project_proto_msgTypes[8]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use PerformActionRequest.ProtoReflect.Descriptor instead.
+func (*PerformActionRequest) Descriptor() ([]byte, []int) {
+	return file_project_v1_project_proto_rawDescGZIP(), []int{8}
+}
+
+func (x *PerformActionRequest) GetProjectId() int64 {
+	if x != nil {
+		return x.ProjectId
+	}
+	return 0
+}
+
+func (x *PerformActionRequest) GetActionName() string {
+	if x != nil {
+		return x.ActionName
+	}
+	return ""
+}
+
+func (x *PerformActionRequest) GetPayload() *structpb.Struct {
+	if x != nil {
+		return x.Payload
+	}
+	return nil
+}
+
+type PerformActionResponse struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	ProjectId     int64                  `protobuf:"varint,1,opt,name=project_id,json=projectId,proto3" json:"project_id,omitempty"`
+	NewState      string                 `protobuf:"bytes,2,opt,name=new_state,json=newState,proto3" json:"new_state,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *PerformActionResponse) Reset() {
+	*x = PerformActionResponse{}
+	mi := &file_project_v1_project_proto_msgTypes[9]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *PerformActionResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*PerformActionResponse) ProtoMessage() {}
+
+func (x *PerformActionResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_project_v1_project_proto_msgTypes[9]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use PerformActionResponse.ProtoReflect.Descriptor instead.
+func (*PerformActionResponse) Descriptor() ([]byte, []int) {
+	return file_project_v1_project_proto_rawDescGZIP(), []int{9}
+}
+
+func (x *PerformActionResponse) GetProjectId() int64 {
+	if x != nil {
+		return x.ProjectId
+	}
+	return 0
+}
+
+func (x *PerformActionResponse) GetNewState() string {
+	if x != nil {
+		return x.NewState
+	}
+	return ""
+}
+
 var File_project_v1_project_proto protoreflect.FileDescriptor
 
 const file_project_v1_project_proto_rawDesc = "" +
 	"\n" +
-	"\x18project/v1/project.proto\x12\aproject\"\x92\x01\n" +
+	"\x18project/v1/project.proto\x12\aproject\x1a\x1cgoogle/protobuf/struct.proto\"\x92\x01\n" +
 	"\x14CreateProjectRequest\x12\x14\n" +
 	"\x05title\x18\x01 \x01(\tR\x05title\x12 \n" +
 	"\vdescription\x18\x02 \x01(\tR\vdescription\x12\x1d\n" +
@@ -573,12 +686,23 @@ const file_project_v1_project_proto_rawDesc = "" +
 	"\x06status\x18\x03 \x01(\tR\x06status\x12#\n" +
 	"\rcurrent_state\x18\x04 \x01(\tR\fcurrentState\"Q\n" +
 	"\x1aGetStudentProjectsResponse\x123\n" +
-	"\bprojects\x18\x01 \x03(\v2\x17.project.ProjectPreviewR\bprojects2\x86\x02\n" +
+	"\bprojects\x18\x01 \x03(\v2\x17.project.ProjectPreviewR\bprojects\"\x89\x01\n" +
+	"\x14PerformActionRequest\x12\x1d\n" +
+	"\n" +
+	"project_id\x18\x01 \x01(\x03R\tprojectId\x12\x1f\n" +
+	"\vaction_name\x18\x02 \x01(\tR\n" +
+	"actionName\x121\n" +
+	"\apayload\x18\x03 \x01(\v2\x17.google.protobuf.StructR\apayload\"S\n" +
+	"\x15PerformActionResponse\x12\x1d\n" +
+	"\n" +
+	"project_id\x18\x01 \x01(\x03R\tprojectId\x12\x1b\n" +
+	"\tnew_state\x18\x02 \x01(\tR\bnewState2\xd6\x02\n" +
 	"\x0eProjectService\x12N\n" +
 	"\rCreateProject\x12\x1d.project.CreateProjectRequest\x1a\x1e.project.CreateProjectResponse\x12E\n" +
 	"\n" +
 	"GetProject\x12\x1a.project.GetProjectRequest\x1a\x1b.project.GetProjectResponse\x12]\n" +
-	"\x12GetStudentProjects\x12\".project.GetStudentProjectsRequest\x1a#.project.GetStudentProjectsResponseB:Z8github.com/lucky720s/diplomaflow/pkg/protobuf/project/v1b\x06proto3"
+	"\x12GetStudentProjects\x12\".project.GetStudentProjectsRequest\x1a#.project.GetStudentProjectsResponse\x12N\n" +
+	"\rPerformAction\x12\x1d.project.PerformActionRequest\x1a\x1e.project.PerformActionResponseB:Z8github.com/lucky720s/diplomaflow/pkg/protobuf/project/v1b\x06proto3"
 
 var (
 	file_project_v1_project_proto_rawDescOnce sync.Once
@@ -592,7 +716,7 @@ func file_project_v1_project_proto_rawDescGZIP() []byte {
 	return file_project_v1_project_proto_rawDescData
 }
 
-var file_project_v1_project_proto_msgTypes = make([]protoimpl.MessageInfo, 8)
+var file_project_v1_project_proto_msgTypes = make([]protoimpl.MessageInfo, 10)
 var file_project_v1_project_proto_goTypes = []any{
 	(*CreateProjectRequest)(nil),       // 0: project.CreateProjectRequest
 	(*CreateProjectResponse)(nil),      // 1: project.CreateProjectResponse
@@ -602,21 +726,27 @@ var file_project_v1_project_proto_goTypes = []any{
 	(*GetStudentProjectsRequest)(nil),  // 5: project.GetStudentProjectsRequest
 	(*ProjectPreview)(nil),             // 6: project.ProjectPreview
 	(*GetStudentProjectsResponse)(nil), // 7: project.GetStudentProjectsResponse
+	(*PerformActionRequest)(nil),       // 8: project.PerformActionRequest
+	(*PerformActionResponse)(nil),      // 9: project.PerformActionResponse
+	(*structpb.Struct)(nil),            // 10: google.protobuf.Struct
 }
 var file_project_v1_project_proto_depIdxs = []int32{
-	3, // 0: project.GetProjectResponse.history:type_name -> project.StateHistory
-	6, // 1: project.GetStudentProjectsResponse.projects:type_name -> project.ProjectPreview
-	0, // 2: project.ProjectService.CreateProject:input_type -> project.CreateProjectRequest
-	2, // 3: project.ProjectService.GetProject:input_type -> project.GetProjectRequest
-	5, // 4: project.ProjectService.GetStudentProjects:input_type -> project.GetStudentProjectsRequest
-	1, // 5: project.ProjectService.CreateProject:output_type -> project.CreateProjectResponse
-	4, // 6: project.ProjectService.GetProject:output_type -> project.GetProjectResponse
-	7, // 7: project.ProjectService.GetStudentProjects:output_type -> project.GetStudentProjectsResponse
-	5, // [5:8] is the sub-list for method output_type
-	2, // [2:5] is the sub-list for method input_type
-	2, // [2:2] is the sub-list for extension type_name
-	2, // [2:2] is the sub-list for extension extendee
-	0, // [0:2] is the sub-list for field type_name
+	3,  // 0: project.GetProjectResponse.history:type_name -> project.StateHistory
+	6,  // 1: project.GetStudentProjectsResponse.projects:type_name -> project.ProjectPreview
+	10, // 2: project.PerformActionRequest.payload:type_name -> google.protobuf.Struct
+	0,  // 3: project.ProjectService.CreateProject:input_type -> project.CreateProjectRequest
+	2,  // 4: project.ProjectService.GetProject:input_type -> project.GetProjectRequest
+	5,  // 5: project.ProjectService.GetStudentProjects:input_type -> project.GetStudentProjectsRequest
+	8,  // 6: project.ProjectService.PerformAction:input_type -> project.PerformActionRequest
+	1,  // 7: project.ProjectService.CreateProject:output_type -> project.CreateProjectResponse
+	4,  // 8: project.ProjectService.GetProject:output_type -> project.GetProjectResponse
+	7,  // 9: project.ProjectService.GetStudentProjects:output_type -> project.GetStudentProjectsResponse
+	9,  // 10: project.ProjectService.PerformAction:output_type -> project.PerformActionResponse
+	7,  // [7:11] is the sub-list for method output_type
+	3,  // [3:7] is the sub-list for method input_type
+	3,  // [3:3] is the sub-list for extension type_name
+	3,  // [3:3] is the sub-list for extension extendee
+	0,  // [0:3] is the sub-list for field type_name
 }
 
 func init() { file_project_v1_project_proto_init() }
@@ -630,7 +760,7 @@ func file_project_v1_project_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_project_v1_project_proto_rawDesc), len(file_project_v1_project_proto_rawDesc)),
 			NumEnums:      0,
-			NumMessages:   8,
+			NumMessages:   10,
 			NumExtensions: 0,
 			NumServices:   1,
 		},

@@ -17,6 +17,8 @@ RUN CGO_ENABLED=0 GOOS=linux go build -o /bin/service ./cmd/university_service
 
 FROM alpine:3.22.2
 WORKDIR /app
+COPY --from=builder /app/cmd/university_service/config.yaml /app/config.yaml
+
 RUN apk --no-cache add ca-certificates tzdata
 
 RUN addgroup -S appgroup && adduser -S appuser -G appgroup

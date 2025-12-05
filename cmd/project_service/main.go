@@ -5,15 +5,23 @@ import (
 	"net"
 	"os"
 	"os/signal"
+	"strings"
 	"syscall"
 	"time"
 
 	"github.com/lucky720s/diplomaflow/internal/project"
+	"github.com/lucky720s/diplomaflow/pkg/broker"
 	"github.com/lucky720s/diplomaflow/pkg/config"
 	"github.com/lucky720s/diplomaflow/pkg/logger"
 	projectv1 "github.com/lucky720s/diplomaflow/pkg/protobuf/project/v1"
+	workflowv1 "github.com/lucky720s/diplomaflow/pkg/protobuf/workflow/v1"
+
+	"gorm.io/driver/postgres"
+	"gorm.io/gorm"
+
 	"go.uber.org/zap"
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/credentials/insecure"
 )
 
 func main() {
@@ -25,11 +33,36 @@ func main() {
 	log := logger.New(cfg.Env)
 	defer log.Sync()
 
-	h, cleanup, err := project.InitializeApp(&cfg, log)
+	db, err := gorm.Open(postgres.Open(cfg.Database.DSN), &gorm.Config{})
+	if err != nil {
+		log.Fatal("failed to connect to database", zap.Error(err))
+	}
+
+	brokers := strings.Split(cfg.Kafka.Brokers, ",")
+	kafkaProducer, err := broker.NewProducer(brokers)
+	if err != nil {
+		log.Fatal("Failed to create kafka producer", zap.Error(err))
+	}
+	defer kafkaProducer.Close()
+
+	wfConn, err := grpc.NewClient(cfg.Services.WorkflowAddr, grpc.WithTransportCredentials(insecure.NewCredentials()))
+	if err != nil {
+		log.Fatal("Failed to connect to workflow service", zap.Error(err))
+	}
+	defer wfConn.Close()
+	wfClient := workflowv1.NewWorkflowServiceClient(wfConn)
+
+	h, cleanup, err := project.InitializeApp(&cfg, db, log.Logger, kafkaProducer, wfClient)
 	if err != nil {
 		log.Fatal("failed to initialize app", zap.Error(err))
 	}
 	defer cleanup()
+
+	repo := project.NewRepository(db)
+	outboxProcessor := project.NewOutboxProcessor(repo, kafkaProducer, log.Logger)
+
+	ctx, cancel := context.WithCancel(context.Background())
+	go outboxProcessor.Start(ctx)
 
 	lis, err := net.Listen("tcp", ":"+cfg.GRPCPort)
 	if err != nil {
@@ -50,9 +83,13 @@ func main() {
 	<-quit
 
 	log.Info("Shutting down...")
-	_, cancel := context.WithTimeout(context.Background(), 10*time.Second)
-	defer cancel()
+
+	cancel()
+	outboxProcessor.Stop()
+
+	time.Sleep(500 * time.Millisecond)
 
 	grpcServer.GracefulStop()
+
 	log.Info("Project Service exited")
 }

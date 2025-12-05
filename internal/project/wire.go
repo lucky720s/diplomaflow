@@ -5,56 +5,32 @@
 package project
 
 import (
-	"strings"
-
 	"github.com/google/wire"
 	"github.com/lucky720s/diplomaflow/pkg/broker"
-	"github.com/lucky720s/diplomaflow/pkg/logger"
 	workflowv1 "github.com/lucky720s/diplomaflow/pkg/protobuf/workflow/v1"
-	"google.golang.org/grpc"
-	"google.golang.org/grpc/credentials/insecure"
-	"gorm.io/driver/postgres"
+	"go.uber.org/zap"
 	"gorm.io/gorm"
 )
 
-func ProvideDB(cfg *Config) (*gorm.DB, func(), error) {
-	db, err := gorm.Open(postgres.Open(cfg.Database.DSN), &gorm.Config{})
-	if err != nil {
-		return nil, nil, err
-	}
-	cleanup := func() {
-		sqlDB, _ := db.DB()
-		if sqlDB != nil {
-			sqlDB.Close()
-		}
-	}
-	return db, cleanup, nil
+func ProvideProcessorRegistry() *ProcessorRegistry {
+	registry := NewProcessorRegistry()
+	registry.Register("SELECT_SUPERVISOR", &SupervisorSelectionHandler{})
+	registry.Register("UPLOAD_FILE", &DocumentUploadHandler{})
+	registry.Register("APPROVE", &ApprovalHandler{})
+	registry.Register("REJECT", &ApprovalHandler{})
+	return registry
 }
 
-func ProvideWorkflowClient(cfg *Config) (workflowv1.WorkflowServiceClient, func(), error) {
-	conn, err := grpc.NewClient(cfg.Services.WorkflowAddr, grpc.WithTransportCredentials(insecure.NewCredentials()))
-	if err != nil {
-		return nil, nil, err
-	}
-	cleanup := func() { conn.Close() }
-	return workflowv1.NewWorkflowServiceClient(conn), cleanup, nil
-}
-
-func ProvideProducer(cfg *Config) (*broker.Producer, func(), error) {
-	producer, err := broker.NewProducer(strings.Split(cfg.Kafka.Brokers, ","))
-	if err != nil {
-		return nil, nil, err
-	}
-	cleanup := func() { producer.Close() }
-	return producer, cleanup, nil
-}
-
-func InitializeApp(cfg *Config, log *logger.Logger) (*Handler, func(), error) {
+func InitializeApp(
+	cfg *Config,
+	db *gorm.DB,
+	log *zap.Logger,
+	kafkaProducer *broker.Producer,
+	wfClient workflowv1.WorkflowServiceClient,
+) (*Handler, func(), error) {
 	wire.Build(
-		ProvideDB,
-		ProvideWorkflowClient,
-		ProvideProducer,
 		NewRepository,
+		ProvideProcessorRegistry,
 		NewService,
 		NewHandler,
 	)

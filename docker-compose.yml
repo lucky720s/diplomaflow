@@ -50,7 +50,6 @@ services:
     networks:
       - app_network
 
-
   university_service:
     build:
       context: .
@@ -59,7 +58,7 @@ services:
     env_file:
       - .env
     environment:
-      - APP_GRPC_PORT=${PORT_UNIVERSITY}
+      - GRPC_PORT=${PORT_UNIVERSITY}
     ports:
       - "${PORT_UNIVERSITY}:${PORT_UNIVERSITY}"
     depends_on:
@@ -76,7 +75,7 @@ services:
     env_file:
       - .env
     environment:
-      - APP_GRPC_PORT=${PORT_ROLE}
+      - GRPC_PORT=${PORT_ROLE}
     ports:
       - "${PORT_ROLE}:${PORT_ROLE}"
     depends_on:
@@ -93,7 +92,7 @@ services:
     env_file:
       - .env
     environment:
-      - APP_GRPC_PORT=${PORT_AUTH}
+      - GRPC_PORT=${PORT_AUTH}
     ports:
       - "${PORT_AUTH}:${PORT_AUTH}"
     depends_on:
@@ -114,7 +113,7 @@ services:
     env_file:
       - .env
     environment:
-      - APP_GRPC_PORT=${PORT_WORKFLOW}
+      - GRPC_PORT=${PORT_WORKFLOW}
     ports:
       - "${PORT_WORKFLOW}:${PORT_WORKFLOW}"
     depends_on:
@@ -131,7 +130,7 @@ services:
     env_file:
       - .env
     environment:
-      - APP_GRPC_PORT=${PORT_TEAM}
+      - GRPC_PORT=${PORT_TEAM}
     ports:
       - "${PORT_TEAM}:${PORT_TEAM}"
     depends_on:
@@ -152,7 +151,7 @@ services:
     env_file:
       - .env
     environment:
-      - APP_GRPC_PORT=${PORT_PROJECT}
+      - GRPC_PORT=${PORT_PROJECT}
     ports:
       - "${PORT_PROJECT}:${PORT_PROJECT}"
     depends_on:
@@ -175,7 +174,7 @@ services:
     env_file:
       - .env
     environment:
-      - APP_PORT=${PORT_GATEWAY}
+      - PORT=${PORT_GATEWAY}
     ports:
       - "${PORT_GATEWAY}:${PORT_GATEWAY}"
     depends_on:

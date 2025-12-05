@@ -67,3 +67,23 @@ func (s *Service) GetAvailableStudents(ctx context.Context, universityID int64) 
 
 	return resp.Users, nil
 }
+func (s *Service) CreateTeamForProject(ctx context.Context, projectID int64, studentID int64) error {
+	team := &Team{
+		Name:      fmt.Sprintf("Team Project %d", projectID),
+		ProjectID: projectID,
+		Members: []TeamMember{
+			{
+				UserID:    studentID,
+				Role:      "leader",
+				CreatedAt: time.Now(),
+			},
+		},
+		CreatedAt: time.Now(),
+		UpdatedAt: time.Now(),
+	}
+
+	if err := s.repo.Create(ctx, team); err != nil {
+		return fmt.Errorf("failed to create team for project: %w", err)
+	}
+	return nil
+}

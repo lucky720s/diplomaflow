@@ -22,6 +22,7 @@ const (
 	ProjectService_CreateProject_FullMethodName      = "/project.ProjectService/CreateProject"
 	ProjectService_GetProject_FullMethodName         = "/project.ProjectService/GetProject"
 	ProjectService_GetStudentProjects_FullMethodName = "/project.ProjectService/GetStudentProjects"
+	ProjectService_PerformAction_FullMethodName      = "/project.ProjectService/PerformAction"
 )
 
 // ProjectServiceClient is the client API for ProjectService service.
@@ -31,6 +32,7 @@ type ProjectServiceClient interface {
 	CreateProject(ctx context.Context, in *CreateProjectRequest, opts ...grpc.CallOption) (*CreateProjectResponse, error)
 	GetProject(ctx context.Context, in *GetProjectRequest, opts ...grpc.CallOption) (*GetProjectResponse, error)
 	GetStudentProjects(ctx context.Context, in *GetStudentProjectsRequest, opts ...grpc.CallOption) (*GetStudentProjectsResponse, error)
+	PerformAction(ctx context.Context, in *PerformActionRequest, opts ...grpc.CallOption) (*PerformActionResponse, error)
 }
 
 type projectServiceClient struct {
@@ -68,6 +70,15 @@ func (c *projectServiceClient) GetStudentProjects(ctx context.Context, in *GetSt
 	return out, nil
 }
 
+func (c *projectServiceClient) PerformAction(ctx context.Context, in *PerformActionRequest, opts ...grpc.CallOption) (*PerformActionResponse, error) {
+	out := new(PerformActionResponse)
+	err := c.cc.Invoke(ctx, ProjectService_PerformAction_FullMethodName, in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // ProjectServiceServer is the server API for ProjectService service.
 // All implementations must embed UnimplementedProjectServiceServer
 // for forward compatibility
@@ -75,6 +86,7 @@ type ProjectServiceServer interface {
 	CreateProject(context.Context, *CreateProjectRequest) (*CreateProjectResponse, error)
 	GetProject(context.Context, *GetProjectRequest) (*GetProjectResponse, error)
 	GetStudentProjects(context.Context, *GetStudentProjectsRequest) (*GetStudentProjectsResponse, error)
+	PerformAction(context.Context, *PerformActionRequest) (*PerformActionResponse, error)
 	mustEmbedUnimplementedProjectServiceServer()
 }
 
@@ -90,6 +102,9 @@ func (UnimplementedProjectServiceServer) GetProject(context.Context, *GetProject
 }
 func (UnimplementedProjectServiceServer) GetStudentProjects(context.Context, *GetStudentProjectsRequest) (*GetStudentProjectsResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetStudentProjects not implemented")
+}
+func (UnimplementedProjectServiceServer) PerformAction(context.Context, *PerformActionRequest) (*PerformActionResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method PerformAction not implemented")
 }
 func (UnimplementedProjectServiceServer) mustEmbedUnimplementedProjectServiceServer() {}
 
@@ -158,6 +173,24 @@ func _ProjectService_GetStudentProjects_Handler(srv interface{}, ctx context.Con
 	return interceptor(ctx, in, info, handler)
 }
 
+func _ProjectService_PerformAction_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(PerformActionRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(ProjectServiceServer).PerformAction(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: ProjectService_PerformAction_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(ProjectServiceServer).PerformAction(ctx, req.(*PerformActionRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // ProjectService_ServiceDesc is the grpc.ServiceDesc for ProjectService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -176,6 +209,10 @@ var ProjectService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "GetStudentProjects",
 			Handler:    _ProjectService_GetStudentProjects_Handler,
+		},
+		{
+			MethodName: "PerformAction",
+			Handler:    _ProjectService_PerformAction_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

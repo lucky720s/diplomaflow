@@ -3,30 +3,42 @@ package project
 import (
 	"time"
 
-	"gorm.io/gorm"
+	"gorm.io/datatypes"
 )
 
 type Project struct {
-	ID           uint64 `gorm:"primaryKey"`
-	Title        string `gorm:"not null"`
-	Description  string
-	StudentID    int64 `gorm:"not null;index"`
-	TeamID       int64
-	WorkflowName string `gorm:"not null"`
-	CurrentState string
-	Status       string
-	History      []StateHistory `gorm:"foreignKey:ProjectID;constraint:OnDelete:CASCADE"`
-	CreatedAt    time.Time
-	UpdatedAt    time.Time
-	DeletedAt    gorm.DeletedAt `gorm:"index"`
+	ID            uint   `gorm:"primaryKey"`
+	Title         string `gorm:"not null"`
+	Description   string
+	StudentID     int64 `gorm:"not null"`
+	UniversityID  int64 `gorm:"not null"`
+	TeamID        int64
+	WorkflowID    uint `gorm:"not null"`
+	WorkflowName  string
+	CurrentStepID string `gorm:"not null"`
+	CurrentState  string
+	Status        string         `gorm:"default:'active'"`
+	Data          datatypes.JSON `gorm:"type:jsonb"`
+	History       []StateHistory `gorm:"foreignKey:ProjectID"`
+	CreatedAt     time.Time
+	UpdatedAt     time.Time
 }
 
 type StateHistory struct {
-	ID        uint64 `gorm:"primaryKey"`
-	ProjectID uint64 `gorm:"index"`
+	ID        uint `gorm:"primaryKey"`
+	ProjectID uint
 	StateName string
 	Status    string
 	ChangedBy int64
 	Comment   string
+	CreatedAt time.Time
+}
+
+type OutboxEvent struct {
+	ID        uint           `gorm:"primaryKey"`
+	Topic     string         `gorm:"not null"`
+	EventType string         `gorm:"not null"`
+	Payload   datatypes.JSON `gorm:"not null"`
+	Status    string         `gorm:"default:'pending'"`
 	CreatedAt time.Time
 }

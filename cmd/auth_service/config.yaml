@@ -1,9 +1,8 @@
 env: "local"
 grpc_port: 8082
+jwt:
+  secret: "secret"
+  access_token_ttl: 15m
+  refresh_token_ttl: 720h
 database:
   dsn: ""
-jwt:
-  secret: "secret_from_env_var_is_better"
-services:
-  university_addr: "university_service:8081"
-  role_addr: "role_service:8086"

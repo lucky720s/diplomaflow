@@ -2,9 +2,10 @@ package main
 
 import (
 	"context"
-	"net"
+	"encoding/json"
 	"os"
 	"os/signal"
+	"strings"
 	"syscall"
 	"time"
 
@@ -12,9 +13,14 @@ import (
 	"github.com/lucky720s/diplomaflow/pkg/broker"
 	"github.com/lucky720s/diplomaflow/pkg/config"
 	"github.com/lucky720s/diplomaflow/pkg/logger"
-	teamv1 "github.com/lucky720s/diplomaflow/pkg/protobuf/team/v1"
+	authv1 "github.com/lucky720s/diplomaflow/pkg/protobuf/auth/v1"
+
+	"gorm.io/driver/postgres"
+	"gorm.io/gorm"
+
 	"go.uber.org/zap"
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/credentials/insecure"
 )
 
 func main() {
@@ -26,45 +32,65 @@ func main() {
 	log := logger.New(cfg.Env)
 	defer log.Sync()
 
-	app, cleanup, err := team.InitializeApp(&cfg, log)
+	db, err := gorm.Open(postgres.Open(cfg.Database.DSN), &gorm.Config{})
+	if err != nil {
+		log.Fatal("failed to connect to database", zap.Error(err))
+	}
+
+	authConn, err := grpc.NewClient(cfg.Services.AuthAddr, grpc.WithTransportCredentials(insecure.NewCredentials()))
+	if err != nil {
+		log.Fatal("Failed to connect to auth service", zap.Error(err))
+	}
+	defer authConn.Close()
+	authClient := authv1.NewAuthServiceClient(authConn)
+
+	eventHandler, cleanup, err := team.InitializeApp(&cfg, db, log.Logger, authClient)
 	if err != nil {
 		log.Fatal("failed to initialize app", zap.Error(err))
 	}
 	defer cleanup()
 
-	ctx, cancelCtx := context.WithCancel(context.Background())
-	app.Consumer.Start(ctx, []string{"project-events"}, func(ctx context.Context, event broker.Event) error {
-		if event.Type == "ProjectCreated" {
-			return app.EventHandler.HandleProjectCreated(event)
-		}
-		return nil
-	})
+	brokers := strings.Split(cfg.Kafka.Brokers, ",")
 
-	lis, err := net.Listen("tcp", ":"+cfg.GRPCPort)
+	kafkaConsumer, err := broker.NewConsumer(brokers, "team-service-group", log.Logger)
 	if err != nil {
-		log.Fatal("listen error", zap.Error(err))
+		log.Fatal("Failed to create kafka consumer", zap.Error(err))
 	}
-	grpcServer := grpc.NewServer()
-	teamv1.RegisterTeamServiceServer(grpcServer, app.Handler)
+
+	ctx, cancel := context.WithCancel(context.Background())
+
+	handler := func(ctx context.Context, event broker.Event) error {
+		payloadBytes, err := json.Marshal(event.Payload)
+		if err != nil {
+			log.Error("Failed to marshal event payload", zap.Error(err))
+			return nil
+		}
+
+		var payload team.ProjectCreatedEvent
+		if err := json.Unmarshal(payloadBytes, &payload); err != nil {
+			log.Error("Failed to unmarshal event payload", zap.Error(err))
+			return nil
+		}
+
+		return eventHandler.HandleProjectCreated(ctx, payload)
+	}
 
 	go func() {
-		log.Info("Team Service starting", zap.String("port", cfg.GRPCPort))
-		if err := grpcServer.Serve(lis); err != nil {
-			log.Fatal("serve error", zap.Error(err))
-		}
+		log.Info("Starting Kafka consumer for topics: project-events")
+		kafkaConsumer.Start(ctx, []string{"project-events"}, handler)
 	}()
+
+	log.Info("Team Service started")
 
 	quit := make(chan os.Signal, 1)
 	signal.Notify(quit, syscall.SIGINT, syscall.SIGTERM)
 	<-quit
 
-	log.Info("Shutting down Team Service...")
+	log.Info("Shutting down...")
 
-	cancelCtx()
+	cancel()
 
-	_, cancel := context.WithTimeout(context.Background(), 10*time.Second)
-	defer cancel()
-	grpcServer.GracefulStop()
+	time.Sleep(1 * time.Second)
 
 	log.Info("Team Service exited")
 }

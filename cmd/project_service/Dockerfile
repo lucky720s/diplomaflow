@@ -17,10 +17,14 @@ RUN CGO_ENABLED=0 GOOS=linux go build -o /bin/service ./cmd/project_service
 
 FROM alpine:3.22.2
 WORKDIR /app
+COPY --from=builder /app/cmd/project_service/config.yaml /app/config.yaml
+
 RUN apk --no-cache add ca-certificates tzdata
 
 RUN addgroup -S appgroup && adduser -S appuser -G appgroup
+
 COPY --from=builder /bin/service /app/service
+
 RUN chown -R appuser:appgroup /app
 USER appuser
 
