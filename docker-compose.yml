@@ -132,6 +132,7 @@ services:
       - .env
     environment:
       - GRPC_PORT=${PORT_TEAM}
+      - KAFKA_BROKERS=kafka:29092
     ports:
       - "${PORT_TEAM}:${PORT_TEAM}"
     depends_on:
@@ -153,6 +154,7 @@ services:
       - .env
     environment:
       - GRPC_PORT=${PORT_PROJECT}
+      - KAFKA_BROKERS=kafka:29092
     ports:
       - "${PORT_PROJECT}:${PORT_PROJECT}"
     depends_on:
