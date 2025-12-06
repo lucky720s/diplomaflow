@@ -16,11 +16,12 @@ func InitializeApp(
 	db *gorm.DB,
 	log *zap.Logger,
 	authClient authv1.AuthServiceClient,
-) (*EventHandler, func(), error) {
+) (*Handler, *EventHandler, func(), error) {
 	wire.Build(
 		NewRepository,
 		NewService,
 		NewEventHandler,
+		NewHandler,
 	)
-	return &EventHandler{}, nil, nil
+	return &Handler{}, &EventHandler{}, nil, nil
 }

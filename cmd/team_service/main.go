@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"encoding/json"
+	"net"
 	"os"
 	"os/signal"
 	"strings"
@@ -14,6 +15,7 @@ import (
 	"github.com/lucky720s/diplomaflow/pkg/config"
 	"github.com/lucky720s/diplomaflow/pkg/logger"
 	authv1 "github.com/lucky720s/diplomaflow/pkg/protobuf/auth/v1"
+	teamv1 "github.com/lucky720s/diplomaflow/pkg/protobuf/team/v1"
 
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
@@ -21,6 +23,7 @@ import (
 	"go.uber.org/zap"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
+	"google.golang.org/grpc/reflection"
 )
 
 func main() {
@@ -44,14 +47,13 @@ func main() {
 	defer authConn.Close()
 	authClient := authv1.NewAuthServiceClient(authConn)
 
-	eventHandler, cleanup, err := team.InitializeApp(&cfg, db, log.Logger, authClient)
+	h, eventHandler, cleanup, err := team.InitializeApp(&cfg, db, log.Logger, authClient)
 	if err != nil {
 		log.Fatal("failed to initialize app", zap.Error(err))
 	}
 	defer cleanup()
 
 	brokers := strings.Split(cfg.Kafka.Brokers, ",")
-
 	kafkaConsumer, err := broker.NewConsumer(brokers, "team-service-group", log.Logger)
 	if err != nil {
 		log.Fatal("Failed to create kafka consumer", zap.Error(err))
@@ -80,6 +82,22 @@ func main() {
 		kafkaConsumer.Start(ctx, []string{"project-events"}, handler)
 	}()
 
+	lis, err := net.Listen("tcp", ":"+cfg.GRPCPort)
+	if err != nil {
+		log.Fatal("failed to listen", zap.Error(err))
+	}
+
+	grpcServer := grpc.NewServer()
+	teamv1.RegisterTeamServiceServer(grpcServer, h)
+	reflection.Register(grpcServer)
+
+	go func() {
+		log.Info("Team Service starting", zap.String("port", cfg.GRPCPort))
+		if err := grpcServer.Serve(lis); err != nil {
+			log.Fatal("failed to serve", zap.Error(err))
+		}
+	}()
+
 	log.Info("Team Service started")
 
 	quit := make(chan os.Signal, 1)
@@ -89,6 +107,7 @@ func main() {
 	log.Info("Shutting down...")
 
 	cancel()
+	grpcServer.GracefulStop()
 
 	time.Sleep(1 * time.Second)
 
