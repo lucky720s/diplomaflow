@@ -39,6 +39,7 @@ type repository struct {
 }
 
 func NewRepository(db *gorm.DB) Repository {
+	_ = db.AutoMigrate(&Workflow{}, &State{}, &Transition{}, &StateAction{})
 	return &repository{db: db}
 }
 

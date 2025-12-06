@@ -2,6 +2,7 @@ package auth
 
 import (
 	"context"
+
 	"gorm.io/gorm"
 )
 
@@ -24,6 +25,7 @@ type repository struct {
 }
 
 func NewRepository(db *gorm.DB) Repository {
+	_ = db.AutoMigrate(&User{})
 	return &repository{db: db}
 }
 
