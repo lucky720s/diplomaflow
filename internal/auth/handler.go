@@ -25,7 +25,7 @@ func (h *Handler) Register(ctx context.Context, req *authv1.RegisterRequest) (*a
 	if err := req.Validate(); err != nil {
 		return nil, status.Errorf(codes.InvalidArgument, "validation error: %v", err)
 	}
-	userID, err := h.service.Register(ctx, req.Email, req.Password, req.FirstName, req.LastName, req.Role, req.UniversityId)
+	userID, err := h.service.Register(ctx, req.Email, req.Password, req.FirstName, req.LastName, req.Role, req.UniversityId, req.DepartmentId)
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, "failed to register: %v", err)
 	}
@@ -65,6 +65,7 @@ func (h *Handler) ValidateToken(ctx context.Context, req *authv1.ValidateTokenRe
 		UserId:       claims.Id,
 		Role:         claims.Role,
 		UniversityId: claims.UniversityID,
+		DepartmentId: claims.DepartmentID,
 	}, nil
 }
 

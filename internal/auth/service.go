@@ -30,7 +30,7 @@ func NewService(
 	}
 }
 
-func (s *Service) Register(ctx context.Context, email, password, firstName, lastName, role string, universityID int64) (int64, error) {
+func (s *Service) Register(ctx context.Context, email, password, firstName, lastName, role string, universityID, departmentID int64) (int64, error) {
 	existingUser, err := s.repo.GetByEmail(ctx, email)
 	if err == nil && existingUser != nil {
 		return 0, errors.New("user already exists")
@@ -51,6 +51,7 @@ func (s *Service) Register(ctx context.Context, email, password, firstName, last
 		LastName:     lastName,
 		Role:         role,
 		UniversityID: universityID,
+		DepartmentID: departmentID,
 	}
 
 	if err := s.repo.Create(ctx, user); err != nil {

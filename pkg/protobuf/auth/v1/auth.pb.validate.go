@@ -88,6 +88,8 @@ func (m *RegisterRequest) validate(all bool) error {
 
 	// no validation rules for UniversityId
 
+	// no validation rules for DepartmentId
+
 	if len(errors) > 0 {
 		return RegisterRequestMultiError(errors)
 	}
@@ -659,6 +661,8 @@ func (m *ValidateTokenResponse) validate(all bool) error {
 
 	// no validation rules for UniversityId
 
+	// no validation rules for DepartmentId
+
 	if len(errors) > 0 {
 		return ValidateTokenResponseMultiError(errors)
 	}
@@ -880,6 +884,8 @@ func (m *UserPreview) validate(all bool) error {
 	// no validation rules for Role
 
 	// no validation rules for UniversityId
+
+	// no validation rules for DepartmentId
 
 	if len(errors) > 0 {
 		return UserPreviewMultiError(errors)

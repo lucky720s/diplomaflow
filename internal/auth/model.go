@@ -14,6 +14,7 @@ type User struct {
 	LastName     string
 	Role         string `gorm:"not null"`
 	UniversityID int64
+	DepartmentID int64
 	CreatedAt    time.Time
 	UpdatedAt    time.Time
 	DeletedAt    gorm.DeletedAt `gorm:"index"`

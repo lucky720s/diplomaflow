@@ -51,6 +51,13 @@ func main() {
 
 	v1 := router.Group("/api/v1")
 	{
+		public := v1.Group("/public")
+		{
+			// Получение списка университетов
+			public.GET("/universities", h.ListUniversities)
+			// Получение списка кафедр конкретного университета
+			public.GET("/universities/:id/departments", h.ListDepartments)
+		}
 		auth := v1.Group("/auth")
 		{
 			auth.POST("/register", h.Register)
@@ -84,7 +91,7 @@ func main() {
 		{
 			universities.POST("", h.CreateUniversity)
 			//universities.GET("/:id", h.GetUniversity)
-			universities.GET("", h.ListUniversities)
+			//universities.GET("", h.ListUniversities)
 		}
 
 		roles := protected.Group("/roles")

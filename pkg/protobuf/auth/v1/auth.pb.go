@@ -30,6 +30,7 @@ type RegisterRequest struct {
 	LastName      string                 `protobuf:"bytes,4,opt,name=last_name,json=lastName,proto3" json:"last_name,omitempty"`
 	Role          string                 `protobuf:"bytes,5,opt,name=role,proto3" json:"role,omitempty"`
 	UniversityId  int64                  `protobuf:"varint,6,opt,name=university_id,json=universityId,proto3" json:"university_id,omitempty"`
+	DepartmentId  int64                  `protobuf:"varint,7,opt,name=department_id,json=departmentId,proto3" json:"department_id,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -102,6 +103,13 @@ func (x *RegisterRequest) GetRole() string {
 func (x *RegisterRequest) GetUniversityId() int64 {
 	if x != nil {
 		return x.UniversityId
+	}
+	return 0
+}
+
+func (x *RegisterRequest) GetDepartmentId() int64 {
+	if x != nil {
+		return x.DepartmentId
 	}
 	return 0
 }
@@ -297,6 +305,7 @@ type ValidateTokenResponse struct {
 	UserId        int64                  `protobuf:"varint,3,opt,name=user_id,json=userId,proto3" json:"user_id,omitempty"`
 	Role          string                 `protobuf:"bytes,4,opt,name=role,proto3" json:"role,omitempty"`
 	UniversityId  int64                  `protobuf:"varint,5,opt,name=university_id,json=universityId,proto3" json:"university_id,omitempty"`
+	DepartmentId  int64                  `protobuf:"varint,6,opt,name=department_id,json=departmentId,proto3" json:"department_id,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -362,6 +371,13 @@ func (x *ValidateTokenResponse) GetRole() string {
 func (x *ValidateTokenResponse) GetUniversityId() int64 {
 	if x != nil {
 		return x.UniversityId
+	}
+	return 0
+}
+
+func (x *ValidateTokenResponse) GetDepartmentId() int64 {
+	if x != nil {
+		return x.DepartmentId
 	}
 	return 0
 }
@@ -442,6 +458,7 @@ type UserPreview struct {
 	LastName      string                 `protobuf:"bytes,4,opt,name=last_name,json=lastName,proto3" json:"last_name,omitempty"`
 	Role          string                 `protobuf:"bytes,5,opt,name=role,proto3" json:"role,omitempty"`
 	UniversityId  int64                  `protobuf:"varint,6,opt,name=university_id,json=universityId,proto3" json:"university_id,omitempty"`
+	DepartmentId  int64                  `protobuf:"varint,7,opt,name=department_id,json=departmentId,proto3" json:"department_id,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -518,6 +535,13 @@ func (x *UserPreview) GetUniversityId() int64 {
 	return 0
 }
 
+func (x *UserPreview) GetDepartmentId() int64 {
+	if x != nil {
+		return x.DepartmentId
+	}
+	return 0
+}
+
 type ListUsersResponse struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	Users         []*UserPreview         `protobuf:"bytes,1,rep,name=users,proto3" json:"users,omitempty"`
@@ -574,7 +598,7 @@ var File_auth_v1_auth_proto protoreflect.FileDescriptor
 
 const file_auth_v1_auth_proto_rawDesc = "" +
 	"\n" +
-	"\x12auth/v1/auth.proto\x12\x04auth\x1a\x17validate/validate.proto\"\xca\x01\n" +
+	"\x12auth/v1/auth.proto\x12\x04auth\x1a\x17validate/validate.proto\"\xef\x01\n" +
 	"\x0fRegisterRequest\x12\x1d\n" +
 	"\x05email\x18\x01 \x01(\tB\a\xfaB\x04r\x02`\x01R\x05email\x12#\n" +
 	"\bpassword\x18\x02 \x01(\tB\a\xfaB\x04r\x02\x10\bR\bpassword\x12\x1d\n" +
@@ -582,7 +606,8 @@ const file_auth_v1_auth_proto_rawDesc = "" +
 	"first_name\x18\x03 \x01(\tR\tfirstName\x12\x1b\n" +
 	"\tlast_name\x18\x04 \x01(\tR\blastName\x12\x12\n" +
 	"\x04role\x18\x05 \x01(\tR\x04role\x12#\n" +
-	"\runiversity_id\x18\x06 \x01(\x03R\funiversityId\"+\n" +
+	"\runiversity_id\x18\x06 \x01(\x03R\funiversityId\x12#\n" +
+	"\rdepartment_id\x18\a \x01(\x03R\fdepartmentId\"+\n" +
 	"\x10RegisterResponse\x12\x17\n" +
 	"\auser_id\x18\x01 \x01(\x03R\x06userId\"@\n" +
 	"\fLoginRequest\x12\x14\n" +
@@ -591,18 +616,19 @@ const file_auth_v1_auth_proto_rawDesc = "" +
 	"\rLoginResponse\x12\x14\n" +
 	"\x05token\x18\x01 \x01(\tR\x05token\",\n" +
 	"\x14ValidateTokenRequest\x12\x14\n" +
-	"\x05token\x18\x01 \x01(\tR\x05token\"\x97\x01\n" +
+	"\x05token\x18\x01 \x01(\tR\x05token\"\xbc\x01\n" +
 	"\x15ValidateTokenResponse\x12\x16\n" +
 	"\x06status\x18\x01 \x01(\x03R\x06status\x12\x14\n" +
 	"\x05error\x18\x02 \x01(\tR\x05error\x12\x17\n" +
 	"\auser_id\x18\x03 \x01(\x03R\x06userId\x12\x12\n" +
 	"\x04role\x18\x04 \x01(\tR\x04role\x12#\n" +
-	"\runiversity_id\x18\x05 \x01(\x03R\funiversityId\"|\n" +
+	"\runiversity_id\x18\x05 \x01(\x03R\funiversityId\x12#\n" +
+	"\rdepartment_id\x18\x06 \x01(\x03R\fdepartmentId\"|\n" +
 	"\x10ListUsersRequest\x12#\n" +
 	"\runiversity_id\x18\x01 \x01(\x03R\funiversityId\x12\x12\n" +
 	"\x04role\x18\x02 \x01(\tR\x04role\x12\x12\n" +
 	"\x04page\x18\x03 \x01(\x05R\x04page\x12\x1b\n" +
-	"\tpage_size\x18\x04 \x01(\x05R\bpageSize\"\xa8\x01\n" +
+	"\tpage_size\x18\x04 \x01(\x05R\bpageSize\"\xcd\x01\n" +
 	"\vUserPreview\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\x03R\x02id\x12\x14\n" +
 	"\x05email\x18\x02 \x01(\tR\x05email\x12\x1d\n" +
@@ -610,7 +636,8 @@ const file_auth_v1_auth_proto_rawDesc = "" +
 	"first_name\x18\x03 \x01(\tR\tfirstName\x12\x1b\n" +
 	"\tlast_name\x18\x04 \x01(\tR\blastName\x12\x12\n" +
 	"\x04role\x18\x05 \x01(\tR\x04role\x12#\n" +
-	"\runiversity_id\x18\x06 \x01(\x03R\funiversityId\"]\n" +
+	"\runiversity_id\x18\x06 \x01(\x03R\funiversityId\x12#\n" +
+	"\rdepartment_id\x18\a \x01(\x03R\fdepartmentId\"]\n" +
 	"\x11ListUsersResponse\x12'\n" +
 	"\x05users\x18\x01 \x03(\v2\x11.auth.UserPreviewR\x05users\x12\x1f\n" +
 	"\vtotal_count\x18\x02 \x01(\x03R\n" +

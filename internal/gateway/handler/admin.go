@@ -3,6 +3,7 @@ package handler
 import (
 	"context"
 	"net/http"
+	"strconv"
 
 	"github.com/gin-gonic/gin"
 	rolev1 "github.com/lucky720s/diplomaflow/pkg/protobuf/role/v1"
@@ -28,6 +29,22 @@ func (h *Handler) ListUniversities(c *gin.Context) {
 	res, err := h.universityClient.ListUniversities(context.Background(), &universityv1.ListUniversitiesRequest{})
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+	c.JSON(http.StatusOK, res)
+}
+func (h *Handler) ListDepartments(c *gin.Context) {
+	uniIDStr := c.Param("id")
+	uniID, err := strconv.ParseInt(uniIDStr, 10, 64)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid university id"})
+		return
+	}
+	res, err := h.universityClient.ListDepartments(context.Background(), &universityv1.ListDepartmentsRequest{
+		UniversityId: uniID,
+	})
+	if err != nil {
+		MapGRPCError(c, err)
 		return
 	}
 	c.JSON(http.StatusOK, res)

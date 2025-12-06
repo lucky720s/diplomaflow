@@ -20,6 +20,7 @@ type JwtClaims struct {
 	Email        string
 	Role         string
 	UniversityID int64
+	DepartmentID int64
 }
 
 func (j *JwtWrapper) GenerateToken(user User) (string, error) {
@@ -28,6 +29,7 @@ func (j *JwtWrapper) GenerateToken(user User) (string, error) {
 		Email:        user.Email,
 		Role:         user.Role,
 		UniversityID: user.UniversityID,
+		DepartmentID: user.DepartmentID,
 		RegisteredClaims: jwt.RegisteredClaims{
 			ExpiresAt: jwt.NewNumericDate(time.Now().Local().Add(time.Hour * time.Duration(j.ExpirationHours))),
 			Issuer:    j.Issuer,
