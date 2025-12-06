@@ -51,6 +51,13 @@ func main() {
 
 	v1 := router.Group("/api/v1")
 	{
+
+		auth := v1.Group("/auth")
+		{
+			auth.POST("/register", h.Register)
+			auth.POST("/login", h.Login)
+			//auth.POST("/validate", h.ValidateToken)
+		}
 		public := v1.Group("/public")
 		{
 			// Получение списка университетов
@@ -58,13 +65,6 @@ func main() {
 			// Получение списка кафедр конкретного университета
 			public.GET("/universities/:id/departments", h.ListDepartments)
 		}
-		auth := v1.Group("/auth")
-		{
-			auth.POST("/register", h.Register)
-			auth.POST("/login", h.Login)
-			//auth.POST("/validate", h.ValidateToken)
-		}
-
 		protected := v1.Group("/")
 		protected.Use(middleware.AuthMiddleware(cfg.JWTSecret))
 
