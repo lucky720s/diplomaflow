@@ -84,9 +84,10 @@ func main() {
 			teams.POST("", h.CreateTeam)
 			teams.GET("/:id", h.GetTeam)
 			teams.GET("/available-students", h.GetAvailableStudents)
-			// teams.POST("/:id/members", h.AddTeamMember)
-		}
 
+			// Новый роут для привязки проекта
+			teams.PUT("/:id/assign-project", h.AssignProjectToTeam)
+		}
 		universities := protected.Group("/universities")
 		{
 			universities.POST("", h.CreateUniversity)

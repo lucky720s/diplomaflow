@@ -44,3 +44,29 @@ func (h *Handler) GetAvailableStudents(c *gin.Context) {
 	}
 	c.JSON(http.StatusOK, res)
 }
+func (h *Handler) AssignProjectToTeam(c *gin.Context) {
+	teamIDStr := c.Param("id")
+	teamID, err := strconv.ParseInt(teamIDStr, 10, 64)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid team id"})
+		return
+	}
+
+	var req struct {
+		ProjectID int64 `json:"project_id" binding:"required"`
+	}
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	_, err = h.teamClient.AssignProject(context.Background(), &teamv1.AssignProjectRequest{
+		TeamId:    teamID,
+		ProjectId: req.ProjectID,
+	})
+	if err != nil {
+		MapGRPCError(c, err)
+		return
+	}
+	c.JSON(http.StatusOK, gin.H{"success": true})
+}

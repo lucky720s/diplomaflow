@@ -21,11 +21,12 @@ func (h *Handler) CreateTeam(ctx context.Context, req *pb.CreateTeamRequest) (*p
 	if req.Name == "" {
 		return nil, status.Error(codes.InvalidArgument, "team name is required")
 	}
-	if req.ProjectId == 0 {
-		return nil, status.Error(codes.InvalidArgument, "project_id is required")
+	var projectID *int64
+	if req.ProjectId != 0 {
+		p := req.ProjectId
+		projectID = &p
 	}
-
-	teamID, err := h.service.CreateTeam(ctx, req.Name, req.ProjectId, req.MemberIds)
+	teamID, err := h.service.CreateTeam(ctx, req.Name, projectID, req.MemberIds)
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, "failed to create team: %v", err)
 	}
@@ -52,11 +53,14 @@ func (h *Handler) GetTeam(ctx context.Context, req *pb.GetTeamRequest) (*pb.GetT
 			Role:   m.Role,
 		})
 	}
-
+	var projID int64
+	if team.ProjectID != nil {
+		projID = *team.ProjectID
+	}
 	return &pb.GetTeamResponse{
 		TeamId:    int64(team.ID),
 		Name:      team.Name,
-		ProjectId: team.ProjectID,
+		ProjectId: projID,
 		Members:   pbMembers,
 	}, nil
 }
@@ -83,4 +87,16 @@ func (h *Handler) GetAvailableStudents(ctx context.Context, req *pb.GetAvailable
 	return &pb.GetAvailableStudentsResponse{
 		Students: pbStudents,
 	}, nil
+}
+func (h *Handler) AssignProject(ctx context.Context, req *pb.AssignProjectRequest) (*pb.AssignProjectResponse, error) {
+	if req.TeamId == 0 || req.ProjectId == 0 {
+		return nil, status.Error(codes.InvalidArgument, "team_id and project_id are required")
+	}
+
+	err := h.service.AssignProject(ctx, req.TeamId, req.ProjectId)
+	if err != nil {
+		return nil, status.Errorf(codes.Internal, "failed to assign project: %v", err)
+	}
+
+	return &pb.AssignProjectResponse{Success: true}, nil
 }

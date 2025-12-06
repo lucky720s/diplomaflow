@@ -937,3 +937,213 @@ var _ interface {
 	Cause() error
 	ErrorName() string
 } = GetAvailableStudentsResponseValidationError{}
+
+// Validate checks the field values on AssignProjectRequest with the rules
+// defined in the proto definition for this message. If any rules are
+// violated, the first error encountered is returned, or nil if there are no violations.
+func (m *AssignProjectRequest) Validate() error {
+	return m.validate(false)
+}
+
+// ValidateAll checks the field values on AssignProjectRequest with the rules
+// defined in the proto definition for this message. If any rules are
+// violated, the result is a list of violation errors wrapped in
+// AssignProjectRequestMultiError, or nil if none found.
+func (m *AssignProjectRequest) ValidateAll() error {
+	return m.validate(true)
+}
+
+func (m *AssignProjectRequest) validate(all bool) error {
+	if m == nil {
+		return nil
+	}
+
+	var errors []error
+
+	// no validation rules for TeamId
+
+	// no validation rules for ProjectId
+
+	if len(errors) > 0 {
+		return AssignProjectRequestMultiError(errors)
+	}
+
+	return nil
+}
+
+// AssignProjectRequestMultiError is an error wrapping multiple validation
+// errors returned by AssignProjectRequest.ValidateAll() if the designated
+// constraints aren't met.
+type AssignProjectRequestMultiError []error
+
+// Error returns a concatenation of all the error messages it wraps.
+func (m AssignProjectRequestMultiError) Error() string {
+	msgs := make([]string, 0, len(m))
+	for _, err := range m {
+		msgs = append(msgs, err.Error())
+	}
+	return strings.Join(msgs, "; ")
+}
+
+// AllErrors returns a list of validation violation errors.
+func (m AssignProjectRequestMultiError) AllErrors() []error { return m }
+
+// AssignProjectRequestValidationError is the validation error returned by
+// AssignProjectRequest.Validate if the designated constraints aren't met.
+type AssignProjectRequestValidationError struct {
+	field  string
+	reason string
+	cause  error
+	key    bool
+}
+
+// Field function returns field value.
+func (e AssignProjectRequestValidationError) Field() string { return e.field }
+
+// Reason function returns reason value.
+func (e AssignProjectRequestValidationError) Reason() string { return e.reason }
+
+// Cause function returns cause value.
+func (e AssignProjectRequestValidationError) Cause() error { return e.cause }
+
+// Key function returns key value.
+func (e AssignProjectRequestValidationError) Key() bool { return e.key }
+
+// ErrorName returns error name.
+func (e AssignProjectRequestValidationError) ErrorName() string {
+	return "AssignProjectRequestValidationError"
+}
+
+// Error satisfies the builtin error interface
+func (e AssignProjectRequestValidationError) Error() string {
+	cause := ""
+	if e.cause != nil {
+		cause = fmt.Sprintf(" | caused by: %v", e.cause)
+	}
+
+	key := ""
+	if e.key {
+		key = "key for "
+	}
+
+	return fmt.Sprintf(
+		"invalid %sAssignProjectRequest.%s: %s%s",
+		key,
+		e.field,
+		e.reason,
+		cause)
+}
+
+var _ error = AssignProjectRequestValidationError{}
+
+var _ interface {
+	Field() string
+	Reason() string
+	Key() bool
+	Cause() error
+	ErrorName() string
+} = AssignProjectRequestValidationError{}
+
+// Validate checks the field values on AssignProjectResponse with the rules
+// defined in the proto definition for this message. If any rules are
+// violated, the first error encountered is returned, or nil if there are no violations.
+func (m *AssignProjectResponse) Validate() error {
+	return m.validate(false)
+}
+
+// ValidateAll checks the field values on AssignProjectResponse with the rules
+// defined in the proto definition for this message. If any rules are
+// violated, the result is a list of violation errors wrapped in
+// AssignProjectResponseMultiError, or nil if none found.
+func (m *AssignProjectResponse) ValidateAll() error {
+	return m.validate(true)
+}
+
+func (m *AssignProjectResponse) validate(all bool) error {
+	if m == nil {
+		return nil
+	}
+
+	var errors []error
+
+	// no validation rules for Success
+
+	if len(errors) > 0 {
+		return AssignProjectResponseMultiError(errors)
+	}
+
+	return nil
+}
+
+// AssignProjectResponseMultiError is an error wrapping multiple validation
+// errors returned by AssignProjectResponse.ValidateAll() if the designated
+// constraints aren't met.
+type AssignProjectResponseMultiError []error
+
+// Error returns a concatenation of all the error messages it wraps.
+func (m AssignProjectResponseMultiError) Error() string {
+	msgs := make([]string, 0, len(m))
+	for _, err := range m {
+		msgs = append(msgs, err.Error())
+	}
+	return strings.Join(msgs, "; ")
+}
+
+// AllErrors returns a list of validation violation errors.
+func (m AssignProjectResponseMultiError) AllErrors() []error { return m }
+
+// AssignProjectResponseValidationError is the validation error returned by
+// AssignProjectResponse.Validate if the designated constraints aren't met.
+type AssignProjectResponseValidationError struct {
+	field  string
+	reason string
+	cause  error
+	key    bool
+}
+
+// Field function returns field value.
+func (e AssignProjectResponseValidationError) Field() string { return e.field }
+
+// Reason function returns reason value.
+func (e AssignProjectResponseValidationError) Reason() string { return e.reason }
+
+// Cause function returns cause value.
+func (e AssignProjectResponseValidationError) Cause() error { return e.cause }
+
+// Key function returns key value.
+func (e AssignProjectResponseValidationError) Key() bool { return e.key }
+
+// ErrorName returns error name.
+func (e AssignProjectResponseValidationError) ErrorName() string {
+	return "AssignProjectResponseValidationError"
+}
+
+// Error satisfies the builtin error interface
+func (e AssignProjectResponseValidationError) Error() string {
+	cause := ""
+	if e.cause != nil {
+		cause = fmt.Sprintf(" | caused by: %v", e.cause)
+	}
+
+	key := ""
+	if e.key {
+		key = "key for "
+	}
+
+	return fmt.Sprintf(
+		"invalid %sAssignProjectResponse.%s: %s%s",
+		key,
+		e.field,
+		e.reason,
+		cause)
+}
+
+var _ error = AssignProjectResponseValidationError{}
+
+var _ interface {
+	Field() string
+	Reason() string
+	Key() bool
+	Cause() error
+	ErrorName() string
+} = AssignProjectResponseValidationError{}

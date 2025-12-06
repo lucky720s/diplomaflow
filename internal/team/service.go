@@ -20,7 +20,7 @@ func NewService(repo Repository, authClient authv1.AuthServiceClient) *Service {
 	}
 }
 
-func (s *Service) CreateTeam(ctx context.Context, name string, projectID int64, memberIDs []int64) (int64, error) {
+func (s *Service) CreateTeam(ctx context.Context, name string, projectID *int64, memberIDs []int64) (int64, error) {
 	members := make([]TeamMember, len(memberIDs))
 	for i, uid := range memberIDs {
 		role := "member"
@@ -68,9 +68,11 @@ func (s *Service) GetAvailableStudents(ctx context.Context, universityID int64) 
 	return resp.Users, nil
 }
 func (s *Service) CreateTeamForProject(ctx context.Context, projectID int64, studentID int64) error {
+	pID := projectID
+
 	team := &Team{
 		Name:      fmt.Sprintf("Team Project %d", projectID),
-		ProjectID: projectID,
+		ProjectID: &pID,
 		Members: []TeamMember{
 			{
 				UserID:    studentID,
@@ -84,6 +86,18 @@ func (s *Service) CreateTeamForProject(ctx context.Context, projectID int64, stu
 
 	if err := s.repo.Create(ctx, team); err != nil {
 		return fmt.Errorf("failed to create team for project: %w", err)
+	}
+	return nil
+}
+func (s *Service) AssignProject(ctx context.Context, teamID int64, projectID int64) error {
+	team, err := s.repo.GetByID(ctx, uint64(teamID))
+	if err != nil {
+		return err
+	}
+	team.ProjectID = &projectID
+
+	if err := s.repo.Update(ctx, team); err != nil {
+		return fmt.Errorf("failed to assign project: %w", err)
 	}
 	return nil
 }

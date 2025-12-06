@@ -12,6 +12,7 @@ type Repository interface {
 	GetByID(ctx context.Context, id uint64) (*Team, error)
 	AddMember(ctx context.Context, member *TeamMember) error
 	RemoveMember(ctx context.Context, teamID uint64, userID int64) error
+	Update(ctx context.Context, team *Team) error
 }
 
 type repository struct {
@@ -45,4 +46,7 @@ func (r *repository) RemoveMember(ctx context.Context, teamID uint64, userID int
 	return r.db.WithContext(ctx).
 		Where("team_id = ? AND user_id = ?", teamID, userID).
 		Delete(&TeamMember{}).Error
+}
+func (r *repository) Update(ctx context.Context, team *Team) error {
+	return r.db.WithContext(ctx).Save(team).Error
 }

@@ -22,6 +22,7 @@ const (
 	TeamService_CreateTeam_FullMethodName           = "/team.TeamService/CreateTeam"
 	TeamService_GetTeam_FullMethodName              = "/team.TeamService/GetTeam"
 	TeamService_GetAvailableStudents_FullMethodName = "/team.TeamService/GetAvailableStudents"
+	TeamService_AssignProject_FullMethodName        = "/team.TeamService/AssignProject"
 )
 
 // TeamServiceClient is the client API for TeamService service.
@@ -31,6 +32,7 @@ type TeamServiceClient interface {
 	CreateTeam(ctx context.Context, in *CreateTeamRequest, opts ...grpc.CallOption) (*CreateTeamResponse, error)
 	GetTeam(ctx context.Context, in *GetTeamRequest, opts ...grpc.CallOption) (*GetTeamResponse, error)
 	GetAvailableStudents(ctx context.Context, in *GetAvailableStudentsRequest, opts ...grpc.CallOption) (*GetAvailableStudentsResponse, error)
+	AssignProject(ctx context.Context, in *AssignProjectRequest, opts ...grpc.CallOption) (*AssignProjectResponse, error)
 }
 
 type teamServiceClient struct {
@@ -68,6 +70,15 @@ func (c *teamServiceClient) GetAvailableStudents(ctx context.Context, in *GetAva
 	return out, nil
 }
 
+func (c *teamServiceClient) AssignProject(ctx context.Context, in *AssignProjectRequest, opts ...grpc.CallOption) (*AssignProjectResponse, error) {
+	out := new(AssignProjectResponse)
+	err := c.cc.Invoke(ctx, TeamService_AssignProject_FullMethodName, in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // TeamServiceServer is the server API for TeamService service.
 // All implementations must embed UnimplementedTeamServiceServer
 // for forward compatibility
@@ -75,6 +86,7 @@ type TeamServiceServer interface {
 	CreateTeam(context.Context, *CreateTeamRequest) (*CreateTeamResponse, error)
 	GetTeam(context.Context, *GetTeamRequest) (*GetTeamResponse, error)
 	GetAvailableStudents(context.Context, *GetAvailableStudentsRequest) (*GetAvailableStudentsResponse, error)
+	AssignProject(context.Context, *AssignProjectRequest) (*AssignProjectResponse, error)
 	mustEmbedUnimplementedTeamServiceServer()
 }
 
@@ -90,6 +102,9 @@ func (UnimplementedTeamServiceServer) GetTeam(context.Context, *GetTeamRequest) 
 }
 func (UnimplementedTeamServiceServer) GetAvailableStudents(context.Context, *GetAvailableStudentsRequest) (*GetAvailableStudentsResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetAvailableStudents not implemented")
+}
+func (UnimplementedTeamServiceServer) AssignProject(context.Context, *AssignProjectRequest) (*AssignProjectResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method AssignProject not implemented")
 }
 func (UnimplementedTeamServiceServer) mustEmbedUnimplementedTeamServiceServer() {}
 
@@ -158,6 +173,24 @@ func _TeamService_GetAvailableStudents_Handler(srv interface{}, ctx context.Cont
 	return interceptor(ctx, in, info, handler)
 }
 
+func _TeamService_AssignProject_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(AssignProjectRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(TeamServiceServer).AssignProject(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: TeamService_AssignProject_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(TeamServiceServer).AssignProject(ctx, req.(*AssignProjectRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // TeamService_ServiceDesc is the grpc.ServiceDesc for TeamService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -176,6 +209,10 @@ var TeamService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "GetAvailableStudents",
 			Handler:    _TeamService_GetAvailableStudents_Handler,
+		},
+		{
+			MethodName: "AssignProject",
+			Handler:    _TeamService_AssignProject_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

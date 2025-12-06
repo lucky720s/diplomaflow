@@ -437,6 +437,102 @@ func (x *GetAvailableStudentsResponse) GetStudents() []*StudentPreview {
 	return nil
 }
 
+type AssignProjectRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	TeamId        int64                  `protobuf:"varint,1,opt,name=team_id,json=teamId,proto3" json:"team_id,omitempty"`
+	ProjectId     int64                  `protobuf:"varint,2,opt,name=project_id,json=projectId,proto3" json:"project_id,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *AssignProjectRequest) Reset() {
+	*x = AssignProjectRequest{}
+	mi := &file_team_v1_team_proto_msgTypes[8]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *AssignProjectRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*AssignProjectRequest) ProtoMessage() {}
+
+func (x *AssignProjectRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_team_v1_team_proto_msgTypes[8]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use AssignProjectRequest.ProtoReflect.Descriptor instead.
+func (*AssignProjectRequest) Descriptor() ([]byte, []int) {
+	return file_team_v1_team_proto_rawDescGZIP(), []int{8}
+}
+
+func (x *AssignProjectRequest) GetTeamId() int64 {
+	if x != nil {
+		return x.TeamId
+	}
+	return 0
+}
+
+func (x *AssignProjectRequest) GetProjectId() int64 {
+	if x != nil {
+		return x.ProjectId
+	}
+	return 0
+}
+
+type AssignProjectResponse struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Success       bool                   `protobuf:"varint,1,opt,name=success,proto3" json:"success,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *AssignProjectResponse) Reset() {
+	*x = AssignProjectResponse{}
+	mi := &file_team_v1_team_proto_msgTypes[9]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *AssignProjectResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*AssignProjectResponse) ProtoMessage() {}
+
+func (x *AssignProjectResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_team_v1_team_proto_msgTypes[9]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use AssignProjectResponse.ProtoReflect.Descriptor instead.
+func (*AssignProjectResponse) Descriptor() ([]byte, []int) {
+	return file_team_v1_team_proto_rawDescGZIP(), []int{9}
+}
+
+func (x *AssignProjectResponse) GetSuccess() bool {
+	if x != nil {
+		return x.Success
+	}
+	return false
+}
+
 var File_team_v1_team_proto protoreflect.FileDescriptor
 
 const file_team_v1_team_proto_rawDesc = "" +
@@ -469,12 +565,19 @@ const file_team_v1_team_proto_rawDesc = "" +
 	"\tfull_name\x18\x02 \x01(\tR\bfullName\x12\x14\n" +
 	"\x05email\x18\x03 \x01(\tR\x05email\"P\n" +
 	"\x1cGetAvailableStudentsResponse\x120\n" +
-	"\bstudents\x18\x01 \x03(\v2\x14.team.StudentPreviewR\bstudents2\xe5\x01\n" +
+	"\bstudents\x18\x01 \x03(\v2\x14.team.StudentPreviewR\bstudents\"N\n" +
+	"\x14AssignProjectRequest\x12\x17\n" +
+	"\ateam_id\x18\x01 \x01(\x03R\x06teamId\x12\x1d\n" +
+	"\n" +
+	"project_id\x18\x02 \x01(\x03R\tprojectId\"1\n" +
+	"\x15AssignProjectResponse\x12\x18\n" +
+	"\asuccess\x18\x01 \x01(\bR\asuccess2\xaf\x02\n" +
 	"\vTeamService\x12?\n" +
 	"\n" +
 	"CreateTeam\x12\x17.team.CreateTeamRequest\x1a\x18.team.CreateTeamResponse\x126\n" +
 	"\aGetTeam\x12\x14.team.GetTeamRequest\x1a\x15.team.GetTeamResponse\x12]\n" +
-	"\x14GetAvailableStudents\x12!.team.GetAvailableStudentsRequest\x1a\".team.GetAvailableStudentsResponseB7Z5github.com/lucky720s/diplomaflow/pkg/protobuf/team/v1b\x06proto3"
+	"\x14GetAvailableStudents\x12!.team.GetAvailableStudentsRequest\x1a\".team.GetAvailableStudentsResponse\x12H\n" +
+	"\rAssignProject\x12\x1a.team.AssignProjectRequest\x1a\x1b.team.AssignProjectResponseB7Z5github.com/lucky720s/diplomaflow/pkg/protobuf/team/v1b\x06proto3"
 
 var (
 	file_team_v1_team_proto_rawDescOnce sync.Once
@@ -488,7 +591,7 @@ func file_team_v1_team_proto_rawDescGZIP() []byte {
 	return file_team_v1_team_proto_rawDescData
 }
 
-var file_team_v1_team_proto_msgTypes = make([]protoimpl.MessageInfo, 8)
+var file_team_v1_team_proto_msgTypes = make([]protoimpl.MessageInfo, 10)
 var file_team_v1_team_proto_goTypes = []any{
 	(*CreateTeamRequest)(nil),            // 0: team.CreateTeamRequest
 	(*CreateTeamResponse)(nil),           // 1: team.CreateTeamResponse
@@ -498,6 +601,8 @@ var file_team_v1_team_proto_goTypes = []any{
 	(*GetAvailableStudentsRequest)(nil),  // 5: team.GetAvailableStudentsRequest
 	(*StudentPreview)(nil),               // 6: team.StudentPreview
 	(*GetAvailableStudentsResponse)(nil), // 7: team.GetAvailableStudentsResponse
+	(*AssignProjectRequest)(nil),         // 8: team.AssignProjectRequest
+	(*AssignProjectResponse)(nil),        // 9: team.AssignProjectResponse
 }
 var file_team_v1_team_proto_depIdxs = []int32{
 	3, // 0: team.GetTeamResponse.members:type_name -> team.TeamMember
@@ -505,11 +610,13 @@ var file_team_v1_team_proto_depIdxs = []int32{
 	0, // 2: team.TeamService.CreateTeam:input_type -> team.CreateTeamRequest
 	2, // 3: team.TeamService.GetTeam:input_type -> team.GetTeamRequest
 	5, // 4: team.TeamService.GetAvailableStudents:input_type -> team.GetAvailableStudentsRequest
-	1, // 5: team.TeamService.CreateTeam:output_type -> team.CreateTeamResponse
-	4, // 6: team.TeamService.GetTeam:output_type -> team.GetTeamResponse
-	7, // 7: team.TeamService.GetAvailableStudents:output_type -> team.GetAvailableStudentsResponse
-	5, // [5:8] is the sub-list for method output_type
-	2, // [2:5] is the sub-list for method input_type
+	8, // 5: team.TeamService.AssignProject:input_type -> team.AssignProjectRequest
+	1, // 6: team.TeamService.CreateTeam:output_type -> team.CreateTeamResponse
+	4, // 7: team.TeamService.GetTeam:output_type -> team.GetTeamResponse
+	7, // 8: team.TeamService.GetAvailableStudents:output_type -> team.GetAvailableStudentsResponse
+	9, // 9: team.TeamService.AssignProject:output_type -> team.AssignProjectResponse
+	6, // [6:10] is the sub-list for method output_type
+	2, // [2:6] is the sub-list for method input_type
 	2, // [2:2] is the sub-list for extension type_name
 	2, // [2:2] is the sub-list for extension extendee
 	0, // [0:2] is the sub-list for field type_name
@@ -526,7 +633,7 @@ func file_team_v1_team_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_team_v1_team_proto_rawDesc), len(file_team_v1_team_proto_rawDesc)),
 			NumEnums:      0,
-			NumMessages:   8,
+			NumMessages:   10,
 			NumExtensions: 0,
 			NumServices:   1,
 		},

@@ -8,6 +8,8 @@ service TeamService {
   rpc CreateTeam (CreateTeamRequest) returns (CreateTeamResponse);
   rpc GetTeam (GetTeamRequest) returns (GetTeamResponse);
   rpc GetAvailableStudents (GetAvailableStudentsRequest) returns (GetAvailableStudentsResponse);
+  rpc AssignProject (AssignProjectRequest) returns (AssignProjectResponse);
+
 }
 
 message CreateTeamRequest {
@@ -48,4 +50,12 @@ message StudentPreview {
 
 message GetAvailableStudentsResponse {
   repeated StudentPreview students = 1;
+}
+message AssignProjectRequest {
+  int64 team_id = 1;
+  int64 project_id = 2;
+}
+
+message AssignProjectResponse {
+  bool success = 1;
 }
