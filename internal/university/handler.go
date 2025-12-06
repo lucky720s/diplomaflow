@@ -2,6 +2,7 @@ package university
 
 import (
 	"context"
+
 	universityv1 "github.com/lucky720s/diplomaflow/pkg/protobuf/university/v1"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
@@ -48,5 +49,28 @@ func (h *Handler) CreateDepartment(ctx context.Context, req *universityv1.Create
 	}
 	return &universityv1.CreateDepartmentResponse{
 		Department: &universityv1.Department{Id: dep.ID, Name: dep.Name, UniversityId: dep.UniversityID},
+	}, nil
+}
+func (h *Handler) ListDepartments(ctx context.Context, req *universityv1.ListDepartmentsRequest) (*universityv1.ListDepartmentsResponse, error) {
+	if req.UniversityId == 0 {
+		return nil, status.Error(codes.InvalidArgument, "university_id is required")
+	}
+
+	deps, err := h.service.ListDepartments(ctx, req.UniversityId)
+	if err != nil {
+		return nil, status.Errorf(codes.Internal, "failed to list departments: %v", err)
+	}
+
+	var pbDeps []*universityv1.Department
+	for _, d := range deps {
+		pbDeps = append(pbDeps, &universityv1.Department{
+			Id:           d.ID,
+			Name:         d.Name,
+			UniversityId: d.UniversityID,
+		})
+	}
+
+	return &universityv1.ListDepartmentsResponse{
+		Departments: pbDeps,
 	}, nil
 }
