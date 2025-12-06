@@ -46,13 +46,9 @@ func main() {
 	}
 	defer authConn.Close()
 	authClient := authv1.NewAuthServiceClient(authConn)
-
-	h, eventHandler, cleanup, err := team.InitializeApp(&cfg, db, log.Logger, authClient)
-	if err != nil {
-		log.Fatal("failed to initialize app", zap.Error(err))
-	}
-	defer cleanup()
-
+	app := team.InitializeApp(&cfg, db, log.Logger, authClient)
+	h := app.Handler
+	eventHandler := app.EventHandler
 	brokers := strings.Split(cfg.Kafka.Brokers, ",")
 	kafkaConsumer, err := broker.NewConsumer(brokers, "team-service-group", log.Logger)
 	if err != nil {

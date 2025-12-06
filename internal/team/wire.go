@@ -11,17 +11,30 @@ import (
 	"gorm.io/gorm"
 )
 
+type App struct {
+	Handler      *Handler
+	EventHandler *EventHandler
+}
+
+func NewApp(h *Handler, eh *EventHandler) *App {
+	return &App{
+		Handler:      h,
+		EventHandler: eh,
+	}
+}
+
 func InitializeApp(
 	cfg *Config,
 	db *gorm.DB,
 	log *zap.Logger,
 	authClient authv1.AuthServiceClient,
-) (*Handler, *EventHandler, func(), error) {
+) *App {
 	wire.Build(
 		NewRepository,
 		NewService,
 		NewEventHandler,
 		NewHandler,
+		NewApp,
 	)
-	return &Handler{}, &EventHandler{}, nil, nil
+	return &App{}
 }
