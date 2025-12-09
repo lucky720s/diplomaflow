@@ -7,6 +7,8 @@ wire:
 	cd internal/university && wire
 	cd internal/workflow && wire
 	cd internal/gateway && wire
+	cd internal/file && wire
+	cd internal/form && wire
 	@echo "Wire generated!"
 
 proto:

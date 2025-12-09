@@ -10,6 +10,9 @@ import (
 	"github.com/lucky720s/diplomaflow/internal/gateway/handler"
 	"github.com/lucky720s/diplomaflow/pkg/logger"
 	authv1 "github.com/lucky720s/diplomaflow/pkg/protobuf/auth/v1"
+	filev1 "github.com/lucky720s/diplomaflow/pkg/protobuf/file/v1"
+	formv1 "github.com/lucky720s/diplomaflow/pkg/protobuf/form/v1"
+	notificationv1 "github.com/lucky720s/diplomaflow/pkg/protobuf/notification/v1"
 	projectv1 "github.com/lucky720s/diplomaflow/pkg/protobuf/project/v1"
 	rolev1 "github.com/lucky720s/diplomaflow/pkg/protobuf/role/v1"
 	teamv1 "github.com/lucky720s/diplomaflow/pkg/protobuf/team/v1"
@@ -75,7 +78,28 @@ func ProvideWorkflowClient(cfg *config.Config) (workflowv1.WorkflowServiceClient
 	}
 	return workflowv1.NewWorkflowServiceClient(conn), cleanup, nil
 }
+func ProvideNotificationClient(cfg *config.Config) (notificationv1.NotificationServiceClient, func(), error) {
+	conn, cleanup, err := provideConn(cfg.NotificationServiceAddr)
+	if err != nil {
+		return nil, nil, err
+	}
+	return notificationv1.NewNotificationServiceClient(conn), cleanup, nil
+}
+func ProvideFileClient(cfg *config.Config) (filev1.FileServiceClient, func(), error) {
+	conn, cleanup, err := provideConn(cfg.FileServiceAddr)
+	if err != nil {
+		return nil, nil, err
+	}
+	return filev1.NewFileServiceClient(conn), cleanup, nil
+}
 
+func ProvideFormClient(cfg *config.Config) (formv1.FormServiceClient, func(), error) {
+	conn, cleanup, err := provideConn(cfg.FormServiceAddr)
+	if err != nil {
+		return nil, nil, err
+	}
+	return formv1.NewFormServiceClient(conn), cleanup, nil
+}
 func InitializeApp(cfg *config.Config, log *logger.Logger) (*handler.Handler, func(), error) {
 	wire.Build(
 		ProvideAuthClient,
@@ -84,6 +108,9 @@ func InitializeApp(cfg *config.Config, log *logger.Logger) (*handler.Handler, fu
 		ProvideUniversityClient,
 		ProvideRoleClient,
 		ProvideWorkflowClient,
+		ProvideNotificationClient,
+		ProvideFileClient,
+		ProvideFormClient,
 		handler.NewHandler,
 	)
 	return &handler.Handler{}, nil, nil

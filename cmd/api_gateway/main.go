@@ -60,9 +60,7 @@ func main() {
 		}
 		public := v1.Group("/public")
 		{
-			// Получение списка университетов
 			public.GET("/universities", h.ListUniversities)
-			// Получение списка кафедр конкретного университета
 			public.GET("/universities/:id/departments", h.ListDepartments)
 		}
 		protected := v1.Group("/")
@@ -85,8 +83,9 @@ func main() {
 			teams.GET("/:id", h.GetTeam)
 			teams.GET("/available-students", h.GetAvailableStudents)
 
-			// Новый роут для привязки проекта
 			teams.PUT("/:id/assign-project", h.AssignProjectToTeam)
+			teams.GET("/invites", h.GetMyInvites)
+			teams.POST("/invites/:id/respond", h.RespondToInvite)
 		}
 		universities := protected.Group("/universities")
 		{
@@ -107,6 +106,20 @@ func main() {
 			workflows.POST("", h.CreateWorkflow)
 			//workflows.GET("/:id", h.GetWorkflow)
 			// workflows.PUT("/:id/status", h.UpdateWorkflowStatus)
+		}
+		notifications := protected.Group("/notifications")
+		{
+			notifications.GET("", h.ListNotifications)
+			notifications.PUT("/:id/read", h.MarkNotificationRead)
+		}
+		files := protected.Group("/files")
+		{
+			files.POST("/upload", h.UploadFile)
+			files.GET("/:id", h.DownloadFile)
+		}
+		forms := protected.Group("/forms")
+		{
+			forms.POST("/submit", h.SubmitForm)
 		}
 	}
 

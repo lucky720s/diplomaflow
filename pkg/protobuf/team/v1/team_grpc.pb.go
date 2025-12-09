@@ -23,6 +23,8 @@ const (
 	TeamService_GetTeam_FullMethodName              = "/team.TeamService/GetTeam"
 	TeamService_GetAvailableStudents_FullMethodName = "/team.TeamService/GetAvailableStudents"
 	TeamService_AssignProject_FullMethodName        = "/team.TeamService/AssignProject"
+	TeamService_GetMyInvites_FullMethodName         = "/team.TeamService/GetMyInvites"
+	TeamService_RespondToInvite_FullMethodName      = "/team.TeamService/RespondToInvite"
 )
 
 // TeamServiceClient is the client API for TeamService service.
@@ -33,6 +35,8 @@ type TeamServiceClient interface {
 	GetTeam(ctx context.Context, in *GetTeamRequest, opts ...grpc.CallOption) (*GetTeamResponse, error)
 	GetAvailableStudents(ctx context.Context, in *GetAvailableStudentsRequest, opts ...grpc.CallOption) (*GetAvailableStudentsResponse, error)
 	AssignProject(ctx context.Context, in *AssignProjectRequest, opts ...grpc.CallOption) (*AssignProjectResponse, error)
+	GetMyInvites(ctx context.Context, in *GetMyInvitesRequest, opts ...grpc.CallOption) (*GetMyInvitesResponse, error)
+	RespondToInvite(ctx context.Context, in *RespondToInviteRequest, opts ...grpc.CallOption) (*RespondToInviteResponse, error)
 }
 
 type teamServiceClient struct {
@@ -79,6 +83,24 @@ func (c *teamServiceClient) AssignProject(ctx context.Context, in *AssignProject
 	return out, nil
 }
 
+func (c *teamServiceClient) GetMyInvites(ctx context.Context, in *GetMyInvitesRequest, opts ...grpc.CallOption) (*GetMyInvitesResponse, error) {
+	out := new(GetMyInvitesResponse)
+	err := c.cc.Invoke(ctx, TeamService_GetMyInvites_FullMethodName, in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *teamServiceClient) RespondToInvite(ctx context.Context, in *RespondToInviteRequest, opts ...grpc.CallOption) (*RespondToInviteResponse, error) {
+	out := new(RespondToInviteResponse)
+	err := c.cc.Invoke(ctx, TeamService_RespondToInvite_FullMethodName, in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // TeamServiceServer is the server API for TeamService service.
 // All implementations must embed UnimplementedTeamServiceServer
 // for forward compatibility
@@ -87,6 +109,8 @@ type TeamServiceServer interface {
 	GetTeam(context.Context, *GetTeamRequest) (*GetTeamResponse, error)
 	GetAvailableStudents(context.Context, *GetAvailableStudentsRequest) (*GetAvailableStudentsResponse, error)
 	AssignProject(context.Context, *AssignProjectRequest) (*AssignProjectResponse, error)
+	GetMyInvites(context.Context, *GetMyInvitesRequest) (*GetMyInvitesResponse, error)
+	RespondToInvite(context.Context, *RespondToInviteRequest) (*RespondToInviteResponse, error)
 	mustEmbedUnimplementedTeamServiceServer()
 }
 
@@ -105,6 +129,12 @@ func (UnimplementedTeamServiceServer) GetAvailableStudents(context.Context, *Get
 }
 func (UnimplementedTeamServiceServer) AssignProject(context.Context, *AssignProjectRequest) (*AssignProjectResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method AssignProject not implemented")
+}
+func (UnimplementedTeamServiceServer) GetMyInvites(context.Context, *GetMyInvitesRequest) (*GetMyInvitesResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetMyInvites not implemented")
+}
+func (UnimplementedTeamServiceServer) RespondToInvite(context.Context, *RespondToInviteRequest) (*RespondToInviteResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method RespondToInvite not implemented")
 }
 func (UnimplementedTeamServiceServer) mustEmbedUnimplementedTeamServiceServer() {}
 
@@ -191,6 +221,42 @@ func _TeamService_AssignProject_Handler(srv interface{}, ctx context.Context, de
 	return interceptor(ctx, in, info, handler)
 }
 
+func _TeamService_GetMyInvites_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetMyInvitesRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(TeamServiceServer).GetMyInvites(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: TeamService_GetMyInvites_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(TeamServiceServer).GetMyInvites(ctx, req.(*GetMyInvitesRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _TeamService_RespondToInvite_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(RespondToInviteRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(TeamServiceServer).RespondToInvite(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: TeamService_RespondToInvite_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(TeamServiceServer).RespondToInvite(ctx, req.(*RespondToInviteRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // TeamService_ServiceDesc is the grpc.ServiceDesc for TeamService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -213,6 +279,14 @@ var TeamService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "AssignProject",
 			Handler:    _TeamService_AssignProject_Handler,
+		},
+		{
+			MethodName: "GetMyInvites",
+			Handler:    _TeamService_GetMyInvites_Handler,
+		},
+		{
+			MethodName: "RespondToInvite",
+			Handler:    _TeamService_RespondToInvite_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

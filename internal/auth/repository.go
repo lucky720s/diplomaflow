@@ -14,10 +14,11 @@ type Repository interface {
 }
 
 type UserFilter struct {
-	UniversityID int64
-	Role         string
-	Limit        int
-	Offset       int
+	UniversityID  int64
+	Role          string
+	ExcludeUserID int64
+	Limit         int
+	Offset        int
 }
 
 type repository struct {
@@ -61,7 +62,9 @@ func (r *repository) ListUsers(ctx context.Context, filter UserFilter) ([]*User,
 	if filter.Role != "" {
 		query = query.Where("role = ?", filter.Role)
 	}
-
+	if filter.ExcludeUserID != 0 {
+		query = query.Where("id != ?", filter.ExcludeUserID)
+	}
 	if err := query.Count(&total).Error; err != nil {
 		return nil, 0, err
 	}

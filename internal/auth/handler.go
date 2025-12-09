@@ -70,7 +70,7 @@ func (h *Handler) ValidateToken(ctx context.Context, req *authv1.ValidateTokenRe
 }
 
 func (h *Handler) ListUsers(ctx context.Context, req *authv1.ListUsersRequest) (*authv1.ListUsersResponse, error) {
-	users, total, err := h.service.ListUsers(ctx, req.UniversityId, req.Role, req.Page, req.PageSize)
+	users, total, err := h.service.ListUsers(ctx, req.UniversityId, req.Role, req.Page, req.PageSize, req.ExcludeUserId)
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, "failed to list users: %v", err)
 	}

@@ -26,6 +26,7 @@ type CreateTeamRequest struct {
 	Name          string                 `protobuf:"bytes,1,opt,name=name,proto3" json:"name,omitempty"`
 	ProjectId     int64                  `protobuf:"varint,2,opt,name=project_id,json=projectId,proto3" json:"project_id,omitempty"`
 	MemberIds     []int64                `protobuf:"varint,3,rep,packed,name=member_ids,json=memberIds,proto3" json:"member_ids,omitempty"`
+	LeaderId      int64                  `protobuf:"varint,4,opt,name=leader_id,json=leaderId,proto3" json:"leader_id,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -79,6 +80,13 @@ func (x *CreateTeamRequest) GetMemberIds() []int64 {
 		return x.MemberIds
 	}
 	return nil
+}
+
+func (x *CreateTeamRequest) GetLeaderId() int64 {
+	if x != nil {
+		return x.LeaderId
+	}
+	return 0
 }
 
 type CreateTeamResponse struct {
@@ -292,6 +300,7 @@ func (x *GetTeamResponse) GetMembers() []*TeamMember {
 type GetAvailableStudentsRequest struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	UniversityId  int64                  `protobuf:"varint,1,opt,name=university_id,json=universityId,proto3" json:"university_id,omitempty"`
+	ExcludeUserId int64                  `protobuf:"varint,2,opt,name=exclude_user_id,json=excludeUserId,proto3" json:"exclude_user_id,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -329,6 +338,13 @@ func (*GetAvailableStudentsRequest) Descriptor() ([]byte, []int) {
 func (x *GetAvailableStudentsRequest) GetUniversityId() int64 {
 	if x != nil {
 		return x.UniversityId
+	}
+	return 0
+}
+
+func (x *GetAvailableStudentsRequest) GetExcludeUserId() int64 {
+	if x != nil {
+		return x.ExcludeUserId
 	}
 	return 0
 }
@@ -533,17 +549,294 @@ func (x *AssignProjectResponse) GetSuccess() bool {
 	return false
 }
 
+type Invite struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Id            int64                  `protobuf:"varint,1,opt,name=id,proto3" json:"id,omitempty"`
+	TeamId        int64                  `protobuf:"varint,2,opt,name=team_id,json=teamId,proto3" json:"team_id,omitempty"`
+	TeamName      string                 `protobuf:"bytes,3,opt,name=team_name,json=teamName,proto3" json:"team_name,omitempty"`
+	InviterId     int64                  `protobuf:"varint,4,opt,name=inviter_id,json=inviterId,proto3" json:"inviter_id,omitempty"`
+	Status        string                 `protobuf:"bytes,5,opt,name=status,proto3" json:"status,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *Invite) Reset() {
+	*x = Invite{}
+	mi := &file_team_v1_team_proto_msgTypes[10]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *Invite) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*Invite) ProtoMessage() {}
+
+func (x *Invite) ProtoReflect() protoreflect.Message {
+	mi := &file_team_v1_team_proto_msgTypes[10]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use Invite.ProtoReflect.Descriptor instead.
+func (*Invite) Descriptor() ([]byte, []int) {
+	return file_team_v1_team_proto_rawDescGZIP(), []int{10}
+}
+
+func (x *Invite) GetId() int64 {
+	if x != nil {
+		return x.Id
+	}
+	return 0
+}
+
+func (x *Invite) GetTeamId() int64 {
+	if x != nil {
+		return x.TeamId
+	}
+	return 0
+}
+
+func (x *Invite) GetTeamName() string {
+	if x != nil {
+		return x.TeamName
+	}
+	return ""
+}
+
+func (x *Invite) GetInviterId() int64 {
+	if x != nil {
+		return x.InviterId
+	}
+	return 0
+}
+
+func (x *Invite) GetStatus() string {
+	if x != nil {
+		return x.Status
+	}
+	return ""
+}
+
+type GetMyInvitesRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	UserId        int64                  `protobuf:"varint,1,opt,name=user_id,json=userId,proto3" json:"user_id,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *GetMyInvitesRequest) Reset() {
+	*x = GetMyInvitesRequest{}
+	mi := &file_team_v1_team_proto_msgTypes[11]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *GetMyInvitesRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*GetMyInvitesRequest) ProtoMessage() {}
+
+func (x *GetMyInvitesRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_team_v1_team_proto_msgTypes[11]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use GetMyInvitesRequest.ProtoReflect.Descriptor instead.
+func (*GetMyInvitesRequest) Descriptor() ([]byte, []int) {
+	return file_team_v1_team_proto_rawDescGZIP(), []int{11}
+}
+
+func (x *GetMyInvitesRequest) GetUserId() int64 {
+	if x != nil {
+		return x.UserId
+	}
+	return 0
+}
+
+type GetMyInvitesResponse struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Invites       []*Invite              `protobuf:"bytes,1,rep,name=invites,proto3" json:"invites,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *GetMyInvitesResponse) Reset() {
+	*x = GetMyInvitesResponse{}
+	mi := &file_team_v1_team_proto_msgTypes[12]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *GetMyInvitesResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*GetMyInvitesResponse) ProtoMessage() {}
+
+func (x *GetMyInvitesResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_team_v1_team_proto_msgTypes[12]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use GetMyInvitesResponse.ProtoReflect.Descriptor instead.
+func (*GetMyInvitesResponse) Descriptor() ([]byte, []int) {
+	return file_team_v1_team_proto_rawDescGZIP(), []int{12}
+}
+
+func (x *GetMyInvitesResponse) GetInvites() []*Invite {
+	if x != nil {
+		return x.Invites
+	}
+	return nil
+}
+
+type RespondToInviteRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	InviteId      int64                  `protobuf:"varint,1,opt,name=invite_id,json=inviteId,proto3" json:"invite_id,omitempty"`
+	UserId        int64                  `protobuf:"varint,2,opt,name=user_id,json=userId,proto3" json:"user_id,omitempty"`
+	Accept        bool                   `protobuf:"varint,3,opt,name=accept,proto3" json:"accept,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *RespondToInviteRequest) Reset() {
+	*x = RespondToInviteRequest{}
+	mi := &file_team_v1_team_proto_msgTypes[13]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *RespondToInviteRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*RespondToInviteRequest) ProtoMessage() {}
+
+func (x *RespondToInviteRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_team_v1_team_proto_msgTypes[13]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use RespondToInviteRequest.ProtoReflect.Descriptor instead.
+func (*RespondToInviteRequest) Descriptor() ([]byte, []int) {
+	return file_team_v1_team_proto_rawDescGZIP(), []int{13}
+}
+
+func (x *RespondToInviteRequest) GetInviteId() int64 {
+	if x != nil {
+		return x.InviteId
+	}
+	return 0
+}
+
+func (x *RespondToInviteRequest) GetUserId() int64 {
+	if x != nil {
+		return x.UserId
+	}
+	return 0
+}
+
+func (x *RespondToInviteRequest) GetAccept() bool {
+	if x != nil {
+		return x.Accept
+	}
+	return false
+}
+
+type RespondToInviteResponse struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Success       bool                   `protobuf:"varint,1,opt,name=success,proto3" json:"success,omitempty"`
+	Message       string                 `protobuf:"bytes,2,opt,name=message,proto3" json:"message,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *RespondToInviteResponse) Reset() {
+	*x = RespondToInviteResponse{}
+	mi := &file_team_v1_team_proto_msgTypes[14]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *RespondToInviteResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*RespondToInviteResponse) ProtoMessage() {}
+
+func (x *RespondToInviteResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_team_v1_team_proto_msgTypes[14]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use RespondToInviteResponse.ProtoReflect.Descriptor instead.
+func (*RespondToInviteResponse) Descriptor() ([]byte, []int) {
+	return file_team_v1_team_proto_rawDescGZIP(), []int{14}
+}
+
+func (x *RespondToInviteResponse) GetSuccess() bool {
+	if x != nil {
+		return x.Success
+	}
+	return false
+}
+
+func (x *RespondToInviteResponse) GetMessage() string {
+	if x != nil {
+		return x.Message
+	}
+	return ""
+}
+
 var File_team_v1_team_proto protoreflect.FileDescriptor
 
 const file_team_v1_team_proto_rawDesc = "" +
 	"\n" +
-	"\x12team/v1/team.proto\x12\x04team\"e\n" +
+	"\x12team/v1/team.proto\x12\x04team\"\x82\x01\n" +
 	"\x11CreateTeamRequest\x12\x12\n" +
 	"\x04name\x18\x01 \x01(\tR\x04name\x12\x1d\n" +
 	"\n" +
 	"project_id\x18\x02 \x01(\x03R\tprojectId\x12\x1d\n" +
 	"\n" +
-	"member_ids\x18\x03 \x03(\x03R\tmemberIds\"-\n" +
+	"member_ids\x18\x03 \x03(\x03R\tmemberIds\x12\x1b\n" +
+	"\tleader_id\x18\x04 \x01(\x03R\bleaderId\"-\n" +
 	"\x12CreateTeamResponse\x12\x17\n" +
 	"\ateam_id\x18\x01 \x01(\x03R\x06teamId\")\n" +
 	"\x0eGetTeamRequest\x12\x17\n" +
@@ -557,9 +850,10 @@ const file_team_v1_team_proto_rawDesc = "" +
 	"\x04name\x18\x02 \x01(\tR\x04name\x12\x1d\n" +
 	"\n" +
 	"project_id\x18\x03 \x01(\x03R\tprojectId\x12*\n" +
-	"\amembers\x18\x04 \x03(\v2\x10.team.TeamMemberR\amembers\"B\n" +
+	"\amembers\x18\x04 \x03(\v2\x10.team.TeamMemberR\amembers\"j\n" +
 	"\x1bGetAvailableStudentsRequest\x12#\n" +
-	"\runiversity_id\x18\x01 \x01(\x03R\funiversityId\"S\n" +
+	"\runiversity_id\x18\x01 \x01(\x03R\funiversityId\x12&\n" +
+	"\x0fexclude_user_id\x18\x02 \x01(\x03R\rexcludeUserId\"S\n" +
 	"\x0eStudentPreview\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\x03R\x02id\x12\x1b\n" +
 	"\tfull_name\x18\x02 \x01(\tR\bfullName\x12\x14\n" +
@@ -571,13 +865,33 @@ const file_team_v1_team_proto_rawDesc = "" +
 	"\n" +
 	"project_id\x18\x02 \x01(\x03R\tprojectId\"1\n" +
 	"\x15AssignProjectResponse\x12\x18\n" +
-	"\asuccess\x18\x01 \x01(\bR\asuccess2\xaf\x02\n" +
+	"\asuccess\x18\x01 \x01(\bR\asuccess\"\x85\x01\n" +
+	"\x06Invite\x12\x0e\n" +
+	"\x02id\x18\x01 \x01(\x03R\x02id\x12\x17\n" +
+	"\ateam_id\x18\x02 \x01(\x03R\x06teamId\x12\x1b\n" +
+	"\tteam_name\x18\x03 \x01(\tR\bteamName\x12\x1d\n" +
+	"\n" +
+	"inviter_id\x18\x04 \x01(\x03R\tinviterId\x12\x16\n" +
+	"\x06status\x18\x05 \x01(\tR\x06status\".\n" +
+	"\x13GetMyInvitesRequest\x12\x17\n" +
+	"\auser_id\x18\x01 \x01(\x03R\x06userId\">\n" +
+	"\x14GetMyInvitesResponse\x12&\n" +
+	"\ainvites\x18\x01 \x03(\v2\f.team.InviteR\ainvites\"f\n" +
+	"\x16RespondToInviteRequest\x12\x1b\n" +
+	"\tinvite_id\x18\x01 \x01(\x03R\binviteId\x12\x17\n" +
+	"\auser_id\x18\x02 \x01(\x03R\x06userId\x12\x16\n" +
+	"\x06accept\x18\x03 \x01(\bR\x06accept\"M\n" +
+	"\x17RespondToInviteResponse\x12\x18\n" +
+	"\asuccess\x18\x01 \x01(\bR\asuccess\x12\x18\n" +
+	"\amessage\x18\x02 \x01(\tR\amessage2\xc6\x03\n" +
 	"\vTeamService\x12?\n" +
 	"\n" +
 	"CreateTeam\x12\x17.team.CreateTeamRequest\x1a\x18.team.CreateTeamResponse\x126\n" +
 	"\aGetTeam\x12\x14.team.GetTeamRequest\x1a\x15.team.GetTeamResponse\x12]\n" +
 	"\x14GetAvailableStudents\x12!.team.GetAvailableStudentsRequest\x1a\".team.GetAvailableStudentsResponse\x12H\n" +
-	"\rAssignProject\x12\x1a.team.AssignProjectRequest\x1a\x1b.team.AssignProjectResponseB7Z5github.com/lucky720s/diplomaflow/pkg/protobuf/team/v1b\x06proto3"
+	"\rAssignProject\x12\x1a.team.AssignProjectRequest\x1a\x1b.team.AssignProjectResponse\x12E\n" +
+	"\fGetMyInvites\x12\x19.team.GetMyInvitesRequest\x1a\x1a.team.GetMyInvitesResponse\x12N\n" +
+	"\x0fRespondToInvite\x12\x1c.team.RespondToInviteRequest\x1a\x1d.team.RespondToInviteResponseB7Z5github.com/lucky720s/diplomaflow/pkg/protobuf/team/v1b\x06proto3"
 
 var (
 	file_team_v1_team_proto_rawDescOnce sync.Once
@@ -591,7 +905,7 @@ func file_team_v1_team_proto_rawDescGZIP() []byte {
 	return file_team_v1_team_proto_rawDescData
 }
 
-var file_team_v1_team_proto_msgTypes = make([]protoimpl.MessageInfo, 10)
+var file_team_v1_team_proto_msgTypes = make([]protoimpl.MessageInfo, 15)
 var file_team_v1_team_proto_goTypes = []any{
 	(*CreateTeamRequest)(nil),            // 0: team.CreateTeamRequest
 	(*CreateTeamResponse)(nil),           // 1: team.CreateTeamResponse
@@ -603,23 +917,33 @@ var file_team_v1_team_proto_goTypes = []any{
 	(*GetAvailableStudentsResponse)(nil), // 7: team.GetAvailableStudentsResponse
 	(*AssignProjectRequest)(nil),         // 8: team.AssignProjectRequest
 	(*AssignProjectResponse)(nil),        // 9: team.AssignProjectResponse
+	(*Invite)(nil),                       // 10: team.Invite
+	(*GetMyInvitesRequest)(nil),          // 11: team.GetMyInvitesRequest
+	(*GetMyInvitesResponse)(nil),         // 12: team.GetMyInvitesResponse
+	(*RespondToInviteRequest)(nil),       // 13: team.RespondToInviteRequest
+	(*RespondToInviteResponse)(nil),      // 14: team.RespondToInviteResponse
 }
 var file_team_v1_team_proto_depIdxs = []int32{
-	3, // 0: team.GetTeamResponse.members:type_name -> team.TeamMember
-	6, // 1: team.GetAvailableStudentsResponse.students:type_name -> team.StudentPreview
-	0, // 2: team.TeamService.CreateTeam:input_type -> team.CreateTeamRequest
-	2, // 3: team.TeamService.GetTeam:input_type -> team.GetTeamRequest
-	5, // 4: team.TeamService.GetAvailableStudents:input_type -> team.GetAvailableStudentsRequest
-	8, // 5: team.TeamService.AssignProject:input_type -> team.AssignProjectRequest
-	1, // 6: team.TeamService.CreateTeam:output_type -> team.CreateTeamResponse
-	4, // 7: team.TeamService.GetTeam:output_type -> team.GetTeamResponse
-	7, // 8: team.TeamService.GetAvailableStudents:output_type -> team.GetAvailableStudentsResponse
-	9, // 9: team.TeamService.AssignProject:output_type -> team.AssignProjectResponse
-	6, // [6:10] is the sub-list for method output_type
-	2, // [2:6] is the sub-list for method input_type
-	2, // [2:2] is the sub-list for extension type_name
-	2, // [2:2] is the sub-list for extension extendee
-	0, // [0:2] is the sub-list for field type_name
+	3,  // 0: team.GetTeamResponse.members:type_name -> team.TeamMember
+	6,  // 1: team.GetAvailableStudentsResponse.students:type_name -> team.StudentPreview
+	10, // 2: team.GetMyInvitesResponse.invites:type_name -> team.Invite
+	0,  // 3: team.TeamService.CreateTeam:input_type -> team.CreateTeamRequest
+	2,  // 4: team.TeamService.GetTeam:input_type -> team.GetTeamRequest
+	5,  // 5: team.TeamService.GetAvailableStudents:input_type -> team.GetAvailableStudentsRequest
+	8,  // 6: team.TeamService.AssignProject:input_type -> team.AssignProjectRequest
+	11, // 7: team.TeamService.GetMyInvites:input_type -> team.GetMyInvitesRequest
+	13, // 8: team.TeamService.RespondToInvite:input_type -> team.RespondToInviteRequest
+	1,  // 9: team.TeamService.CreateTeam:output_type -> team.CreateTeamResponse
+	4,  // 10: team.TeamService.GetTeam:output_type -> team.GetTeamResponse
+	7,  // 11: team.TeamService.GetAvailableStudents:output_type -> team.GetAvailableStudentsResponse
+	9,  // 12: team.TeamService.AssignProject:output_type -> team.AssignProjectResponse
+	12, // 13: team.TeamService.GetMyInvites:output_type -> team.GetMyInvitesResponse
+	14, // 14: team.TeamService.RespondToInvite:output_type -> team.RespondToInviteResponse
+	9,  // [9:15] is the sub-list for method output_type
+	3,  // [3:9] is the sub-list for method input_type
+	3,  // [3:3] is the sub-list for extension type_name
+	3,  // [3:3] is the sub-list for extension extendee
+	0,  // [0:3] is the sub-list for field type_name
 }
 
 func init() { file_team_v1_team_proto_init() }
@@ -633,7 +957,7 @@ func file_team_v1_team_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_team_v1_team_proto_rawDesc), len(file_team_v1_team_proto_rawDesc)),
 			NumEnums:      0,
-			NumMessages:   10,
+			NumMessages:   15,
 			NumExtensions: 0,
 			NumServices:   1,
 		},

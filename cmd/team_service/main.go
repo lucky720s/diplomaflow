@@ -46,7 +46,12 @@ func main() {
 	}
 	defer authConn.Close()
 	authClient := authv1.NewAuthServiceClient(authConn)
-	app := team.InitializeApp(&cfg, db, log.Logger, authClient)
+	app, cleanup, err := team.InitializeApp(&cfg, db, log.Logger, authClient)
+	if err != nil {
+		log.Fatal("failed to initialize app", zap.Error(err))
+	}
+	defer cleanup()
+
 	h := app.Handler
 	eventHandler := app.EventHandler
 	brokers := strings.Split(cfg.Kafka.Brokers, ",")

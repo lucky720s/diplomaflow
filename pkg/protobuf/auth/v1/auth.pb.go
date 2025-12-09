@@ -388,6 +388,7 @@ type ListUsersRequest struct {
 	Role          string                 `protobuf:"bytes,2,opt,name=role,proto3" json:"role,omitempty"`
 	Page          int32                  `protobuf:"varint,3,opt,name=page,proto3" json:"page,omitempty"`
 	PageSize      int32                  `protobuf:"varint,4,opt,name=page_size,json=pageSize,proto3" json:"page_size,omitempty"`
+	ExcludeUserId int64                  `protobuf:"varint,5,opt,name=exclude_user_id,json=excludeUserId,proto3" json:"exclude_user_id,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -446,6 +447,13 @@ func (x *ListUsersRequest) GetPage() int32 {
 func (x *ListUsersRequest) GetPageSize() int32 {
 	if x != nil {
 		return x.PageSize
+	}
+	return 0
+}
+
+func (x *ListUsersRequest) GetExcludeUserId() int64 {
+	if x != nil {
+		return x.ExcludeUserId
 	}
 	return 0
 }
@@ -623,12 +631,13 @@ const file_auth_v1_auth_proto_rawDesc = "" +
 	"\auser_id\x18\x03 \x01(\x03R\x06userId\x12\x12\n" +
 	"\x04role\x18\x04 \x01(\tR\x04role\x12#\n" +
 	"\runiversity_id\x18\x05 \x01(\x03R\funiversityId\x12#\n" +
-	"\rdepartment_id\x18\x06 \x01(\x03R\fdepartmentId\"|\n" +
+	"\rdepartment_id\x18\x06 \x01(\x03R\fdepartmentId\"\xa4\x01\n" +
 	"\x10ListUsersRequest\x12#\n" +
 	"\runiversity_id\x18\x01 \x01(\x03R\funiversityId\x12\x12\n" +
 	"\x04role\x18\x02 \x01(\tR\x04role\x12\x12\n" +
 	"\x04page\x18\x03 \x01(\x05R\x04page\x12\x1b\n" +
-	"\tpage_size\x18\x04 \x01(\x05R\bpageSize\"\xcd\x01\n" +
+	"\tpage_size\x18\x04 \x01(\x05R\bpageSize\x12&\n" +
+	"\x0fexclude_user_id\x18\x05 \x01(\x03R\rexcludeUserId\"\xcd\x01\n" +
 	"\vUserPreview\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\x03R\x02id\x12\x14\n" +
 	"\x05email\x18\x02 \x01(\tR\x05email\x12\x1d\n" +

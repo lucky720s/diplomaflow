@@ -773,6 +773,8 @@ func (m *ListUsersRequest) validate(all bool) error {
 
 	// no validation rules for PageSize
 
+	// no validation rules for ExcludeUserId
+
 	if len(errors) > 0 {
 		return ListUsersRequestMultiError(errors)
 	}

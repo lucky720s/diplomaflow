@@ -38,6 +38,7 @@ const (
 	WorkflowService_SetActiveWorkflow_FullMethodName             = "/workflow.v1.WorkflowService/SetActiveWorkflow"
 	WorkflowService_GetActiveWorkflowByDepartment_FullMethodName = "/workflow.v1.WorkflowService/GetActiveWorkflowByDepartment"
 	WorkflowService_GetNextState_FullMethodName                  = "/workflow.v1.WorkflowService/GetNextState"
+	WorkflowService_GetStepConfiguration_FullMethodName          = "/workflow.v1.WorkflowService/GetStepConfiguration"
 )
 
 // WorkflowServiceClient is the client API for WorkflowService service.
@@ -62,6 +63,8 @@ type WorkflowServiceClient interface {
 	SetActiveWorkflow(ctx context.Context, in *SetActiveWorkflowRequest, opts ...grpc.CallOption) (*Workflow, error)
 	GetActiveWorkflowByDepartment(ctx context.Context, in *GetActiveWorkflowByDepartmentRequest, opts ...grpc.CallOption) (*Workflow, error)
 	GetNextState(ctx context.Context, in *GetNextStateRequest, opts ...grpc.CallOption) (*State, error)
+	// Новый метод для получения распаршенной конфигурации шага
+	GetStepConfiguration(ctx context.Context, in *GetStepConfigurationRequest, opts ...grpc.CallOption) (*StepConfiguration, error)
 }
 
 type workflowServiceClient struct {
@@ -234,6 +237,15 @@ func (c *workflowServiceClient) GetNextState(ctx context.Context, in *GetNextSta
 	return out, nil
 }
 
+func (c *workflowServiceClient) GetStepConfiguration(ctx context.Context, in *GetStepConfigurationRequest, opts ...grpc.CallOption) (*StepConfiguration, error) {
+	out := new(StepConfiguration)
+	err := c.cc.Invoke(ctx, WorkflowService_GetStepConfiguration_FullMethodName, in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // WorkflowServiceServer is the server API for WorkflowService service.
 // All implementations must embed UnimplementedWorkflowServiceServer
 // for forward compatibility
@@ -256,6 +268,8 @@ type WorkflowServiceServer interface {
 	SetActiveWorkflow(context.Context, *SetActiveWorkflowRequest) (*Workflow, error)
 	GetActiveWorkflowByDepartment(context.Context, *GetActiveWorkflowByDepartmentRequest) (*Workflow, error)
 	GetNextState(context.Context, *GetNextStateRequest) (*State, error)
+	// Новый метод для получения распаршенной конфигурации шага
+	GetStepConfiguration(context.Context, *GetStepConfigurationRequest) (*StepConfiguration, error)
 	mustEmbedUnimplementedWorkflowServiceServer()
 }
 
@@ -316,6 +330,9 @@ func (UnimplementedWorkflowServiceServer) GetActiveWorkflowByDepartment(context.
 }
 func (UnimplementedWorkflowServiceServer) GetNextState(context.Context, *GetNextStateRequest) (*State, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetNextState not implemented")
+}
+func (UnimplementedWorkflowServiceServer) GetStepConfiguration(context.Context, *GetStepConfigurationRequest) (*StepConfiguration, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetStepConfiguration not implemented")
 }
 func (UnimplementedWorkflowServiceServer) mustEmbedUnimplementedWorkflowServiceServer() {}
 
@@ -654,6 +671,24 @@ func _WorkflowService_GetNextState_Handler(srv interface{}, ctx context.Context,
 	return interceptor(ctx, in, info, handler)
 }
 
+func _WorkflowService_GetStepConfiguration_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetStepConfigurationRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(WorkflowServiceServer).GetStepConfiguration(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: WorkflowService_GetStepConfiguration_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(WorkflowServiceServer).GetStepConfiguration(ctx, req.(*GetStepConfigurationRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // WorkflowService_ServiceDesc is the grpc.ServiceDesc for WorkflowService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -732,6 +767,10 @@ var WorkflowService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "GetNextState",
 			Handler:    _WorkflowService_GetNextState_Handler,
+		},
+		{
+			MethodName: "GetStepConfiguration",
+			Handler:    _WorkflowService_GetStepConfiguration_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

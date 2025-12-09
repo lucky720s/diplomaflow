@@ -11,6 +11,7 @@ import (
 	protoimpl "google.golang.org/protobuf/runtime/protoimpl"
 	emptypb "google.golang.org/protobuf/types/known/emptypb"
 	structpb "google.golang.org/protobuf/types/known/structpb"
+	timestamppb "google.golang.org/protobuf/types/known/timestamppb"
 	reflect "reflect"
 	sync "sync"
 	unsafe "unsafe"
@@ -133,7 +134,7 @@ func (x StateAction_ActionType) Number() protoreflect.EnumNumber {
 
 // Deprecated: Use StateAction_ActionType.Descriptor instead.
 func (StateAction_ActionType) EnumDescriptor() ([]byte, []int) {
-	return file_workflow_v1_workflow_proto_rawDescGZIP(), []int{0, 0}
+	return file_workflow_v1_workflow_proto_rawDescGZIP(), []int{5, 0}
 }
 
 type StateAction_Trigger int32
@@ -185,7 +186,348 @@ func (x StateAction_Trigger) Number() protoreflect.EnumNumber {
 
 // Deprecated: Use StateAction_Trigger.Descriptor instead.
 func (StateAction_Trigger) EnumDescriptor() ([]byte, []int) {
-	return file_workflow_v1_workflow_proto_rawDescGZIP(), []int{0, 1}
+	return file_workflow_v1_workflow_proto_rawDescGZIP(), []int{5, 1}
+}
+
+// Конфигурация для шага (хранится внутри State.config или парсится отдельно)
+type StepConfiguration struct {
+	state            protoimpl.MessageState `protogen:"open.v1"`
+	TeamConfig       *TeamConfig            `protobuf:"bytes,1,opt,name=team_config,json=teamConfig,proto3" json:"team_config,omitempty"`
+	DeadlineConfig   *DeadlineConfig        `protobuf:"bytes,2,opt,name=deadline_config,json=deadlineConfig,proto3" json:"deadline_config,omitempty"`
+	FormSchema       *FormSchema            `protobuf:"bytes,3,opt,name=form_schema,json=formSchema,proto3" json:"form_schema,omitempty"`
+	FileRequirements *FileRequirements      `protobuf:"bytes,4,opt,name=file_requirements,json=fileRequirements,proto3" json:"file_requirements,omitempty"`
+	AllowedRoles     []string               `protobuf:"bytes,5,rep,name=allowed_roles,json=allowedRoles,proto3" json:"allowed_roles,omitempty"` // Роли, которым доступен этот шаг
+	unknownFields    protoimpl.UnknownFields
+	sizeCache        protoimpl.SizeCache
+}
+
+func (x *StepConfiguration) Reset() {
+	*x = StepConfiguration{}
+	mi := &file_workflow_v1_workflow_proto_msgTypes[0]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *StepConfiguration) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*StepConfiguration) ProtoMessage() {}
+
+func (x *StepConfiguration) ProtoReflect() protoreflect.Message {
+	mi := &file_workflow_v1_workflow_proto_msgTypes[0]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use StepConfiguration.ProtoReflect.Descriptor instead.
+func (*StepConfiguration) Descriptor() ([]byte, []int) {
+	return file_workflow_v1_workflow_proto_rawDescGZIP(), []int{0}
+}
+
+func (x *StepConfiguration) GetTeamConfig() *TeamConfig {
+	if x != nil {
+		return x.TeamConfig
+	}
+	return nil
+}
+
+func (x *StepConfiguration) GetDeadlineConfig() *DeadlineConfig {
+	if x != nil {
+		return x.DeadlineConfig
+	}
+	return nil
+}
+
+func (x *StepConfiguration) GetFormSchema() *FormSchema {
+	if x != nil {
+		return x.FormSchema
+	}
+	return nil
+}
+
+func (x *StepConfiguration) GetFileRequirements() *FileRequirements {
+	if x != nil {
+		return x.FileRequirements
+	}
+	return nil
+}
+
+func (x *StepConfiguration) GetAllowedRoles() []string {
+	if x != nil {
+		return x.AllowedRoles
+	}
+	return nil
+}
+
+type TeamConfig struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	MinSize       int32                  `protobuf:"varint,1,opt,name=min_size,json=minSize,proto3" json:"min_size,omitempty"`
+	MaxSize       int32                  `protobuf:"varint,2,opt,name=max_size,json=maxSize,proto3" json:"max_size,omitempty"`
+	AllowSolo     bool                   `protobuf:"varint,3,opt,name=allow_solo,json=allowSolo,proto3" json:"allow_solo,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *TeamConfig) Reset() {
+	*x = TeamConfig{}
+	mi := &file_workflow_v1_workflow_proto_msgTypes[1]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *TeamConfig) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*TeamConfig) ProtoMessage() {}
+
+func (x *TeamConfig) ProtoReflect() protoreflect.Message {
+	mi := &file_workflow_v1_workflow_proto_msgTypes[1]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use TeamConfig.ProtoReflect.Descriptor instead.
+func (*TeamConfig) Descriptor() ([]byte, []int) {
+	return file_workflow_v1_workflow_proto_rawDescGZIP(), []int{1}
+}
+
+func (x *TeamConfig) GetMinSize() int32 {
+	if x != nil {
+		return x.MinSize
+	}
+	return 0
+}
+
+func (x *TeamConfig) GetMaxSize() int32 {
+	if x != nil {
+		return x.MaxSize
+	}
+	return 0
+}
+
+func (x *TeamConfig) GetAllowSolo() bool {
+	if x != nil {
+		return x.AllowSolo
+	}
+	return false
+}
+
+type DeadlineConfig struct {
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// Дедлайн может быть фиксированной датой или длительностью от начала шага
+	//
+	// Types that are valid to be assigned to Type:
+	//
+	//	*DeadlineConfig_FixedDate
+	//	*DeadlineConfig_DurationHours
+	Type          isDeadlineConfig_Type `protobuf_oneof:"type"`
+	Timezone      string                `protobuf:"bytes,3,opt,name=timezone,proto3" json:"timezone,omitempty"` // e.g., "Asia/Almaty" or "UTC+5"
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *DeadlineConfig) Reset() {
+	*x = DeadlineConfig{}
+	mi := &file_workflow_v1_workflow_proto_msgTypes[2]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *DeadlineConfig) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*DeadlineConfig) ProtoMessage() {}
+
+func (x *DeadlineConfig) ProtoReflect() protoreflect.Message {
+	mi := &file_workflow_v1_workflow_proto_msgTypes[2]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use DeadlineConfig.ProtoReflect.Descriptor instead.
+func (*DeadlineConfig) Descriptor() ([]byte, []int) {
+	return file_workflow_v1_workflow_proto_rawDescGZIP(), []int{2}
+}
+
+func (x *DeadlineConfig) GetType() isDeadlineConfig_Type {
+	if x != nil {
+		return x.Type
+	}
+	return nil
+}
+
+func (x *DeadlineConfig) GetFixedDate() *timestamppb.Timestamp {
+	if x != nil {
+		if x, ok := x.Type.(*DeadlineConfig_FixedDate); ok {
+			return x.FixedDate
+		}
+	}
+	return nil
+}
+
+func (x *DeadlineConfig) GetDurationHours() int32 {
+	if x != nil {
+		if x, ok := x.Type.(*DeadlineConfig_DurationHours); ok {
+			return x.DurationHours
+		}
+	}
+	return 0
+}
+
+func (x *DeadlineConfig) GetTimezone() string {
+	if x != nil {
+		return x.Timezone
+	}
+	return ""
+}
+
+type isDeadlineConfig_Type interface {
+	isDeadlineConfig_Type()
+}
+
+type DeadlineConfig_FixedDate struct {
+	FixedDate *timestamppb.Timestamp `protobuf:"bytes,1,opt,name=fixed_date,json=fixedDate,proto3,oneof"`
+}
+
+type DeadlineConfig_DurationHours struct {
+	DurationHours int32 `protobuf:"varint,2,opt,name=duration_hours,json=durationHours,proto3,oneof"`
+}
+
+func (*DeadlineConfig_FixedDate) isDeadlineConfig_Type() {}
+
+func (*DeadlineConfig_DurationHours) isDeadlineConfig_Type() {}
+
+type FormSchema struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	FormId        string                 `protobuf:"bytes,1,opt,name=form_id,json=formId,proto3" json:"form_id,omitempty"`             // Уникальный ID формы
+	JsonSchema    string                 `protobuf:"bytes,2,opt,name=json_schema,json=jsonSchema,proto3" json:"json_schema,omitempty"` // JSON Schema для валидации на фронте и бэке
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *FormSchema) Reset() {
+	*x = FormSchema{}
+	mi := &file_workflow_v1_workflow_proto_msgTypes[3]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *FormSchema) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*FormSchema) ProtoMessage() {}
+
+func (x *FormSchema) ProtoReflect() protoreflect.Message {
+	mi := &file_workflow_v1_workflow_proto_msgTypes[3]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use FormSchema.ProtoReflect.Descriptor instead.
+func (*FormSchema) Descriptor() ([]byte, []int) {
+	return file_workflow_v1_workflow_proto_rawDescGZIP(), []int{3}
+}
+
+func (x *FormSchema) GetFormId() string {
+	if x != nil {
+		return x.FormId
+	}
+	return ""
+}
+
+func (x *FormSchema) GetJsonSchema() string {
+	if x != nil {
+		return x.JsonSchema
+	}
+	return ""
+}
+
+type FileRequirements struct {
+	state             protoimpl.MessageState `protogen:"open.v1"`
+	MaxFiles          int32                  `protobuf:"varint,1,opt,name=max_files,json=maxFiles,proto3" json:"max_files,omitempty"`
+	AllowedExtensions []string               `protobuf:"bytes,2,rep,name=allowed_extensions,json=allowedExtensions,proto3" json:"allowed_extensions,omitempty"` // e.g. [".pdf", ".docx"]
+	MaxSizeBytes      int64                  `protobuf:"varint,3,opt,name=max_size_bytes,json=maxSizeBytes,proto3" json:"max_size_bytes,omitempty"`
+	unknownFields     protoimpl.UnknownFields
+	sizeCache         protoimpl.SizeCache
+}
+
+func (x *FileRequirements) Reset() {
+	*x = FileRequirements{}
+	mi := &file_workflow_v1_workflow_proto_msgTypes[4]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *FileRequirements) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*FileRequirements) ProtoMessage() {}
+
+func (x *FileRequirements) ProtoReflect() protoreflect.Message {
+	mi := &file_workflow_v1_workflow_proto_msgTypes[4]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use FileRequirements.ProtoReflect.Descriptor instead.
+func (*FileRequirements) Descriptor() ([]byte, []int) {
+	return file_workflow_v1_workflow_proto_rawDescGZIP(), []int{4}
+}
+
+func (x *FileRequirements) GetMaxFiles() int32 {
+	if x != nil {
+		return x.MaxFiles
+	}
+	return 0
+}
+
+func (x *FileRequirements) GetAllowedExtensions() []string {
+	if x != nil {
+		return x.AllowedExtensions
+	}
+	return nil
+}
+
+func (x *FileRequirements) GetMaxSizeBytes() int64 {
+	if x != nil {
+		return x.MaxSizeBytes
+	}
+	return 0
 }
 
 type StateAction struct {
@@ -201,7 +543,7 @@ type StateAction struct {
 
 func (x *StateAction) Reset() {
 	*x = StateAction{}
-	mi := &file_workflow_v1_workflow_proto_msgTypes[0]
+	mi := &file_workflow_v1_workflow_proto_msgTypes[5]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -213,7 +555,7 @@ func (x *StateAction) String() string {
 func (*StateAction) ProtoMessage() {}
 
 func (x *StateAction) ProtoReflect() protoreflect.Message {
-	mi := &file_workflow_v1_workflow_proto_msgTypes[0]
+	mi := &file_workflow_v1_workflow_proto_msgTypes[5]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -226,7 +568,7 @@ func (x *StateAction) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use StateAction.ProtoReflect.Descriptor instead.
 func (*StateAction) Descriptor() ([]byte, []int) {
-	return file_workflow_v1_workflow_proto_rawDescGZIP(), []int{0}
+	return file_workflow_v1_workflow_proto_rawDescGZIP(), []int{5}
 }
 
 func (x *StateAction) GetId() int64 {
@@ -277,7 +619,7 @@ type Workflow struct {
 
 func (x *Workflow) Reset() {
 	*x = Workflow{}
-	mi := &file_workflow_v1_workflow_proto_msgTypes[1]
+	mi := &file_workflow_v1_workflow_proto_msgTypes[6]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -289,7 +631,7 @@ func (x *Workflow) String() string {
 func (*Workflow) ProtoMessage() {}
 
 func (x *Workflow) ProtoReflect() protoreflect.Message {
-	mi := &file_workflow_v1_workflow_proto_msgTypes[1]
+	mi := &file_workflow_v1_workflow_proto_msgTypes[6]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -302,7 +644,7 @@ func (x *Workflow) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use Workflow.ProtoReflect.Descriptor instead.
 func (*Workflow) Descriptor() ([]byte, []int) {
-	return file_workflow_v1_workflow_proto_rawDescGZIP(), []int{1}
+	return file_workflow_v1_workflow_proto_rawDescGZIP(), []int{6}
 }
 
 func (x *Workflow) GetId() int64 {
@@ -347,7 +689,7 @@ type State struct {
 	Name          string                 `protobuf:"bytes,3,opt,name=name,proto3" json:"name,omitempty"`
 	Description   string                 `protobuf:"bytes,4,opt,name=description,proto3" json:"description,omitempty"`
 	Type          StateType              `protobuf:"varint,5,opt,name=type,proto3,enum=workflow.v1.StateType" json:"type,omitempty"`
-	Config        *structpb.Struct       `protobuf:"bytes,6,opt,name=config,proto3" json:"config,omitempty"`
+	Config        *structpb.Struct       `protobuf:"bytes,6,opt,name=config,proto3" json:"config,omitempty"` // Здесь лежит JSON представление StepConfiguration
 	DurationDays  int32                  `protobuf:"varint,7,opt,name=duration_days,json=durationDays,proto3" json:"duration_days,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
@@ -355,7 +697,7 @@ type State struct {
 
 func (x *State) Reset() {
 	*x = State{}
-	mi := &file_workflow_v1_workflow_proto_msgTypes[2]
+	mi := &file_workflow_v1_workflow_proto_msgTypes[7]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -367,7 +709,7 @@ func (x *State) String() string {
 func (*State) ProtoMessage() {}
 
 func (x *State) ProtoReflect() protoreflect.Message {
-	mi := &file_workflow_v1_workflow_proto_msgTypes[2]
+	mi := &file_workflow_v1_workflow_proto_msgTypes[7]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -380,7 +722,7 @@ func (x *State) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use State.ProtoReflect.Descriptor instead.
 func (*State) Descriptor() ([]byte, []int) {
-	return file_workflow_v1_workflow_proto_rawDescGZIP(), []int{2}
+	return file_workflow_v1_workflow_proto_rawDescGZIP(), []int{7}
 }
 
 func (x *State) GetId() int64 {
@@ -445,7 +787,7 @@ type Transition struct {
 
 func (x *Transition) Reset() {
 	*x = Transition{}
-	mi := &file_workflow_v1_workflow_proto_msgTypes[3]
+	mi := &file_workflow_v1_workflow_proto_msgTypes[8]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -457,7 +799,7 @@ func (x *Transition) String() string {
 func (*Transition) ProtoMessage() {}
 
 func (x *Transition) ProtoReflect() protoreflect.Message {
-	mi := &file_workflow_v1_workflow_proto_msgTypes[3]
+	mi := &file_workflow_v1_workflow_proto_msgTypes[8]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -470,7 +812,7 @@ func (x *Transition) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use Transition.ProtoReflect.Descriptor instead.
 func (*Transition) Descriptor() ([]byte, []int) {
-	return file_workflow_v1_workflow_proto_rawDescGZIP(), []int{3}
+	return file_workflow_v1_workflow_proto_rawDescGZIP(), []int{8}
 }
 
 func (x *Transition) GetId() int64 {
@@ -518,7 +860,7 @@ type CreateWorkflowRequest struct {
 
 func (x *CreateWorkflowRequest) Reset() {
 	*x = CreateWorkflowRequest{}
-	mi := &file_workflow_v1_workflow_proto_msgTypes[4]
+	mi := &file_workflow_v1_workflow_proto_msgTypes[9]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -530,7 +872,7 @@ func (x *CreateWorkflowRequest) String() string {
 func (*CreateWorkflowRequest) ProtoMessage() {}
 
 func (x *CreateWorkflowRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_workflow_v1_workflow_proto_msgTypes[4]
+	mi := &file_workflow_v1_workflow_proto_msgTypes[9]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -543,7 +885,7 @@ func (x *CreateWorkflowRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use CreateWorkflowRequest.ProtoReflect.Descriptor instead.
 func (*CreateWorkflowRequest) Descriptor() ([]byte, []int) {
-	return file_workflow_v1_workflow_proto_rawDescGZIP(), []int{4}
+	return file_workflow_v1_workflow_proto_rawDescGZIP(), []int{9}
 }
 
 func (x *CreateWorkflowRequest) GetName() string {
@@ -573,7 +915,7 @@ type GetWorkflowRequest struct {
 
 func (x *GetWorkflowRequest) Reset() {
 	*x = GetWorkflowRequest{}
-	mi := &file_workflow_v1_workflow_proto_msgTypes[5]
+	mi := &file_workflow_v1_workflow_proto_msgTypes[10]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -585,7 +927,7 @@ func (x *GetWorkflowRequest) String() string {
 func (*GetWorkflowRequest) ProtoMessage() {}
 
 func (x *GetWorkflowRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_workflow_v1_workflow_proto_msgTypes[5]
+	mi := &file_workflow_v1_workflow_proto_msgTypes[10]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -598,7 +940,7 @@ func (x *GetWorkflowRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetWorkflowRequest.ProtoReflect.Descriptor instead.
 func (*GetWorkflowRequest) Descriptor() ([]byte, []int) {
-	return file_workflow_v1_workflow_proto_rawDescGZIP(), []int{5}
+	return file_workflow_v1_workflow_proto_rawDescGZIP(), []int{10}
 }
 
 func (x *GetWorkflowRequest) GetCriteria() isGetWorkflowRequest_Criteria {
@@ -651,7 +993,7 @@ type ListWorkflowsRequest struct {
 
 func (x *ListWorkflowsRequest) Reset() {
 	*x = ListWorkflowsRequest{}
-	mi := &file_workflow_v1_workflow_proto_msgTypes[6]
+	mi := &file_workflow_v1_workflow_proto_msgTypes[11]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -663,7 +1005,7 @@ func (x *ListWorkflowsRequest) String() string {
 func (*ListWorkflowsRequest) ProtoMessage() {}
 
 func (x *ListWorkflowsRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_workflow_v1_workflow_proto_msgTypes[6]
+	mi := &file_workflow_v1_workflow_proto_msgTypes[11]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -676,7 +1018,7 @@ func (x *ListWorkflowsRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ListWorkflowsRequest.ProtoReflect.Descriptor instead.
 func (*ListWorkflowsRequest) Descriptor() ([]byte, []int) {
-	return file_workflow_v1_workflow_proto_rawDescGZIP(), []int{6}
+	return file_workflow_v1_workflow_proto_rawDescGZIP(), []int{11}
 }
 
 func (x *ListWorkflowsRequest) GetDepartmentId() int64 {
@@ -695,7 +1037,7 @@ type ListWorkflowsResponse struct {
 
 func (x *ListWorkflowsResponse) Reset() {
 	*x = ListWorkflowsResponse{}
-	mi := &file_workflow_v1_workflow_proto_msgTypes[7]
+	mi := &file_workflow_v1_workflow_proto_msgTypes[12]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -707,7 +1049,7 @@ func (x *ListWorkflowsResponse) String() string {
 func (*ListWorkflowsResponse) ProtoMessage() {}
 
 func (x *ListWorkflowsResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_workflow_v1_workflow_proto_msgTypes[7]
+	mi := &file_workflow_v1_workflow_proto_msgTypes[12]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -720,7 +1062,7 @@ func (x *ListWorkflowsResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ListWorkflowsResponse.ProtoReflect.Descriptor instead.
 func (*ListWorkflowsResponse) Descriptor() ([]byte, []int) {
-	return file_workflow_v1_workflow_proto_rawDescGZIP(), []int{7}
+	return file_workflow_v1_workflow_proto_rawDescGZIP(), []int{12}
 }
 
 func (x *ListWorkflowsResponse) GetWorkflows() []*Workflow {
@@ -740,7 +1082,7 @@ type UpdateWorkflowRequest struct {
 
 func (x *UpdateWorkflowRequest) Reset() {
 	*x = UpdateWorkflowRequest{}
-	mi := &file_workflow_v1_workflow_proto_msgTypes[8]
+	mi := &file_workflow_v1_workflow_proto_msgTypes[13]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -752,7 +1094,7 @@ func (x *UpdateWorkflowRequest) String() string {
 func (*UpdateWorkflowRequest) ProtoMessage() {}
 
 func (x *UpdateWorkflowRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_workflow_v1_workflow_proto_msgTypes[8]
+	mi := &file_workflow_v1_workflow_proto_msgTypes[13]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -765,7 +1107,7 @@ func (x *UpdateWorkflowRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use UpdateWorkflowRequest.ProtoReflect.Descriptor instead.
 func (*UpdateWorkflowRequest) Descriptor() ([]byte, []int) {
-	return file_workflow_v1_workflow_proto_rawDescGZIP(), []int{8}
+	return file_workflow_v1_workflow_proto_rawDescGZIP(), []int{13}
 }
 
 func (x *UpdateWorkflowRequest) GetId() int64 {
@@ -791,7 +1133,7 @@ type DeleteWorkflowRequest struct {
 
 func (x *DeleteWorkflowRequest) Reset() {
 	*x = DeleteWorkflowRequest{}
-	mi := &file_workflow_v1_workflow_proto_msgTypes[9]
+	mi := &file_workflow_v1_workflow_proto_msgTypes[14]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -803,7 +1145,7 @@ func (x *DeleteWorkflowRequest) String() string {
 func (*DeleteWorkflowRequest) ProtoMessage() {}
 
 func (x *DeleteWorkflowRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_workflow_v1_workflow_proto_msgTypes[9]
+	mi := &file_workflow_v1_workflow_proto_msgTypes[14]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -816,7 +1158,7 @@ func (x *DeleteWorkflowRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use DeleteWorkflowRequest.ProtoReflect.Descriptor instead.
 func (*DeleteWorkflowRequest) Descriptor() ([]byte, []int) {
-	return file_workflow_v1_workflow_proto_rawDescGZIP(), []int{9}
+	return file_workflow_v1_workflow_proto_rawDescGZIP(), []int{14}
 }
 
 func (x *DeleteWorkflowRequest) GetId() int64 {
@@ -840,7 +1182,7 @@ type CreateStateRequest struct {
 
 func (x *CreateStateRequest) Reset() {
 	*x = CreateStateRequest{}
-	mi := &file_workflow_v1_workflow_proto_msgTypes[10]
+	mi := &file_workflow_v1_workflow_proto_msgTypes[15]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -852,7 +1194,7 @@ func (x *CreateStateRequest) String() string {
 func (*CreateStateRequest) ProtoMessage() {}
 
 func (x *CreateStateRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_workflow_v1_workflow_proto_msgTypes[10]
+	mi := &file_workflow_v1_workflow_proto_msgTypes[15]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -865,7 +1207,7 @@ func (x *CreateStateRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use CreateStateRequest.ProtoReflect.Descriptor instead.
 func (*CreateStateRequest) Descriptor() ([]byte, []int) {
-	return file_workflow_v1_workflow_proto_rawDescGZIP(), []int{10}
+	return file_workflow_v1_workflow_proto_rawDescGZIP(), []int{15}
 }
 
 func (x *CreateStateRequest) GetWorkflowId() int64 {
@@ -919,7 +1261,7 @@ type GetStateRequest struct {
 
 func (x *GetStateRequest) Reset() {
 	*x = GetStateRequest{}
-	mi := &file_workflow_v1_workflow_proto_msgTypes[11]
+	mi := &file_workflow_v1_workflow_proto_msgTypes[16]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -931,7 +1273,7 @@ func (x *GetStateRequest) String() string {
 func (*GetStateRequest) ProtoMessage() {}
 
 func (x *GetStateRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_workflow_v1_workflow_proto_msgTypes[11]
+	mi := &file_workflow_v1_workflow_proto_msgTypes[16]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -944,7 +1286,7 @@ func (x *GetStateRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetStateRequest.ProtoReflect.Descriptor instead.
 func (*GetStateRequest) Descriptor() ([]byte, []int) {
-	return file_workflow_v1_workflow_proto_rawDescGZIP(), []int{11}
+	return file_workflow_v1_workflow_proto_rawDescGZIP(), []int{16}
 }
 
 func (x *GetStateRequest) GetStateId() int64 {
@@ -963,7 +1305,7 @@ type ListStatesRequest struct {
 
 func (x *ListStatesRequest) Reset() {
 	*x = ListStatesRequest{}
-	mi := &file_workflow_v1_workflow_proto_msgTypes[12]
+	mi := &file_workflow_v1_workflow_proto_msgTypes[17]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -975,7 +1317,7 @@ func (x *ListStatesRequest) String() string {
 func (*ListStatesRequest) ProtoMessage() {}
 
 func (x *ListStatesRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_workflow_v1_workflow_proto_msgTypes[12]
+	mi := &file_workflow_v1_workflow_proto_msgTypes[17]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -988,7 +1330,7 @@ func (x *ListStatesRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ListStatesRequest.ProtoReflect.Descriptor instead.
 func (*ListStatesRequest) Descriptor() ([]byte, []int) {
-	return file_workflow_v1_workflow_proto_rawDescGZIP(), []int{12}
+	return file_workflow_v1_workflow_proto_rawDescGZIP(), []int{17}
 }
 
 func (x *ListStatesRequest) GetWorkflowId() int64 {
@@ -1007,7 +1349,7 @@ type ListStatesResponse struct {
 
 func (x *ListStatesResponse) Reset() {
 	*x = ListStatesResponse{}
-	mi := &file_workflow_v1_workflow_proto_msgTypes[13]
+	mi := &file_workflow_v1_workflow_proto_msgTypes[18]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1019,7 +1361,7 @@ func (x *ListStatesResponse) String() string {
 func (*ListStatesResponse) ProtoMessage() {}
 
 func (x *ListStatesResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_workflow_v1_workflow_proto_msgTypes[13]
+	mi := &file_workflow_v1_workflow_proto_msgTypes[18]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1032,7 +1374,7 @@ func (x *ListStatesResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ListStatesResponse.ProtoReflect.Descriptor instead.
 func (*ListStatesResponse) Descriptor() ([]byte, []int) {
-	return file_workflow_v1_workflow_proto_rawDescGZIP(), []int{13}
+	return file_workflow_v1_workflow_proto_rawDescGZIP(), []int{18}
 }
 
 func (x *ListStatesResponse) GetStates() []*State {
@@ -1055,7 +1397,7 @@ type UpdateStateRequest struct {
 
 func (x *UpdateStateRequest) Reset() {
 	*x = UpdateStateRequest{}
-	mi := &file_workflow_v1_workflow_proto_msgTypes[14]
+	mi := &file_workflow_v1_workflow_proto_msgTypes[19]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1067,7 +1409,7 @@ func (x *UpdateStateRequest) String() string {
 func (*UpdateStateRequest) ProtoMessage() {}
 
 func (x *UpdateStateRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_workflow_v1_workflow_proto_msgTypes[14]
+	mi := &file_workflow_v1_workflow_proto_msgTypes[19]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1080,7 +1422,7 @@ func (x *UpdateStateRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use UpdateStateRequest.ProtoReflect.Descriptor instead.
 func (*UpdateStateRequest) Descriptor() ([]byte, []int) {
-	return file_workflow_v1_workflow_proto_rawDescGZIP(), []int{14}
+	return file_workflow_v1_workflow_proto_rawDescGZIP(), []int{19}
 }
 
 func (x *UpdateStateRequest) GetId() int64 {
@@ -1127,7 +1469,7 @@ type DeleteStateRequest struct {
 
 func (x *DeleteStateRequest) Reset() {
 	*x = DeleteStateRequest{}
-	mi := &file_workflow_v1_workflow_proto_msgTypes[15]
+	mi := &file_workflow_v1_workflow_proto_msgTypes[20]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1139,7 +1481,7 @@ func (x *DeleteStateRequest) String() string {
 func (*DeleteStateRequest) ProtoMessage() {}
 
 func (x *DeleteStateRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_workflow_v1_workflow_proto_msgTypes[15]
+	mi := &file_workflow_v1_workflow_proto_msgTypes[20]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1152,7 +1494,7 @@ func (x *DeleteStateRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use DeleteStateRequest.ProtoReflect.Descriptor instead.
 func (*DeleteStateRequest) Descriptor() ([]byte, []int) {
-	return file_workflow_v1_workflow_proto_rawDescGZIP(), []int{15}
+	return file_workflow_v1_workflow_proto_rawDescGZIP(), []int{20}
 }
 
 func (x *DeleteStateRequest) GetId() int64 {
@@ -1174,7 +1516,7 @@ type CreateTransitionRequest struct {
 
 func (x *CreateTransitionRequest) Reset() {
 	*x = CreateTransitionRequest{}
-	mi := &file_workflow_v1_workflow_proto_msgTypes[16]
+	mi := &file_workflow_v1_workflow_proto_msgTypes[21]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1186,7 +1528,7 @@ func (x *CreateTransitionRequest) String() string {
 func (*CreateTransitionRequest) ProtoMessage() {}
 
 func (x *CreateTransitionRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_workflow_v1_workflow_proto_msgTypes[16]
+	mi := &file_workflow_v1_workflow_proto_msgTypes[21]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1199,7 +1541,7 @@ func (x *CreateTransitionRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use CreateTransitionRequest.ProtoReflect.Descriptor instead.
 func (*CreateTransitionRequest) Descriptor() ([]byte, []int) {
-	return file_workflow_v1_workflow_proto_rawDescGZIP(), []int{16}
+	return file_workflow_v1_workflow_proto_rawDescGZIP(), []int{21}
 }
 
 func (x *CreateTransitionRequest) GetWorkflowId() int64 {
@@ -1239,7 +1581,7 @@ type DeleteTransitionRequest struct {
 
 func (x *DeleteTransitionRequest) Reset() {
 	*x = DeleteTransitionRequest{}
-	mi := &file_workflow_v1_workflow_proto_msgTypes[17]
+	mi := &file_workflow_v1_workflow_proto_msgTypes[22]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1251,7 +1593,7 @@ func (x *DeleteTransitionRequest) String() string {
 func (*DeleteTransitionRequest) ProtoMessage() {}
 
 func (x *DeleteTransitionRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_workflow_v1_workflow_proto_msgTypes[17]
+	mi := &file_workflow_v1_workflow_proto_msgTypes[22]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1264,7 +1606,7 @@ func (x *DeleteTransitionRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use DeleteTransitionRequest.ProtoReflect.Descriptor instead.
 func (*DeleteTransitionRequest) Descriptor() ([]byte, []int) {
-	return file_workflow_v1_workflow_proto_rawDescGZIP(), []int{17}
+	return file_workflow_v1_workflow_proto_rawDescGZIP(), []int{22}
 }
 
 func (x *DeleteTransitionRequest) GetId() int64 {
@@ -1286,7 +1628,7 @@ type CreateStateActionRequest struct {
 
 func (x *CreateStateActionRequest) Reset() {
 	*x = CreateStateActionRequest{}
-	mi := &file_workflow_v1_workflow_proto_msgTypes[18]
+	mi := &file_workflow_v1_workflow_proto_msgTypes[23]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1298,7 +1640,7 @@ func (x *CreateStateActionRequest) String() string {
 func (*CreateStateActionRequest) ProtoMessage() {}
 
 func (x *CreateStateActionRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_workflow_v1_workflow_proto_msgTypes[18]
+	mi := &file_workflow_v1_workflow_proto_msgTypes[23]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1311,7 +1653,7 @@ func (x *CreateStateActionRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use CreateStateActionRequest.ProtoReflect.Descriptor instead.
 func (*CreateStateActionRequest) Descriptor() ([]byte, []int) {
-	return file_workflow_v1_workflow_proto_rawDescGZIP(), []int{18}
+	return file_workflow_v1_workflow_proto_rawDescGZIP(), []int{23}
 }
 
 func (x *CreateStateActionRequest) GetStateId() int64 {
@@ -1351,7 +1693,7 @@ type ListStateActionsRequest struct {
 
 func (x *ListStateActionsRequest) Reset() {
 	*x = ListStateActionsRequest{}
-	mi := &file_workflow_v1_workflow_proto_msgTypes[19]
+	mi := &file_workflow_v1_workflow_proto_msgTypes[24]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1363,7 +1705,7 @@ func (x *ListStateActionsRequest) String() string {
 func (*ListStateActionsRequest) ProtoMessage() {}
 
 func (x *ListStateActionsRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_workflow_v1_workflow_proto_msgTypes[19]
+	mi := &file_workflow_v1_workflow_proto_msgTypes[24]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1376,7 +1718,7 @@ func (x *ListStateActionsRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ListStateActionsRequest.ProtoReflect.Descriptor instead.
 func (*ListStateActionsRequest) Descriptor() ([]byte, []int) {
-	return file_workflow_v1_workflow_proto_rawDescGZIP(), []int{19}
+	return file_workflow_v1_workflow_proto_rawDescGZIP(), []int{24}
 }
 
 func (x *ListStateActionsRequest) GetStateId() int64 {
@@ -1395,7 +1737,7 @@ type ListStateActionsResponse struct {
 
 func (x *ListStateActionsResponse) Reset() {
 	*x = ListStateActionsResponse{}
-	mi := &file_workflow_v1_workflow_proto_msgTypes[20]
+	mi := &file_workflow_v1_workflow_proto_msgTypes[25]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1407,7 +1749,7 @@ func (x *ListStateActionsResponse) String() string {
 func (*ListStateActionsResponse) ProtoMessage() {}
 
 func (x *ListStateActionsResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_workflow_v1_workflow_proto_msgTypes[20]
+	mi := &file_workflow_v1_workflow_proto_msgTypes[25]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1420,7 +1762,7 @@ func (x *ListStateActionsResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ListStateActionsResponse.ProtoReflect.Descriptor instead.
 func (*ListStateActionsResponse) Descriptor() ([]byte, []int) {
-	return file_workflow_v1_workflow_proto_rawDescGZIP(), []int{20}
+	return file_workflow_v1_workflow_proto_rawDescGZIP(), []int{25}
 }
 
 func (x *ListStateActionsResponse) GetActions() []*StateAction {
@@ -1439,7 +1781,7 @@ type DeleteStateActionRequest struct {
 
 func (x *DeleteStateActionRequest) Reset() {
 	*x = DeleteStateActionRequest{}
-	mi := &file_workflow_v1_workflow_proto_msgTypes[21]
+	mi := &file_workflow_v1_workflow_proto_msgTypes[26]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1451,7 +1793,7 @@ func (x *DeleteStateActionRequest) String() string {
 func (*DeleteStateActionRequest) ProtoMessage() {}
 
 func (x *DeleteStateActionRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_workflow_v1_workflow_proto_msgTypes[21]
+	mi := &file_workflow_v1_workflow_proto_msgTypes[26]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1464,7 +1806,7 @@ func (x *DeleteStateActionRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use DeleteStateActionRequest.ProtoReflect.Descriptor instead.
 func (*DeleteStateActionRequest) Descriptor() ([]byte, []int) {
-	return file_workflow_v1_workflow_proto_rawDescGZIP(), []int{21}
+	return file_workflow_v1_workflow_proto_rawDescGZIP(), []int{26}
 }
 
 func (x *DeleteStateActionRequest) GetId() int64 {
@@ -1483,7 +1825,7 @@ type SetActiveWorkflowRequest struct {
 
 func (x *SetActiveWorkflowRequest) Reset() {
 	*x = SetActiveWorkflowRequest{}
-	mi := &file_workflow_v1_workflow_proto_msgTypes[22]
+	mi := &file_workflow_v1_workflow_proto_msgTypes[27]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1495,7 +1837,7 @@ func (x *SetActiveWorkflowRequest) String() string {
 func (*SetActiveWorkflowRequest) ProtoMessage() {}
 
 func (x *SetActiveWorkflowRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_workflow_v1_workflow_proto_msgTypes[22]
+	mi := &file_workflow_v1_workflow_proto_msgTypes[27]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1508,7 +1850,7 @@ func (x *SetActiveWorkflowRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use SetActiveWorkflowRequest.ProtoReflect.Descriptor instead.
 func (*SetActiveWorkflowRequest) Descriptor() ([]byte, []int) {
-	return file_workflow_v1_workflow_proto_rawDescGZIP(), []int{22}
+	return file_workflow_v1_workflow_proto_rawDescGZIP(), []int{27}
 }
 
 func (x *SetActiveWorkflowRequest) GetWorkflowId() int64 {
@@ -1527,7 +1869,7 @@ type GetActiveWorkflowByDepartmentRequest struct {
 
 func (x *GetActiveWorkflowByDepartmentRequest) Reset() {
 	*x = GetActiveWorkflowByDepartmentRequest{}
-	mi := &file_workflow_v1_workflow_proto_msgTypes[23]
+	mi := &file_workflow_v1_workflow_proto_msgTypes[28]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1539,7 +1881,7 @@ func (x *GetActiveWorkflowByDepartmentRequest) String() string {
 func (*GetActiveWorkflowByDepartmentRequest) ProtoMessage() {}
 
 func (x *GetActiveWorkflowByDepartmentRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_workflow_v1_workflow_proto_msgTypes[23]
+	mi := &file_workflow_v1_workflow_proto_msgTypes[28]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1552,7 +1894,7 @@ func (x *GetActiveWorkflowByDepartmentRequest) ProtoReflect() protoreflect.Messa
 
 // Deprecated: Use GetActiveWorkflowByDepartmentRequest.ProtoReflect.Descriptor instead.
 func (*GetActiveWorkflowByDepartmentRequest) Descriptor() ([]byte, []int) {
-	return file_workflow_v1_workflow_proto_rawDescGZIP(), []int{23}
+	return file_workflow_v1_workflow_proto_rawDescGZIP(), []int{28}
 }
 
 func (x *GetActiveWorkflowByDepartmentRequest) GetDepartmentId() int64 {
@@ -1572,7 +1914,7 @@ type GetNextStateRequest struct {
 
 func (x *GetNextStateRequest) Reset() {
 	*x = GetNextStateRequest{}
-	mi := &file_workflow_v1_workflow_proto_msgTypes[24]
+	mi := &file_workflow_v1_workflow_proto_msgTypes[29]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1584,7 +1926,7 @@ func (x *GetNextStateRequest) String() string {
 func (*GetNextStateRequest) ProtoMessage() {}
 
 func (x *GetNextStateRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_workflow_v1_workflow_proto_msgTypes[24]
+	mi := &file_workflow_v1_workflow_proto_msgTypes[29]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1597,7 +1939,7 @@ func (x *GetNextStateRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetNextStateRequest.ProtoReflect.Descriptor instead.
 func (*GetNextStateRequest) Descriptor() ([]byte, []int) {
-	return file_workflow_v1_workflow_proto_rawDescGZIP(), []int{24}
+	return file_workflow_v1_workflow_proto_rawDescGZIP(), []int{29}
 }
 
 func (x *GetNextStateRequest) GetCurrentStateId() int64 {
@@ -1614,11 +1956,84 @@ func (x *GetNextStateRequest) GetEventName() string {
 	return ""
 }
 
+type GetStepConfigurationRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	StateId       int64                  `protobuf:"varint,1,opt,name=state_id,json=stateId,proto3" json:"state_id,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *GetStepConfigurationRequest) Reset() {
+	*x = GetStepConfigurationRequest{}
+	mi := &file_workflow_v1_workflow_proto_msgTypes[30]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *GetStepConfigurationRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*GetStepConfigurationRequest) ProtoMessage() {}
+
+func (x *GetStepConfigurationRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_workflow_v1_workflow_proto_msgTypes[30]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use GetStepConfigurationRequest.ProtoReflect.Descriptor instead.
+func (*GetStepConfigurationRequest) Descriptor() ([]byte, []int) {
+	return file_workflow_v1_workflow_proto_rawDescGZIP(), []int{30}
+}
+
+func (x *GetStepConfigurationRequest) GetStateId() int64 {
+	if x != nil {
+		return x.StateId
+	}
+	return 0
+}
+
 var File_workflow_v1_workflow_proto protoreflect.FileDescriptor
 
 const file_workflow_v1_workflow_proto_rawDesc = "" +
 	"\n" +
-	"\x1aworkflow/v1/workflow.proto\x12\vworkflow.v1\x1a\x1cgoogle/protobuf/struct.proto\x1a\x1bgoogle/protobuf/empty.proto\"\x93\x03\n" +
+	"\x1aworkflow/v1/workflow.proto\x12\vworkflow.v1\x1a\x1cgoogle/protobuf/struct.proto\x1a\x1bgoogle/protobuf/empty.proto\x1a\x1fgoogle/protobuf/timestamp.proto\"\xbe\x02\n" +
+	"\x11StepConfiguration\x128\n" +
+	"\vteam_config\x18\x01 \x01(\v2\x17.workflow.v1.TeamConfigR\n" +
+	"teamConfig\x12D\n" +
+	"\x0fdeadline_config\x18\x02 \x01(\v2\x1b.workflow.v1.DeadlineConfigR\x0edeadlineConfig\x128\n" +
+	"\vform_schema\x18\x03 \x01(\v2\x17.workflow.v1.FormSchemaR\n" +
+	"formSchema\x12J\n" +
+	"\x11file_requirements\x18\x04 \x01(\v2\x1d.workflow.v1.FileRequirementsR\x10fileRequirements\x12#\n" +
+	"\rallowed_roles\x18\x05 \x03(\tR\fallowedRoles\"a\n" +
+	"\n" +
+	"TeamConfig\x12\x19\n" +
+	"\bmin_size\x18\x01 \x01(\x05R\aminSize\x12\x19\n" +
+	"\bmax_size\x18\x02 \x01(\x05R\amaxSize\x12\x1d\n" +
+	"\n" +
+	"allow_solo\x18\x03 \x01(\bR\tallowSolo\"\x9a\x01\n" +
+	"\x0eDeadlineConfig\x12;\n" +
+	"\n" +
+	"fixed_date\x18\x01 \x01(\v2\x1a.google.protobuf.TimestampH\x00R\tfixedDate\x12'\n" +
+	"\x0eduration_hours\x18\x02 \x01(\x05H\x00R\rdurationHours\x12\x1a\n" +
+	"\btimezone\x18\x03 \x01(\tR\btimezoneB\x06\n" +
+	"\x04type\"F\n" +
+	"\n" +
+	"FormSchema\x12\x17\n" +
+	"\aform_id\x18\x01 \x01(\tR\x06formId\x12\x1f\n" +
+	"\vjson_schema\x18\x02 \x01(\tR\n" +
+	"jsonSchema\"\x84\x01\n" +
+	"\x10FileRequirements\x12\x1b\n" +
+	"\tmax_files\x18\x01 \x01(\x05R\bmaxFiles\x12-\n" +
+	"\x12allowed_extensions\x18\x02 \x03(\tR\x11allowedExtensions\x12$\n" +
+	"\x0emax_size_bytes\x18\x03 \x01(\x03R\fmaxSizeBytes\"\x93\x03\n" +
 	"\vStateAction\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\x03R\x02id\x12\x19\n" +
 	"\bstate_id\x18\x02 \x01(\x03R\astateId\x127\n" +
@@ -1729,7 +2144,9 @@ const file_workflow_v1_workflow_proto_rawDesc = "" +
 	"\x13GetNextStateRequest\x12(\n" +
 	"\x10current_state_id\x18\x01 \x01(\x03R\x0ecurrentStateId\x12\x1d\n" +
 	"\n" +
-	"event_name\x18\x02 \x01(\tR\teventName*\x9e\x01\n" +
+	"event_name\x18\x02 \x01(\tR\teventName\"8\n" +
+	"\x1bGetStepConfigurationRequest\x12\x19\n" +
+	"\bstate_id\x18\x01 \x01(\x03R\astateId*\x9e\x01\n" +
 	"\tStateType\x12\x1a\n" +
 	"\x16STATE_TYPE_UNSPECIFIED\x10\x00\x12\x12\n" +
 	"\x0eTEAM_FORMATION\x10\x01\x12\x18\n" +
@@ -1737,7 +2154,7 @@ const file_workflow_v1_workflow_proto_rawDesc = "" +
 	"\x0fDOCUMENT_UPLOAD\x10\x03\x12\x10\n" +
 	"\fFORM_FILLING\x10\x04\x12\x12\n" +
 	"\x0eEXTERNAL_CHECK\x10\x05\x12\f\n" +
-	"\bAPPROVAL\x10\x062\xa9\v\n" +
+	"\bAPPROVAL\x10\x062\x8b\f\n" +
 	"\x0fWorkflowService\x12K\n" +
 	"\x0eCreateWorkflow\x12\".workflow.v1.CreateWorkflowRequest\x1a\x15.workflow.v1.Workflow\x12E\n" +
 	"\vGetWorkflow\x12\x1f.workflow.v1.GetWorkflowRequest\x1a\x15.workflow.v1.Workflow\x12V\n" +
@@ -1757,7 +2174,8 @@ const file_workflow_v1_workflow_proto_rawDesc = "" +
 	"\x11DeleteStateAction\x12%.workflow.v1.DeleteStateActionRequest\x1a\x16.google.protobuf.Empty\x12Q\n" +
 	"\x11SetActiveWorkflow\x12%.workflow.v1.SetActiveWorkflowRequest\x1a\x15.workflow.v1.Workflow\x12i\n" +
 	"\x1dGetActiveWorkflowByDepartment\x121.workflow.v1.GetActiveWorkflowByDepartmentRequest\x1a\x15.workflow.v1.Workflow\x12D\n" +
-	"\fGetNextState\x12 .workflow.v1.GetNextStateRequest\x1a\x12.workflow.v1.StateB;Z9github.com/lucky720s/diplomaflow/pkg/protobuf/workflow/v1b\x06proto3"
+	"\fGetNextState\x12 .workflow.v1.GetNextStateRequest\x1a\x12.workflow.v1.State\x12`\n" +
+	"\x14GetStepConfiguration\x12(.workflow.v1.GetStepConfigurationRequest\x1a\x1e.workflow.v1.StepConfigurationB;Z9github.com/lucky720s/diplomaflow/pkg/protobuf/workflow/v1b\x06proto3"
 
 var (
 	file_workflow_v1_workflow_proto_rawDescOnce sync.Once
@@ -1772,96 +2190,110 @@ func file_workflow_v1_workflow_proto_rawDescGZIP() []byte {
 }
 
 var file_workflow_v1_workflow_proto_enumTypes = make([]protoimpl.EnumInfo, 3)
-var file_workflow_v1_workflow_proto_msgTypes = make([]protoimpl.MessageInfo, 25)
+var file_workflow_v1_workflow_proto_msgTypes = make([]protoimpl.MessageInfo, 31)
 var file_workflow_v1_workflow_proto_goTypes = []any{
 	(StateType)(0),                               // 0: workflow.v1.StateType
 	(StateAction_ActionType)(0),                  // 1: workflow.v1.StateAction.ActionType
 	(StateAction_Trigger)(0),                     // 2: workflow.v1.StateAction.Trigger
-	(*StateAction)(nil),                          // 3: workflow.v1.StateAction
-	(*Workflow)(nil),                             // 4: workflow.v1.Workflow
-	(*State)(nil),                                // 5: workflow.v1.State
-	(*Transition)(nil),                           // 6: workflow.v1.Transition
-	(*CreateWorkflowRequest)(nil),                // 7: workflow.v1.CreateWorkflowRequest
-	(*GetWorkflowRequest)(nil),                   // 8: workflow.v1.GetWorkflowRequest
-	(*ListWorkflowsRequest)(nil),                 // 9: workflow.v1.ListWorkflowsRequest
-	(*ListWorkflowsResponse)(nil),                // 10: workflow.v1.ListWorkflowsResponse
-	(*UpdateWorkflowRequest)(nil),                // 11: workflow.v1.UpdateWorkflowRequest
-	(*DeleteWorkflowRequest)(nil),                // 12: workflow.v1.DeleteWorkflowRequest
-	(*CreateStateRequest)(nil),                   // 13: workflow.v1.CreateStateRequest
-	(*GetStateRequest)(nil),                      // 14: workflow.v1.GetStateRequest
-	(*ListStatesRequest)(nil),                    // 15: workflow.v1.ListStatesRequest
-	(*ListStatesResponse)(nil),                   // 16: workflow.v1.ListStatesResponse
-	(*UpdateStateRequest)(nil),                   // 17: workflow.v1.UpdateStateRequest
-	(*DeleteStateRequest)(nil),                   // 18: workflow.v1.DeleteStateRequest
-	(*CreateTransitionRequest)(nil),              // 19: workflow.v1.CreateTransitionRequest
-	(*DeleteTransitionRequest)(nil),              // 20: workflow.v1.DeleteTransitionRequest
-	(*CreateStateActionRequest)(nil),             // 21: workflow.v1.CreateStateActionRequest
-	(*ListStateActionsRequest)(nil),              // 22: workflow.v1.ListStateActionsRequest
-	(*ListStateActionsResponse)(nil),             // 23: workflow.v1.ListStateActionsResponse
-	(*DeleteStateActionRequest)(nil),             // 24: workflow.v1.DeleteStateActionRequest
-	(*SetActiveWorkflowRequest)(nil),             // 25: workflow.v1.SetActiveWorkflowRequest
-	(*GetActiveWorkflowByDepartmentRequest)(nil), // 26: workflow.v1.GetActiveWorkflowByDepartmentRequest
-	(*GetNextStateRequest)(nil),                  // 27: workflow.v1.GetNextStateRequest
-	(*structpb.Struct)(nil),                      // 28: google.protobuf.Struct
-	(*emptypb.Empty)(nil),                        // 29: google.protobuf.Empty
+	(*StepConfiguration)(nil),                    // 3: workflow.v1.StepConfiguration
+	(*TeamConfig)(nil),                           // 4: workflow.v1.TeamConfig
+	(*DeadlineConfig)(nil),                       // 5: workflow.v1.DeadlineConfig
+	(*FormSchema)(nil),                           // 6: workflow.v1.FormSchema
+	(*FileRequirements)(nil),                     // 7: workflow.v1.FileRequirements
+	(*StateAction)(nil),                          // 8: workflow.v1.StateAction
+	(*Workflow)(nil),                             // 9: workflow.v1.Workflow
+	(*State)(nil),                                // 10: workflow.v1.State
+	(*Transition)(nil),                           // 11: workflow.v1.Transition
+	(*CreateWorkflowRequest)(nil),                // 12: workflow.v1.CreateWorkflowRequest
+	(*GetWorkflowRequest)(nil),                   // 13: workflow.v1.GetWorkflowRequest
+	(*ListWorkflowsRequest)(nil),                 // 14: workflow.v1.ListWorkflowsRequest
+	(*ListWorkflowsResponse)(nil),                // 15: workflow.v1.ListWorkflowsResponse
+	(*UpdateWorkflowRequest)(nil),                // 16: workflow.v1.UpdateWorkflowRequest
+	(*DeleteWorkflowRequest)(nil),                // 17: workflow.v1.DeleteWorkflowRequest
+	(*CreateStateRequest)(nil),                   // 18: workflow.v1.CreateStateRequest
+	(*GetStateRequest)(nil),                      // 19: workflow.v1.GetStateRequest
+	(*ListStatesRequest)(nil),                    // 20: workflow.v1.ListStatesRequest
+	(*ListStatesResponse)(nil),                   // 21: workflow.v1.ListStatesResponse
+	(*UpdateStateRequest)(nil),                   // 22: workflow.v1.UpdateStateRequest
+	(*DeleteStateRequest)(nil),                   // 23: workflow.v1.DeleteStateRequest
+	(*CreateTransitionRequest)(nil),              // 24: workflow.v1.CreateTransitionRequest
+	(*DeleteTransitionRequest)(nil),              // 25: workflow.v1.DeleteTransitionRequest
+	(*CreateStateActionRequest)(nil),             // 26: workflow.v1.CreateStateActionRequest
+	(*ListStateActionsRequest)(nil),              // 27: workflow.v1.ListStateActionsRequest
+	(*ListStateActionsResponse)(nil),             // 28: workflow.v1.ListStateActionsResponse
+	(*DeleteStateActionRequest)(nil),             // 29: workflow.v1.DeleteStateActionRequest
+	(*SetActiveWorkflowRequest)(nil),             // 30: workflow.v1.SetActiveWorkflowRequest
+	(*GetActiveWorkflowByDepartmentRequest)(nil), // 31: workflow.v1.GetActiveWorkflowByDepartmentRequest
+	(*GetNextStateRequest)(nil),                  // 32: workflow.v1.GetNextStateRequest
+	(*GetStepConfigurationRequest)(nil),          // 33: workflow.v1.GetStepConfigurationRequest
+	(*timestamppb.Timestamp)(nil),                // 34: google.protobuf.Timestamp
+	(*structpb.Struct)(nil),                      // 35: google.protobuf.Struct
+	(*emptypb.Empty)(nil),                        // 36: google.protobuf.Empty
 }
 var file_workflow_v1_workflow_proto_depIdxs = []int32{
-	1,  // 0: workflow.v1.StateAction.type:type_name -> workflow.v1.StateAction.ActionType
-	2,  // 1: workflow.v1.StateAction.trigger:type_name -> workflow.v1.StateAction.Trigger
-	28, // 2: workflow.v1.StateAction.config:type_name -> google.protobuf.Struct
-	5,  // 3: workflow.v1.Workflow.steps:type_name -> workflow.v1.State
-	0,  // 4: workflow.v1.State.type:type_name -> workflow.v1.StateType
-	28, // 5: workflow.v1.State.config:type_name -> google.protobuf.Struct
-	4,  // 6: workflow.v1.ListWorkflowsResponse.workflows:type_name -> workflow.v1.Workflow
-	0,  // 7: workflow.v1.CreateStateRequest.type:type_name -> workflow.v1.StateType
-	28, // 8: workflow.v1.CreateStateRequest.config:type_name -> google.protobuf.Struct
-	5,  // 9: workflow.v1.ListStatesResponse.states:type_name -> workflow.v1.State
-	28, // 10: workflow.v1.UpdateStateRequest.config:type_name -> google.protobuf.Struct
-	1,  // 11: workflow.v1.CreateStateActionRequest.type:type_name -> workflow.v1.StateAction.ActionType
-	2,  // 12: workflow.v1.CreateStateActionRequest.trigger:type_name -> workflow.v1.StateAction.Trigger
-	28, // 13: workflow.v1.CreateStateActionRequest.config:type_name -> google.protobuf.Struct
-	3,  // 14: workflow.v1.ListStateActionsResponse.actions:type_name -> workflow.v1.StateAction
-	7,  // 15: workflow.v1.WorkflowService.CreateWorkflow:input_type -> workflow.v1.CreateWorkflowRequest
-	8,  // 16: workflow.v1.WorkflowService.GetWorkflow:input_type -> workflow.v1.GetWorkflowRequest
-	9,  // 17: workflow.v1.WorkflowService.ListWorkflows:input_type -> workflow.v1.ListWorkflowsRequest
-	11, // 18: workflow.v1.WorkflowService.UpdateWorkflow:input_type -> workflow.v1.UpdateWorkflowRequest
-	12, // 19: workflow.v1.WorkflowService.DeleteWorkflow:input_type -> workflow.v1.DeleteWorkflowRequest
-	13, // 20: workflow.v1.WorkflowService.CreateState:input_type -> workflow.v1.CreateStateRequest
-	14, // 21: workflow.v1.WorkflowService.GetState:input_type -> workflow.v1.GetStateRequest
-	15, // 22: workflow.v1.WorkflowService.ListStates:input_type -> workflow.v1.ListStatesRequest
-	17, // 23: workflow.v1.WorkflowService.UpdateState:input_type -> workflow.v1.UpdateStateRequest
-	18, // 24: workflow.v1.WorkflowService.DeleteState:input_type -> workflow.v1.DeleteStateRequest
-	19, // 25: workflow.v1.WorkflowService.CreateTransition:input_type -> workflow.v1.CreateTransitionRequest
-	20, // 26: workflow.v1.WorkflowService.DeleteTransition:input_type -> workflow.v1.DeleteTransitionRequest
-	21, // 27: workflow.v1.WorkflowService.CreateStateAction:input_type -> workflow.v1.CreateStateActionRequest
-	22, // 28: workflow.v1.WorkflowService.ListStateActions:input_type -> workflow.v1.ListStateActionsRequest
-	24, // 29: workflow.v1.WorkflowService.DeleteStateAction:input_type -> workflow.v1.DeleteStateActionRequest
-	25, // 30: workflow.v1.WorkflowService.SetActiveWorkflow:input_type -> workflow.v1.SetActiveWorkflowRequest
-	26, // 31: workflow.v1.WorkflowService.GetActiveWorkflowByDepartment:input_type -> workflow.v1.GetActiveWorkflowByDepartmentRequest
-	27, // 32: workflow.v1.WorkflowService.GetNextState:input_type -> workflow.v1.GetNextStateRequest
-	4,  // 33: workflow.v1.WorkflowService.CreateWorkflow:output_type -> workflow.v1.Workflow
-	4,  // 34: workflow.v1.WorkflowService.GetWorkflow:output_type -> workflow.v1.Workflow
-	10, // 35: workflow.v1.WorkflowService.ListWorkflows:output_type -> workflow.v1.ListWorkflowsResponse
-	4,  // 36: workflow.v1.WorkflowService.UpdateWorkflow:output_type -> workflow.v1.Workflow
-	29, // 37: workflow.v1.WorkflowService.DeleteWorkflow:output_type -> google.protobuf.Empty
-	5,  // 38: workflow.v1.WorkflowService.CreateState:output_type -> workflow.v1.State
-	5,  // 39: workflow.v1.WorkflowService.GetState:output_type -> workflow.v1.State
-	16, // 40: workflow.v1.WorkflowService.ListStates:output_type -> workflow.v1.ListStatesResponse
-	5,  // 41: workflow.v1.WorkflowService.UpdateState:output_type -> workflow.v1.State
-	29, // 42: workflow.v1.WorkflowService.DeleteState:output_type -> google.protobuf.Empty
-	6,  // 43: workflow.v1.WorkflowService.CreateTransition:output_type -> workflow.v1.Transition
-	29, // 44: workflow.v1.WorkflowService.DeleteTransition:output_type -> google.protobuf.Empty
-	3,  // 45: workflow.v1.WorkflowService.CreateStateAction:output_type -> workflow.v1.StateAction
-	23, // 46: workflow.v1.WorkflowService.ListStateActions:output_type -> workflow.v1.ListStateActionsResponse
-	29, // 47: workflow.v1.WorkflowService.DeleteStateAction:output_type -> google.protobuf.Empty
-	4,  // 48: workflow.v1.WorkflowService.SetActiveWorkflow:output_type -> workflow.v1.Workflow
-	4,  // 49: workflow.v1.WorkflowService.GetActiveWorkflowByDepartment:output_type -> workflow.v1.Workflow
-	5,  // 50: workflow.v1.WorkflowService.GetNextState:output_type -> workflow.v1.State
-	33, // [33:51] is the sub-list for method output_type
-	15, // [15:33] is the sub-list for method input_type
-	15, // [15:15] is the sub-list for extension type_name
-	15, // [15:15] is the sub-list for extension extendee
-	0,  // [0:15] is the sub-list for field type_name
+	4,  // 0: workflow.v1.StepConfiguration.team_config:type_name -> workflow.v1.TeamConfig
+	5,  // 1: workflow.v1.StepConfiguration.deadline_config:type_name -> workflow.v1.DeadlineConfig
+	6,  // 2: workflow.v1.StepConfiguration.form_schema:type_name -> workflow.v1.FormSchema
+	7,  // 3: workflow.v1.StepConfiguration.file_requirements:type_name -> workflow.v1.FileRequirements
+	34, // 4: workflow.v1.DeadlineConfig.fixed_date:type_name -> google.protobuf.Timestamp
+	1,  // 5: workflow.v1.StateAction.type:type_name -> workflow.v1.StateAction.ActionType
+	2,  // 6: workflow.v1.StateAction.trigger:type_name -> workflow.v1.StateAction.Trigger
+	35, // 7: workflow.v1.StateAction.config:type_name -> google.protobuf.Struct
+	10, // 8: workflow.v1.Workflow.steps:type_name -> workflow.v1.State
+	0,  // 9: workflow.v1.State.type:type_name -> workflow.v1.StateType
+	35, // 10: workflow.v1.State.config:type_name -> google.protobuf.Struct
+	9,  // 11: workflow.v1.ListWorkflowsResponse.workflows:type_name -> workflow.v1.Workflow
+	0,  // 12: workflow.v1.CreateStateRequest.type:type_name -> workflow.v1.StateType
+	35, // 13: workflow.v1.CreateStateRequest.config:type_name -> google.protobuf.Struct
+	10, // 14: workflow.v1.ListStatesResponse.states:type_name -> workflow.v1.State
+	35, // 15: workflow.v1.UpdateStateRequest.config:type_name -> google.protobuf.Struct
+	1,  // 16: workflow.v1.CreateStateActionRequest.type:type_name -> workflow.v1.StateAction.ActionType
+	2,  // 17: workflow.v1.CreateStateActionRequest.trigger:type_name -> workflow.v1.StateAction.Trigger
+	35, // 18: workflow.v1.CreateStateActionRequest.config:type_name -> google.protobuf.Struct
+	8,  // 19: workflow.v1.ListStateActionsResponse.actions:type_name -> workflow.v1.StateAction
+	12, // 20: workflow.v1.WorkflowService.CreateWorkflow:input_type -> workflow.v1.CreateWorkflowRequest
+	13, // 21: workflow.v1.WorkflowService.GetWorkflow:input_type -> workflow.v1.GetWorkflowRequest
+	14, // 22: workflow.v1.WorkflowService.ListWorkflows:input_type -> workflow.v1.ListWorkflowsRequest
+	16, // 23: workflow.v1.WorkflowService.UpdateWorkflow:input_type -> workflow.v1.UpdateWorkflowRequest
+	17, // 24: workflow.v1.WorkflowService.DeleteWorkflow:input_type -> workflow.v1.DeleteWorkflowRequest
+	18, // 25: workflow.v1.WorkflowService.CreateState:input_type -> workflow.v1.CreateStateRequest
+	19, // 26: workflow.v1.WorkflowService.GetState:input_type -> workflow.v1.GetStateRequest
+	20, // 27: workflow.v1.WorkflowService.ListStates:input_type -> workflow.v1.ListStatesRequest
+	22, // 28: workflow.v1.WorkflowService.UpdateState:input_type -> workflow.v1.UpdateStateRequest
+	23, // 29: workflow.v1.WorkflowService.DeleteState:input_type -> workflow.v1.DeleteStateRequest
+	24, // 30: workflow.v1.WorkflowService.CreateTransition:input_type -> workflow.v1.CreateTransitionRequest
+	25, // 31: workflow.v1.WorkflowService.DeleteTransition:input_type -> workflow.v1.DeleteTransitionRequest
+	26, // 32: workflow.v1.WorkflowService.CreateStateAction:input_type -> workflow.v1.CreateStateActionRequest
+	27, // 33: workflow.v1.WorkflowService.ListStateActions:input_type -> workflow.v1.ListStateActionsRequest
+	29, // 34: workflow.v1.WorkflowService.DeleteStateAction:input_type -> workflow.v1.DeleteStateActionRequest
+	30, // 35: workflow.v1.WorkflowService.SetActiveWorkflow:input_type -> workflow.v1.SetActiveWorkflowRequest
+	31, // 36: workflow.v1.WorkflowService.GetActiveWorkflowByDepartment:input_type -> workflow.v1.GetActiveWorkflowByDepartmentRequest
+	32, // 37: workflow.v1.WorkflowService.GetNextState:input_type -> workflow.v1.GetNextStateRequest
+	33, // 38: workflow.v1.WorkflowService.GetStepConfiguration:input_type -> workflow.v1.GetStepConfigurationRequest
+	9,  // 39: workflow.v1.WorkflowService.CreateWorkflow:output_type -> workflow.v1.Workflow
+	9,  // 40: workflow.v1.WorkflowService.GetWorkflow:output_type -> workflow.v1.Workflow
+	15, // 41: workflow.v1.WorkflowService.ListWorkflows:output_type -> workflow.v1.ListWorkflowsResponse
+	9,  // 42: workflow.v1.WorkflowService.UpdateWorkflow:output_type -> workflow.v1.Workflow
+	36, // 43: workflow.v1.WorkflowService.DeleteWorkflow:output_type -> google.protobuf.Empty
+	10, // 44: workflow.v1.WorkflowService.CreateState:output_type -> workflow.v1.State
+	10, // 45: workflow.v1.WorkflowService.GetState:output_type -> workflow.v1.State
+	21, // 46: workflow.v1.WorkflowService.ListStates:output_type -> workflow.v1.ListStatesResponse
+	10, // 47: workflow.v1.WorkflowService.UpdateState:output_type -> workflow.v1.State
+	36, // 48: workflow.v1.WorkflowService.DeleteState:output_type -> google.protobuf.Empty
+	11, // 49: workflow.v1.WorkflowService.CreateTransition:output_type -> workflow.v1.Transition
+	36, // 50: workflow.v1.WorkflowService.DeleteTransition:output_type -> google.protobuf.Empty
+	8,  // 51: workflow.v1.WorkflowService.CreateStateAction:output_type -> workflow.v1.StateAction
+	28, // 52: workflow.v1.WorkflowService.ListStateActions:output_type -> workflow.v1.ListStateActionsResponse
+	36, // 53: workflow.v1.WorkflowService.DeleteStateAction:output_type -> google.protobuf.Empty
+	9,  // 54: workflow.v1.WorkflowService.SetActiveWorkflow:output_type -> workflow.v1.Workflow
+	9,  // 55: workflow.v1.WorkflowService.GetActiveWorkflowByDepartment:output_type -> workflow.v1.Workflow
+	10, // 56: workflow.v1.WorkflowService.GetNextState:output_type -> workflow.v1.State
+	3,  // 57: workflow.v1.WorkflowService.GetStepConfiguration:output_type -> workflow.v1.StepConfiguration
+	39, // [39:58] is the sub-list for method output_type
+	20, // [20:39] is the sub-list for method input_type
+	20, // [20:20] is the sub-list for extension type_name
+	20, // [20:20] is the sub-list for extension extendee
+	0,  // [0:20] is the sub-list for field type_name
 }
 
 func init() { file_workflow_v1_workflow_proto_init() }
@@ -1869,7 +2301,11 @@ func file_workflow_v1_workflow_proto_init() {
 	if File_workflow_v1_workflow_proto != nil {
 		return
 	}
-	file_workflow_v1_workflow_proto_msgTypes[5].OneofWrappers = []any{
+	file_workflow_v1_workflow_proto_msgTypes[2].OneofWrappers = []any{
+		(*DeadlineConfig_FixedDate)(nil),
+		(*DeadlineConfig_DurationHours)(nil),
+	}
+	file_workflow_v1_workflow_proto_msgTypes[10].OneofWrappers = []any{
 		(*GetWorkflowRequest_WorkflowId)(nil),
 		(*GetWorkflowRequest_Name)(nil),
 	}
@@ -1879,7 +2315,7 @@ func file_workflow_v1_workflow_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_workflow_v1_workflow_proto_rawDesc), len(file_workflow_v1_workflow_proto_rawDesc)),
 			NumEnums:      3,
-			NumMessages:   25,
+			NumMessages:   31,
 			NumExtensions: 0,
 			NumServices:   1,
 		},

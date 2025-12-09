@@ -1,0 +1,53 @@
+syntax = "proto3";
+
+package notification;
+
+import "google/protobuf/empty.proto";
+import "google/protobuf/timestamp.proto";
+
+option go_package = "github.com/lucky720s/diplomaflow/pkg/protobuf/notification/v1";
+
+service NotificationService {
+  rpc SendNotification (SendNotificationRequest) returns (SendNotificationResponse);
+  rpc ListNotifications (ListNotificationsRequest) returns (ListNotificationsResponse);
+  rpc MarkAsRead (MarkAsReadRequest) returns (google.protobuf.Empty);
+}
+
+message SendNotificationRequest {
+  int64 user_id = 1;
+  string title = 2;
+  string message = 3;
+  string link = 4;
+  string type = 5;
+}
+
+message SendNotificationResponse {
+  int64 notification_id = 1;
+}
+
+message ListNotificationsRequest {
+  int64 user_id = 1;
+  bool only_unread = 2;
+  int32 page = 3;
+  int32 page_size = 4;
+}
+
+message Notification {
+  int64 id = 1;
+  string title = 2;
+  string message = 3;
+  string link = 4;
+  string type = 5;
+  bool is_read = 6;
+  google.protobuf.Timestamp created_at = 7;
+}
+
+message ListNotificationsResponse {
+  repeated Notification notifications = 1;
+  int64 total_count = 2;
+}
+
+message MarkAsReadRequest {
+  int64 notification_id = 1;
+  int64 user_id = 2;
+}

@@ -26,7 +26,7 @@ func (h *Handler) CreateTeam(ctx context.Context, req *pb.CreateTeamRequest) (*p
 		p := req.ProjectId
 		projectID = &p
 	}
-	teamID, err := h.service.CreateTeam(ctx, req.Name, projectID, req.MemberIds)
+	teamID, err := h.service.CreateTeam(ctx, req.Name, projectID, req.MemberIds, req.LeaderId)
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, "failed to create team: %v", err)
 	}
@@ -70,7 +70,7 @@ func (h *Handler) GetAvailableStudents(ctx context.Context, req *pb.GetAvailable
 		return nil, status.Error(codes.InvalidArgument, "university_id is required")
 	}
 
-	students, err := h.service.GetAvailableStudents(ctx, req.UniversityId)
+	students, err := h.service.GetAvailableStudents(ctx, req.UniversityId, req.ExcludeUserId)
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, "failed to get students: %v", err)
 	}

@@ -13,6 +13,12 @@ type Repository interface {
 	AddMember(ctx context.Context, member *TeamMember) error
 	RemoveMember(ctx context.Context, teamID uint64, userID int64) error
 	Update(ctx context.Context, team *Team) error
+	CreateInvite(ctx context.Context, invite *TeamInvite) error
+	GetInvitesByUserID(ctx context.Context, userID int64) ([]*TeamInvite, error)
+	GetInviteByID(ctx context.Context, inviteID uint64) (*TeamInvite, error)
+	UpdateInviteStatus(ctx context.Context, inviteID uint64, status string) error
+	IsUserInAnyTeam(ctx context.Context, userID int64) (bool, error)
+	DeletePendingInvitesForUser(ctx context.Context, userID int64) error
 }
 
 type repository struct {
@@ -50,4 +56,35 @@ func (r *repository) RemoveMember(ctx context.Context, teamID uint64, userID int
 }
 func (r *repository) Update(ctx context.Context, team *Team) error {
 	return r.db.WithContext(ctx).Save(team).Error
+}
+func (r *repository) CreateInvite(ctx context.Context, invite *TeamInvite) error {
+	return r.db.WithContext(ctx).Create(invite).Error
+}
+
+func (r *repository) GetInvitesByUserID(ctx context.Context, userID int64) ([]*TeamInvite, error) {
+	var invites []*TeamInvite
+	err := r.db.WithContext(ctx).Preload("Team").Where("user_id = ? AND status = ?", userID, "PENDING").Find(&invites).Error
+	return invites, err
+}
+
+func (r *repository) GetInviteByID(ctx context.Context, inviteID uint64) (*TeamInvite, error) {
+	var invite TeamInvite
+	err := r.db.WithContext(ctx).First(&invite, inviteID).Error
+	return &invite, err
+}
+
+func (r *repository) UpdateInviteStatus(ctx context.Context, inviteID uint64, status string) error {
+	return r.db.WithContext(ctx).Model(&TeamInvite{}).Where("id = ?", inviteID).Update("status", status).Error
+}
+
+func (r *repository) IsUserInAnyTeam(ctx context.Context, userID int64) (bool, error) {
+	var count int64
+	err := r.db.WithContext(ctx).Model(&TeamMember{}).Where("user_id = ?", userID).Count(&count).Error
+	return count > 0, err
+}
+
+func (r *repository) DeletePendingInvitesForUser(ctx context.Context, userID int64) error {
+	return r.db.WithContext(ctx).Model(&TeamInvite{}).
+		Where("user_id = ? AND status = ?", userID, "PENDING").
+		Update("status", "AUTO_DECLINED").Error
 }

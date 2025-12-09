@@ -1,0 +1,54 @@
+syntax = "proto3";
+
+package form;
+
+import "google/protobuf/struct.proto";
+import "google/protobuf/timestamp.proto";
+
+option go_package = "github.com/lucky720s/diplomaflow/pkg/protobuf/form/v1";
+
+service FormService {
+  rpc SubmitForm(SubmitFormRequest) returns (SubmitFormResponse);
+  rpc GetFormSubmission(GetFormSubmissionRequest) returns (GetFormSubmissionResponse);
+  rpc ListProjectForms(ListProjectFormsRequest) returns (ListProjectFormsResponse);
+}
+
+message SubmitFormRequest {
+  int64 project_id = 1;
+  int64 step_id = 2;
+  int64 user_id = 3;
+  google.protobuf.Struct data = 4;
+}
+
+message SubmitFormResponse {
+  string submission_id = 1;
+  bool success = 2;
+}
+
+message GetFormSubmissionRequest {
+  string submission_id = 1;
+}
+
+message GetFormSubmissionResponse {
+  string submission_id = 1;
+  int64 project_id = 2;
+  int64 step_id = 3;
+  int64 user_id = 4;
+  google.protobuf.Struct data = 5;
+  google.protobuf.Timestamp created_at = 6;
+}
+
+message ListProjectFormsRequest {
+  int64 project_id = 1;
+}
+
+message FormPreview {
+  string submission_id = 1;
+  int64 step_id = 2;
+  string step_name = 3;
+  google.protobuf.Timestamp created_at = 4;
+}
+
+message ListProjectFormsResponse {
+  repeated FormPreview forms = 1;
+}

@@ -7,7 +7,8 @@ type Config struct {
 		DSN string `mapstructure:"dsn"`
 	} `mapstructure:"database"`
 	Services struct {
-		AuthAddr string `mapstructure:"auth_addr"`
+		AuthAddr         string `mapstructure:"auth_addr"`
+		NotificationAddr string `mapstructure:"notification_addr"`
 	} `mapstructure:"services"`
 	Kafka struct {
 		Brokers string `mapstructure:"brokers"`

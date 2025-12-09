@@ -2,7 +2,7 @@ syntax = "proto3";
 
 package file;
 
-option go_package = "gen/file";
+option go_package = "github.com/lucky720s/diplomaflow/pkg/protobuf/file/v1";
 
 service FileService {
   rpc UploadFile(stream UploadFileRequest) returns (UploadFileResponse);

@@ -4,6 +4,7 @@ package workflow.v1;
 
 import "google/protobuf/struct.proto";
 import "google/protobuf/empty.proto";
+import "google/protobuf/timestamp.proto";
 
 option go_package = "github.com/lucky720s/diplomaflow/pkg/protobuf/workflow/v1";
 
@@ -15,6 +16,39 @@ enum StateType {
   FORM_FILLING = 4;
   EXTERNAL_CHECK = 5;
   APPROVAL = 6;
+}
+
+message StepConfiguration {
+  TeamConfig team_config = 1;
+  DeadlineConfig deadline_config = 2;
+  FormSchema form_schema = 3;
+  FileRequirements file_requirements = 4;
+  repeated string allowed_roles = 5;
+}
+
+message TeamConfig {
+  int32 min_size = 1;
+  int32 max_size = 2;
+  bool allow_solo = 3;
+}
+
+message DeadlineConfig {
+  oneof type {
+    google.protobuf.Timestamp fixed_date = 1;
+    int32 duration_hours = 2;
+  }
+  string timezone = 3;
+}
+
+message FormSchema {
+  string form_id = 1;
+  string json_schema = 2;
+}
+
+message FileRequirements {
+  int32 max_files = 1;
+  repeated string allowed_extensions = 2;
+  int64 max_size_bytes = 3;
 }
 
 message StateAction {
@@ -30,7 +64,6 @@ message StateAction {
     ON_EXIT = 2;
     ON_DEADLINE = 3;
   }
-
   int64 id = 1;
   int64 state_id = 2;
   ActionType type = 3;
@@ -87,6 +120,7 @@ service WorkflowService {
   rpc SetActiveWorkflow(SetActiveWorkflowRequest) returns (Workflow);
   rpc GetActiveWorkflowByDepartment(GetActiveWorkflowByDepartmentRequest) returns (Workflow);
   rpc GetNextState(GetNextStateRequest) returns (State);
+  rpc GetStepConfiguration(GetStepConfigurationRequest) returns (StepConfiguration);
 }
 
 message CreateWorkflowRequest { string name = 1; int64 department_id = 2; }
@@ -95,7 +129,8 @@ message GetWorkflowRequest {
     int64 workflow_id = 1;
     string name = 2;
   }
-}message ListWorkflowsRequest { int64 department_id = 1; }
+}
+message ListWorkflowsRequest { int64 department_id = 1; }
 message ListWorkflowsResponse { repeated Workflow workflows = 1; }
 message UpdateWorkflowRequest { int64 id = 1; string name = 2; }
 message DeleteWorkflowRequest { int64 id = 1; }
@@ -118,3 +153,5 @@ message DeleteStateActionRequest { int64 id = 1; }
 message SetActiveWorkflowRequest { int64 workflow_id = 1; }
 message GetActiveWorkflowByDepartmentRequest { int64 department_id = 1; }
 message GetNextStateRequest { int64 current_state_id = 1; string event_name = 2; }
+
+message GetStepConfigurationRequest { int64 state_id = 1; }

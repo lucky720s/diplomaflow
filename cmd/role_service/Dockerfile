@@ -3,15 +3,11 @@ WORKDIR /app
 
 ENV GOWORK=off
 
-RUN go install github.com/google/wire/cmd/wire@latest
 
 COPY go.mod go.sum ./
 RUN go mod download
 
 COPY . .
-RUN wire gen ./internal/role
-
-RUN go generate ./...
 
 RUN CGO_ENABLED=0 GOOS=linux go build -o /bin/service ./cmd/role_service
 

@@ -6,3 +6,5 @@ kafka:
   brokers: "kafka:9092"
 services:
   auth_addr: "auth_service:8082"
+  notification_addr: "notification_service:8087"
+
