@@ -17,8 +17,9 @@ type Config struct {
 	RoleServiceAddr         string `mapstructure:"services_role_addr"`
 	WorkflowServiceAddr     string `mapstructure:"services_workflow_addr"`
 	NotificationServiceAddr string `mapstructure:"services_notification_addr"`
-	FileServiceAddr         string `mapstructure:"services_file_addr"` // New
+	FileServiceAddr         string `mapstructure:"services_file_addr"`
 	FormServiceAddr         string `mapstructure:"services_form_addr"`
+	RedisAddr               string `mapstructure:"redis_addr"`
 }
 
 func Load(path string, cfg interface{}) error {
