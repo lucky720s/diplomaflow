@@ -19,3 +19,13 @@ type User struct {
 	UpdatedAt    time.Time
 	DeletedAt    gorm.DeletedAt `gorm:"index"`
 }
+type RefreshToken struct {
+	ID        uint64    `gorm:"primaryKey"`
+	UserID    int64     `gorm:"index;not null"`
+	Token     string    `gorm:"uniqueIndex;not null"`
+	UserAgent string    `gorm:"type:varchar(255)"`
+	ClientIP  string    `gorm:"type:varchar(45)"`
+	ExpiresAt time.Time `gorm:"not null"`
+	Revoked   bool      `gorm:"default:false"`
+	CreatedAt time.Time
+}

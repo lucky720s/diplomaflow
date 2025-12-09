@@ -7,7 +7,9 @@ require (
 	github.com/envoyproxy/protoc-gen-validate v1.2.1
 	github.com/gin-gonic/gin v1.11.0
 	github.com/golang-jwt/jwt/v5 v5.3.0
+	github.com/google/uuid v1.6.0
 	github.com/google/wire v0.7.0
+	github.com/redis/go-redis/v9 v9.17.2
 	github.com/spf13/viper v1.17.0
 	github.com/stretchr/testify v1.11.1
 	go.uber.org/zap v1.25.0
@@ -24,8 +26,10 @@ require (
 	filippo.io/edwards25519 v1.1.0 // indirect
 	github.com/bytedance/sonic v1.14.0 // indirect
 	github.com/bytedance/sonic/loader v0.3.0 // indirect
+	github.com/cespare/xxhash/v2 v2.3.0 // indirect
 	github.com/cloudwego/base64x v0.1.6 // indirect
 	github.com/davecgh/go-spew v1.1.2-0.20180830191138-d8f796af33cc // indirect
+	github.com/dgryski/go-rendezvous v0.0.0-20200823014737-9f7001d12a5f // indirect
 	github.com/eapache/go-resiliency v1.3.0 // indirect
 	github.com/eapache/go-xerial-snappy v0.0.0-20230111030713-bf00bc1b83b6 // indirect
 	github.com/eapache/queue v1.1.0 // indirect
@@ -39,7 +43,6 @@ require (
 	github.com/goccy/go-json v0.10.2 // indirect
 	github.com/goccy/go-yaml v1.18.0 // indirect
 	github.com/golang/snappy v0.0.4 // indirect
-	github.com/google/uuid v1.6.0 // indirect
 	github.com/hashicorp/errwrap v1.1.0 // indirect
 	github.com/hashicorp/go-multierror v1.1.1 // indirect
 	github.com/hashicorp/go-uuid v1.0.3 // indirect

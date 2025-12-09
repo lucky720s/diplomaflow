@@ -9,6 +9,9 @@ service AuthService {
   rpc Login (LoginRequest) returns (LoginResponse);
   rpc ValidateToken (ValidateTokenRequest) returns (ValidateTokenResponse);
   rpc ListUsers (ListUsersRequest) returns (ListUsersResponse);
+  rpc RefreshToken (RefreshTokenRequest) returns (RefreshTokenResponse);
+  rpc ListSessions (ListSessionsRequest) returns (ListSessionsResponse);
+  rpc RevokeSession (RevokeSessionRequest) returns (RevokeSessionResponse);
 }
 
 message RegisterRequest {
@@ -28,10 +31,13 @@ message RegisterResponse {
 message LoginRequest {
   string email = 1;
   string password = 2;
+  string user_agent = 3;
+  string ip_address = 4;
 }
 
 message LoginResponse {
-  string token = 1;
+  string access_token = 1;
+  string refresh_token = 2;
 }
 
 message ValidateTokenRequest {
@@ -68,4 +74,38 @@ message UserPreview {
 message ListUsersResponse {
   repeated UserPreview users = 1;
   int64 total_count = 2;
+}
+message RefreshTokenRequest {
+  string refresh_token = 1;
+  string user_agent = 2;
+  string ip_address = 3;
+}
+
+message RefreshTokenResponse {
+  string access_token = 1;
+  string refresh_token = 2;
+}
+message ListSessionsRequest {
+  int64 user_id = 1;
+}
+message Session {
+  uint64 id = 1;
+  string user_agent = 2;
+  string ip_address = 3;
+  string created_at = 4;
+  string expires_at = 5;
+  bool is_current = 6;
+}
+
+message ListSessionsResponse {
+  repeated Session sessions = 1;
+}
+
+message RevokeSessionRequest {
+  int64 user_id = 1;
+  uint64 session_id = 2;
+}
+
+message RevokeSessionResponse {
+  bool success = 1;
 }

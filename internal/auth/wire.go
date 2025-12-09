@@ -5,6 +5,8 @@
 package auth
 
 import (
+	"time"
+
 	"github.com/google/wire"
 	"github.com/lucky720s/diplomaflow/pkg/logger"
 	rolev1 "github.com/lucky720s/diplomaflow/pkg/protobuf/role/v1"
@@ -55,10 +57,14 @@ func ProvideRoleClient(cfg *Config) (rolev1.RoleServiceClient, func(), error) {
 }
 
 func ProvideJwtWrapper(cfg *Config) JwtWrapper {
+	accessTTL, _ := time.ParseDuration(cfg.JWT.AccessTokenTTL)
+	refreshTTL, _ := time.ParseDuration(cfg.JWT.RefreshTokenTTL)
+
 	return JwtWrapper{
 		SecretKey:       cfg.JWT.Secret,
 		Issuer:          "diplomaflow",
-		ExpirationHours: 24,
+		AccessTokenTTL:  accessTTL,
+		RefreshTokenTTL: refreshTTL,
 	}
 }
 

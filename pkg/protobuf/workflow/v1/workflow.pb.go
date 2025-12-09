@@ -189,14 +189,13 @@ func (StateAction_Trigger) EnumDescriptor() ([]byte, []int) {
 	return file_workflow_v1_workflow_proto_rawDescGZIP(), []int{5, 1}
 }
 
-// Конфигурация для шага (хранится внутри State.config или парсится отдельно)
 type StepConfiguration struct {
 	state            protoimpl.MessageState `protogen:"open.v1"`
 	TeamConfig       *TeamConfig            `protobuf:"bytes,1,opt,name=team_config,json=teamConfig,proto3" json:"team_config,omitempty"`
 	DeadlineConfig   *DeadlineConfig        `protobuf:"bytes,2,opt,name=deadline_config,json=deadlineConfig,proto3" json:"deadline_config,omitempty"`
 	FormSchema       *FormSchema            `protobuf:"bytes,3,opt,name=form_schema,json=formSchema,proto3" json:"form_schema,omitempty"`
 	FileRequirements *FileRequirements      `protobuf:"bytes,4,opt,name=file_requirements,json=fileRequirements,proto3" json:"file_requirements,omitempty"`
-	AllowedRoles     []string               `protobuf:"bytes,5,rep,name=allowed_roles,json=allowedRoles,proto3" json:"allowed_roles,omitempty"` // Роли, которым доступен этот шаг
+	AllowedRoles     []string               `protobuf:"bytes,5,rep,name=allowed_roles,json=allowedRoles,proto3" json:"allowed_roles,omitempty"`
 	unknownFields    protoimpl.UnknownFields
 	sizeCache        protoimpl.SizeCache
 }
@@ -328,14 +327,12 @@ func (x *TeamConfig) GetAllowSolo() bool {
 
 type DeadlineConfig struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
-	// Дедлайн может быть фиксированной датой или длительностью от начала шага
-	//
 	// Types that are valid to be assigned to Type:
 	//
 	//	*DeadlineConfig_FixedDate
 	//	*DeadlineConfig_DurationHours
 	Type          isDeadlineConfig_Type `protobuf_oneof:"type"`
-	Timezone      string                `protobuf:"bytes,3,opt,name=timezone,proto3" json:"timezone,omitempty"` // e.g., "Asia/Almaty" or "UTC+5"
+	Timezone      string                `protobuf:"bytes,3,opt,name=timezone,proto3" json:"timezone,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -420,8 +417,8 @@ func (*DeadlineConfig_DurationHours) isDeadlineConfig_Type() {}
 
 type FormSchema struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
-	FormId        string                 `protobuf:"bytes,1,opt,name=form_id,json=formId,proto3" json:"form_id,omitempty"`             // Уникальный ID формы
-	JsonSchema    string                 `protobuf:"bytes,2,opt,name=json_schema,json=jsonSchema,proto3" json:"json_schema,omitempty"` // JSON Schema для валидации на фронте и бэке
+	FormId        string                 `protobuf:"bytes,1,opt,name=form_id,json=formId,proto3" json:"form_id,omitempty"`
+	JsonSchema    string                 `protobuf:"bytes,2,opt,name=json_schema,json=jsonSchema,proto3" json:"json_schema,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -473,7 +470,7 @@ func (x *FormSchema) GetJsonSchema() string {
 type FileRequirements struct {
 	state             protoimpl.MessageState `protogen:"open.v1"`
 	MaxFiles          int32                  `protobuf:"varint,1,opt,name=max_files,json=maxFiles,proto3" json:"max_files,omitempty"`
-	AllowedExtensions []string               `protobuf:"bytes,2,rep,name=allowed_extensions,json=allowedExtensions,proto3" json:"allowed_extensions,omitempty"` // e.g. [".pdf", ".docx"]
+	AllowedExtensions []string               `protobuf:"bytes,2,rep,name=allowed_extensions,json=allowedExtensions,proto3" json:"allowed_extensions,omitempty"`
 	MaxSizeBytes      int64                  `protobuf:"varint,3,opt,name=max_size_bytes,json=maxSizeBytes,proto3" json:"max_size_bytes,omitempty"`
 	unknownFields     protoimpl.UnknownFields
 	sizeCache         protoimpl.SizeCache
@@ -689,7 +686,7 @@ type State struct {
 	Name          string                 `protobuf:"bytes,3,opt,name=name,proto3" json:"name,omitempty"`
 	Description   string                 `protobuf:"bytes,4,opt,name=description,proto3" json:"description,omitempty"`
 	Type          StateType              `protobuf:"varint,5,opt,name=type,proto3,enum=workflow.v1.StateType" json:"type,omitempty"`
-	Config        *structpb.Struct       `protobuf:"bytes,6,opt,name=config,proto3" json:"config,omitempty"` // Здесь лежит JSON представление StepConfiguration
+	Config        *structpb.Struct       `protobuf:"bytes,6,opt,name=config,proto3" json:"config,omitempty"`
 	DurationDays  int32                  `protobuf:"varint,7,opt,name=duration_days,json=durationDays,proto3" json:"duration_days,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache

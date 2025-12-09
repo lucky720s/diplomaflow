@@ -2,47 +2,30 @@ package auth
 
 import (
 	"errors"
+	"fmt"
+	"strconv"
+	"strings"
 	"time"
 
 	"github.com/golang-jwt/jwt/v5"
+	"github.com/google/uuid"
 	"golang.org/x/crypto/bcrypt"
 )
 
 type JwtWrapper struct {
 	SecretKey       string
 	Issuer          string
-	ExpirationHours int64
+	AccessTokenTTL  time.Duration
+	RefreshTokenTTL time.Duration
 }
 
 type JwtClaims struct {
-	jwt.RegisteredClaims
 	Id           int64
 	Email        string
 	Role         string
 	UniversityID int64
 	DepartmentID int64
-}
-
-func (j *JwtWrapper) GenerateToken(user User) (string, error) {
-	claims := &JwtClaims{
-		Id:           user.ID,
-		Email:        user.Email,
-		Role:         user.Role,
-		UniversityID: user.UniversityID,
-		DepartmentID: user.DepartmentID,
-		RegisteredClaims: jwt.RegisteredClaims{
-			ExpiresAt: jwt.NewNumericDate(time.Now().Local().Add(time.Hour * time.Duration(j.ExpirationHours))),
-			Issuer:    j.Issuer,
-		},
-	}
-
-	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
-	signedToken, err := token.SignedString([]byte(j.SecretKey))
-	if err != nil {
-		return "", err
-	}
-
-	return signedToken, nil
+	jwt.RegisteredClaims
 }
 
 func (j *JwtWrapper) ValidateToken(signedToken string) (*JwtClaims, error) {
@@ -64,12 +47,11 @@ func (j *JwtWrapper) ValidateToken(signedToken string) (*JwtClaims, error) {
 	}
 
 	if claims.ExpiresAt.Time.Before(time.Now()) {
-		return nil, errors.New("jwt is expired")
+		return nil, errors.New("token expired")
 	}
 
 	return claims, nil
 }
-
 func HashPassword(password string) (string, error) {
 	bytes, err := bcrypt.GenerateFromPassword([]byte(password), 14)
 	return string(bytes), err
@@ -78,4 +60,51 @@ func HashPassword(password string) (string, error) {
 func CheckPasswordHash(password, hash string) bool {
 	err := bcrypt.CompareHashAndPassword([]byte(hash), []byte(password))
 	return err == nil
+}
+func (j *JwtWrapper) GenerateAccessToken(user User) (string, error) {
+	claims := &JwtClaims{
+		Id:           user.ID,
+		Email:        user.Email,
+		Role:         user.Role,
+		UniversityID: user.UniversityID,
+		DepartmentID: user.DepartmentID,
+		RegisteredClaims: jwt.RegisteredClaims{
+			ExpiresAt: jwt.NewNumericDate(time.Now().Add(j.AccessTokenTTL)), // Используем AccessTokenTTL
+			Issuer:    j.Issuer,
+		},
+	}
+
+	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
+	return token.SignedString([]byte(j.SecretKey))
+}
+func (j *JwtWrapper) GenerateRefreshToken() string {
+	return uuid.New().String()
+}
+func (j *JwtWrapper) GenerateRefreshTokenSecret() string {
+	return uuid.New().String()
+}
+func HashToken(token string) (string, error) {
+	bytes, err := bcrypt.GenerateFromPassword([]byte(token), bcrypt.DefaultCost)
+	return string(bytes), err
+}
+
+func CheckTokenHash(token, hash string) bool {
+	err := bcrypt.CompareHashAndPassword([]byte(hash), []byte(token))
+	return err == nil
+}
+
+func FormatRefreshToken(id uint64, uuidSecret string) string {
+	return fmt.Sprintf("%d.%s", id, uuidSecret)
+}
+
+func ParseRefreshToken(raw string) (uint64, string, error) {
+	parts := strings.Split(raw, ".")
+	if len(parts) != 2 {
+		return 0, "", errors.New("invalid token format")
+	}
+	id, err := strconv.ParseUint(parts[0], 10, 64)
+	if err != nil {
+		return 0, "", errors.New("invalid token id")
+	}
+	return id, parts[1], nil
 }

@@ -96,7 +96,25 @@ services:
         condition: service_healthy
     networks:
       - app_network
-
+  redis:
+    image: redis:7.2-alpine
+    container_name: redis
+    ports:
+      - "6379:6379"
+    command: redis-server --save 20 1 --loglevel warning
+    volumes:
+      - diplomaflow_redis:/data
+    networks:
+      - app_network
+    deploy:
+      resources:
+        limits:
+          memory: 128M
+    healthcheck:
+      test: [ "CMD", "redis-cli", "ping" ]
+      interval: 5s
+      timeout: 3s
+      retries: 5
   auth_service:
     build:
       context: .
@@ -106,7 +124,12 @@ services:
       - .env
     environment:
       - GRPC_PORT=${PORT_AUTH}
+      - JWT_SECRET=${JWT_SECRET}
+      - DATABASE_DSN=${DATABASE_DSN}
+      - JWT_ACCESS_TOKEN_TTL=15m
+      - JWT_REFRESH_TOKEN_TTL=720h
       - GOMEMLIMIT=64MiB
+      - REDIS_ADDR=redis:6379
     deploy:
       resources:
         limits:
@@ -120,6 +143,8 @@ services:
         condition: service_started
       role_service:
         condition: service_started
+      redis:
+        condition: service_healthy
     networks:
       - app_network
 
@@ -281,6 +306,7 @@ services:
       - PORT=${PORT_GATEWAY}
       - SERVICES_FILE_ADDR=file_service:${PORT_FILE}
       - SERVICES_FORM_ADDR=form_service:${PORT_FORM}
+      - REDIS_ADDR=redis:6379
       - GOMEMLIMIT=64MiB
     deploy:
       resources:
@@ -289,14 +315,24 @@ services:
     ports:
       - "${PORT_GATEWAY}:${PORT_GATEWAY}"
     depends_on:
-      - auth_service
-      - project_service
-      - team_service
-      - workflow_service
-      - university_service
-      - role_service
-      - file_service
-      - form_service
+      auth_service:
+        condition: service_started
+      project_service:
+        condition: service_started
+      team_service:
+        condition: service_started
+      workflow_service:
+        condition: service_started
+      university_service:
+        condition: service_started
+      role_service:
+        condition: service_started
+      file_service:
+        condition: service_started
+      form_service:
+        condition: service_started
+      redis:
+        condition: service_healthy
     volumes:
       - diplomaflow_uploads:/app/uploads
     networks:
@@ -305,6 +341,7 @@ services:
 volumes:
   diplomaflow_data:
   diplomaflow_uploads:
+  diplomaflow_redis:
 
 networks:
   app_network:

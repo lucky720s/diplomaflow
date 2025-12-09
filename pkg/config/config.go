@@ -8,11 +8,11 @@ import (
 
 func Load(path string, cfg interface{}) error {
 	viper.SetConfigFile(path)
-	viper.AutomaticEnv()
-	viper.SetEnvKeyReplacer(strings.NewReplacer(".", "_"))
+	viper.SetConfigType("yaml")
 	if err := viper.ReadInConfig(); err != nil {
 		return err
 	}
-
+	viper.AutomaticEnv()
+	viper.SetEnvKeyReplacer(strings.NewReplacer(".", "_"))
 	return viper.Unmarshal(cfg)
 }

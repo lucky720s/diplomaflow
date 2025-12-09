@@ -35,12 +35,13 @@ func (h *Handler) Register(ctx context.Context, req *authv1.RegisterRequest) (*a
 }
 
 func (h *Handler) Login(ctx context.Context, req *authv1.LoginRequest) (*authv1.LoginResponse, error) {
-	token, err := h.service.Login(ctx, req.Email, req.Password)
+	accessToken, refreshToken, err := h.service.Login(ctx, req.Email, req.Password, req.UserAgent, req.IpAddress)
 	if err != nil {
 		return nil, status.Error(codes.Unauthenticated, "invalid credentials")
 	}
 	return &authv1.LoginResponse{
-		Token: token,
+		AccessToken:  accessToken,
+		RefreshToken: refreshToken,
 	}, nil
 }
 
@@ -91,4 +92,43 @@ func (h *Handler) ListUsers(ctx context.Context, req *authv1.ListUsersRequest) (
 		Users:      pbUsers,
 		TotalCount: total,
 	}, nil
+}
+func (h *Handler) RefreshToken(ctx context.Context, req *authv1.RefreshTokenRequest) (*authv1.RefreshTokenResponse, error) {
+	if req.RefreshToken == "" {
+		return nil, status.Error(codes.InvalidArgument, "refresh_token is required")
+	}
+	accessToken, refreshToken, err := h.service.RefreshToken(ctx, req.RefreshToken, req.UserAgent, req.IpAddress)
+	if err != nil {
+		return nil, status.Errorf(codes.Unauthenticated, "failed to refresh: %v", err)
+	}
+	return &authv1.RefreshTokenResponse{
+		AccessToken:  accessToken,
+		RefreshToken: refreshToken,
+	}, nil
+}
+func (h *Handler) ListSessions(ctx context.Context, req *authv1.ListSessionsRequest) (*authv1.ListSessionsResponse, error) {
+	sessions, err := h.service.ListSessions(ctx, req.UserId)
+	if err != nil {
+		return nil, status.Errorf(codes.Internal, "failed to list sessions: %v", err)
+	}
+
+	var pbSessions []*authv1.Session
+	for _, s := range sessions {
+		pbSessions = append(pbSessions, &authv1.Session{
+			Id:        s.ID,
+			UserAgent: s.UserAgent,
+			IpAddress: s.ClientIP,
+			CreatedAt: s.CreatedAt.String(),
+			ExpiresAt: s.ExpiresAt.String(),
+		})
+	}
+	return &authv1.ListSessionsResponse{Sessions: pbSessions}, nil
+}
+
+func (h *Handler) RevokeSession(ctx context.Context, req *authv1.RevokeSessionRequest) (*authv1.RevokeSessionResponse, error) {
+	err := h.service.RevokeSession(ctx, req.UserId, req.SessionId)
+	if err != nil {
+		return nil, status.Errorf(codes.Internal, "failed to revoke session: %v", err)
+	}
+	return &authv1.RevokeSessionResponse{Success: true}, nil
 }

@@ -63,7 +63,6 @@ type WorkflowServiceClient interface {
 	SetActiveWorkflow(ctx context.Context, in *SetActiveWorkflowRequest, opts ...grpc.CallOption) (*Workflow, error)
 	GetActiveWorkflowByDepartment(ctx context.Context, in *GetActiveWorkflowByDepartmentRequest, opts ...grpc.CallOption) (*Workflow, error)
 	GetNextState(ctx context.Context, in *GetNextStateRequest, opts ...grpc.CallOption) (*State, error)
-	// Новый метод для получения распаршенной конфигурации шага
 	GetStepConfiguration(ctx context.Context, in *GetStepConfigurationRequest, opts ...grpc.CallOption) (*StepConfiguration, error)
 }
 
@@ -268,7 +267,6 @@ type WorkflowServiceServer interface {
 	SetActiveWorkflow(context.Context, *SetActiveWorkflowRequest) (*Workflow, error)
 	GetActiveWorkflowByDepartment(context.Context, *GetActiveWorkflowByDepartmentRequest) (*Workflow, error)
 	GetNextState(context.Context, *GetNextStateRequest) (*State, error)
-	// Новый метод для получения распаршенной конфигурации шага
 	GetStepConfiguration(context.Context, *GetStepConfigurationRequest) (*StepConfiguration, error)
 	mustEmbedUnimplementedWorkflowServiceServer()
 }

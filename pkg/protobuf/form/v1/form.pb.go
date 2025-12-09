@@ -26,9 +26,9 @@ const (
 type SubmitFormRequest struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	ProjectId     int64                  `protobuf:"varint,1,opt,name=project_id,json=projectId,proto3" json:"project_id,omitempty"`
-	StepId        int64                  `protobuf:"varint,2,opt,name=step_id,json=stepId,proto3" json:"step_id,omitempty"` // ID шага workflow, к которому относится форма
-	UserId        int64                  `protobuf:"varint,3,opt,name=user_id,json=userId,proto3" json:"user_id,omitempty"` // Кто заполнил
-	Data          *structpb.Struct       `protobuf:"bytes,4,opt,name=data,proto3" json:"data,omitempty"`                    // JSON данные формы
+	StepId        int64                  `protobuf:"varint,2,opt,name=step_id,json=stepId,proto3" json:"step_id,omitempty"`
+	UserId        int64                  `protobuf:"varint,3,opt,name=user_id,json=userId,proto3" json:"user_id,omitempty"`
+	Data          *structpb.Struct       `protobuf:"bytes,4,opt,name=data,proto3" json:"data,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }

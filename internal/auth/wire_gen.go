@@ -14,6 +14,7 @@ import (
 	"google.golang.org/grpc/credentials/insecure"
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
+	"time"
 )
 
 // Injectors from wire.go:
@@ -36,7 +37,7 @@ func InitializeApp(cfg *Config, log *logger.Logger) (*Handler, func(), error) {
 		cleanup()
 		return nil, nil, err
 	}
-	service := NewService(authRepository, jwtWrapper, universityServiceClient, roleServiceClient)
+	service := NewService(authRepository, jwtWrapper, universityServiceClient, roleServiceClient, log)
 	handler := NewHandler(service)
 	return handler, func() {
 		cleanup3()
@@ -87,9 +88,13 @@ func ProvideRoleClient(cfg *Config) (v1_2.RoleServiceClient, func(), error) {
 }
 
 func ProvideJwtWrapper(cfg *Config) JwtWrapper {
+	accessTTL, _ := time.ParseDuration(cfg.JWT.AccessTokenTTL)
+	refreshTTL, _ := time.ParseDuration(cfg.JWT.RefreshTokenTTL)
+
 	return JwtWrapper{
 		SecretKey:       cfg.JWT.Secret,
 		Issuer:          "diplomaflow",
-		ExpirationHours: 24,
+		AccessTokenTTL:  accessTTL,
+		RefreshTokenTTL: refreshTTL,
 	}
 }

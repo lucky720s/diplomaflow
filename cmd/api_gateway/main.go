@@ -14,6 +14,7 @@ import (
 	"github.com/lucky720s/diplomaflow/internal/gateway/config"
 	"github.com/lucky720s/diplomaflow/internal/gateway/middleware"
 	"github.com/lucky720s/diplomaflow/pkg/logger"
+	"github.com/redis/go-redis/v9"
 	"go.uber.org/zap"
 )
 
@@ -22,10 +23,14 @@ func main() {
 	if err := config.Load("config.yaml", &cfg); err != nil {
 		panic("failed to load config: " + err.Error())
 	}
-
+	rdb := redis.NewClient(&redis.Options{
+		Addr: cfg.RedisAddr,
+	})
 	log := logger.New(cfg.Env)
 	defer log.Sync()
-
+	if err := rdb.Ping(context.Background()).Err(); err != nil {
+		log.Fatal("Failed to connect to Redis", zap.Error(err), zap.String("addr", cfg.RedisAddr))
+	}
 	h, cleanup, err := gateway.InitializeApp(&cfg, log)
 	if err != nil {
 		log.Fatal("Failed to initialize handlers", zap.Error(err))
@@ -54,9 +59,19 @@ func main() {
 
 		auth := v1.Group("/auth")
 		{
-			auth.POST("/register", h.Register)
-			auth.POST("/login", h.Login)
-			//auth.POST("/validate", h.ValidateToken)
+			auth.POST("/login",
+				middleware.RateLimitMiddleware(rdb, 5, time.Minute),
+				h.Login)
+
+			auth.POST("/refresh",
+				middleware.RateLimitMiddleware(rdb, 10, time.Hour),
+				h.RefreshToken)
+			sessions := auth.Group("/sessions")
+			sessions.Use(middleware.AuthMiddleware(cfg.JWTSecret))
+			{
+				sessions.GET("", h.ListSessions)
+				sessions.DELETE("/:id", h.RevokeSession)
+			}
 		}
 		public := v1.Group("/public")
 		{
