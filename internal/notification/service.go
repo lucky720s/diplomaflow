@@ -3,16 +3,18 @@ package notification
 import (
 	"context"
 	"time"
+
+	"github.com/lucky720s/diplomaflow/pkg/logger"
 )
 
 type Service struct {
-	repo Repository
+	repo   Repository
+	logger *logger.Logger
 }
 
-func NewService(repo Repository) *Service {
-	return &Service{repo: repo}
+func NewService(repo Repository, log *logger.Logger) *Service {
+	return &Service{repo: repo, logger: log}
 }
-
 func (s *Service) SendNotification(ctx context.Context, userID int64, title, message, link, nType string) (int64, error) {
 	n := &Notification{
 		UserID:    userID,

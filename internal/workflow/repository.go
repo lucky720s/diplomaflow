@@ -164,7 +164,9 @@ func (r *repository) SetActiveWorkflow(ctx context.Context, workflowID int64) (*
 
 func (r *repository) GetActiveWorkflowByDepartment(ctx context.Context, departmentID int64) (*Workflow, error) {
 	var wf Workflow
-	if err := r.db.WithContext(ctx).Where("department_id = ? AND is_active = ?", departmentID, true).First(&wf).Error; err != nil {
+	if err := r.db.WithContext(ctx).
+		Preload("Steps").
+		Where("department_id = ? AND is_active = ?", departmentID, true).First(&wf).Error; err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			return nil, errors.New("no active workflow found")
 		}

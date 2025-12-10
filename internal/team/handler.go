@@ -100,3 +100,28 @@ func (h *Handler) AssignProject(ctx context.Context, req *pb.AssignProjectReques
 
 	return &pb.AssignProjectResponse{Success: true}, nil
 }
+func (h *Handler) GetMyInvites(ctx context.Context, req *pb.GetMyInvitesRequest) (*pb.GetMyInvitesResponse, error) {
+	invites, err := h.service.GetMyInvites(ctx, req.UserId)
+	if err != nil {
+		return nil, status.Errorf(codes.Internal, "failed: %v", err)
+	}
+	var pbInvites []*pb.Invite
+	for _, inv := range invites {
+		pbInvites = append(pbInvites, &pb.Invite{
+			Id:        int64(inv.ID),
+			TeamId:    int64(inv.TeamID),
+			TeamName:  inv.Team.Name,
+			InviterId: inv.InviterID,
+			Status:    inv.Status,
+		})
+	}
+	return &pb.GetMyInvitesResponse{Invites: pbInvites}, nil
+}
+
+func (h *Handler) RespondToInvite(ctx context.Context, req *pb.RespondToInviteRequest) (*pb.RespondToInviteResponse, error) {
+	err := h.service.RespondToInvite(ctx, req.InviteId, req.UserId, req.Accept)
+	if err != nil {
+		return nil, status.Errorf(codes.Internal, "failed: %v", err)
+	}
+	return &pb.RespondToInviteResponse{Success: true}, nil
+}

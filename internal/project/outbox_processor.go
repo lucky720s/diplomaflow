@@ -67,12 +67,8 @@ func (p *OutboxProcessor) processEvents(ctx context.Context) {
 			continue
 		}
 
-		if err := p.repo.DeleteEvent(ctx, event.ID); err != nil {
-			p.logger.Error("Failed to delete processed event",
-				zap.Uint("event_id", event.ID),
-				zap.Error(err))
-		} else {
-			p.logger.Debug("Event processed successfully", zap.Uint("event_id", event.ID))
+		if err := p.repo.MarkEventProcessed(ctx, event.ID); err != nil { // ✅
+			p.logger.Error("Failed to mark event as processed")
 		}
 	}
 }

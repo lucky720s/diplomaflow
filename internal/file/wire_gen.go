@@ -7,14 +7,28 @@
 package file
 
 import (
+	"github.com/lucky720s/diplomaflow/pkg/database"
 	"github.com/lucky720s/diplomaflow/pkg/logger"
+	"gorm.io/gorm"
 )
 
 // Injectors from wire.go:
 
 func InitializeApp(cfg *Config, log *logger.Logger) (*Handler, func(), error) {
-	service := NewService(cfg, log)
+	db, cleanup, err := ProvideDB(cfg)
+	if err != nil {
+		return nil, nil, err
+	}
+	fileRepository := NewRepository(db)
+	service := NewService(cfg, fileRepository, log)
 	handler := NewHandler(service, log)
 	return handler, func() {
+		cleanup()
 	}, nil
+}
+
+// wire.go:
+
+func ProvideDB(cfg *Config) (*gorm.DB, func(), error) {
+	return database.NewConnection(cfg.Database.DSN)
 }

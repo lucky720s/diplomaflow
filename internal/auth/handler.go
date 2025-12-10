@@ -11,7 +11,7 @@ import (
 
 type Handler struct {
 	authv1.UnimplementedAuthServiceServer
-	service *Service
+	service AuthService
 }
 
 func NewHandler(service *Service) *Handler {

@@ -9,6 +9,7 @@ package gateway
 import (
 	"github.com/lucky720s/diplomaflow/internal/gateway/config"
 	"github.com/lucky720s/diplomaflow/internal/gateway/handler"
+	grpc2 "github.com/lucky720s/diplomaflow/pkg/grpc"
 	"github.com/lucky720s/diplomaflow/pkg/logger"
 	"github.com/lucky720s/diplomaflow/pkg/protobuf/auth/v1"
 	v1_8 "github.com/lucky720s/diplomaflow/pkg/protobuf/file/v1"
@@ -21,6 +22,7 @@ import (
 	v1_6 "github.com/lucky720s/diplomaflow/pkg/protobuf/workflow/v1"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
+	"time"
 )
 
 // Injectors from wire.go:
@@ -115,10 +117,11 @@ func InitializeApp(cfg *config.Config, log *logger.Logger) (*handler.Handler, fu
 // wire.go:
 
 func provideConn(addr string) (*grpc.ClientConn, func(), error) {
-	conn, err := grpc.NewClient(addr, grpc.WithTransportCredentials(insecure.NewCredentials()))
+	conn, err := grpc.NewClient(addr, grpc.WithTransportCredentials(insecure.NewCredentials()), grpc.WithDefaultServiceConfig(grpc2.DefaultRetryServiceConfig()), grpc.WithUnaryInterceptor(grpc2.TimeoutInterceptor(10*time.Second)))
 	if err != nil {
 		return nil, nil, err
 	}
+
 	cleanup := func() { conn.Close() }
 	return conn, cleanup, nil
 }

@@ -28,6 +28,8 @@ type CreateProjectRequest struct {
 	Description   string                 `protobuf:"bytes,2,opt,name=description,proto3" json:"description,omitempty"`
 	StudentId     int64                  `protobuf:"varint,3,opt,name=student_id,json=studentId,proto3" json:"student_id,omitempty"`
 	WorkflowName  string                 `protobuf:"bytes,4,opt,name=workflow_name,json=workflowName,proto3" json:"workflow_name,omitempty"`
+	UniversityId  int64                  `protobuf:"varint,5,opt,name=university_id,json=universityId,proto3" json:"university_id,omitempty"`
+	DepartmentId  int64                  `protobuf:"varint,6,opt,name=department_id,json=departmentId,proto3" json:"department_id,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -88,6 +90,20 @@ func (x *CreateProjectRequest) GetWorkflowName() string {
 		return x.WorkflowName
 	}
 	return ""
+}
+
+func (x *CreateProjectRequest) GetUniversityId() int64 {
+	if x != nil {
+		return x.UniversityId
+	}
+	return 0
+}
+
+func (x *CreateProjectRequest) GetDepartmentId() int64 {
+	if x != nil {
+		return x.DepartmentId
+	}
+	return 0
 }
 
 type CreateProjectResponse struct {
@@ -642,13 +658,15 @@ var File_project_v1_project_proto protoreflect.FileDescriptor
 
 const file_project_v1_project_proto_rawDesc = "" +
 	"\n" +
-	"\x18project/v1/project.proto\x12\aproject\x1a\x1cgoogle/protobuf/struct.proto\"\x92\x01\n" +
+	"\x18project/v1/project.proto\x12\aproject\x1a\x1cgoogle/protobuf/struct.proto\"\xdc\x01\n" +
 	"\x14CreateProjectRequest\x12\x14\n" +
 	"\x05title\x18\x01 \x01(\tR\x05title\x12 \n" +
 	"\vdescription\x18\x02 \x01(\tR\vdescription\x12\x1d\n" +
 	"\n" +
 	"student_id\x18\x03 \x01(\x03R\tstudentId\x12#\n" +
-	"\rworkflow_name\x18\x04 \x01(\tR\fworkflowName\"N\n" +
+	"\rworkflow_name\x18\x04 \x01(\tR\fworkflowName\x12#\n" +
+	"\runiversity_id\x18\x05 \x01(\x03R\funiversityId\x12#\n" +
+	"\rdepartment_id\x18\x06 \x01(\x03R\fdepartmentId\"N\n" +
 	"\x15CreateProjectResponse\x12\x1d\n" +
 	"\n" +
 	"project_id\x18\x01 \x01(\x03R\tprojectId\x12\x16\n" +

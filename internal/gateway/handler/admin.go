@@ -1,7 +1,6 @@
 package handler
 
 import (
-	"context"
 	"net/http"
 	"strconv"
 
@@ -17,7 +16,7 @@ func (h *Handler) CreateUniversity(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
-	res, err := h.universityClient.CreateUniversity(context.Background(), &req)
+	res, err := h.universityClient.CreateUniversity(c.Request.Context(), &req)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
@@ -26,7 +25,7 @@ func (h *Handler) CreateUniversity(c *gin.Context) {
 }
 
 func (h *Handler) ListUniversities(c *gin.Context) {
-	res, err := h.universityClient.ListUniversities(context.Background(), &universityv1.ListUniversitiesRequest{})
+	res, err := h.universityClient.ListUniversities(c.Request.Context(), &universityv1.ListUniversitiesRequest{})
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
@@ -40,7 +39,7 @@ func (h *Handler) ListDepartments(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid university id"})
 		return
 	}
-	res, err := h.universityClient.ListDepartments(context.Background(), &universityv1.ListDepartmentsRequest{
+	res, err := h.universityClient.ListDepartments(c.Request.Context(), &universityv1.ListDepartmentsRequest{
 		UniversityId: uniID,
 	})
 	if err != nil {
@@ -56,7 +55,7 @@ func (h *Handler) CreateDepartment(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
-	res, err := h.universityClient.CreateDepartment(context.Background(), &req)
+	res, err := h.universityClient.CreateDepartment(c.Request.Context(), &req)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
@@ -70,7 +69,7 @@ func (h *Handler) CreateWorkflow(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
-	res, err := h.workflowClient.CreateWorkflow(context.Background(), &req)
+	res, err := h.workflowClient.CreateWorkflow(c.Request.Context(), &req)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
@@ -84,7 +83,7 @@ func (h *Handler) CreateRole(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
-	res, err := h.roleClient.CreateRole(context.Background(), &req)
+	res, err := h.roleClient.CreateRole(c.Request.Context(), &req)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return

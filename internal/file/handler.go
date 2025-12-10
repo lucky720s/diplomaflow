@@ -84,9 +84,18 @@ func (h *Handler) GetFileInfo(ctx context.Context, req *filev1.GetFileInfoReques
 		return nil, status.Errorf(codes.NotFound, "file not found")
 	}
 
+	meta, err := h.service.GetMetadata(ctx, req.Id)
+	if err != nil {
+		return &filev1.GetFileInfoResponse{
+			Id:          req.Id,
+			Name:        req.Id,
+			DownloadUrl: h.service.GetFileURL(req.Id),
+		}, nil
+	}
+
 	return &filev1.GetFileInfoResponse{
 		Id:          req.Id,
-		Name:        req.Id,
+		Name:        meta.FileName,
 		DownloadUrl: h.service.GetFileURL(req.Id),
 	}, nil
 }

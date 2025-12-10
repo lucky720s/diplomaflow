@@ -30,9 +30,9 @@ func NewService(repo Repository, wfClient workflowv1.WorkflowServiceClient, regi
 	}
 }
 
-func (s *Service) CreateProject(ctx context.Context, req *projectv1.CreateProjectRequest, universityID int64) (*projectv1.CreateProjectResponse, error) {
+func (s *Service) CreateProject(ctx context.Context, req *projectv1.CreateProjectRequest) (*projectv1.CreateProjectResponse, error) {
 	wf, err := s.workflowClient.GetActiveWorkflowByDepartment(ctx, &workflowv1.GetActiveWorkflowByDepartmentRequest{
-		DepartmentId: universityID,
+		DepartmentId: req.DepartmentId,
 	})
 	if err != nil {
 		s.logger.Error("Failed to get active workflow", zap.Error(err))
@@ -47,7 +47,7 @@ func (s *Service) CreateProject(ctx context.Context, req *projectv1.CreateProjec
 		Title:         req.Title,
 		Description:   req.Description,
 		StudentID:     req.StudentId,
-		UniversityID:  universityID,
+		UniversityID:  req.UniversityId,
 		WorkflowID:    uint(wf.Id),
 		WorkflowName:  wf.Name,
 		CurrentStepID: strconv.FormatInt(initialStep.Id, 10),
@@ -59,7 +59,7 @@ func (s *Service) CreateProject(ctx context.Context, req *projectv1.CreateProjec
 
 	eventPayload := map[string]interface{}{
 		"student_id":    req.StudentId,
-		"university_id": universityID,
+		"university_id": req.UniversityId,
 		"title":         req.Title,
 	}
 

@@ -19,6 +19,7 @@ type Repository interface {
 	UpdateInviteStatus(ctx context.Context, inviteID uint64, status string) error
 	IsUserInAnyTeam(ctx context.Context, userID int64) (bool, error)
 	DeletePendingInvitesForUser(ctx context.Context, userID int64) error
+	CreateTeamWithInvites(ctx context.Context, team *Team, invites []*TeamInvite) error
 }
 
 type repository struct {
@@ -26,7 +27,7 @@ type repository struct {
 }
 
 func NewRepository(db *gorm.DB) Repository {
-	_ = db.AutoMigrate(&Team{}, &TeamMember{})
+	_ = db.AutoMigrate(&Team{}, &TeamMember{}, &TeamInvite{})
 	return &repository{db: db}
 }
 
@@ -87,4 +88,18 @@ func (r *repository) DeletePendingInvitesForUser(ctx context.Context, userID int
 	return r.db.WithContext(ctx).Model(&TeamInvite{}).
 		Where("user_id = ? AND status = ?", userID, "PENDING").
 		Update("status", "AUTO_DECLINED").Error
+}
+func (r *repository) CreateTeamWithInvites(ctx context.Context, team *Team, invites []*TeamInvite) error {
+	return r.db.WithContext(ctx).Transaction(func(tx *gorm.DB) error {
+		if err := tx.Create(team).Error; err != nil {
+			return err
+		}
+		for _, inv := range invites {
+			inv.TeamID = team.ID
+			if err := tx.Create(inv).Error; err != nil {
+				return err
+			}
+		}
+		return nil
+	})
 }

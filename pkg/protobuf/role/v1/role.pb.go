@@ -10,6 +10,7 @@ import (
 	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
 	protoimpl "google.golang.org/protobuf/runtime/protoimpl"
 	emptypb "google.golang.org/protobuf/types/known/emptypb"
+	fieldmaskpb "google.golang.org/protobuf/types/known/fieldmaskpb"
 	reflect "reflect"
 	sync "sync"
 	unsafe "unsafe"
@@ -268,6 +269,7 @@ func (x *GetRoleResponse) GetRole() *Role {
 
 type ListRolesRequest struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
+	DepartmentId  int64                  `protobuf:"varint,1,opt,name=department_id,json=departmentId,proto3" json:"department_id,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -300,6 +302,13 @@ func (x *ListRolesRequest) ProtoReflect() protoreflect.Message {
 // Deprecated: Use ListRolesRequest.ProtoReflect.Descriptor instead.
 func (*ListRolesRequest) Descriptor() ([]byte, []int) {
 	return file_role_v1_role_proto_rawDescGZIP(), []int{5}
+}
+
+func (x *ListRolesRequest) GetDepartmentId() int64 {
+	if x != nil {
+		return x.DepartmentId
+	}
+	return 0
 }
 
 type ListRolesResponse struct {
@@ -392,6 +401,8 @@ func (x *DeleteRoleRequest) GetRoleId() int64 {
 
 type UpdateRoleRequest struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
+	Role          *Role                  `protobuf:"bytes,1,opt,name=role,proto3" json:"role,omitempty"`
+	UpdateMask    *fieldmaskpb.FieldMask `protobuf:"bytes,2,opt,name=update_mask,json=updateMask,proto3" json:"update_mask,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -426,8 +437,23 @@ func (*UpdateRoleRequest) Descriptor() ([]byte, []int) {
 	return file_role_v1_role_proto_rawDescGZIP(), []int{8}
 }
 
+func (x *UpdateRoleRequest) GetRole() *Role {
+	if x != nil {
+		return x.Role
+	}
+	return nil
+}
+
+func (x *UpdateRoleRequest) GetUpdateMask() *fieldmaskpb.FieldMask {
+	if x != nil {
+		return x.UpdateMask
+	}
+	return nil
+}
+
 type UpdateRoleResponse struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
+	Role          *Role                  `protobuf:"bytes,1,opt,name=role,proto3" json:"role,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -462,11 +488,18 @@ func (*UpdateRoleResponse) Descriptor() ([]byte, []int) {
 	return file_role_v1_role_proto_rawDescGZIP(), []int{9}
 }
 
+func (x *UpdateRoleResponse) GetRole() *Role {
+	if x != nil {
+		return x.Role
+	}
+	return nil
+}
+
 var File_role_v1_role_proto protoreflect.FileDescriptor
 
 const file_role_v1_role_proto_rawDesc = "" +
 	"\n" +
-	"\x12role/v1/role.proto\x12\arole.v1\x1a\x1bgoogle/protobuf/empty.proto\"O\n" +
+	"\x12role/v1/role.proto\x12\arole.v1\x1a\x1bgoogle/protobuf/empty.proto\x1a google/protobuf/field_mask.proto\"O\n" +
 	"\x04Role\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\x03R\x02id\x12\x12\n" +
 	"\x04name\x18\x02 \x01(\tR\x04name\x12#\n" +
@@ -479,14 +512,19 @@ const file_role_v1_role_proto_rawDesc = "" +
 	"\x0eGetRoleRequest\x12\x17\n" +
 	"\arole_id\x18\x01 \x01(\x03R\x06roleId\"4\n" +
 	"\x0fGetRoleResponse\x12!\n" +
-	"\x04role\x18\x01 \x01(\v2\r.role.v1.RoleR\x04role\"\x12\n" +
-	"\x10ListRolesRequest\"8\n" +
+	"\x04role\x18\x01 \x01(\v2\r.role.v1.RoleR\x04role\"7\n" +
+	"\x10ListRolesRequest\x12#\n" +
+	"\rdepartment_id\x18\x01 \x01(\x03R\fdepartmentId\"8\n" +
 	"\x11ListRolesResponse\x12#\n" +
 	"\x05roles\x18\x01 \x03(\v2\r.role.v1.RoleR\x05roles\",\n" +
 	"\x11DeleteRoleRequest\x12\x17\n" +
-	"\arole_id\x18\x01 \x01(\x03R\x06roleId\"\x13\n" +
-	"\x11UpdateRoleRequest\"\x14\n" +
-	"\x12UpdateRoleResponse2\xdf\x02\n" +
+	"\arole_id\x18\x01 \x01(\x03R\x06roleId\"s\n" +
+	"\x11UpdateRoleRequest\x12!\n" +
+	"\x04role\x18\x01 \x01(\v2\r.role.v1.RoleR\x04role\x12;\n" +
+	"\vupdate_mask\x18\x02 \x01(\v2\x1a.google.protobuf.FieldMaskR\n" +
+	"updateMask\"7\n" +
+	"\x12UpdateRoleResponse\x12!\n" +
+	"\x04role\x18\x01 \x01(\v2\r.role.v1.RoleR\x04role2\xdf\x02\n" +
 	"\vRoleService\x12E\n" +
 	"\n" +
 	"CreateRole\x12\x1a.role.v1.CreateRoleRequest\x1a\x1b.role.v1.CreateRoleResponse\x12<\n" +
@@ -511,37 +549,41 @@ func file_role_v1_role_proto_rawDescGZIP() []byte {
 
 var file_role_v1_role_proto_msgTypes = make([]protoimpl.MessageInfo, 10)
 var file_role_v1_role_proto_goTypes = []any{
-	(*Role)(nil),               // 0: role.v1.Role
-	(*CreateRoleRequest)(nil),  // 1: role.v1.CreateRoleRequest
-	(*CreateRoleResponse)(nil), // 2: role.v1.CreateRoleResponse
-	(*GetRoleRequest)(nil),     // 3: role.v1.GetRoleRequest
-	(*GetRoleResponse)(nil),    // 4: role.v1.GetRoleResponse
-	(*ListRolesRequest)(nil),   // 5: role.v1.ListRolesRequest
-	(*ListRolesResponse)(nil),  // 6: role.v1.ListRolesResponse
-	(*DeleteRoleRequest)(nil),  // 7: role.v1.DeleteRoleRequest
-	(*UpdateRoleRequest)(nil),  // 8: role.v1.UpdateRoleRequest
-	(*UpdateRoleResponse)(nil), // 9: role.v1.UpdateRoleResponse
-	(*emptypb.Empty)(nil),      // 10: google.protobuf.Empty
+	(*Role)(nil),                  // 0: role.v1.Role
+	(*CreateRoleRequest)(nil),     // 1: role.v1.CreateRoleRequest
+	(*CreateRoleResponse)(nil),    // 2: role.v1.CreateRoleResponse
+	(*GetRoleRequest)(nil),        // 3: role.v1.GetRoleRequest
+	(*GetRoleResponse)(nil),       // 4: role.v1.GetRoleResponse
+	(*ListRolesRequest)(nil),      // 5: role.v1.ListRolesRequest
+	(*ListRolesResponse)(nil),     // 6: role.v1.ListRolesResponse
+	(*DeleteRoleRequest)(nil),     // 7: role.v1.DeleteRoleRequest
+	(*UpdateRoleRequest)(nil),     // 8: role.v1.UpdateRoleRequest
+	(*UpdateRoleResponse)(nil),    // 9: role.v1.UpdateRoleResponse
+	(*fieldmaskpb.FieldMask)(nil), // 10: google.protobuf.FieldMask
+	(*emptypb.Empty)(nil),         // 11: google.protobuf.Empty
 }
 var file_role_v1_role_proto_depIdxs = []int32{
 	0,  // 0: role.v1.CreateRoleResponse.role:type_name -> role.v1.Role
 	0,  // 1: role.v1.GetRoleResponse.role:type_name -> role.v1.Role
 	0,  // 2: role.v1.ListRolesResponse.roles:type_name -> role.v1.Role
-	1,  // 3: role.v1.RoleService.CreateRole:input_type -> role.v1.CreateRoleRequest
-	3,  // 4: role.v1.RoleService.GetRole:input_type -> role.v1.GetRoleRequest
-	5,  // 5: role.v1.RoleService.ListRoles:input_type -> role.v1.ListRolesRequest
-	7,  // 6: role.v1.RoleService.DeleteRole:input_type -> role.v1.DeleteRoleRequest
-	8,  // 7: role.v1.RoleService.UpdateRole:input_type -> role.v1.UpdateRoleRequest
-	2,  // 8: role.v1.RoleService.CreateRole:output_type -> role.v1.CreateRoleResponse
-	4,  // 9: role.v1.RoleService.GetRole:output_type -> role.v1.GetRoleResponse
-	6,  // 10: role.v1.RoleService.ListRoles:output_type -> role.v1.ListRolesResponse
-	10, // 11: role.v1.RoleService.DeleteRole:output_type -> google.protobuf.Empty
-	9,  // 12: role.v1.RoleService.UpdateRole:output_type -> role.v1.UpdateRoleResponse
-	8,  // [8:13] is the sub-list for method output_type
-	3,  // [3:8] is the sub-list for method input_type
-	3,  // [3:3] is the sub-list for extension type_name
-	3,  // [3:3] is the sub-list for extension extendee
-	0,  // [0:3] is the sub-list for field type_name
+	0,  // 3: role.v1.UpdateRoleRequest.role:type_name -> role.v1.Role
+	10, // 4: role.v1.UpdateRoleRequest.update_mask:type_name -> google.protobuf.FieldMask
+	0,  // 5: role.v1.UpdateRoleResponse.role:type_name -> role.v1.Role
+	1,  // 6: role.v1.RoleService.CreateRole:input_type -> role.v1.CreateRoleRequest
+	3,  // 7: role.v1.RoleService.GetRole:input_type -> role.v1.GetRoleRequest
+	5,  // 8: role.v1.RoleService.ListRoles:input_type -> role.v1.ListRolesRequest
+	7,  // 9: role.v1.RoleService.DeleteRole:input_type -> role.v1.DeleteRoleRequest
+	8,  // 10: role.v1.RoleService.UpdateRole:input_type -> role.v1.UpdateRoleRequest
+	2,  // 11: role.v1.RoleService.CreateRole:output_type -> role.v1.CreateRoleResponse
+	4,  // 12: role.v1.RoleService.GetRole:output_type -> role.v1.GetRoleResponse
+	6,  // 13: role.v1.RoleService.ListRoles:output_type -> role.v1.ListRolesResponse
+	11, // 14: role.v1.RoleService.DeleteRole:output_type -> google.protobuf.Empty
+	9,  // 15: role.v1.RoleService.UpdateRole:output_type -> role.v1.UpdateRoleResponse
+	11, // [11:16] is the sub-list for method output_type
+	6,  // [6:11] is the sub-list for method input_type
+	6,  // [6:6] is the sub-list for extension type_name
+	6,  // [6:6] is the sub-list for extension extendee
+	0,  // [0:6] is the sub-list for field type_name
 }
 
 func init() { file_role_v1_role_proto_init() }

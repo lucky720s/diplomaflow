@@ -1,7 +1,6 @@
 package handler
 
 import (
-	"context"
 	"net/http"
 	"strconv"
 
@@ -17,9 +16,9 @@ func (h *Handler) CreateTeam(c *gin.Context) {
 	}
 	leaderID := c.GetInt64("userId")
 	req.LeaderId = leaderID
-	res, err := h.teamClient.CreateTeam(context.Background(), &req)
+	res, err := h.teamClient.CreateTeam(c.Request.Context(), &req)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		MapGRPCError(c, err)
 		return
 	}
 	c.JSON(http.StatusCreated, res)
@@ -27,9 +26,9 @@ func (h *Handler) CreateTeam(c *gin.Context) {
 
 func (h *Handler) GetTeam(c *gin.Context) {
 	id, _ := strconv.ParseInt(c.Param("id"), 10, 64)
-	res, err := h.teamClient.GetTeam(context.Background(), &teamv1.GetTeamRequest{TeamId: id})
+	res, err := h.teamClient.GetTeam(c.Request.Context(), &teamv1.GetTeamRequest{TeamId: id})
 	if err != nil {
-		c.JSON(http.StatusNotFound, gin.H{"error": err.Error()})
+		MapGRPCError(c, err)
 		return
 	}
 	c.JSON(http.StatusOK, res)
@@ -39,9 +38,9 @@ func (h *Handler) GetAvailableStudents(c *gin.Context) {
 	uniID := c.GetInt64("universityId")
 	userID := c.GetInt64("userId")
 
-	res, err := h.teamClient.GetAvailableStudents(context.Background(), &teamv1.GetAvailableStudentsRequest{UniversityId: uniID, ExcludeUserId: userID})
+	res, err := h.teamClient.GetAvailableStudents(c.Request.Context(), &teamv1.GetAvailableStudentsRequest{UniversityId: uniID, ExcludeUserId: userID})
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		MapGRPCError(c, err)
 		return
 	}
 	c.JSON(http.StatusOK, res)
@@ -62,7 +61,7 @@ func (h *Handler) AssignProjectToTeam(c *gin.Context) {
 		return
 	}
 
-	_, err = h.teamClient.AssignProject(context.Background(), &teamv1.AssignProjectRequest{
+	_, err = h.teamClient.AssignProject(c.Request.Context(), &teamv1.AssignProjectRequest{
 		TeamId:    teamID,
 		ProjectId: req.ProjectID,
 	})
@@ -74,7 +73,7 @@ func (h *Handler) AssignProjectToTeam(c *gin.Context) {
 }
 func (h *Handler) GetMyInvites(c *gin.Context) {
 	userID := c.GetInt64("userId")
-	res, err := h.teamClient.GetMyInvites(context.Background(), &teamv1.GetMyInvitesRequest{UserId: userID})
+	res, err := h.teamClient.GetMyInvites(c.Request.Context(), &teamv1.GetMyInvitesRequest{UserId: userID})
 	if err != nil {
 		MapGRPCError(c, err)
 		return
@@ -94,7 +93,7 @@ func (h *Handler) RespondToInvite(c *gin.Context) {
 		return
 	}
 
-	_, err := h.teamClient.RespondToInvite(context.Background(), &teamv1.RespondToInviteRequest{
+	_, err := h.teamClient.RespondToInvite(c.Request.Context(), &teamv1.RespondToInviteRequest{
 		InviteId: inviteID,
 		UserId:   userID,
 		Accept:   jsonReq.Accept,

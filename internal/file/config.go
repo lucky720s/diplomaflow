@@ -7,4 +7,7 @@ type Config struct {
 		Path    string `mapstructure:"path"`
 		BaseURL string `mapstructure:"base_url"`
 	} `mapstructure:"storage"`
+	Database struct {
+		DSN string `mapstructure:"dsn"`
+	} `mapstructure:"database"`
 }

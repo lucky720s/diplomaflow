@@ -65,6 +65,10 @@ func (m *CreateProjectRequest) validate(all bool) error {
 
 	// no validation rules for WorkflowName
 
+	// no validation rules for UniversityId
+
+	// no validation rules for DepartmentId
+
 	if len(errors) > 0 {
 		return CreateProjectRequestMultiError(errors)
 	}

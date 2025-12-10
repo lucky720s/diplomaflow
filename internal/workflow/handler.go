@@ -243,3 +243,53 @@ func (h *Handler) GetNextState(ctx context.Context, req *workflowv1.GetNextState
 	}
 	return toProtoState(st), nil
 }
+func (h *Handler) GetStepConfiguration(ctx context.Context, req *workflowv1.GetStepConfigurationRequest) (*workflowv1.StepConfiguration, error) {
+	state, err := h.service.GetState(ctx, req.StateId)
+	if err != nil {
+		return nil, status.Errorf(codes.NotFound, "state not found")
+	}
+
+	var configMap map[string]interface{}
+	if err := json.Unmarshal(state.Config, &configMap); err != nil {
+		return nil, status.Errorf(codes.Internal, "failed to parse config")
+	}
+
+	config := &workflowv1.StepConfiguration{}
+	if tc, ok := configMap["team_config"].(map[string]interface{}); ok {
+		config.TeamConfig = &workflowv1.TeamConfig{}
+		if v, ok := tc["min_size"].(float64); ok {
+			config.TeamConfig.MinSize = int32(v)
+		}
+		if v, ok := tc["max_size"].(float64); ok {
+			config.TeamConfig.MaxSize = int32(v)
+		}
+		if v, ok := tc["allow_solo"].(bool); ok {
+			config.TeamConfig.AllowSolo = v
+		}
+	}
+	if fr, ok := configMap["file_requirements"].(map[string]interface{}); ok {
+		config.FileRequirements = &workflowv1.FileRequirements{}
+		if v, ok := fr["max_files"].(float64); ok {
+			config.FileRequirements.MaxFiles = int32(v)
+		}
+		if v, ok := fr["max_size_bytes"].(float64); ok {
+			config.FileRequirements.MaxSizeBytes = int64(v)
+		}
+		if exts, ok := fr["allowed_extensions"].([]interface{}); ok {
+			for _, ext := range exts {
+				if s, ok := ext.(string); ok {
+					config.FileRequirements.AllowedExtensions = append(config.FileRequirements.AllowedExtensions, s)
+				}
+			}
+		}
+	}
+	if roles, ok := configMap["allowed_roles"].([]interface{}); ok {
+		for _, r := range roles {
+			if s, ok := r.(string); ok {
+				config.AllowedRoles = append(config.AllowedRoles, s)
+			}
+		}
+	}
+
+	return config, nil
+}

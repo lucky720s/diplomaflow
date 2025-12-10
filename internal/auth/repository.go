@@ -33,7 +33,7 @@ type repository struct {
 }
 
 func NewRepository(db *gorm.DB) Repository {
-	_ = db.AutoMigrate(&User{})
+	_ = db.AutoMigrate(&User{}, &RefreshToken{})
 	return &repository{db: db}
 }
 

@@ -67,7 +67,7 @@ CREATE TABLE IF NOT EXISTS states
     workflow_id   BIGINT       NOT NULL,
     name          VARCHAR(255) NOT NULL,
     description   TEXT,
-    type          INT          NOT NULL,
+    type          VARCHAR(50)  NOT NULL,
     config        JSONB                    DEFAULT '{}',
     duration_days INT                      DEFAULT 0,
     created_at    TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
@@ -85,7 +85,126 @@ CREATE TABLE IF NOT EXISTS transitions
     to_state_id   BIGINT       NOT NULL,
     created_at    TIMESTAMP WITH TIME ZONE DEFAULT NOW()
     );
+-- Projects
+CREATE TABLE IF NOT EXISTS projects (
+                                        id BIGSERIAL PRIMARY KEY,
+                                        title VARCHAR(255) NOT NULL,
+    description TEXT,
+    student_id BIGINT NOT NULL,
+    university_id BIGINT NOT NULL,
+    team_id BIGINT,
+    workflow_id BIGINT NOT NULL,
+    workflow_name VARCHAR(255),
+    current_step_id VARCHAR(50) NOT NULL,
+    current_state VARCHAR(255),
+    status VARCHAR(50) DEFAULT 'active',
+    data JSONB DEFAULT '{}',
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+    );
+CREATE INDEX idx_projects_student_id ON projects(student_id);
 
+-- State History
+CREATE TABLE IF NOT EXISTS state_histories (
+                                               id BIGSERIAL PRIMARY KEY,
+                                               project_id BIGINT NOT NULL,
+                                               state_name VARCHAR(255),
+    status VARCHAR(50),
+    changed_by BIGINT,
+    comment TEXT,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+    );
+
+-- Teams
+CREATE TABLE IF NOT EXISTS teams (
+                                     id BIGSERIAL PRIMARY KEY,
+                                     name VARCHAR(255) NOT NULL,
+    project_id BIGINT UNIQUE,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+    deleted_at TIMESTAMP WITH TIME ZONE
+                             );
+
+-- Team Members
+CREATE TABLE IF NOT EXISTS team_members (
+                                            id BIGSERIAL PRIMARY KEY,
+                                            team_id BIGINT NOT NULL,
+                                            user_id BIGINT NOT NULL,
+                                            role VARCHAR(50),
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+    );
+CREATE INDEX idx_team_members_team_id ON team_members(team_id);
+
+-- Team Invites
+CREATE TABLE IF NOT EXISTS team_invites (
+                                            id BIGSERIAL PRIMARY KEY,
+                                            team_id BIGINT NOT NULL,
+                                            user_id BIGINT NOT NULL,
+                                            inviter_id BIGINT NOT NULL,
+                                            status VARCHAR(50) DEFAULT 'PENDING',
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+    );
+CREATE INDEX idx_team_invites_user_id ON team_invites(user_id);
+
+-- Notifications
+CREATE TABLE IF NOT EXISTS notifications (
+                                             id BIGSERIAL PRIMARY KEY,
+                                             user_id BIGINT NOT NULL,
+                                             title VARCHAR(255) NOT NULL,
+    message TEXT,
+    link VARCHAR(500),
+    type VARCHAR(50),
+    is_read BOOLEAN DEFAULT FALSE,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+    deleted_at TIMESTAMP WITH TIME ZONE
+                             );
+CREATE INDEX idx_notifications_user_id ON notifications(user_id);
+
+-- Form Submissions
+CREATE TABLE IF NOT EXISTS form_submissions (
+                                                id VARCHAR(36) PRIMARY KEY,
+    project_id BIGINT NOT NULL,
+    step_id BIGINT NOT NULL,
+    user_id BIGINT NOT NULL,
+    data JSONB NOT NULL,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+    deleted_at TIMESTAMP WITH TIME ZONE
+                             );
+
+-- Outbox Events
+CREATE TABLE IF NOT EXISTS outbox_events (
+                                             id BIGSERIAL PRIMARY KEY,
+                                             topic VARCHAR(255) NOT NULL,
+    event_type VARCHAR(255) NOT NULL,
+    payload JSONB NOT NULL,
+    status VARCHAR(50) DEFAULT 'pending',
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+    );
+CREATE INDEX idx_outbox_events_status ON outbox_events(status);
+
+-- State Actions
+CREATE TABLE IF NOT EXISTS state_actions (
+                                             id BIGSERIAL PRIMARY KEY,
+                                             state_id BIGINT NOT NULL,
+                                             type VARCHAR(50) NOT NULL,
+    trigger VARCHAR(50) NOT NULL,
+    config JSONB NOT NULL
+    );
+CREATE INDEX idx_state_actions_state_id ON state_actions(state_id);
+CREATE TABLE IF NOT EXISTS file_metadata (
+                                             id VARCHAR(36) PRIMARY KEY,
+    user_id BIGINT,
+    project_id BIGINT,
+    file_name VARCHAR(255),
+    file_type VARCHAR(50),
+    size BIGINT,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+    );
+CREATE INDEX idx_file_metadata_user_id ON file_metadata(user_id);
+CREATE INDEX idx_file_metadata_project_id ON file_metadata(project_id);
 
 INSERT INTO universities (name, short_name)
 VALUES ('International Information Technology University', 'IITU'),('Astana IT University', 'AITU');

@@ -25,7 +25,7 @@ func InitializeApp(cfg *Config, db *gorm.DB, log *zap.Logger, authClient v1.Auth
 	}
 	service := NewService(teamRepository, authClient, notificationServiceClient, log)
 	handler := NewHandler(service)
-	eventHandler := NewEventHandler(service)
+	eventHandler := NewEventHandler(service, log)
 	app := NewApp(handler, eventHandler)
 	return app, func() {
 		cleanup()

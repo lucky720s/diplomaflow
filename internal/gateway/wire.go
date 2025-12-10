@@ -5,9 +5,12 @@
 package gateway
 
 import (
+	"time"
+
 	"github.com/google/wire"
 	"github.com/lucky720s/diplomaflow/internal/gateway/config"
 	"github.com/lucky720s/diplomaflow/internal/gateway/handler"
+	grpcpkg "github.com/lucky720s/diplomaflow/pkg/grpc"
 	"github.com/lucky720s/diplomaflow/pkg/logger"
 	authv1 "github.com/lucky720s/diplomaflow/pkg/protobuf/auth/v1"
 	filev1 "github.com/lucky720s/diplomaflow/pkg/protobuf/file/v1"
@@ -23,10 +26,15 @@ import (
 )
 
 func provideConn(addr string) (*grpc.ClientConn, func(), error) {
-	conn, err := grpc.NewClient(addr, grpc.WithTransportCredentials(insecure.NewCredentials()))
+	conn, err := grpc.NewClient(addr,
+		grpc.WithTransportCredentials(insecure.NewCredentials()),
+		grpc.WithDefaultServiceConfig(grpcpkg.DefaultRetryServiceConfig()),
+		grpc.WithUnaryInterceptor(grpcpkg.TimeoutInterceptor(10*time.Second)),
+	)
 	if err != nil {
 		return nil, nil, err
 	}
+
 	cleanup := func() { conn.Close() }
 	return conn, cleanup, nil
 }
@@ -78,6 +86,7 @@ func ProvideWorkflowClient(cfg *config.Config) (workflowv1.WorkflowServiceClient
 	}
 	return workflowv1.NewWorkflowServiceClient(conn), cleanup, nil
 }
+
 func ProvideNotificationClient(cfg *config.Config) (notificationv1.NotificationServiceClient, func(), error) {
 	conn, cleanup, err := provideConn(cfg.NotificationServiceAddr)
 	if err != nil {
@@ -85,6 +94,7 @@ func ProvideNotificationClient(cfg *config.Config) (notificationv1.NotificationS
 	}
 	return notificationv1.NewNotificationServiceClient(conn), cleanup, nil
 }
+
 func ProvideFileClient(cfg *config.Config) (filev1.FileServiceClient, func(), error) {
 	conn, cleanup, err := provideConn(cfg.FileServiceAddr)
 	if err != nil {
@@ -100,6 +110,7 @@ func ProvideFormClient(cfg *config.Config) (formv1.FormServiceClient, func(), er
 	}
 	return formv1.NewFormServiceClient(conn), cleanup, nil
 }
+
 func InitializeApp(cfg *config.Config, log *logger.Logger) (*handler.Handler, func(), error) {
 	wire.Build(
 		ProvideAuthClient,

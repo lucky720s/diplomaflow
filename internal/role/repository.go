@@ -11,6 +11,8 @@ type Repository interface {
 	Create(ctx context.Context, role *Role) error
 	GetByID(ctx context.Context, id int64) (*Role, error)
 	Delete(ctx context.Context, id int64) error
+	Update(ctx context.Context, role *Role) error
+	List(ctx context.Context, departmentID int64) ([]*Role, error)
 }
 
 type repository struct {
@@ -43,4 +45,19 @@ func (r *repository) Delete(ctx context.Context, id int64) error {
 		return errors.New("role not found")
 	}
 	return nil
+}
+func (r *repository) Update(ctx context.Context, role *Role) error {
+	return r.db.WithContext(ctx).Save(role).Error
+}
+
+func (r *repository) List(ctx context.Context, departmentID int64) ([]*Role, error) {
+	var roles []*Role
+	query := r.db.WithContext(ctx)
+	if departmentID > 0 {
+		query = query.Where("department_id = ?", departmentID)
+	}
+	if err := query.Find(&roles).Error; err != nil {
+		return nil, err
+	}
+	return roles, nil
 }

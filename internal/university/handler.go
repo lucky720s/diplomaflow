@@ -74,3 +74,62 @@ func (h *Handler) ListDepartments(ctx context.Context, req *universityv1.ListDep
 		Departments: pbDeps,
 	}, nil
 }
+func (h *Handler) GetUniversity(ctx context.Context, req *universityv1.GetUniversityRequest) (*universityv1.GetUniversityResponse, error) {
+	uni, err := h.service.GetUniversity(ctx, req.UniversityId)
+	if err != nil {
+		return nil, status.Errorf(codes.NotFound, "university not found")
+	}
+	return &universityv1.GetUniversityResponse{
+		University: &universityv1.University{Id: uni.ID, Name: uni.Name, ShortName: uni.ShortName},
+	}, nil
+}
+
+func (h *Handler) UpdateUniversity(ctx context.Context, req *universityv1.UpdateUniversityRequest) (*universityv1.UpdateUniversityResponse, error) {
+	if req.University == nil {
+		return nil, status.Error(codes.InvalidArgument, "university is required")
+	}
+	uni, err := h.service.UpdateUniversity(ctx, req.University.Id, req.University.Name, req.University.ShortName, req.UpdateMask)
+	if err != nil {
+		return nil, status.Errorf(codes.Internal, "failed to update: %v", err)
+	}
+	return &universityv1.UpdateUniversityResponse{
+		University: &universityv1.University{Id: uni.ID, Name: uni.Name, ShortName: uni.ShortName},
+	}, nil
+}
+
+func (h *Handler) DeleteUniversity(ctx context.Context, req *universityv1.DeleteUniversityRequest) (*universityv1.DeleteUniversityResponse, error) {
+	if err := h.service.DeleteUniversity(ctx, req.UniversityId); err != nil {
+		return nil, status.Errorf(codes.Internal, "failed to delete: %v", err)
+	}
+	return &universityv1.DeleteUniversityResponse{Success: true}, nil
+}
+
+func (h *Handler) GetDepartment(ctx context.Context, req *universityv1.GetDepartmentRequest) (*universityv1.GetDepartmentResponse, error) {
+	dep, err := h.service.GetDepartment(ctx, req.DepartmentId)
+	if err != nil {
+		return nil, status.Errorf(codes.NotFound, "department not found")
+	}
+	return &universityv1.GetDepartmentResponse{
+		Department: &universityv1.Department{Id: dep.ID, Name: dep.Name, UniversityId: dep.UniversityID},
+	}, nil
+}
+
+func (h *Handler) UpdateDepartment(ctx context.Context, req *universityv1.UpdateDepartmentRequest) (*universityv1.UpdateDepartmentResponse, error) {
+	if req.Department == nil {
+		return nil, status.Error(codes.InvalidArgument, "department is required")
+	}
+	dep, err := h.service.UpdateDepartment(ctx, req.Department.Id, req.Department.Name, req.UpdateMask)
+	if err != nil {
+		return nil, status.Errorf(codes.Internal, "failed to update: %v", err)
+	}
+	return &universityv1.UpdateDepartmentResponse{
+		Department: &universityv1.Department{Id: dep.ID, Name: dep.Name, UniversityId: dep.UniversityID},
+	}, nil
+}
+
+func (h *Handler) DeleteDepartment(ctx context.Context, req *universityv1.DeleteDepartmentRequest) (*universityv1.DeleteDepartmentResponse, error) {
+	if err := h.service.DeleteDepartment(ctx, req.DepartmentId); err != nil {
+		return nil, status.Errorf(codes.Internal, "failed to delete: %v", err)
+	}
+	return &universityv1.DeleteDepartmentResponse{Success: true}, nil
+}

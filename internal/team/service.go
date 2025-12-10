@@ -37,26 +37,25 @@ func (s *Service) CreateTeam(ctx context.Context, name string, projectID *int64,
 		UpdatedAt: time.Now(),
 	}
 
-	if err := s.repo.Create(ctx, team); err != nil {
-		return 0, fmt.Errorf("failed to create team: %w", err)
-	}
-
+	var invites []*TeamInvite
 	for _, memberID := range memberIDs {
 		if memberID == leaderID {
 			continue
 		}
-		invite := &TeamInvite{
-			TeamID:    team.ID,
+		invites = append(invites, &TeamInvite{
 			UserID:    memberID,
 			InviterID: leaderID,
 			Status:    "PENDING",
 			CreatedAt: time.Now(),
+		})
+	}
+	if err := s.repo.CreateTeamWithInvites(ctx, team, invites); err != nil {
+		return 0, fmt.Errorf("failed to create team: %w", err)
+	}
+	for _, memberID := range memberIDs {
+		if memberID == leaderID {
+			continue
 		}
-
-		if err := s.repo.CreateInvite(ctx, invite); err != nil {
-			return 0, fmt.Errorf("failed to create invite for user %d: %w", memberID, err)
-		}
-
 		_, err := s.notifClient.SendNotification(ctx, &notificationv1.SendNotificationRequest{
 			UserId:  memberID,
 			Title:   "Приглашение в команду",

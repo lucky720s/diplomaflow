@@ -14,6 +14,7 @@ type JwtClaims struct {
 	Email        string `json:"Email"`
 	Role         string `json:"Role"`
 	UniversityID int64  `json:"UniversityID"`
+	DepartmentID int64  `json:"DepartmentID"`
 }
 
 func AuthMiddleware(secret string) gin.HandlerFunc {
@@ -45,8 +46,21 @@ func AuthMiddleware(secret string) gin.HandlerFunc {
 		c.Set("userId", claims.Id)
 		c.Set("role", claims.Role)
 		c.Set("universityId", claims.UniversityID)
+		c.Set("departmentId", claims.DepartmentID)
 		c.Set("email", claims.Email)
 
 		c.Next()
+	}
+}
+func RBACMiddleware(allowedRoles ...string) gin.HandlerFunc {
+	return func(c *gin.Context) {
+		role := c.GetString("role")
+		for _, r := range allowedRoles {
+			if role == r {
+				c.Next()
+				return
+			}
+		}
+		c.AbortWithStatusJSON(403, gin.H{"error": "forbidden"})
 	}
 }

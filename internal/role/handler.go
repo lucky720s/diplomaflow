@@ -62,3 +62,39 @@ func (h *Handler) GetRole(ctx context.Context, req *rolev1.GetRoleRequest) (*rol
 		},
 	}, nil
 }
+func (h *Handler) UpdateRole(ctx context.Context, req *rolev1.UpdateRoleRequest) (*rolev1.UpdateRoleResponse, error) {
+	if req.Role == nil || req.Role.Id == 0 {
+		return nil, status.Error(codes.InvalidArgument, "role with id is required")
+	}
+
+	role, err := h.service.UpdateRole(ctx, req.Role.Id, req.Role.Name, req.Role.DepartmentId, req.UpdateMask)
+	if err != nil {
+		return nil, status.Errorf(codes.Internal, "failed to update role: %v", err)
+	}
+
+	return &rolev1.UpdateRoleResponse{
+		Role: &rolev1.Role{
+			Id:           role.ID,
+			Name:         role.Name,
+			DepartmentId: role.DepartmentID,
+		},
+	}, nil
+}
+
+func (h *Handler) ListRoles(ctx context.Context, req *rolev1.ListRolesRequest) (*rolev1.ListRolesResponse, error) {
+	roles, err := h.service.ListRoles(ctx, req.DepartmentId)
+	if err != nil {
+		return nil, status.Errorf(codes.Internal, "failed to list roles: %v", err)
+	}
+
+	var pbRoles []*rolev1.Role
+	for _, r := range roles {
+		pbRoles = append(pbRoles, &rolev1.Role{
+			Id:           r.ID,
+			Name:         r.Name,
+			DepartmentId: r.DepartmentID,
+		})
+	}
+
+	return &rolev1.ListRolesResponse{Roles: pbRoles}, nil
+}

@@ -4,6 +4,8 @@ import (
 	"io"
 	"net/http"
 	"path/filepath"
+	"regexp"
+	"strings"
 
 	"github.com/gin-gonic/gin"
 	filev1 "github.com/lucky720s/diplomaflow/pkg/protobuf/file/v1"
@@ -66,11 +68,21 @@ func (h *Handler) UploadFile(c *gin.Context) {
 
 func (h *Handler) DownloadFile(c *gin.Context) {
 	id := c.Param("id")
-	_, err := h.fileClient.GetFileInfo(c.Request.Context(), &filev1.GetFileInfoRequest{Id: id})
-	if err != nil {
-		MapGRPCError(c, err)
+	if !isValidFileID(id) {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid file id"})
 		return
 	}
-	filePath := filepath.Join("/app/uploads", id)
+
+	filePath := filepath.Join("/app/uploads", filepath.Clean(id))
+	if !strings.HasPrefix(filePath, "/app/uploads/") {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid path"})
+		return
+	}
+
 	c.File(filePath)
+}
+
+func isValidFileID(id string) bool {
+	matched, _ := regexp.MatchString(`^[a-f0-9\-]+(\.[a-z]+)?$`, id)
+	return matched && !strings.Contains(id, "..")
 }

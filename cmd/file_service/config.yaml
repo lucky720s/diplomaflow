@@ -3,3 +3,5 @@ grpc_port: 8088
 storage:
   path: "./uploads"
   base_url: "http://localhost:8080/api/v1"
+database:
+  dsn: "" 

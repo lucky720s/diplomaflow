@@ -3,11 +3,9 @@ package project
 import (
 	"context"
 	"encoding/json"
-	"strconv"
 
 	projectv1 "github.com/lucky720s/diplomaflow/pkg/protobuf/project/v1"
 	"google.golang.org/grpc/codes"
-	"google.golang.org/grpc/metadata"
 	"google.golang.org/grpc/status"
 )
 
@@ -27,19 +25,14 @@ func (h *Handler) CreateProject(ctx context.Context, req *projectv1.CreateProjec
 	if req.StudentId == 0 {
 		return nil, status.Error(codes.InvalidArgument, "student_id is required")
 	}
-
-	var universityID int64
-	if md, ok := metadata.FromIncomingContext(ctx); ok {
-		if values := md.Get("x-university-id"); len(values) > 0 {
-			universityID, _ = strconv.ParseInt(values[0], 10, 64)
-		}
+	if req.UniversityId == 0 {
+		return nil, status.Error(codes.InvalidArgument, "university_id is required")
+	}
+	if req.DepartmentId == 0 {
+		return nil, status.Error(codes.InvalidArgument, "department_id is required")
 	}
 
-	if universityID == 0 {
-		return nil, status.Error(codes.Unauthenticated, "university_id missing in context")
-	}
-
-	resp, err := h.service.CreateProject(ctx, req, universityID)
+	resp, err := h.service.CreateProject(ctx, req)
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, "failed to create project: %v", err)
 	}

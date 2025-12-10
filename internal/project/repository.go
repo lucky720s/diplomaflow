@@ -16,6 +16,7 @@ type Repository interface {
 	DeleteEvent(ctx context.Context, id uint) error
 	ListByStudent(ctx context.Context, studentID int64) ([]*Project, error)
 	AddHistory(ctx context.Context, history *StateHistory) error
+	MarkEventProcessed(ctx context.Context, id uint) error
 }
 
 type repository struct {
@@ -85,4 +86,9 @@ func (r *repository) ListByStudent(ctx context.Context, studentID int64) ([]*Pro
 
 func (r *repository) AddHistory(ctx context.Context, history *StateHistory) error {
 	return r.db.WithContext(ctx).Create(history).Error
+}
+func (r *repository) MarkEventProcessed(ctx context.Context, id uint) error {
+	return r.db.WithContext(ctx).Model(&OutboxEvent{}).
+		Where("id = ?", id).
+		Update("status", "processed").Error
 }

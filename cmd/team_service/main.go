@@ -109,7 +109,7 @@ func main() {
 
 	cancel()
 	grpcServer.GracefulStop()
-
+	kafkaConsumer.Close()
 	time.Sleep(1 * time.Second)
 
 	log.Info("Team Service exited")

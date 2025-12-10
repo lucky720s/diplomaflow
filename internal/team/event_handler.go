@@ -20,8 +20,8 @@ type EventHandler struct {
 	logger  *zap.Logger
 }
 
-func NewEventHandler(service *Service) *EventHandler {
-	return &EventHandler{service: service}
+func NewEventHandler(service *Service, logger *zap.Logger) *EventHandler {
+	return &EventHandler{service: service, logger: logger}
 }
 
 func (h *EventHandler) HandleProjectCreated(ctx context.Context, event ProjectCreatedEvent) error {

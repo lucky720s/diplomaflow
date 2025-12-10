@@ -1,4 +1,23 @@
 services:
+  main_postgres:
+    image: postgres:16-alpine
+    container_name: main_postgres
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB}
+    ports:
+      - "${POSTGRES_PORT}:5432"
+    volumes:
+      - diplomaflow_data:/var/lib/postgresql/data
+      - ./db/init.sql:/docker-entrypoint-initdb.d/init.sql
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}" ]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    networks:
+      - app_network
   kafka:
     image: confluentinc/cp-kafka:7.6.0
     container_name: kafka
@@ -33,25 +52,7 @@ services:
     networks:
       - app_network
 
-  main_postgres:
-    image: postgres:16-alpine
-    container_name: main_postgres
-    environment:
-      POSTGRES_USER: ${POSTGRES_USER}
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
-      POSTGRES_DB: ${POSTGRES_DB}
-    ports:
-      - "${POSTGRES_PORT}:5432"
-    volumes:
-      - diplomaflow_data:/var/lib/postgresql/data
-      - ./db/init.sql:/docker-entrypoint-initdb.d/init.sql
-    healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}"]
-      interval: 5s
-      timeout: 5s
-      retries: 5
-    networks:
-      - app_network
+
 
   university_service:
     build:
@@ -258,6 +259,10 @@ services:
     environment:
       - GRPC_PORT=${PORT_FILE}
       - GOMEMLIMIT=64MiB
+      - DATABASE_DSN=${DATABASE_DSN}
+    depends_on:
+      main_postgres:
+        condition: service_healthy
     deploy:
       resources:
         limits:

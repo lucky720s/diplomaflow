@@ -52,7 +52,7 @@ func main() {
 		c.Header("X-Trace-ID", traceID)
 		c.Next()
 	})
-	router.Use(middleware.CorsMiddleware())
+	router.Use(middleware.CorsMiddleware(cfg.AllowedOrigins))
 
 	v1 := router.Group("/api/v1")
 	{
@@ -66,6 +66,7 @@ func main() {
 			auth.POST("/refresh",
 				middleware.RateLimitMiddleware(rdb, 10, time.Hour),
 				h.RefreshToken)
+			auth.POST("/register", h.Register)
 			sessions := auth.Group("/sessions")
 			sessions.Use(middleware.AuthMiddleware(cfg.JWTSecret))
 			{
@@ -85,7 +86,7 @@ func main() {
 
 		projects := protected.Group("/projects")
 		{
-			projects.POST("", h.CreateProject)
+			projects.POST("", middleware.RBACMiddleware("student"), h.CreateProject)
 			projects.GET("/:id", h.GetProjectDetails)
 			projects.GET("", h.ListProjects)
 			// projects.PUT("/:id", h.UpdateProject)
@@ -136,6 +137,17 @@ func main() {
 		{
 			forms.POST("/submit", h.SubmitForm)
 		}
+		router.GET("/health", func(c *gin.Context) {
+			c.JSON(200, gin.H{"status": "ok"})
+		})
+		router.GET("/ready", func(c *gin.Context) {
+			if err := rdb.Ping(c.Request.Context()).Err(); err != nil {
+				c.JSON(503, gin.H{"status": "not ready", "error": "redis unavailable"})
+				return
+			}
+			c.JSON(200, gin.H{"status": "ready"})
+		})
+
 	}
 
 	srv := &http.Server{
