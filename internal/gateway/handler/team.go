@@ -9,18 +9,43 @@ import (
 )
 
 func (h *Handler) CreateTeam(c *gin.Context) {
-	var req teamv1.CreateTeamRequest
-	if err := c.ShouldBindJSON(&req); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+	var reqBody struct {
+		Name      string  `json:"name" binding:"required"`
+		ProjectID int64   `json:"project_id"`
+		MemberIDs []int64 `json:"member_ids"`
+	}
+	if err := c.ShouldBindJSON(&reqBody); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid json: " + err.Error()})
 		return
 	}
 	leaderID := c.GetInt64("userId")
-	req.LeaderId = leaderID
-	res, err := h.teamClient.CreateTeam(c.Request.Context(), &req)
+	if leaderID == 0 {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "unauthorized"})
+		return
+	}
+	uniqueMembers := make(map[int64]bool)
+	var cleanMemberIDs []int64
+	for _, id := range reqBody.MemberIDs {
+		if id == leaderID {
+			continue
+		}
+		if !uniqueMembers[id] {
+			uniqueMembers[id] = true
+			cleanMemberIDs = append(cleanMemberIDs, id)
+		}
+	}
+	req := &teamv1.CreateTeamRequest{
+		Name:      reqBody.Name,
+		ProjectId: reqBody.ProjectID,
+		MemberIds: cleanMemberIDs,
+		LeaderId:  leaderID,
+	}
+	res, err := h.teamClient.CreateTeam(c.Request.Context(), req)
 	if err != nil {
 		MapGRPCError(c, err)
 		return
 	}
+
 	c.JSON(http.StatusCreated, res)
 }
 
