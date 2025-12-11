@@ -125,3 +125,44 @@ func (h *Handler) RespondToInvite(ctx context.Context, req *pb.RespondToInviteRe
 	}
 	return &pb.RespondToInviteResponse{Success: true}, nil
 }
+func (h *Handler) GetMyTeam(ctx context.Context, req *pb.GetMyTeamRequest) (*pb.GetMyTeamResponse, error) {
+	if req.UserId == 0 {
+		return nil, status.Error(codes.InvalidArgument, "user_id is required")
+	}
+
+	team, role, pendingCount, err := h.service.GetMyTeam(ctx, req.UserId)
+	if err != nil {
+		return nil, status.Errorf(codes.Internal, "failed to get team: %v", err)
+	}
+	if team == nil {
+		return &pb.GetMyTeamResponse{
+			HasTeam: false,
+			Team:    nil,
+		}, nil
+	}
+	var pbMembers []*pb.TeamMember
+	for _, m := range team.Members {
+		pbMembers = append(pbMembers, &pb.TeamMember{
+			UserId: m.UserID,
+			Role:   m.Role,
+		})
+	}
+
+	var projID int64
+	if team.ProjectID != nil {
+		projID = *team.ProjectID
+	}
+
+	return &pb.GetMyTeamResponse{
+		HasTeam: true,
+		Team: &pb.TeamInfo{
+			TeamId:              int64(team.ID),
+			Name:                team.Name,
+			ProjectId:           projID,
+			Role:                role,
+			Members:             pbMembers,
+			MemberCount:         int32(len(team.Members)),
+			PendingInvitesCount: int32(pendingCount),
+		},
+	}, nil
+}

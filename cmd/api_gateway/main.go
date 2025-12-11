@@ -95,6 +95,7 @@ func main() {
 		protected.GET("/students/:student_id/projects", h.GetStudentProjects)
 		teams := protected.Group("/teams")
 		{
+			teams.GET("/my", h.GetMyTeam)
 			teams.POST("", h.CreateTeam)
 			teams.GET("/:id", h.GetTeam)
 			teams.GET("/available-students", h.GetAvailableStudents)

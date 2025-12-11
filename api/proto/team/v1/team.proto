@@ -11,6 +11,7 @@ service TeamService {
   rpc AssignProject (AssignProjectRequest) returns (AssignProjectResponse);
   rpc GetMyInvites (GetMyInvitesRequest) returns (GetMyInvitesResponse);
   rpc RespondToInvite (RespondToInviteRequest) returns (RespondToInviteResponse);
+  rpc GetMyTeam (GetMyTeamRequest) returns (GetMyTeamResponse);
 }
 message CreateTeamRequest {
   string name = 1;
@@ -92,4 +93,21 @@ message RespondToInviteRequest {
 message RespondToInviteResponse {
   bool success = 1;
   string message = 2;
+}
+message GetMyTeamRequest {
+  int64 user_id = 1;
+}
+
+message GetMyTeamResponse {
+  bool has_team = 1;
+  TeamInfo team = 2;
+}
+message TeamInfo {
+  int64 team_id = 1;
+  string name = 2;
+  int64 project_id = 3;
+  string role = 4;
+  repeated TeamMember members = 5;
+  int32 member_count = 6;
+  int32 pending_invites_count = 7;
 }

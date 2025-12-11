@@ -20,6 +20,8 @@ type Repository interface {
 	IsUserInAnyTeam(ctx context.Context, userID int64) (bool, error)
 	DeletePendingInvitesForUser(ctx context.Context, userID int64) error
 	CreateTeamWithInvites(ctx context.Context, team *Team, invites []*TeamInvite) error
+	GetTeamByUserID(ctx context.Context, userID int64) (*Team, string, error)
+	CountPendingInvitesByTeam(ctx context.Context, teamID uint64) (int64, error)
 }
 
 type repository struct {
@@ -102,4 +104,27 @@ func (r *repository) CreateTeamWithInvites(ctx context.Context, team *Team, invi
 		}
 		return nil
 	})
+}
+func (r *repository) GetTeamByUserID(ctx context.Context, userID int64) (*Team, string, error) {
+	var member TeamMember
+	if err := r.db.WithContext(ctx).Where("user_id = ?", userID).First(&member).Error; err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return nil, "", nil // Пользователь не в команде
+		}
+		return nil, "", err
+	}
+
+	var team Team
+	if err := r.db.WithContext(ctx).Preload("Members").First(&team, member.TeamID).Error; err != nil {
+		return nil, "", err
+	}
+
+	return &team, member.Role, nil
+}
+func (r *repository) CountPendingInvitesByTeam(ctx context.Context, teamID uint64) (int64, error) {
+	var count int64
+	err := r.db.WithContext(ctx).Model(&TeamInvite{}).
+		Where("team_id = ? AND status = ?", teamID, "PENDING").
+		Count(&count).Error
+	return count, err
 }

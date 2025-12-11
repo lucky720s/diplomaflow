@@ -171,3 +171,15 @@ func (s *Service) RespondToInvite(ctx context.Context, inviteID int64, userID in
 
 	return nil
 }
+func (s *Service) GetMyTeam(ctx context.Context, userID int64) (*Team, string, int64, error) {
+	team, role, err := s.repo.GetTeamByUserID(ctx, userID)
+	if err != nil {
+		return nil, "", 0, err
+	}
+	if team == nil {
+		return nil, "", 0, nil
+	}
+	pendingCount, _ := s.repo.CountPendingInvitesByTeam(ctx, team.ID)
+
+	return team, role, pendingCount, nil
+}
