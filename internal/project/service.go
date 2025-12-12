@@ -18,14 +18,22 @@ type Service struct {
 	repo           Repository
 	workflowClient workflowv1.WorkflowServiceClient
 	registry       *ProcessorRegistry
+	actionExecutor *StateActionExecutor
 	logger         *zap.Logger
 }
 
-func NewService(repo Repository, wfClient workflowv1.WorkflowServiceClient, registry *ProcessorRegistry, logger *zap.Logger) *Service {
+func NewService(
+	repo Repository,
+	wfClient workflowv1.WorkflowServiceClient,
+	registry *ProcessorRegistry,
+	actionExecutor *StateActionExecutor,
+	logger *zap.Logger,
+) *Service {
 	return &Service{
 		repo:           repo,
 		workflowClient: wfClient,
 		registry:       registry,
+		actionExecutor: actionExecutor,
 		logger:         logger,
 	}
 }
@@ -48,6 +56,7 @@ func (s *Service) CreateProject(ctx context.Context, req *projectv1.CreateProjec
 		Description:   req.Description,
 		StudentID:     req.StudentId,
 		UniversityID:  req.UniversityId,
+		DepartmentID:  req.DepartmentId,
 		WorkflowID:    uint(wf.Id),
 		WorkflowName:  wf.Name,
 		CurrentStepID: strconv.FormatInt(initialStep.Id, 10),
@@ -84,7 +93,14 @@ func (s *Service) PerformAction(ctx context.Context, projectID int64, actionName
 	if err != nil {
 		return nil, fmt.Errorf("project not found: %w", err)
 	}
+
 	currentStateID, _ := strconv.ParseInt(project.CurrentStepID, 10, 64)
+	if s.actionExecutor != nil {
+		if err := s.actionExecutor.ExecuteActions(ctx, currentStateID, "ON_EXIT", project); err != nil {
+			s.logger.Warn("Failed to execute ON_EXIT actions", zap.Error(err))
+		}
+	}
+
 	stateInfo, err := s.workflowClient.GetState(ctx, &workflowv1.GetStateRequest{StateId: currentStateID})
 	if err != nil {
 		return nil, fmt.Errorf("failed to get state info: %w", err)
@@ -96,7 +112,6 @@ func (s *Service) PerformAction(ctx context.Context, projectID int64, actionName
 	}
 
 	currentData, _ := JSONToMap(project.Data)
-
 	stepConfig := make(map[string]interface{})
 	if stateInfo.Config != nil {
 		bytes, _ := stateInfo.Config.MarshalJSON()
@@ -119,7 +134,25 @@ func (s *Service) PerformAction(ctx context.Context, projectID int64, actionName
 	if err == nil && nextState != nil {
 		project.CurrentStepID = strconv.FormatInt(nextState.Id, 10)
 		project.CurrentState = nextState.Name
+		if nextState.DurationDays > 0 {
+			deadline := time.Now().AddDate(0, 0, int(nextState.DurationDays))
+			project.DeadlineAt = &deadline
+			project.DeadlineProcessed = false
+		}
+
+		if s.actionExecutor != nil {
+			if err := s.actionExecutor.ExecuteActions(ctx, nextState.Id, "ON_ENTER", project); err != nil {
+				s.logger.Warn("Failed to execute ON_ENTER actions", zap.Error(err))
+			}
+		}
 	}
+	history := &StateHistory{
+		ProjectID: project.ID,
+		StateName: project.CurrentState,
+		Status:    "completed",
+		CreatedAt: time.Now(),
+	}
+	_ = s.repo.AddHistory(ctx, history)
 
 	if err := s.repo.Update(ctx, project); err != nil {
 		return nil, err

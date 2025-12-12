@@ -90,3 +90,51 @@ func (h *Handler) CreateRole(c *gin.Context) {
 	}
 	c.JSON(http.StatusCreated, res)
 }
+func (h *Handler) GetUniversity(c *gin.Context) {
+	idStr := c.Param("id")
+	id, err := strconv.ParseInt(idStr, 10, 64)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid university id"})
+		return
+	}
+
+	res, err := h.universityClient.GetUniversity(c.Request.Context(), &universityv1.GetUniversityRequest{
+		UniversityId: id,
+	})
+	if err != nil {
+		MapGRPCError(c, err)
+		return
+	}
+	c.JSON(http.StatusOK, res)
+}
+
+func (h *Handler) ListRoles(c *gin.Context) {
+	departmentID := c.GetInt64("departmentId")
+
+	res, err := h.roleClient.ListRoles(c.Request.Context(), &rolev1.ListRolesRequest{
+		DepartmentId: departmentID,
+	})
+	if err != nil {
+		MapGRPCError(c, err)
+		return
+	}
+	c.JSON(http.StatusOK, res)
+}
+
+func (h *Handler) GetRole(c *gin.Context) {
+	idStr := c.Param("id")
+	id, err := strconv.ParseInt(idStr, 10, 64)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid role id"})
+		return
+	}
+
+	res, err := h.roleClient.GetRole(c.Request.Context(), &rolev1.GetRoleRequest{
+		RoleId: id,
+	})
+	if err != nil {
+		MapGRPCError(c, err)
+		return
+	}
+	c.JSON(http.StatusOK, res)
+}

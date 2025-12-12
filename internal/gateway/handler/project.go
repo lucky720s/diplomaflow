@@ -8,6 +8,7 @@ import (
 	projectv1 "github.com/lucky720s/diplomaflow/pkg/protobuf/project/v1"
 	"golang.org/x/sync/errgroup"
 	"google.golang.org/grpc/metadata"
+	"google.golang.org/protobuf/types/known/structpb"
 )
 
 func (h *Handler) CreateProject(c *gin.Context) {
@@ -50,10 +51,6 @@ func (h *Handler) GetProject(c *gin.Context) {
 		return
 	}
 	c.JSON(http.StatusOK, res)
-}
-
-func (h *Handler) ListProjects(c *gin.Context) {
-	c.JSON(http.StatusNotImplemented, gin.H{"message": "Not implemented yet"})
 }
 
 func (h *Handler) GetStudentProjects(c *gin.Context) {
@@ -103,4 +100,51 @@ func (h *Handler) GetProjectDetails(c *gin.Context) {
 		"project": projectResp,
 		"viewer":  currentUserInfo,
 	})
+}
+func (h *Handler) ListProjects(c *gin.Context) {
+	studentID := c.GetInt64("userId")
+	role := c.GetString("role")
+
+	var req projectv1.GetStudentProjectsRequest
+
+	if role == "student" {
+		req.StudentId = studentID
+	}
+
+	res, err := h.projectClient.GetStudentProjects(c.Request.Context(), &req)
+	if err != nil {
+		MapGRPCError(c, err)
+		return
+	}
+
+	c.JSON(http.StatusOK, res)
+}
+
+func (h *Handler) PerformProjectAction(c *gin.Context) {
+	projectID, _ := strconv.ParseInt(c.Param("id"), 10, 64)
+
+	var req struct {
+		ActionName string                 `json:"action_name" binding:"required"`
+		Payload    map[string]interface{} `json:"payload"`
+	}
+
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	payloadStruct, _ := structpb.NewStruct(req.Payload)
+
+	res, err := h.projectClient.PerformAction(c.Request.Context(), &projectv1.PerformActionRequest{
+		ProjectId:  projectID,
+		ActionName: req.ActionName,
+		Payload:    payloadStruct,
+	})
+
+	if err != nil {
+		MapGRPCError(c, err)
+		return
+	}
+
+	c.JSON(http.StatusOK, res)
 }

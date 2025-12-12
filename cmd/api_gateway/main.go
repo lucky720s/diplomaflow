@@ -82,13 +82,14 @@ func main() {
 		protected := v1.Group("/")
 		protected.Use(middleware.AuthMiddleware(cfg.JWTSecret))
 
-		//protected.GET("/users", h.ListUsers)
+		protected.GET("/users", h.ListUsers)
 
 		projects := protected.Group("/projects")
 		{
 			projects.POST("", middleware.RBACMiddleware("student"), h.CreateProject)
 			projects.GET("/:id", h.GetProjectDetails)
 			projects.GET("", h.ListProjects)
+			projects.PUT("/:id/action", h.PerformProjectAction)
 			// projects.PUT("/:id", h.UpdateProject)
 			// projects.DELETE("/:id", h.DeleteProject)
 		}
@@ -107,22 +108,23 @@ func main() {
 		universities := protected.Group("/universities")
 		{
 			universities.POST("", h.CreateUniversity)
-			//universities.GET("/:id", h.GetUniversity)
-			//universities.GET("", h.ListUniversities)
+			universities.GET("/:id", h.GetUniversity)
 		}
 
 		roles := protected.Group("/roles")
 		{
 			roles.POST("", h.CreateRole)
-			//roles.GET("", h.ListRoles)
-			//roles.GET("/:id", h.GetRole)
+			roles.GET("", h.ListRoles)
+			roles.GET("/:id", h.GetRole)
 		}
 
 		workflows := protected.Group("/workflows")
 		{
-			workflows.POST("", h.CreateWorkflow)
-			//workflows.GET("/:id", h.GetWorkflow)
-			// workflows.PUT("/:id/status", h.UpdateWorkflowStatus)
+			workflows.POST("", middleware.RBACMiddleware("admin"), h.CreateWorkflow)
+			workflows.GET("", h.ListWorkflows)
+			workflows.GET("/:id", h.GetWorkflow)
+			workflows.POST("/:id/states", h.CreateState)
+			workflows.POST("/:id/activate", h.SetActiveWorkflow)
 		}
 		notifications := protected.Group("/notifications")
 		{

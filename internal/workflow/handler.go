@@ -19,17 +19,22 @@ type Handler struct {
 func NewHandler(service *Service) *Handler {
 	return &Handler{service: service}
 }
-
 func toProtoWorkflow(wf *Workflow) *workflowv1.Workflow {
 	if wf == nil {
 		return nil
 	}
-	return &workflowv1.Workflow{
+
+	pbWorkflow := &workflowv1.Workflow{
 		Id:           wf.ID,
 		Name:         wf.Name,
 		DepartmentId: wf.DepartmentID,
 		IsActive:     wf.IsActive,
 	}
+	for _, step := range wf.Steps {
+		pbWorkflow.Steps = append(pbWorkflow.Steps, toProtoState(&step))
+	}
+
+	return pbWorkflow
 }
 
 func toProtoState(st *State) *workflowv1.State {

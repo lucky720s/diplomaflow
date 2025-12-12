@@ -12,10 +12,11 @@ services:
       - diplomaflow_data:/var/lib/postgresql/data
       - ./db/init.sql:/docker-entrypoint-initdb.d/init.sql
     healthcheck:
-      test: [ "CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}" ]
+      test: [ "CMD-SHELL", "pg_isready -U diplomaflow -d diplomaflow && psql -U diplomaflow -d diplomaflow -c 'SELECT 1 FROM states LIMIT 1'" ]
       interval: 5s
       timeout: 5s
-      retries: 5
+      retries: 10
+      start_period: 30s
     networks:
       - app_network
   kafka:
@@ -208,6 +209,8 @@ services:
     environment:
       - GRPC_PORT=${PORT_PROJECT}
       - KAFKA_BROKERS=kafka:29092
+      - SERVICES_WORKFLOW_ADDR=workflow_service:${PORT_WORKFLOW}
+      - SERVICES_NOTIFICATION_ADDR=notification_service:${PORT_NOTIFICATION}
       - GOMEMLIMIT=64MiB
     deploy:
       resources:

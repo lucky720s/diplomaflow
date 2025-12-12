@@ -3,6 +3,7 @@ package project
 import (
 	"context"
 	"encoding/json"
+	"time"
 
 	"gorm.io/datatypes"
 	"gorm.io/gorm"
@@ -15,8 +16,10 @@ type Repository interface {
 	GetPendingEvents(ctx context.Context, limit int) ([]OutboxEvent, error)
 	DeleteEvent(ctx context.Context, id uint) error
 	ListByStudent(ctx context.Context, studentID int64) ([]*Project, error)
+	ListAll(ctx context.Context, departmentID int64, limit, offset int) ([]*Project, int64, error)
 	AddHistory(ctx context.Context, history *StateHistory) error
 	MarkEventProcessed(ctx context.Context, id uint) error
+	GetProjectsWithExpiredDeadlines(ctx context.Context) ([]*Project, error)
 }
 
 type repository struct {
@@ -78,7 +81,13 @@ func (r *repository) DeleteEvent(ctx context.Context, id uint) error {
 
 func (r *repository) ListByStudent(ctx context.Context, studentID int64) ([]*Project, error) {
 	var projects []*Project
-	if err := r.db.WithContext(ctx).Where("student_id = ?", studentID).Find(&projects).Error; err != nil {
+	query := r.db.WithContext(ctx)
+
+	if studentID != 0 {
+		query = query.Where("student_id = ?", studentID)
+	}
+
+	if err := query.Order("created_at DESC").Find(&projects).Error; err != nil {
 		return nil, err
 	}
 	return projects, nil
@@ -91,4 +100,33 @@ func (r *repository) MarkEventProcessed(ctx context.Context, id uint) error {
 	return r.db.WithContext(ctx).Model(&OutboxEvent{}).
 		Where("id = ?", id).
 		Update("status", "processed").Error
+}
+func (r *repository) GetProjectsWithExpiredDeadlines(ctx context.Context) ([]*Project, error) {
+	var projects []*Project
+	err := r.db.WithContext(ctx).
+		Where("status = ? AND deadline_at < ? AND deadline_processed = ?",
+			"active", time.Now(), false).
+		Find(&projects).Error
+
+	return projects, err
+}
+func (r *repository) ListAll(ctx context.Context, departmentID int64, limit, offset int) ([]*Project, int64, error) {
+	var projects []*Project
+	var total int64
+
+	query := r.db.WithContext(ctx).Model(&Project{})
+
+	if departmentID > 0 {
+		query = query.Where("department_id = ?", departmentID)
+	}
+
+	if err := query.Count(&total).Error; err != nil {
+		return nil, 0, err
+	}
+
+	if err := query.Limit(limit).Offset(offset).Order("created_at DESC").Find(&projects).Error; err != nil {
+		return nil, 0, err
+	}
+
+	return projects, total, nil
 }

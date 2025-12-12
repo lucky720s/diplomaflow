@@ -3,6 +3,7 @@ grpc_port: 8083
 database:
   dsn: ""
 kafka:
-  brokers: "kafka:9092"
+  brokers: "kafka:29092"
 services:
   workflow_addr: "workflow_service:8085"
+  notification_addr: "notification_service:8087"

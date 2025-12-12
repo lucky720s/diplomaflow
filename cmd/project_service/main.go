@@ -52,7 +52,7 @@ func main() {
 	defer wfConn.Close()
 	wfClient := workflowv1.NewWorkflowServiceClient(wfConn)
 
-	h, cleanup, err := project.InitializeApp(&cfg, db, log.Logger, kafkaProducer, wfClient)
+	app, cleanup, err := project.InitializeApp(&cfg, db, log.Logger, kafkaProducer, wfClient)
 	if err != nil {
 		log.Fatal("failed to initialize app", zap.Error(err))
 	}
@@ -63,13 +63,14 @@ func main() {
 
 	ctx, cancel := context.WithCancel(context.Background())
 	go outboxProcessor.Start(ctx)
+	go app.DeadlineScheduler.Start(ctx)
 
 	lis, err := net.Listen("tcp", ":"+cfg.GRPCPort)
 	if err != nil {
 		log.Fatal("listen error", zap.Error(err))
 	}
 	grpcServer := grpc.NewServer()
-	projectv1.RegisterProjectServiceServer(grpcServer, h)
+	projectv1.RegisterProjectServiceServer(grpcServer, app.Handler)
 
 	go func() {
 		log.Info("Project Service starting", zap.String("port", cfg.GRPCPort))
@@ -86,6 +87,7 @@ func main() {
 
 	cancel()
 	outboxProcessor.Stop()
+	app.DeadlineScheduler.Stop()
 
 	time.Sleep(500 * time.Millisecond)
 
