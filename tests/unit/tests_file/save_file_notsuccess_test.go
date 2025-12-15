@@ -4,7 +4,7 @@ import (
 	"context"
 	"testing"
 
-	domain "github.com/lucky720s/diplomaflow/internal/file"
+	"github.com/lucky720s/diplomaflow/internal/file"
 
 	"github.com/pkg/errors"
 	"github.com/stretchr/testify/mock"
@@ -14,7 +14,7 @@ import (
 func TestService_SaveFile_RepoError(t *testing.T) {
 	tmpDir := t.TempDir()
 	repo := new(MockRepository)
-	svc := domain.NewTestService(tmpDir, repo, nil)
+	svc := file.NewTestService(tmpDir, repo, nil)
 
 	repo.
 		On("SaveMetadata", mock.Anything, mock.Anything).

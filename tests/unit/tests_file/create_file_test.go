@@ -5,14 +5,14 @@ import (
 	"path/filepath"
 	"testing"
 
-	domain "github.com/lucky720s/diplomaflow/internal/file"
+	"github.com/lucky720s/diplomaflow/internal/file"
 	"github.com/stretchr/testify/require"
 )
 
 func TestService_CreateFile(t *testing.T) {
 	tmpDir := t.TempDir()
 
-	svc := domain.NewTestService(tmpDir, nil, nil)
+	svc := file.NewTestService(tmpDir, nil, nil)
 
 	file, name, err := svc.CreateFile(".txt")
 

@@ -5,7 +5,7 @@ import (
 	"path/filepath"
 	"testing"
 
-	domain "github.com/lucky720s/diplomaflow/internal/file"
+	"github.com/lucky720s/diplomaflow/internal/file"
 	"github.com/stretchr/testify/require"
 )
 
@@ -16,7 +16,7 @@ func TestService_FileExists(t *testing.T) {
 	err := os.WriteFile(filePath, []byte("data"), 0644)
 	require.NoError(t, err)
 
-	svc := domain.NewTestService(tmpDir, nil, nil)
+	svc := file.NewTestService(tmpDir, nil, nil)
 
 	require.True(t, svc.FileExists("test.txt"))
 	require.False(t, svc.FileExists("missing.txt"))

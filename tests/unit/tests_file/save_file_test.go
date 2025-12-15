@@ -4,7 +4,7 @@ import (
 	"context"
 	"testing"
 
-	domain "github.com/lucky720s/diplomaflow/internal/file"
+	"github.com/lucky720s/diplomaflow/internal/file"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 )
@@ -17,7 +17,7 @@ func TestService_SaveFile_Success(t *testing.T) {
 		On("SaveMetadata", mock.Anything, mock.AnythingOfType("*file.FileMetadata")).
 		Return(nil)
 
-	svc := domain.NewTestService(tmpDir, repo, nil)
+	svc := file.NewTestService(tmpDir, repo, nil)
 
 	name, file, err := svc.SaveFile(
 		context.Background(),

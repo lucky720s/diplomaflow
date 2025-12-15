@@ -86,3 +86,16 @@ func (s *Service) SaveFile(ctx context.Context, userID, projectID int64, fileNam
 func (s *Service) GetMetadata(ctx context.Context, id string) (*FileMetadata, error) {
 	return s.repo.GetMetadata(ctx, id)
 }
+
+func NewTestService(
+	storagePath string,
+	repo Repository,
+	log *logger.Logger,
+) *Service {
+	return &Service{
+		storagePath: storagePath,
+		baseURL:     "http://test",
+		repo:        repo,
+		logger:      log,
+	}
+}
