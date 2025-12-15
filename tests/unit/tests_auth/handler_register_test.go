@@ -1,9 +1,10 @@
-package auth
+package tests_auth
 
 import (
 	"context"
 	"testing"
 
+	"github.com/lucky720s/diplomaflow/internal/auth"
 	authv1 "github.com/lucky720s/diplomaflow/pkg/protobuf/auth/v1"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
@@ -11,10 +12,10 @@ import (
 
 func TestHandler_Register_Success(t *testing.T) {
 	mockService := new(MockService)
-	handler := NewHandler(mockService)
+	handler := auth.NewHandler(mockService)
 
 	mockService.
-		On("Register", mock.Anything, "test@mail.com", "12345678", "A", "B", "student", int64(1)).
+		On("Register", mock.Anything, "test@mail.com", "12345678", "A", "B", "student", int64(1), int64(0)).
 		Return(int64(42), nil)
 
 	req := &authv1.RegisterRequest{

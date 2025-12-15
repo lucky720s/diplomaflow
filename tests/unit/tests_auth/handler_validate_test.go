@@ -1,9 +1,10 @@
-package auth
+package tests_auth
 
 import (
 	"context"
 	"testing"
 
+	"github.com/lucky720s/diplomaflow/internal/auth"
 	authv1 "github.com/lucky720s/diplomaflow/pkg/protobuf/auth/v1"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
@@ -11,11 +12,11 @@ import (
 
 func TestHandler_ValidateToken_Success(t *testing.T) {
 	mockService := new(MockService)
-	handler := NewHandler(mockService)
+	handler := auth.NewHandler(mockService)
 
 	mockService.
 		On("Validate", mock.Anything, "validToken").
-		Return(&JwtClaims{Id: 1, Role: "admin", UniversityID: 10}, nil)
+		Return(&auth.JwtClaims{Id: 1, Role: "admin", UniversityID: 10}, nil)
 
 	req := &authv1.ValidateTokenRequest{Token: "validToken"}
 
