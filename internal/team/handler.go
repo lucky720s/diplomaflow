@@ -6,6 +6,7 @@ import (
 	pb "github.com/lucky720s/diplomaflow/pkg/protobuf/team/v1"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
+	"google.golang.org/protobuf/types/known/emptypb"
 )
 
 type Handler struct {
@@ -165,4 +166,112 @@ func (h *Handler) GetMyTeam(ctx context.Context, req *pb.GetMyTeamRequest) (*pb.
 			PendingInvitesCount: int32(pendingCount),
 		},
 	}, nil
+}
+func (h *Handler) ListTeams(ctx context.Context, req *pb.ListTeamsRequest) (*pb.ListTeamsResponse, error) {
+	teams, total, err := h.service.ListTeams(ctx, req.DepartmentId, req.ProjectId, req.Page, req.PageSize)
+	if err != nil {
+		return nil, status.Errorf(codes.Internal, "failed to list teams: %v", err)
+	}
+
+	var pbTeams []*pb.Team
+	for _, t := range teams {
+		var members []*pb.TeamMember
+		for _, m := range t.Members {
+			members = append(members, &pb.TeamMember{
+				UserId: m.UserID,
+				Role:   m.Role,
+			})
+		}
+
+		var projID int64
+		if t.ProjectID != nil {
+			projID = *t.ProjectID
+		}
+
+		pbTeams = append(pbTeams, &pb.Team{
+			Id:        int64(t.ID),
+			Name:      t.Name,
+			ProjectId: projID,
+			Members:   members,
+			CreatedAt: t.CreatedAt.Format("2006-01-02T15:04:05Z"),
+		})
+	}
+
+	return &pb.ListTeamsResponse{
+		Teams:      pbTeams,
+		TotalCount: total,
+	}, nil
+}
+
+func (h *Handler) UpdateTeam(ctx context.Context, req *pb.UpdateTeamRequest) (*pb.UpdateTeamResponse, error) {
+	if req.Team == nil || req.Team.Id == 0 {
+		return nil, status.Error(codes.InvalidArgument, "team with id is required")
+	}
+
+	team, err := h.service.UpdateTeam(ctx, uint64(req.Team.Id), req.Team.Name)
+	if err != nil {
+		return nil, status.Errorf(codes.Internal, "failed to update team: %v", err)
+	}
+
+	var members []*pb.TeamMember
+	for _, m := range team.Members {
+		members = append(members, &pb.TeamMember{
+			UserId: m.UserID,
+			Role:   m.Role,
+		})
+	}
+
+	var projID int64
+	if team.ProjectID != nil {
+		projID = *team.ProjectID
+	}
+
+	return &pb.UpdateTeamResponse{
+		Team: &pb.Team{
+			Id:        int64(team.ID),
+			Name:      team.Name,
+			ProjectId: projID,
+			Members:   members,
+			CreatedAt: team.CreatedAt.Format("2006-01-02T15:04:05Z"),
+		},
+	}, nil
+}
+
+func (h *Handler) DeleteTeam(ctx context.Context, req *pb.DeleteTeamRequest) (*emptypb.Empty, error) {
+	if req.TeamId == 0 {
+		return nil, status.Error(codes.InvalidArgument, "team_id is required")
+	}
+
+	if err := h.service.DeleteTeam(ctx, uint64(req.TeamId)); err != nil {
+		return nil, status.Errorf(codes.Internal, "failed to delete team: %v", err)
+	}
+
+	return &emptypb.Empty{}, nil
+}
+
+func (h *Handler) AddMember(ctx context.Context, req *pb.AddMemberRequest) (*pb.AddMemberResponse, error) {
+	if req.TeamId == 0 || req.UserId == 0 {
+		return nil, status.Error(codes.InvalidArgument, "team_id and user_id are required")
+	}
+
+	if err := h.service.AddMember(ctx, uint64(req.TeamId), req.UserId, req.Role); err != nil {
+		return nil, status.Errorf(codes.Internal, "failed to add member: %v", err)
+	}
+
+	return &pb.AddMemberResponse{
+		Success: true,
+		Message: "Member added successfully",
+	}, nil
+}
+
+func (h *Handler) RemoveMember(ctx context.Context, req *pb.RemoveMemberRequest) (*emptypb.Empty, error) {
+	if req.TeamId == 0 || req.UserId == 0 {
+		return nil, status.Error(codes.InvalidArgument, "team_id and user_id are required")
+	}
+
+	if err := h.service.RemoveMember(ctx, uint64(req.TeamId), req.UserId); err != nil {
+		return nil, status.Errorf(codes.Internal, "failed to remove member: %v", err)
+	}
+
+	return &emptypb.Empty{}, nil
 }

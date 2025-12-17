@@ -1883,3 +1883,215 @@ var _ interface {
 	Cause() error
 	ErrorName() string
 } = RevokeSessionResponseValidationError{}
+
+// Validate checks the field values on AssignRoleRequest with the rules defined
+// in the proto definition for this message. If any rules are violated, the
+// first error encountered is returned, or nil if there are no violations.
+func (m *AssignRoleRequest) Validate() error {
+	return m.validate(false)
+}
+
+// ValidateAll checks the field values on AssignRoleRequest with the rules
+// defined in the proto definition for this message. If any rules are
+// violated, the result is a list of violation errors wrapped in
+// AssignRoleRequestMultiError, or nil if none found.
+func (m *AssignRoleRequest) ValidateAll() error {
+	return m.validate(true)
+}
+
+func (m *AssignRoleRequest) validate(all bool) error {
+	if m == nil {
+		return nil
+	}
+
+	var errors []error
+
+	// no validation rules for UserId
+
+	// no validation rules for Role
+
+	if len(errors) > 0 {
+		return AssignRoleRequestMultiError(errors)
+	}
+
+	return nil
+}
+
+// AssignRoleRequestMultiError is an error wrapping multiple validation errors
+// returned by AssignRoleRequest.ValidateAll() if the designated constraints
+// aren't met.
+type AssignRoleRequestMultiError []error
+
+// Error returns a concatenation of all the error messages it wraps.
+func (m AssignRoleRequestMultiError) Error() string {
+	msgs := make([]string, 0, len(m))
+	for _, err := range m {
+		msgs = append(msgs, err.Error())
+	}
+	return strings.Join(msgs, "; ")
+}
+
+// AllErrors returns a list of validation violation errors.
+func (m AssignRoleRequestMultiError) AllErrors() []error { return m }
+
+// AssignRoleRequestValidationError is the validation error returned by
+// AssignRoleRequest.Validate if the designated constraints aren't met.
+type AssignRoleRequestValidationError struct {
+	field  string
+	reason string
+	cause  error
+	key    bool
+}
+
+// Field function returns field value.
+func (e AssignRoleRequestValidationError) Field() string { return e.field }
+
+// Reason function returns reason value.
+func (e AssignRoleRequestValidationError) Reason() string { return e.reason }
+
+// Cause function returns cause value.
+func (e AssignRoleRequestValidationError) Cause() error { return e.cause }
+
+// Key function returns key value.
+func (e AssignRoleRequestValidationError) Key() bool { return e.key }
+
+// ErrorName returns error name.
+func (e AssignRoleRequestValidationError) ErrorName() string {
+	return "AssignRoleRequestValidationError"
+}
+
+// Error satisfies the builtin error interface
+func (e AssignRoleRequestValidationError) Error() string {
+	cause := ""
+	if e.cause != nil {
+		cause = fmt.Sprintf(" | caused by: %v", e.cause)
+	}
+
+	key := ""
+	if e.key {
+		key = "key for "
+	}
+
+	return fmt.Sprintf(
+		"invalid %sAssignRoleRequest.%s: %s%s",
+		key,
+		e.field,
+		e.reason,
+		cause)
+}
+
+var _ error = AssignRoleRequestValidationError{}
+
+var _ interface {
+	Field() string
+	Reason() string
+	Key() bool
+	Cause() error
+	ErrorName() string
+} = AssignRoleRequestValidationError{}
+
+// Validate checks the field values on AssignRoleResponse with the rules
+// defined in the proto definition for this message. If any rules are
+// violated, the first error encountered is returned, or nil if there are no violations.
+func (m *AssignRoleResponse) Validate() error {
+	return m.validate(false)
+}
+
+// ValidateAll checks the field values on AssignRoleResponse with the rules
+// defined in the proto definition for this message. If any rules are
+// violated, the result is a list of violation errors wrapped in
+// AssignRoleResponseMultiError, or nil if none found.
+func (m *AssignRoleResponse) ValidateAll() error {
+	return m.validate(true)
+}
+
+func (m *AssignRoleResponse) validate(all bool) error {
+	if m == nil {
+		return nil
+	}
+
+	var errors []error
+
+	// no validation rules for Success
+
+	// no validation rules for Message
+
+	if len(errors) > 0 {
+		return AssignRoleResponseMultiError(errors)
+	}
+
+	return nil
+}
+
+// AssignRoleResponseMultiError is an error wrapping multiple validation errors
+// returned by AssignRoleResponse.ValidateAll() if the designated constraints
+// aren't met.
+type AssignRoleResponseMultiError []error
+
+// Error returns a concatenation of all the error messages it wraps.
+func (m AssignRoleResponseMultiError) Error() string {
+	msgs := make([]string, 0, len(m))
+	for _, err := range m {
+		msgs = append(msgs, err.Error())
+	}
+	return strings.Join(msgs, "; ")
+}
+
+// AllErrors returns a list of validation violation errors.
+func (m AssignRoleResponseMultiError) AllErrors() []error { return m }
+
+// AssignRoleResponseValidationError is the validation error returned by
+// AssignRoleResponse.Validate if the designated constraints aren't met.
+type AssignRoleResponseValidationError struct {
+	field  string
+	reason string
+	cause  error
+	key    bool
+}
+
+// Field function returns field value.
+func (e AssignRoleResponseValidationError) Field() string { return e.field }
+
+// Reason function returns reason value.
+func (e AssignRoleResponseValidationError) Reason() string { return e.reason }
+
+// Cause function returns cause value.
+func (e AssignRoleResponseValidationError) Cause() error { return e.cause }
+
+// Key function returns key value.
+func (e AssignRoleResponseValidationError) Key() bool { return e.key }
+
+// ErrorName returns error name.
+func (e AssignRoleResponseValidationError) ErrorName() string {
+	return "AssignRoleResponseValidationError"
+}
+
+// Error satisfies the builtin error interface
+func (e AssignRoleResponseValidationError) Error() string {
+	cause := ""
+	if e.cause != nil {
+		cause = fmt.Sprintf(" | caused by: %v", e.cause)
+	}
+
+	key := ""
+	if e.key {
+		key = "key for "
+	}
+
+	return fmt.Sprintf(
+		"invalid %sAssignRoleResponse.%s: %s%s",
+		key,
+		e.field,
+		e.reason,
+		cause)
+}
+
+var _ error = AssignRoleResponseValidationError{}
+
+var _ interface {
+	Field() string
+	Reason() string
+	Key() bool
+	Cause() error
+	ErrorName() string
+} = AssignRoleResponseValidationError{}

@@ -3,12 +3,14 @@ package auth
 import (
 	"context"
 	"errors"
+	"fmt"
+	"time"
+
 	"github.com/lucky720s/diplomaflow/pkg/logger"
 	rolev1 "github.com/lucky720s/diplomaflow/pkg/protobuf/role/v1"
 	universityv1 "github.com/lucky720s/diplomaflow/pkg/protobuf/university/v1"
 	"go.uber.org/zap"
 	"gorm.io/gorm"
-	"time"
 )
 
 type Service struct {
@@ -189,4 +191,21 @@ func (s *Service) RevokeSession(ctx context.Context, userID int64, sessionID uin
 		return errors.New("unauthorized")
 	}
 	return s.repo.RevokeRefreshToken(ctx, sessionID)
+}
+func (s *Service) AssignRole(ctx context.Context, userID int64, role string) error {
+	user, err := s.repo.GetByID(ctx, userID)
+	if err != nil {
+		return fmt.Errorf("user not found: %w", err)
+	}
+	validRoles := map[string]bool{
+		"student": true,
+		"teacher": true,
+		"admin":   true,
+	}
+	if !validRoles[role] {
+		return fmt.Errorf("invalid role: %s", role)
+	}
+
+	user.Role = role
+	return s.repo.Update(ctx, user)
 }

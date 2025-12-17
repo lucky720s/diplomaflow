@@ -22,6 +22,9 @@ type Repository interface {
 	CreateTeamWithInvites(ctx context.Context, team *Team, invites []*TeamInvite) error
 	GetTeamByUserID(ctx context.Context, userID int64) (*Team, string, error)
 	CountPendingInvitesByTeam(ctx context.Context, teamID uint64) (int64, error)
+	List(ctx context.Context, departmentID, projectID int64, limit, offset int) ([]*Team, int64, error)
+	Delete(ctx context.Context, id uint64) error
+	GetMember(ctx context.Context, teamID uint64, userID int64) (*TeamMember, error)
 }
 
 type repository struct {
@@ -109,7 +112,7 @@ func (r *repository) GetTeamByUserID(ctx context.Context, userID int64) (*Team, 
 	var member TeamMember
 	if err := r.db.WithContext(ctx).Where("user_id = ?", userID).First(&member).Error; err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
-			return nil, "", nil // Пользователь не в команде
+			return nil, "", nil
 		}
 		return nil, "", err
 	}
@@ -127,4 +130,55 @@ func (r *repository) CountPendingInvitesByTeam(ctx context.Context, teamID uint6
 		Where("team_id = ? AND status = ?", teamID, "PENDING").
 		Count(&count).Error
 	return count, err
+}
+func (r *repository) List(ctx context.Context, departmentID, projectID int64, limit, offset int) ([]*Team, int64, error) {
+	var teams []*Team
+	var total int64
+
+	query := r.db.WithContext(ctx).Model(&Team{})
+
+	if projectID > 0 {
+		query = query.Where("project_id = ?", projectID)
+	}
+
+	if err := query.Count(&total).Error; err != nil {
+		return nil, 0, err
+	}
+
+	err := query.Preload("Members").
+		Limit(limit).
+		Offset(offset).
+		Order("created_at DESC").
+		Find(&teams).Error
+
+	return teams, total, err
+}
+
+func (r *repository) Delete(ctx context.Context, id uint64) error {
+	return r.db.WithContext(ctx).Transaction(func(tx *gorm.DB) error {
+		if err := tx.Where("team_id = ?", id).Delete(&TeamInvite{}).Error; err != nil {
+			return err
+		}
+		if err := tx.Where("team_id = ?", id).Delete(&TeamMember{}).Error; err != nil {
+			return err
+		}
+		if err := tx.Delete(&Team{}, id).Error; err != nil {
+			return err
+		}
+		return nil
+	})
+}
+
+func (r *repository) GetMember(ctx context.Context, teamID uint64, userID int64) (*TeamMember, error) {
+	var member TeamMember
+	err := r.db.WithContext(ctx).
+		Where("team_id = ? AND user_id = ?", teamID, userID).
+		First(&member).Error
+	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return nil, nil
+		}
+		return nil, err
+	}
+	return &member, nil
 }

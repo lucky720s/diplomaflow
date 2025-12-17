@@ -43,7 +43,6 @@ func main() {
 			auth.POST("/refresh", handler.RefreshToken)
 			auth.POST("/logout", handler.Logout)
 		}
-
 		authProtected := v1.Group("/auth")
 		authProtected.Use(middleware.AuthMiddleware(cfg.JWTSecret))
 		{
@@ -61,19 +60,18 @@ func main() {
 			universities.GET("/:id", handler.GetUniversity)
 			universities.GET("/:id/departments", handler.ListDepartments)
 		}
+
 		admin := v1.Group("/admin")
 		admin.Use(middleware.AuthMiddleware(cfg.JWTSecret))
 		admin.Use(middleware.RBACMiddleware("admin"))
 		{
 			admin.POST("/universities", handler.CreateUniversity)
-
 			admin.POST("/departments", handler.CreateDepartment)
-
 			admin.POST("/workflows", handler.CreateWorkflow)
 			admin.POST("/workflows/:id/states", handler.CreateState)
 			admin.POST("/workflows/:id/activate", handler.SetActiveWorkflow)
-
 			admin.POST("/roles", handler.CreateRole)
+			admin.POST("/assign-role", handler.AssignRole)
 		}
 
 		projects := v1.Group("/projects")
@@ -90,12 +88,16 @@ func main() {
 		teams.Use(middleware.AuthMiddleware(cfg.JWTSecret))
 		{
 			teams.POST("", handler.CreateTeam)
+			teams.GET("", handler.ListTeams)
 			teams.GET("/:id", handler.GetTeam)
+			teams.PATCH("/:id", handler.UpdateTeam)
+			teams.DELETE("/:id", handler.DeleteTeam)
 			teams.GET("/my", handler.GetMyTeam)
 			teams.GET("/available-students", handler.GetAvailableStudents)
 			teams.POST("/:id/assign-project", handler.AssignProjectToTeam)
+			teams.POST("/:id/members", handler.AddMember)
+			teams.DELETE("/:id/members", handler.RemoveMember)
 		}
-
 		invites := v1.Group("/invites")
 		invites.Use(middleware.AuthMiddleware(cfg.JWTSecret))
 		{

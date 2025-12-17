@@ -128,3 +128,24 @@ func (h *Handler) RevokeSession(c *gin.Context) {
 
 	c.JSON(http.StatusOK, gin.H{"message": "session revoked"})
 }
+func (h *Handler) AssignRole(c *gin.Context) {
+	var req struct {
+		UserID int64  `json:"user_id" binding:"required"`
+		Role   string `json:"role" binding:"required"`
+	}
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	res, err := h.authClient.AssignRole(c.Request.Context(), &authv1.AssignRoleRequest{
+		UserId: req.UserID,
+		Role:   req.Role,
+	})
+	if err != nil {
+		MapGRPCError(c, err)
+		return
+	}
+
+	c.JSON(http.StatusOK, res)
+}

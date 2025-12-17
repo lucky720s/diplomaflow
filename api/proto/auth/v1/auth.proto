@@ -12,6 +12,7 @@ service AuthService {
   rpc RefreshToken (RefreshTokenRequest) returns (RefreshTokenResponse);
   rpc ListSessions (ListSessionsRequest) returns (ListSessionsResponse);
   rpc RevokeSession (RevokeSessionRequest) returns (RevokeSessionResponse);
+  rpc AssignRole (AssignRoleRequest) returns (AssignRoleResponse);
 }
 
 message RegisterRequest {
@@ -108,4 +109,13 @@ message RevokeSessionRequest {
 
 message RevokeSessionResponse {
   bool success = 1;
+}
+message AssignRoleRequest {
+  int64 user_id = 1;
+  string role = 2;
+}
+
+message AssignRoleResponse {
+  bool success = 1;
+  string message = 2;
 }

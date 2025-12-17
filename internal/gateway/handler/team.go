@@ -6,6 +6,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 	teamv1 "github.com/lucky720s/diplomaflow/pkg/protobuf/team/v1"
+	"google.golang.org/genproto/protobuf/field_mask"
 )
 
 func (h *Handler) CreateTeam(c *gin.Context) {
@@ -145,4 +146,144 @@ func (h *Handler) GetMyTeam(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusOK, res)
+}
+func (h *Handler) ListTeams(c *gin.Context) {
+	departmentID := c.GetInt64("departmentId")
+
+	var projectID int64
+	if pid := c.Query("project_id"); pid != "" {
+		projectID, _ = strconv.ParseInt(pid, 10, 64)
+	}
+
+	page := int32(1)
+	pageSize := int32(20)
+	if p := c.Query("page"); p != "" {
+		if v, err := strconv.ParseInt(p, 10, 32); err == nil {
+			page = int32(v)
+		}
+	}
+	if ps := c.Query("page_size"); ps != "" {
+		if v, err := strconv.ParseInt(ps, 10, 32); err == nil {
+			pageSize = int32(v)
+		}
+	}
+
+	res, err := h.teamClient.ListTeams(c.Request.Context(), &teamv1.ListTeamsRequest{
+		DepartmentId: departmentID,
+		ProjectId:    projectID,
+		Page:         page,
+		PageSize:     pageSize,
+	})
+	if err != nil {
+		MapGRPCError(c, err)
+		return
+	}
+
+	c.JSON(http.StatusOK, res)
+}
+
+func (h *Handler) UpdateTeam(c *gin.Context) {
+	teamID, err := strconv.ParseInt(c.Param("id"), 10, 64)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid team id"})
+		return
+	}
+
+	var reqBody struct {
+		Name string `json:"name"`
+	}
+	if err := c.ShouldBindJSON(&reqBody); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	res, err := h.teamClient.UpdateTeam(c.Request.Context(), &teamv1.UpdateTeamRequest{
+		Team: &teamv1.Team{
+			Id:   teamID,
+			Name: reqBody.Name,
+		},
+		UpdateMask: &field_mask.FieldMask{
+			Paths: []string{"name"},
+		},
+	})
+	if err != nil {
+		MapGRPCError(c, err)
+		return
+	}
+
+	c.JSON(http.StatusOK, res)
+}
+
+func (h *Handler) DeleteTeam(c *gin.Context) {
+	teamID, err := strconv.ParseInt(c.Param("id"), 10, 64)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid team id"})
+		return
+	}
+
+	_, err = h.teamClient.DeleteTeam(c.Request.Context(), &teamv1.DeleteTeamRequest{
+		TeamId: teamID,
+	})
+	if err != nil {
+		MapGRPCError(c, err)
+		return
+	}
+
+	c.JSON(http.StatusNoContent, nil)
+}
+
+func (h *Handler) AddMember(c *gin.Context) {
+	teamID, err := strconv.ParseInt(c.Param("id"), 10, 64)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid team id"})
+		return
+	}
+
+	var reqBody struct {
+		UserID int64  `json:"user_id" binding:"required"`
+		Role   string `json:"role"`
+	}
+	if err := c.ShouldBindJSON(&reqBody); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	res, err := h.teamClient.AddMember(c.Request.Context(), &teamv1.AddMemberRequest{
+		TeamId: teamID,
+		UserId: reqBody.UserID,
+		Role:   reqBody.Role,
+	})
+	if err != nil {
+		MapGRPCError(c, err)
+		return
+	}
+
+	c.JSON(http.StatusOK, res)
+}
+
+func (h *Handler) RemoveMember(c *gin.Context) {
+	teamID, err := strconv.ParseInt(c.Param("id"), 10, 64)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid team id"})
+		return
+	}
+
+	var reqBody struct {
+		UserID int64 `json:"user_id" binding:"required"`
+	}
+	if err := c.ShouldBindJSON(&reqBody); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	_, err = h.teamClient.RemoveMember(c.Request.Context(), &teamv1.RemoveMemberRequest{
+		TeamId: teamID,
+		UserId: reqBody.UserID,
+	})
+	if err != nil {
+		MapGRPCError(c, err)
+		return
+	}
+
+	c.JSON(http.StatusNoContent, nil)
 }

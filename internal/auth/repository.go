@@ -18,6 +18,7 @@ type Repository interface {
 	RevokeRefreshToken(ctx context.Context, id uint64) error
 	RevokeAllUserTokens(ctx context.Context, userID int64) error
 	ListActiveSessions(ctx context.Context, userID int64) ([]*RefreshToken, error)
+	Update(ctx context.Context, user *User) error
 }
 
 type UserFilter struct {
@@ -118,4 +119,7 @@ func (r *repository) ListActiveSessions(ctx context.Context, userID int64) ([]*R
 		Order("created_at desc").
 		Find(&tokens).Error
 	return tokens, err
+}
+func (r *repository) Update(ctx context.Context, user *User) error {
+	return r.db.WithContext(ctx).Save(user).Error
 }
