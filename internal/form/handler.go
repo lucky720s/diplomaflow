@@ -13,13 +13,19 @@ import (
 	"google.golang.org/protobuf/types/known/timestamppb"
 )
 
+type FormUseCase interface {
+	SubmitForm(ctx context.Context, projectID, stepID, userID int64, data map[string]interface{}) (string, error)
+	GetFormSubmission(ctx context.Context, id string) (*FormSubmission, error)
+	ListProjectForms(ctx context.Context, projectID int64) ([]*FormSubmission, error)
+}
+
 type Handler struct {
 	formv1.UnimplementedFormServiceServer
-	service *Service
+	service FormUseCase
 	logger  *logger.Logger
 }
 
-func NewHandler(service *Service, log *logger.Logger) *Handler {
+func NewHandler(service FormUseCase, log *logger.Logger) *Handler {
 	return &Handler{
 		service: service,
 		logger:  log,
