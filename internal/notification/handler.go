@@ -2,17 +2,24 @@ package notification
 
 import (
 	"context"
+
 	notificationv1 "github.com/lucky720s/diplomaflow/pkg/protobuf/notification/v1"
 	"google.golang.org/protobuf/types/known/emptypb"
 	"google.golang.org/protobuf/types/known/timestamppb"
 )
 
-type Handler struct {
-	notificationv1.UnimplementedNotificationServiceServer
-	service *Service
+type NotificationUseCase interface {
+	SendNotification(ctx context.Context, userID int64, title, message, link, nType string) (int64, error)
+	ListNotifications(ctx context.Context, userID int64, onlyUnread bool, page, pageSize int32) ([]*Notification, int64, error)
+	MarkAsRead(ctx context.Context, id, userID int64) error
 }
 
-func NewHandler(service *Service) *Handler {
+type Handler struct {
+	notificationv1.UnimplementedNotificationServiceServer
+	service NotificationUseCase
+}
+
+func NewHandler(service NotificationUseCase) *Handler {
 	return &Handler{service: service}
 }
 
