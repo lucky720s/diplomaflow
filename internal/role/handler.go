@@ -7,14 +7,23 @@ import (
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/types/known/emptypb"
+	"google.golang.org/protobuf/types/known/fieldmaskpb"
 )
+
+type RoleUseCase interface {
+	CreateRole(ctx context.Context, name string, departmentID int64) (*Role, error)
+	DeleteRole(ctx context.Context, id int64) error
+	GetRole(ctx context.Context, id int64) (*Role, error)
+	UpdateRole(ctx context.Context, id int64, name string, departmentID int64, updateMask *fieldmaskpb.FieldMask) (*Role, error)
+	ListRoles(ctx context.Context, departmentID int64) ([]*Role, error)
+}
 
 type Handler struct {
 	rolev1.UnimplementedRoleServiceServer
-	service *Service
+	service RoleUseCase
 }
 
-func NewHandler(service *Service) *Handler {
+func NewHandler(service RoleUseCase) *Handler {
 	return &Handler{service: service}
 }
 
