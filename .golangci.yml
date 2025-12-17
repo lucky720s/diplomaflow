@@ -3,6 +3,7 @@ run:
   modules-download-mode: readonly
 
 linters:
+  disable-all: true
   enable:
     - errcheck
     - gosimple
@@ -10,15 +11,6 @@ linters:
     - ineffassign
     - staticcheck
     - unused
-  disable:
-    - deadcode
-    - structcheck
-    - varcheck
-
-linters-settings:
-  errcheck:
-    check-type-assertions: false
-    check-blank: false
 
 issues:
   exclude-rules:
@@ -27,10 +19,13 @@ issues:
         - errcheck
     - path: wire_gen\.go
       linters:
-        - all
+        - errcheck
+        - unused
     - path: \.pb\.go
       linters:
-        - all
+        - errcheck
+        - unused
     - path: \.pb\.validate\.go
       linters:
-        - all
+        - errcheck
+        - unused
