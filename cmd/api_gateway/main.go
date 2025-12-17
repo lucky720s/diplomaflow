@@ -136,6 +136,7 @@ func main() {
 		teams.POST("/:id/members", gateway.AddMember)
 		teams.DELETE("/:id/members", gateway.RemoveMember)
 	}
+
 	log.Println("API GateWay is listening on :8080")
 	err := router.Run(":8080")
 	if err != nil {
