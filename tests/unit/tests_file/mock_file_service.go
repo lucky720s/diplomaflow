@@ -21,5 +21,6 @@ func (m *MockRepository) GetMetadata(ctx context.Context, id string) (*file.File
 	if args.Get(0) == nil {
 		return nil, args.Error(1)
 	}
-	return args.Get(0).(*file.FileMetadata), args.Error(1)
+	res := args.Get(0).(*file.FileMetadata)
+	return res, args.Error(1)
 }
