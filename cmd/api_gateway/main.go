@@ -17,7 +17,7 @@ func main() {
 	if err := config.Load("config.yaml", &cfg); err != nil {
 		panic(err)
 	}
-
+	//test
 	log := logger.New(cfg.Env)
 	defer log.Sync()
 
