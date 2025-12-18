@@ -15,10 +15,11 @@ linters:
     - goimports
 
 linters-settings:
+  govet:
+    enable:
+      - shadow
   errcheck:
     check-type-assertions: true
-  govet:
-    check-shadowing: true
 
 issues:
   exclude-dirs:
