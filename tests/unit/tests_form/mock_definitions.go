@@ -23,7 +23,10 @@ func (m *MockRepository) GetByID(ctx context.Context, id string) (*form.FormSubm
 	if args.Get(0) == nil {
 		return nil, args.Error(1)
 	}
-	result := args.Get(0).(*form.FormSubmission)
+	result, ok := args.Get(0).(*form.FormSubmission)
+	if !ok {
+		panic("unexpected type for arg 0 in GetByID")
+	}
 	return result, args.Error(1)
 }
 
@@ -32,7 +35,10 @@ func (m *MockRepository) ListByProject(ctx context.Context, projectID int64) ([]
 	if args.Get(0) == nil {
 		return nil, args.Error(1)
 	}
-	result := args.Get(0).([]*form.FormSubmission)
+	result, ok := args.Get(0).([]*form.FormSubmission)
+	if !ok {
+		panic("unexpected type for arg 0 in ListByProject")
+	}
 	return result, args.Error(1)
 }
 
@@ -52,7 +58,10 @@ func (m *MockFormService) GetFormSubmission(ctx context.Context, id string) (*fo
 	if args.Get(0) == nil {
 		return nil, args.Error(1)
 	}
-	result := args.Get(0).(*form.FormSubmission)
+	result, ok := args.Get(0).(*form.FormSubmission)
+	if !ok {
+		panic("unexpected type for arg 0 in GetFormSubmission")
+	}
 	return result, args.Error(1)
 }
 
@@ -61,6 +70,9 @@ func (m *MockFormService) ListProjectForms(ctx context.Context, projectID int64)
 	if args.Get(0) == nil {
 		return nil, args.Error(1)
 	}
-	result := args.Get(0).([]*form.FormSubmission)
+	result, ok := args.Get(0).([]*form.FormSubmission)
+	if !ok {
+		panic("unexpected type for arg 0 in ListProjectForms")
+	}
 	return result, args.Error(1)
 }

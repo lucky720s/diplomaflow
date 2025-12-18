@@ -107,8 +107,8 @@ func (s *Service) PerformAction(ctx context.Context, projectID int64, actionName
 	stepConfig := make(map[string]interface{})
 	if stateInfo.Config != nil {
 		bytes, _ := stateInfo.Config.MarshalJSON()
-		if err := json.Unmarshal(bytes, &stepConfig); err != nil {
-			s.logger.Error("failed to unmarshal step config", zap.Error(err))
+		if unmarshalErr := json.Unmarshal(bytes, &stepConfig); unmarshalErr != nil {
+			s.logger.Error("failed to unmarshal step config", zap.Error(unmarshalErr))
 		}
 	}
 	newData, err := handler.Handle(ctx, currentData, payload, stepConfig)
