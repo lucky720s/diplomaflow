@@ -162,4 +162,4 @@ clean:
 
 dev-setup: deps tools proto wire
 
-ci: deps lint test build
+ci: deps generate lint test build
