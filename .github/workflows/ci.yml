@@ -5,9 +5,12 @@ on:
     branches: [main, dev]
   pull_request:
     branches: [main, dev]
+  workflow_dispatch:
 
 env:
-  GO_VERSION: '1.23'
+  GO_VERSION: '1.25'
+  DATABASE_DSN: "host=localhost user=test password=test dbname=test port=5432 sslmode=disable"
+  REDIS_ADDR: "localhost:6379"
 
 jobs:
   lint:
@@ -22,9 +25,7 @@ jobs:
         with:
           go-version: ${{ env.GO_VERSION }}
           cache: true
-
-      - name: Download dependencies
-        run: go mod download
+          check-latest: true
 
       - name: Run golangci-lint
         uses: golangci/golangci-lint-action@v6
@@ -35,7 +36,6 @@ jobs:
   test:
     name: Test
     runs-on: ubuntu-latest
-
     services:
       postgres:
         image: postgres:16-alpine
@@ -70,15 +70,21 @@ jobs:
         with:
           go-version: ${{ env.GO_VERSION }}
           cache: true
+          check-latest: true
 
       - name: Download dependencies
         run: go mod download
 
+      - name: Initialize Database
+        run: |
+          sudo apt-get update && sudo apt-get install -y postgresql-client
+          # Ждем готовности порта (на всякий случай, хотя service healthcheck уже прошел)
+          sleep 2
+          # Накатываем init.sql
+          PGPASSWORD=test psql -h localhost -U test -d test -f db/init.sql
+
       - name: Run tests
         run: go test -v -race -coverprofile=coverage.out -covermode=atomic ./tests/unit/...
-        env:
-          DATABASE_DSN: "host=localhost user=test password=test dbname=test port=5432 sslmode=disable"
-          REDIS_ADDR: "localhost:6379"
 
       - name: Upload coverage
         uses: codecov/codecov-action@v4
@@ -116,9 +122,7 @@ jobs:
         with:
           go-version: ${{ env.GO_VERSION }}
           cache: true
-
-      - name: Download dependencies
-        run: go mod download
+          check-latest: true
 
       - name: Build ${{ matrix.service }}
         run: |
@@ -132,8 +136,7 @@ jobs:
         with:
           name: ${{ matrix.service }}
           path: bin/${{ matrix.service }}
-          retention-days: 7
-
+          retention-days: 1
 
   ci-success:
     name: ✅ CI Success
@@ -144,15 +147,15 @@ jobs:
       - name: Check all jobs
         run: |
           if [ "${{ needs.lint.result }}" != "success" ]; then
-            echo "Lint failed"
+            echo "❌ Lint failed"
             exit 1
           fi
           if [ "${{ needs.test.result }}" != "success" ]; then
-            echo "Test failed"
+            echo "❌ Test failed"
             exit 1
           fi
           if [ "${{ needs.build.result }}" != "success" ]; then
-            echo "Build failed"
+            echo "❌ Build failed"
             exit 1
           fi
-          echo "All CI checks passed!"
+          echo "✅ All CI checks passed!"
