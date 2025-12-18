@@ -1,10 +1,16 @@
 .DEFAULT_GOAL := help
 
+ifeq ($(OS),Windows_NT)
+    EXE := .exe
+else
+    EXE :=
+endif
+
 GOBIN     := $(shell go env GOPATH)/bin
-PROTOC    := C:/Tools/protoc/bin/protoc.exe
-WIRE      := $(GOBIN)/wire.exe
-GOLINT    := $(GOBIN)/golangci-lint.exe
-VALIDATE  := $(GOBIN)/protoc-gen-validate.exe
+PROTOC    := protoc$(EXE)
+WIRE      := $(GOBIN)/wire$(EXE)
+GOLINT    := $(GOBIN)/golangci-lint$(EXE)
+VALIDATE  := $(GOBIN)/protoc-gen-validate$(EXE)
 
 PROTO_DIR := api/proto
 PROTO_OUT := pkg/protobuf
