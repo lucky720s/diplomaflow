@@ -142,8 +142,8 @@ func (s *Service) PerformAction(ctx context.Context, projectID int64, actionName
 		CreatedAt: time.Now(),
 	}
 	_ = s.repo.AddHistory(ctx, history)
-	if err := s.repo.Update(ctx, project); err != nil {
-		return nil, err
+	if updateErr := s.repo.Update(ctx, project); updateErr != nil {
+		return nil, updateErr
 	}
 	return project, nil
 }
