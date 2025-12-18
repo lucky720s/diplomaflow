@@ -1,6 +1,6 @@
 module github.com/lucky720s/diplomaflow
 
-go 1.25
+go 1.23
 
 require (
 	github.com/IBM/sarama v1.40.1
