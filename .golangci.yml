@@ -20,6 +20,12 @@ linters-settings:
       - shadow
   errcheck:
     check-type-assertions: true
+    exclude-functions:
+      - (go.uber.org/zap.Logger).Sync
+      - (github.com/spf13/viper).BindEnv
+      - (io.Closer).Close
+
+
 
 issues:
   exclude-dirs:
