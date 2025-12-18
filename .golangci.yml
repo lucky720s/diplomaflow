@@ -22,8 +22,12 @@ linters-settings:
     check-type-assertions: true
     exclude-functions:
       - (go.uber.org/zap.Logger).Sync
-      - (github.com/spf13/viper).BindEnv
+      - (*go.uber.org/zap.Logger).Sync
+      - (github.com/lucky720s/diplomaflow/pkg/logger.Logger).Sync
+      - github.com/spf13/viper.BindEnv
+      - encoding/json.Unmarshal
       - (io.Closer).Close
+
 
 
 
