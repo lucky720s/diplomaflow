@@ -14,9 +14,9 @@ func (h *Handler) ListUsers(c *gin.Context) {
 	page := int32(1)
 	pageSize := int32(20)
 
-	if p := c.Query("page"); p != "" {
-		// parse page
-	}
+	//if p := c.Query("page"); p != "" {
+	// parse page
+	//}
 
 	res, err := h.authClient.ListUsers(c.Request.Context(), &authv1.ListUsersRequest{
 		UniversityId: universityID,

@@ -14,7 +14,10 @@ func (h *TeamFormedHandler) Handle(ctx context.Context, currentData map[string]i
 		return nil, fmt.Errorf("missing 'team_id'")
 	}
 	if tc, ok := config["team_config"].(map[string]interface{}); ok {
-		minSize := int(tc["min_size"].(float64))
+		var minSize int
+		if val, ok := tc["min_size"].(float64); ok {
+			minSize = int(val)
+		}
 		memberCount := 1
 		if memberCount < minSize {
 			return nil, fmt.Errorf("team must have at least %d members", minSize)
@@ -67,7 +70,10 @@ func (h *UploadTaskHandler) Handle(ctx context.Context, currentData map[string]i
 	}
 
 	if fr, ok := config["file_requirements"].(map[string]interface{}); ok {
-		maxSize := int64(fr["max_size_bytes"].(float64))
+		var maxSize int64
+		if val, ok := fr["max_size_bytes"].(float64); ok {
+			maxSize = int64(val)
+		}
 		_ = maxSize
 	}
 

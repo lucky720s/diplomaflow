@@ -167,6 +167,7 @@ func (s *Service) RespondToInvite(ctx context.Context, inviteID int64, userID in
 	}
 
 	if err := s.repo.DeletePendingInvitesForUser(ctx, userID); err != nil {
+		s.logger.Warn("failed to delete pending invites", zap.Error(err))
 	}
 
 	return nil

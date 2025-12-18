@@ -63,9 +63,9 @@ func main() {
 	ctx, cancel := context.WithCancel(context.Background())
 
 	handler := func(ctx context.Context, event broker.Event) error {
-		payloadBytes, err := json.Marshal(event.Payload)
-		if err != nil {
-			log.Error("Failed to marshal event payload", zap.Error(err))
+		payloadBytes, marshalErr := json.Marshal(event.Payload)
+		if marshalErr != nil {
+			log.Error("Failed to marshal event payload", zap.Error(marshalErr))
 			return nil
 		}
 
