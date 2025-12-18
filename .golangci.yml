@@ -1,9 +1,12 @@
 run:
-  timeout: 5m
-  modules-download-mode: readonly
+  timeout: 10m
+  go: '1.25'
+  tests: true
+  skip-dirs:
+    - pkg/protobuf
+    - third_party
 
 linters:
-  disable-all: true
   enable:
     - errcheck
     - gosimple
@@ -19,13 +22,4 @@ issues:
         - errcheck
     - path: wire_gen\.go
       linters:
-        - errcheck
-        - unused
-    - path: \.pb\.go
-      linters:
-        - errcheck
-        - unused
-    - path: \.pb\.validate\.go
-      linters:
-        - errcheck
         - unused
