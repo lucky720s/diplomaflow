@@ -73,3 +73,7 @@ func (m *MockService) ListUsers(ctx context.Context, universityID int64, role st
 	}
 	return args.Get(0).([]*auth.User), args.Get(1).(int64), args.Error(2)
 }
+func (m *MockService) AssignRole(ctx context.Context, userID int64, role string) error {
+	args := m.Called(ctx, userID, role)
+	return args.Error(0)
+}
