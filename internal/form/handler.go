@@ -36,15 +36,12 @@ func (h *Handler) SubmitForm(ctx context.Context, req *formv1.SubmitFormRequest)
 	if req.Data == nil {
 		return nil, status.Error(codes.InvalidArgument, "data is required")
 	}
-
 	dataMap := req.Data.AsMap()
-
 	id, err := h.service.SubmitForm(ctx, req.ProjectId, req.StepId, req.UserId, dataMap)
 	if err != nil {
 		h.logger.Error("SubmitForm failed", zap.Error(err))
 		return nil, status.Errorf(codes.Internal, "failed to submit form: %v", err)
 	}
-
 	return &formv1.SubmitFormResponse{
 		SubmissionId: id,
 		Success:      true,
@@ -56,17 +53,14 @@ func (h *Handler) GetFormSubmission(ctx context.Context, req *formv1.GetFormSubm
 	if err != nil {
 		return nil, status.Errorf(codes.NotFound, "submission not found: %v", err)
 	}
-
 	var dataMap map[string]interface{}
-	if err := json.Unmarshal(sub.Data, &dataMap); err != nil {
-		return nil, status.Errorf(codes.Internal, "failed to unmarshal data: %v", err)
+	if unmarshalErr := json.Unmarshal(sub.Data, &dataMap); unmarshalErr != nil {
+		return nil, status.Errorf(codes.Internal, "failed to unmarshal data: %v", unmarshalErr)
 	}
-
 	pbStruct, err := structpb.NewStruct(dataMap)
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, "failed to create proto struct: %v", err)
 	}
-
 	return &formv1.GetFormSubmissionResponse{
 		SubmissionId: sub.ID,
 		ProjectId:    sub.ProjectID,
@@ -82,7 +76,6 @@ func (h *Handler) ListProjectForms(ctx context.Context, req *formv1.ListProjectF
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, "failed to list forms: %v", err)
 	}
-
 	var previews []*formv1.FormPreview
 	for _, sub := range subs {
 		previews = append(previews, &formv1.FormPreview{
@@ -91,6 +84,5 @@ func (h *Handler) ListProjectForms(ctx context.Context, req *formv1.ListProjectF
 			CreatedAt:    timestamppb.New(sub.CreatedAt),
 		})
 	}
-
 	return &formv1.ListProjectFormsResponse{Forms: previews}, nil
 }

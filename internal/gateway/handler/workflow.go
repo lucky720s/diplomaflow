@@ -15,7 +15,6 @@ func (h *Handler) GetWorkflow(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid workflow id"})
 		return
 	}
-
 	res, err := h.workflowClient.GetWorkflow(c.Request.Context(), &workflowv1.GetWorkflowRequest{
 		Criteria: &workflowv1.GetWorkflowRequest_WorkflowId{WorkflowId: id},
 	})
@@ -23,13 +22,11 @@ func (h *Handler) GetWorkflow(c *gin.Context) {
 		MapGRPCError(c, err)
 		return
 	}
-
 	c.JSON(http.StatusOK, res)
 }
 
 func (h *Handler) ListWorkflows(c *gin.Context) {
 	departmentID := c.GetInt64("departmentId")
-
 	res, err := h.workflowClient.ListWorkflows(c.Request.Context(), &workflowv1.ListWorkflowsRequest{
 		DepartmentId: departmentID,
 	})
@@ -37,7 +34,6 @@ func (h *Handler) ListWorkflows(c *gin.Context) {
 		MapGRPCError(c, err)
 		return
 	}
-
 	c.JSON(http.StatusOK, res)
 }
 
@@ -48,20 +44,17 @@ func (h *Handler) CreateState(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid workflow id"})
 		return
 	}
-
 	var req workflowv1.CreateStateRequest
-	if err := c.ShouldBindJSON(&req); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+	if bindErr := c.ShouldBindJSON(&req); bindErr != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": bindErr.Error()})
 		return
 	}
 	req.WorkflowId = workflowID
-
 	res, err := h.workflowClient.CreateState(c.Request.Context(), &req)
 	if err != nil {
 		MapGRPCError(c, err)
 		return
 	}
-
 	c.JSON(http.StatusCreated, res)
 }
 

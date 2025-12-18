@@ -31,12 +31,10 @@ func (h *Handler) CreateProject(ctx context.Context, req *projectv1.CreateProjec
 	if req.DepartmentId == 0 {
 		return nil, status.Error(codes.InvalidArgument, "department_id is required")
 	}
-
 	resp, err := h.service.CreateProject(ctx, req)
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, "failed to create project: %v", err)
 	}
-
 	return resp, nil
 }
 
@@ -44,12 +42,10 @@ func (h *Handler) GetProject(ctx context.Context, req *projectv1.GetProjectReque
 	if req.ProjectId == 0 {
 		return nil, status.Error(codes.InvalidArgument, "project_id is required")
 	}
-
 	project, err := h.service.GetProject(ctx, uint64(req.ProjectId))
 	if err != nil {
 		return nil, status.Errorf(codes.NotFound, "project not found: %v", err)
 	}
-
 	var historyPb []*projectv1.StateHistory
 	for _, h := range project.History {
 		historyPb = append(historyPb, &projectv1.StateHistory{
@@ -60,7 +56,6 @@ func (h *Handler) GetProject(ctx context.Context, req *projectv1.GetProjectReque
 			Timestamp: h.CreatedAt.String(),
 		})
 	}
-
 	return &projectv1.GetProjectResponse{
 		ProjectId:    int64(project.ID),
 		Title:        project.Title,
@@ -78,12 +73,10 @@ func (h *Handler) GetStudentProjects(ctx context.Context, req *projectv1.GetStud
 	if req.StudentId == 0 {
 		return nil, status.Error(codes.InvalidArgument, "student_id is required")
 	}
-
 	projects, err := h.service.GetStudentProjects(ctx, req.StudentId)
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, "failed to list projects: %v", err)
 	}
-
 	var responseProjects []*projectv1.ProjectPreview
 	for _, p := range projects {
 		responseProjects = append(responseProjects, &projectv1.ProjectPreview{
@@ -93,21 +86,21 @@ func (h *Handler) GetStudentProjects(ctx context.Context, req *projectv1.GetStud
 			CurrentState: p.CurrentState,
 		})
 	}
-
 	return &projectv1.GetStudentProjectsResponse{
 		Projects: responseProjects,
 	}, nil
 }
+
 func (h *Handler) PerformAction(ctx context.Context, req *projectv1.PerformActionRequest) (*projectv1.PerformActionResponse, error) {
 	payloadBytes, _ := req.Payload.MarshalJSON()
 	var payloadMap map[string]interface{}
-	json.Unmarshal(payloadBytes, &payloadMap)
-
+	if err := json.Unmarshal(payloadBytes, &payloadMap); err != nil {
+		return nil, status.Errorf(codes.Internal, "failed to unmarshal payload: %v", err)
+	}
 	project, err := h.service.PerformAction(ctx, req.ProjectId, req.ActionName, payloadMap)
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, "failed to perform action: %v", err)
 	}
-
 	return &projectv1.PerformActionResponse{
 		ProjectId: int64(project.ID),
 		NewState:  project.CurrentState,

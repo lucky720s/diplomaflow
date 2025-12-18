@@ -50,7 +50,6 @@ func (s *Service) CreateProject(ctx context.Context, req *projectv1.CreateProjec
 		return nil, errors.New("workflow has no steps")
 	}
 	initialStep := wf.Steps[0]
-
 	project := &Project{
 		Title:         req.Title,
 		Description:   req.Description,
@@ -65,18 +64,15 @@ func (s *Service) CreateProject(ctx context.Context, req *projectv1.CreateProjec
 		CreatedAt:     time.Now(),
 		UpdatedAt:     time.Now(),
 	}
-
 	eventPayload := map[string]interface{}{
 		"student_id":    req.StudentId,
 		"university_id": req.UniversityId,
 		"title":         req.Title,
 	}
-
 	if err := s.repo.CreateWithOutbox(ctx, project, "ProjectCreated", "project-events", eventPayload); err != nil {
 		s.logger.Error("Failed to create project", zap.Error(err))
 		return nil, err
 	}
-
 	return &projectv1.CreateProjectResponse{ProjectId: int64(project.ID), Status: "active"}, nil
 }
 
@@ -93,44 +89,38 @@ func (s *Service) PerformAction(ctx context.Context, projectID int64, actionName
 	if err != nil {
 		return nil, fmt.Errorf("project not found: %w", err)
 	}
-
 	currentStateID, _ := strconv.ParseInt(project.CurrentStepID, 10, 64)
 	if s.actionExecutor != nil {
-		if err := s.actionExecutor.ExecuteActions(ctx, currentStateID, "ON_EXIT", project); err != nil {
-			s.logger.Warn("Failed to execute ON_EXIT actions", zap.Error(err))
+		if execErr := s.actionExecutor.ExecuteActions(ctx, currentStateID, "ON_EXIT", project); execErr != nil {
+			s.logger.Warn("Failed to execute ON_EXIT actions", zap.Error(execErr))
 		}
 	}
-
 	stateInfo, err := s.workflowClient.GetState(ctx, &workflowv1.GetStateRequest{StateId: currentStateID})
 	if err != nil {
 		return nil, fmt.Errorf("failed to get state info: %w", err)
 	}
-
 	handler, err := s.registry.Get(actionName)
 	if err != nil {
 		return nil, err
 	}
-
 	currentData, _ := JSONToMap(project.Data)
 	stepConfig := make(map[string]interface{})
 	if stateInfo.Config != nil {
 		bytes, _ := stateInfo.Config.MarshalJSON()
-		json.Unmarshal(bytes, &stepConfig)
+		if err := json.Unmarshal(bytes, &stepConfig); err != nil {
+			s.logger.Error("failed to unmarshal step config", zap.Error(err))
+		}
 	}
-
 	newData, err := handler.Handle(ctx, currentData, payload, stepConfig)
 	if err != nil {
 		return nil, fmt.Errorf("action failed: %w", err)
 	}
-
 	jsonBytes, _ := json.Marshal(newData)
 	project.Data = datatypes.JSON(jsonBytes)
-
 	nextState, err := s.workflowClient.GetNextState(ctx, &workflowv1.GetNextStateRequest{
 		CurrentStateId: currentStateID,
 		EventName:      actionName,
 	})
-
 	if err == nil && nextState != nil {
 		project.CurrentStepID = strconv.FormatInt(nextState.Id, 10)
 		project.CurrentState = nextState.Name
@@ -139,10 +129,9 @@ func (s *Service) PerformAction(ctx context.Context, projectID int64, actionName
 			project.DeadlineAt = &deadline
 			project.DeadlineProcessed = false
 		}
-
 		if s.actionExecutor != nil {
-			if err := s.actionExecutor.ExecuteActions(ctx, nextState.Id, "ON_ENTER", project); err != nil {
-				s.logger.Warn("Failed to execute ON_ENTER actions", zap.Error(err))
+			if execErr := s.actionExecutor.ExecuteActions(ctx, nextState.Id, "ON_ENTER", project); execErr != nil {
+				s.logger.Warn("Failed to execute ON_ENTER actions", zap.Error(execErr))
 			}
 		}
 	}
@@ -153,10 +142,8 @@ func (s *Service) PerformAction(ctx context.Context, projectID int64, actionName
 		CreatedAt: time.Now(),
 	}
 	_ = s.repo.AddHistory(ctx, history)
-
 	if err := s.repo.Update(ctx, project); err != nil {
 		return nil, err
 	}
-
 	return project, nil
 }
