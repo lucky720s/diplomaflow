@@ -163,6 +163,7 @@ func (m *MockRepository) GetActiveWorkflowByDepartment(ctx context.Context, depI
 // MockWorkflowService (для Handler тестов)
 // --------------------------------------------------------
 
+// / comment
 type MockWorkflowService struct {
 	mock.Mock
 }
