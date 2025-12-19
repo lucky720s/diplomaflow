@@ -11,14 +11,41 @@ import (
 	"google.golang.org/protobuf/types/known/structpb"
 )
 
-type Handler struct {
-	workflowv1.UnimplementedWorkflowServiceServer
-	service *Service
+type WorkflowUseCase interface {
+	CreateWorkflow(ctx context.Context, name string, departmentID int64) (*Workflow, error)
+	GetWorkflow(ctx context.Context, id int64) (*Workflow, error)
+	GetWorkflowByName(ctx context.Context, name string) (*Workflow, error)
+	ListWorkflows(ctx context.Context, departmentID int64) ([]*Workflow, error)
+	UpdateWorkflow(ctx context.Context, id int64, name string) (*Workflow, error)
+	DeleteWorkflow(ctx context.Context, id int64) error
+
+	CreateState(ctx context.Context, req *workflowv1.CreateStateRequest) (*State, error)
+	GetState(ctx context.Context, id int64) (*State, error)
+	ListStates(ctx context.Context, workflowID int64) ([]*State, error)
+	UpdateState(ctx context.Context, req *workflowv1.UpdateStateRequest) (*State, error)
+	DeleteState(ctx context.Context, id int64) error
+
+	CreateTransition(ctx context.Context, req *workflowv1.CreateTransitionRequest) (*Transition, error)
+	DeleteTransition(ctx context.Context, id int64) error
+
+	CreateStateAction(ctx context.Context, req *workflowv1.CreateStateActionRequest) (*StateAction, error)
+	ListStateActions(ctx context.Context, stateID int64) ([]*StateAction, error)
+	DeleteStateAction(ctx context.Context, id int64) error
+
+	SetActiveWorkflow(ctx context.Context, workflowID int64) (*Workflow, error)
+	GetActiveWorkflowByDepartment(ctx context.Context, departmentID int64) (*Workflow, error)
+	GetNextState(ctx context.Context, currentStateID int64, eventName string) (*State, error)
 }
 
-func NewHandler(service *Service) *Handler {
+type Handler struct {
+	workflowv1.UnimplementedWorkflowServiceServer
+	service WorkflowUseCase
+}
+
+func NewHandler(service WorkflowUseCase) *Handler {
 	return &Handler{service: service}
 }
+
 func toProtoWorkflow(wf *Workflow) *workflowv1.Workflow {
 	if wf == nil {
 		return nil

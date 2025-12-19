@@ -10,13 +10,15 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
+/*wefnwnfnfw*/
+
 func TestHandler_ListUsers_Success(t *testing.T) {
 	mockService := new(MockService)
 	handler := auth.NewHandler(mockService)
 
 	users := []*auth.User{
 		{ID: 1, Email: "a@mail.com", FirstName: "A", LastName: "A", Role: "student", UniversityID: 1},
-		{ID: 2, Email: "b@mail.com", FirstName: "B", LastName: "B", Role: "teacher", UniversityID: 1},
+		{ID: 2, Email: "bbbbb44444@mail.com", FirstName: "B", LastName: "B", Role: "teacher", UniversityID: 1},
 	}
 
 	// ИСПРАВЛЕНИЕ: Добавлен int64(0) в конце (это excludeUserID)
