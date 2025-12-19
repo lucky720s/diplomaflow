@@ -10,6 +10,8 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
+/*wefnwnfnfw*/
+
 func TestHandler_ListUsers_Success(t *testing.T) {
 	mockService := new(MockService)
 	handler := auth.NewHandler(mockService)
