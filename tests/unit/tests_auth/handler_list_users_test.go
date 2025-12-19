@@ -18,7 +18,7 @@ func TestHandler_ListUsers_Success(t *testing.T) {
 
 	users := []*auth.User{
 		{ID: 1, Email: "a@mail.com", FirstName: "A", LastName: "A", Role: "student", UniversityID: 1},
-		{ID: 2, Email: "b@mail.com", FirstName: "B", LastName: "B", Role: "teacher", UniversityID: 1},
+		{ID: 2, Email: "bbbbb@mail.com", FirstName: "B", LastName: "B", Role: "teacher", UniversityID: 1},
 	}
 
 	// ИСПРАВЛЕНИЕ: Добавлен int64(0) в конце (это excludeUserID)
