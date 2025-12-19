@@ -11,7 +11,6 @@ import (
 // --------------------------------------------------------
 // MockRepository (для Service тестов)
 // --------------------------------------------------------
-/// commemtnt
 
 type MockRepository struct {
 	mock.Mock
@@ -30,8 +29,8 @@ func (m *MockRepository) GetWorkflow(ctx context.Context, id int64) (*workflow.W
 	if args.Get(0) == nil {
 		return nil, args.Error(1)
 	}
-	// ИСПРАВЛЕНИЕ: Разбиваем на две строки
-	res := args.Get(0).(*workflow.Workflow)
+	// ИСПРАВЛЕНИЕ: Используем безопасное приведение типа (res, _)
+	res, _ := args.Get(0).(*workflow.Workflow)
 	return res, args.Error(1)
 }
 
@@ -40,8 +39,7 @@ func (m *MockRepository) GetWorkflowByName(ctx context.Context, name string) (*w
 	if args.Get(0) == nil {
 		return nil, args.Error(1)
 	}
-	// ИСПРАВЛЕНИЕ
-	res := args.Get(0).(*workflow.Workflow)
+	res, _ := args.Get(0).(*workflow.Workflow)
 	return res, args.Error(1)
 }
 
@@ -50,8 +48,7 @@ func (m *MockRepository) ListWorkflows(ctx context.Context, depID int64) ([]*wor
 	if args.Get(0) == nil {
 		return nil, args.Error(1)
 	}
-	// ИСПРАВЛЕНИЕ
-	res := args.Get(0).([]*workflow.Workflow)
+	res, _ := args.Get(0).([]*workflow.Workflow)
 	return res, args.Error(1)
 }
 
@@ -75,8 +72,7 @@ func (m *MockRepository) GetState(ctx context.Context, id int64) (*workflow.Stat
 	if args.Get(0) == nil {
 		return nil, args.Error(1)
 	}
-	// ИСПРАВЛЕНИЕ
-	res := args.Get(0).(*workflow.State)
+	res, _ := args.Get(0).(*workflow.State)
 	return res, args.Error(1)
 }
 
@@ -85,8 +81,7 @@ func (m *MockRepository) ListStates(ctx context.Context, wfID int64) ([]*workflo
 	if args.Get(0) == nil {
 		return nil, args.Error(1)
 	}
-	// ИСПРАВЛЕНИЕ
-	res := args.Get(0).([]*workflow.State)
+	res, _ := args.Get(0).([]*workflow.State)
 	return res, args.Error(1)
 }
 
@@ -113,8 +108,7 @@ func (m *MockRepository) GetNextState(ctx context.Context, curID int64, event st
 	if args.Get(0) == nil {
 		return nil, args.Error(1)
 	}
-	// ИСПРАВЛЕНИЕ
-	res := args.Get(0).(*workflow.State)
+	res, _ := args.Get(0).(*workflow.State)
 	return res, args.Error(1)
 }
 
@@ -131,8 +125,7 @@ func (m *MockRepository) ListStateActions(ctx context.Context, sID int64) ([]*wo
 	if args.Get(0) == nil {
 		return nil, args.Error(1)
 	}
-	// ИСПРАВЛЕНИЕ
-	res := args.Get(0).([]*workflow.StateAction)
+	res, _ := args.Get(0).([]*workflow.StateAction)
 	return res, args.Error(1)
 }
 
@@ -145,8 +138,7 @@ func (m *MockRepository) SetActiveWorkflow(ctx context.Context, id int64) (*work
 	if args.Get(0) == nil {
 		return nil, args.Error(1)
 	}
-	// ИСПРАВЛЕНИЕ
-	res := args.Get(0).(*workflow.Workflow)
+	res, _ := args.Get(0).(*workflow.Workflow)
 	return res, args.Error(1)
 }
 
@@ -155,8 +147,7 @@ func (m *MockRepository) GetActiveWorkflowByDepartment(ctx context.Context, depI
 	if args.Get(0) == nil {
 		return nil, args.Error(1)
 	}
-	// ИСПРАВЛЕНИЕ
-	res := args.Get(0).(*workflow.Workflow)
+	res, _ := args.Get(0).(*workflow.Workflow)
 	return res, args.Error(1)
 }
 
@@ -164,9 +155,6 @@ func (m *MockRepository) GetActiveWorkflowByDepartment(ctx context.Context, depI
 // MockWorkflowService (для Handler тестов)
 // --------------------------------------------------------
 
-// / comment
-
-// / ewnfwenfwf
 type MockWorkflowService struct {
 	mock.Mock
 }
@@ -176,7 +164,7 @@ func (m *MockWorkflowService) CreateWorkflow(ctx context.Context, name string, d
 	if args.Get(0) == nil {
 		return nil, args.Error(1)
 	}
-	res := args.Get(0).(*workflow.Workflow)
+	res, _ := args.Get(0).(*workflow.Workflow)
 	return res, args.Error(1)
 }
 func (m *MockWorkflowService) GetWorkflow(ctx context.Context, id int64) (*workflow.Workflow, error) {
@@ -184,7 +172,7 @@ func (m *MockWorkflowService) GetWorkflow(ctx context.Context, id int64) (*workf
 	if args.Get(0) == nil {
 		return nil, args.Error(1)
 	}
-	res := args.Get(0).(*workflow.Workflow)
+	res, _ := args.Get(0).(*workflow.Workflow)
 	return res, args.Error(1)
 }
 func (m *MockWorkflowService) GetWorkflowByName(ctx context.Context, name string) (*workflow.Workflow, error) {
@@ -192,7 +180,7 @@ func (m *MockWorkflowService) GetWorkflowByName(ctx context.Context, name string
 	if args.Get(0) == nil {
 		return nil, args.Error(1)
 	}
-	res := args.Get(0).(*workflow.Workflow)
+	res, _ := args.Get(0).(*workflow.Workflow)
 	return res, args.Error(1)
 }
 func (m *MockWorkflowService) ListWorkflows(ctx context.Context, departmentID int64) ([]*workflow.Workflow, error) {
@@ -200,7 +188,7 @@ func (m *MockWorkflowService) ListWorkflows(ctx context.Context, departmentID in
 	if args.Get(0) == nil {
 		return nil, args.Error(1)
 	}
-	res := args.Get(0).([]*workflow.Workflow)
+	res, _ := args.Get(0).([]*workflow.Workflow)
 	return res, args.Error(1)
 }
 func (m *MockWorkflowService) UpdateWorkflow(ctx context.Context, id int64, name string) (*workflow.Workflow, error) {
@@ -208,7 +196,7 @@ func (m *MockWorkflowService) UpdateWorkflow(ctx context.Context, id int64, name
 	if args.Get(0) == nil {
 		return nil, args.Error(1)
 	}
-	res := args.Get(0).(*workflow.Workflow)
+	res, _ := args.Get(0).(*workflow.Workflow)
 	return res, args.Error(1)
 }
 func (m *MockWorkflowService) DeleteWorkflow(ctx context.Context, id int64) error {
@@ -219,7 +207,7 @@ func (m *MockWorkflowService) CreateState(ctx context.Context, req *workflowv1.C
 	if args.Get(0) == nil {
 		return nil, args.Error(1)
 	}
-	res := args.Get(0).(*workflow.State)
+	res, _ := args.Get(0).(*workflow.State)
 	return res, args.Error(1)
 }
 func (m *MockWorkflowService) GetState(ctx context.Context, id int64) (*workflow.State, error) {
@@ -227,7 +215,7 @@ func (m *MockWorkflowService) GetState(ctx context.Context, id int64) (*workflow
 	if args.Get(0) == nil {
 		return nil, args.Error(1)
 	}
-	res := args.Get(0).(*workflow.State)
+	res, _ := args.Get(0).(*workflow.State)
 	return res, args.Error(1)
 }
 func (m *MockWorkflowService) ListStates(ctx context.Context, workflowID int64) ([]*workflow.State, error) {
@@ -235,7 +223,7 @@ func (m *MockWorkflowService) ListStates(ctx context.Context, workflowID int64) 
 	if args.Get(0) == nil {
 		return nil, args.Error(1)
 	}
-	res := args.Get(0).([]*workflow.State)
+	res, _ := args.Get(0).([]*workflow.State)
 	return res, args.Error(1)
 }
 func (m *MockWorkflowService) UpdateState(ctx context.Context, req *workflowv1.UpdateStateRequest) (*workflow.State, error) {
@@ -243,7 +231,7 @@ func (m *MockWorkflowService) UpdateState(ctx context.Context, req *workflowv1.U
 	if args.Get(0) == nil {
 		return nil, args.Error(1)
 	}
-	res := args.Get(0).(*workflow.State)
+	res, _ := args.Get(0).(*workflow.State)
 	return res, args.Error(1)
 }
 func (m *MockWorkflowService) DeleteState(ctx context.Context, id int64) error {
@@ -254,7 +242,7 @@ func (m *MockWorkflowService) CreateTransition(ctx context.Context, req *workflo
 	if args.Get(0) == nil {
 		return nil, args.Error(1)
 	}
-	res := args.Get(0).(*workflow.Transition)
+	res, _ := args.Get(0).(*workflow.Transition)
 	return res, args.Error(1)
 }
 func (m *MockWorkflowService) DeleteTransition(ctx context.Context, id int64) error {
@@ -265,7 +253,7 @@ func (m *MockWorkflowService) CreateStateAction(ctx context.Context, req *workfl
 	if args.Get(0) == nil {
 		return nil, args.Error(1)
 	}
-	res := args.Get(0).(*workflow.StateAction)
+	res, _ := args.Get(0).(*workflow.StateAction)
 	return res, args.Error(1)
 }
 func (m *MockWorkflowService) ListStateActions(ctx context.Context, stateID int64) ([]*workflow.StateAction, error) {
@@ -273,7 +261,7 @@ func (m *MockWorkflowService) ListStateActions(ctx context.Context, stateID int6
 	if args.Get(0) == nil {
 		return nil, args.Error(1)
 	}
-	res := args.Get(0).([]*workflow.StateAction)
+	res, _ := args.Get(0).([]*workflow.StateAction)
 	return res, args.Error(1)
 }
 func (m *MockWorkflowService) DeleteStateAction(ctx context.Context, id int64) error {
@@ -284,7 +272,7 @@ func (m *MockWorkflowService) SetActiveWorkflow(ctx context.Context, workflowID 
 	if args.Get(0) == nil {
 		return nil, args.Error(1)
 	}
-	res := args.Get(0).(*workflow.Workflow)
+	res, _ := args.Get(0).(*workflow.Workflow)
 	return res, args.Error(1)
 }
 func (m *MockWorkflowService) GetActiveWorkflowByDepartment(ctx context.Context, departmentID int64) (*workflow.Workflow, error) {
@@ -292,7 +280,7 @@ func (m *MockWorkflowService) GetActiveWorkflowByDepartment(ctx context.Context,
 	if args.Get(0) == nil {
 		return nil, args.Error(1)
 	}
-	res := args.Get(0).(*workflow.Workflow)
+	res, _ := args.Get(0).(*workflow.Workflow)
 	return res, args.Error(1)
 }
 func (m *MockWorkflowService) GetNextState(ctx context.Context, currentStateID int64, eventName string) (*workflow.State, error) {
@@ -300,7 +288,7 @@ func (m *MockWorkflowService) GetNextState(ctx context.Context, currentStateID i
 	if args.Get(0) == nil {
 		return nil, args.Error(1)
 	}
-	res := args.Get(0).(*workflow.State)
+	res, _ := args.Get(0).(*workflow.State)
 	return res, args.Error(1)
 }
 func (m *MockWorkflowService) GetStepConfiguration(ctx context.Context, req *workflowv1.GetStepConfigurationRequest) (*workflowv1.StepConfiguration, error) {
@@ -308,6 +296,6 @@ func (m *MockWorkflowService) GetStepConfiguration(ctx context.Context, req *wor
 	if args.Get(0) == nil {
 		return nil, args.Error(1)
 	}
-	res := args.Get(0).(*workflowv1.StepConfiguration)
+	res, _ := args.Get(0).(*workflowv1.StepConfiguration)
 	return res, args.Error(1)
 }
