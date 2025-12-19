@@ -8,6 +8,10 @@ import (
 	"github.com/stretchr/testify/mock"
 )
 
+// --------------------------------------------------------
+// MockRepository (для Service тестов)
+// --------------------------------------------------------
+
 type MockRepository struct {
 	mock.Mock
 }
@@ -19,27 +23,37 @@ func (m *MockRepository) CreateWorkflow(ctx context.Context, wf *workflow.Workfl
 	}
 	return args.Error(0)
 }
+
 func (m *MockRepository) GetWorkflow(ctx context.Context, id int64) (*workflow.Workflow, error) {
 	args := m.Called(ctx, id)
 	if args.Get(0) == nil {
 		return nil, args.Error(1)
 	}
-	return args.Get(0).(*workflow.Workflow), args.Error(1)
+	// ИСПРАВЛЕНИЕ: Разбиваем на две строки
+	res := args.Get(0).(*workflow.Workflow)
+	return res, args.Error(1)
 }
+
 func (m *MockRepository) GetWorkflowByName(ctx context.Context, name string) (*workflow.Workflow, error) {
 	args := m.Called(ctx, name)
 	if args.Get(0) == nil {
 		return nil, args.Error(1)
 	}
-	return args.Get(0).(*workflow.Workflow), args.Error(1)
+	// ИСПРАВЛЕНИЕ
+	res := args.Get(0).(*workflow.Workflow)
+	return res, args.Error(1)
 }
+
 func (m *MockRepository) ListWorkflows(ctx context.Context, depID int64) ([]*workflow.Workflow, error) {
 	args := m.Called(ctx, depID)
 	if args.Get(0) == nil {
 		return nil, args.Error(1)
 	}
-	return args.Get(0).([]*workflow.Workflow), args.Error(1)
+	// ИСПРАВЛЕНИЕ
+	res := args.Get(0).([]*workflow.Workflow)
+	return res, args.Error(1)
 }
+
 func (m *MockRepository) UpdateWorkflow(ctx context.Context, wf *workflow.Workflow) error {
 	return m.Called(ctx, wf).Error(0)
 }
@@ -54,20 +68,27 @@ func (m *MockRepository) CreateState(ctx context.Context, st *workflow.State) er
 	}
 	return args.Error(0)
 }
+
 func (m *MockRepository) GetState(ctx context.Context, id int64) (*workflow.State, error) {
 	args := m.Called(ctx, id)
 	if args.Get(0) == nil {
 		return nil, args.Error(1)
 	}
-	return args.Get(0).(*workflow.State), args.Error(1)
+	// ИСПРАВЛЕНИЕ
+	res := args.Get(0).(*workflow.State)
+	return res, args.Error(1)
 }
+
 func (m *MockRepository) ListStates(ctx context.Context, wfID int64) ([]*workflow.State, error) {
 	args := m.Called(ctx, wfID)
 	if args.Get(0) == nil {
 		return nil, args.Error(1)
 	}
-	return args.Get(0).([]*workflow.State), args.Error(1)
+	// ИСПРАВЛЕНИЕ
+	res := args.Get(0).([]*workflow.State)
+	return res, args.Error(1)
 }
+
 func (m *MockRepository) UpdateState(ctx context.Context, st *workflow.State) error {
 	return m.Called(ctx, st).Error(0)
 }
@@ -85,12 +106,15 @@ func (m *MockRepository) CreateTransition(ctx context.Context, tr *workflow.Tran
 func (m *MockRepository) DeleteTransition(ctx context.Context, id int64) error {
 	return m.Called(ctx, id).Error(0)
 }
+
 func (m *MockRepository) GetNextState(ctx context.Context, curID int64, event string) (*workflow.State, error) {
 	args := m.Called(ctx, curID, event)
 	if args.Get(0) == nil {
 		return nil, args.Error(1)
 	}
-	return args.Get(0).(*workflow.State), args.Error(1)
+	// ИСПРАВЛЕНИЕ
+	res := args.Get(0).(*workflow.State)
+	return res, args.Error(1)
 }
 
 func (m *MockRepository) CreateStateAction(ctx context.Context, sa *workflow.StateAction) error {
@@ -100,13 +124,17 @@ func (m *MockRepository) CreateStateAction(ctx context.Context, sa *workflow.Sta
 	}
 	return args.Error(0)
 }
+
 func (m *MockRepository) ListStateActions(ctx context.Context, sID int64) ([]*workflow.StateAction, error) {
 	args := m.Called(ctx, sID)
 	if args.Get(0) == nil {
 		return nil, args.Error(1)
 	}
-	return args.Get(0).([]*workflow.StateAction), args.Error(1)
+	// ИСПРАВЛЕНИЕ
+	res := args.Get(0).([]*workflow.StateAction)
+	return res, args.Error(1)
 }
+
 func (m *MockRepository) DeleteStateAction(ctx context.Context, id int64) error {
 	return m.Called(ctx, id).Error(0)
 }
@@ -116,15 +144,24 @@ func (m *MockRepository) SetActiveWorkflow(ctx context.Context, id int64) (*work
 	if args.Get(0) == nil {
 		return nil, args.Error(1)
 	}
-	return args.Get(0).(*workflow.Workflow), args.Error(1)
+	// ИСПРАВЛЕНИЕ
+	res := args.Get(0).(*workflow.Workflow)
+	return res, args.Error(1)
 }
+
 func (m *MockRepository) GetActiveWorkflowByDepartment(ctx context.Context, depID int64) (*workflow.Workflow, error) {
 	args := m.Called(ctx, depID)
 	if args.Get(0) == nil {
 		return nil, args.Error(1)
 	}
-	return args.Get(0).(*workflow.Workflow), args.Error(1)
+	// ИСПРАВЛЕНИЕ
+	res := args.Get(0).(*workflow.Workflow)
+	return res, args.Error(1)
 }
+
+// --------------------------------------------------------
+// MockWorkflowService (для Handler тестов)
+// --------------------------------------------------------
 
 type MockWorkflowService struct {
 	mock.Mock
@@ -135,35 +172,40 @@ func (m *MockWorkflowService) CreateWorkflow(ctx context.Context, name string, d
 	if args.Get(0) == nil {
 		return nil, args.Error(1)
 	}
-	return args.Get(0).(*workflow.Workflow), args.Error(1)
+	res := args.Get(0).(*workflow.Workflow)
+	return res, args.Error(1)
 }
 func (m *MockWorkflowService) GetWorkflow(ctx context.Context, id int64) (*workflow.Workflow, error) {
 	args := m.Called(ctx, id)
 	if args.Get(0) == nil {
 		return nil, args.Error(1)
 	}
-	return args.Get(0).(*workflow.Workflow), args.Error(1)
+	res := args.Get(0).(*workflow.Workflow)
+	return res, args.Error(1)
 }
 func (m *MockWorkflowService) GetWorkflowByName(ctx context.Context, name string) (*workflow.Workflow, error) {
 	args := m.Called(ctx, name)
 	if args.Get(0) == nil {
 		return nil, args.Error(1)
 	}
-	return args.Get(0).(*workflow.Workflow), args.Error(1)
+	res := args.Get(0).(*workflow.Workflow)
+	return res, args.Error(1)
 }
 func (m *MockWorkflowService) ListWorkflows(ctx context.Context, departmentID int64) ([]*workflow.Workflow, error) {
 	args := m.Called(ctx, departmentID)
 	if args.Get(0) == nil {
 		return nil, args.Error(1)
 	}
-	return args.Get(0).([]*workflow.Workflow), args.Error(1)
+	res := args.Get(0).([]*workflow.Workflow)
+	return res, args.Error(1)
 }
 func (m *MockWorkflowService) UpdateWorkflow(ctx context.Context, id int64, name string) (*workflow.Workflow, error) {
 	args := m.Called(ctx, id, name)
 	if args.Get(0) == nil {
 		return nil, args.Error(1)
 	}
-	return args.Get(0).(*workflow.Workflow), args.Error(1)
+	res := args.Get(0).(*workflow.Workflow)
+	return res, args.Error(1)
 }
 func (m *MockWorkflowService) DeleteWorkflow(ctx context.Context, id int64) error {
 	return m.Called(ctx, id).Error(0)
@@ -173,28 +215,32 @@ func (m *MockWorkflowService) CreateState(ctx context.Context, req *workflowv1.C
 	if args.Get(0) == nil {
 		return nil, args.Error(1)
 	}
-	return args.Get(0).(*workflow.State), args.Error(1)
+	res := args.Get(0).(*workflow.State)
+	return res, args.Error(1)
 }
 func (m *MockWorkflowService) GetState(ctx context.Context, id int64) (*workflow.State, error) {
 	args := m.Called(ctx, id)
 	if args.Get(0) == nil {
 		return nil, args.Error(1)
 	}
-	return args.Get(0).(*workflow.State), args.Error(1)
+	res := args.Get(0).(*workflow.State)
+	return res, args.Error(1)
 }
 func (m *MockWorkflowService) ListStates(ctx context.Context, workflowID int64) ([]*workflow.State, error) {
 	args := m.Called(ctx, workflowID)
 	if args.Get(0) == nil {
 		return nil, args.Error(1)
 	}
-	return args.Get(0).([]*workflow.State), args.Error(1)
+	res := args.Get(0).([]*workflow.State)
+	return res, args.Error(1)
 }
 func (m *MockWorkflowService) UpdateState(ctx context.Context, req *workflowv1.UpdateStateRequest) (*workflow.State, error) {
 	args := m.Called(ctx, req)
 	if args.Get(0) == nil {
 		return nil, args.Error(1)
 	}
-	return args.Get(0).(*workflow.State), args.Error(1)
+	res := args.Get(0).(*workflow.State)
+	return res, args.Error(1)
 }
 func (m *MockWorkflowService) DeleteState(ctx context.Context, id int64) error {
 	return m.Called(ctx, id).Error(0)
@@ -204,7 +250,8 @@ func (m *MockWorkflowService) CreateTransition(ctx context.Context, req *workflo
 	if args.Get(0) == nil {
 		return nil, args.Error(1)
 	}
-	return args.Get(0).(*workflow.Transition), args.Error(1)
+	res := args.Get(0).(*workflow.Transition)
+	return res, args.Error(1)
 }
 func (m *MockWorkflowService) DeleteTransition(ctx context.Context, id int64) error {
 	return m.Called(ctx, id).Error(0)
@@ -214,14 +261,16 @@ func (m *MockWorkflowService) CreateStateAction(ctx context.Context, req *workfl
 	if args.Get(0) == nil {
 		return nil, args.Error(1)
 	}
-	return args.Get(0).(*workflow.StateAction), args.Error(1)
+	res := args.Get(0).(*workflow.StateAction)
+	return res, args.Error(1)
 }
 func (m *MockWorkflowService) ListStateActions(ctx context.Context, stateID int64) ([]*workflow.StateAction, error) {
 	args := m.Called(ctx, stateID)
 	if args.Get(0) == nil {
 		return nil, args.Error(1)
 	}
-	return args.Get(0).([]*workflow.StateAction), args.Error(1)
+	res := args.Get(0).([]*workflow.StateAction)
+	return res, args.Error(1)
 }
 func (m *MockWorkflowService) DeleteStateAction(ctx context.Context, id int64) error {
 	return m.Called(ctx, id).Error(0)
@@ -231,19 +280,30 @@ func (m *MockWorkflowService) SetActiveWorkflow(ctx context.Context, workflowID 
 	if args.Get(0) == nil {
 		return nil, args.Error(1)
 	}
-	return args.Get(0).(*workflow.Workflow), args.Error(1)
+	res := args.Get(0).(*workflow.Workflow)
+	return res, args.Error(1)
 }
 func (m *MockWorkflowService) GetActiveWorkflowByDepartment(ctx context.Context, departmentID int64) (*workflow.Workflow, error) {
 	args := m.Called(ctx, departmentID)
 	if args.Get(0) == nil {
 		return nil, args.Error(1)
 	}
-	return args.Get(0).(*workflow.Workflow), args.Error(1)
+	res := args.Get(0).(*workflow.Workflow)
+	return res, args.Error(1)
 }
 func (m *MockWorkflowService) GetNextState(ctx context.Context, currentStateID int64, eventName string) (*workflow.State, error) {
 	args := m.Called(ctx, currentStateID, eventName)
 	if args.Get(0) == nil {
 		return nil, args.Error(1)
 	}
-	return args.Get(0).(*workflow.State), args.Error(1)
+	res := args.Get(0).(*workflow.State)
+	return res, args.Error(1)
+}
+func (m *MockWorkflowService) GetStepConfiguration(ctx context.Context, req *workflowv1.GetStepConfigurationRequest) (*workflowv1.StepConfiguration, error) {
+	args := m.Called(ctx, req)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+	res := args.Get(0).(*workflowv1.StepConfiguration)
+	return res, args.Error(1)
 }
