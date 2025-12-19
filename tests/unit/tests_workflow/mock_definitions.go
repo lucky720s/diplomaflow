@@ -11,6 +11,7 @@ import (
 // --------------------------------------------------------
 // MockRepository (для Service тестов)
 // --------------------------------------------------------
+/// commemtnt
 
 type MockRepository struct {
 	mock.Mock
