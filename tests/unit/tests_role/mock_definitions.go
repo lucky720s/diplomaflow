@@ -25,7 +25,11 @@ func (m *MockRepository) GetByID(ctx context.Context, id int64) (*role.Role, err
 	if args.Get(0) == nil {
 		return nil, args.Error(1)
 	}
-	return args.Get(0).(*role.Role), args.Error(1)
+	result, ok := args.Get(0).(*role.Role)
+	if !ok {
+		panic("unexpected type for arg 0 in GetByID")
+	}
+	return result, args.Error(1)
 }
 
 func (m *MockRepository) Delete(ctx context.Context, id int64) error {
@@ -43,7 +47,11 @@ func (m *MockRepository) List(ctx context.Context, departmentID int64) ([]*role.
 	if args.Get(0) == nil {
 		return nil, args.Error(1)
 	}
-	return args.Get(0).([]*role.Role), args.Error(1)
+	result, ok := args.Get(0).([]*role.Role)
+	if !ok {
+		panic("unexpected type for arg 0 in List")
+	}
+	return result, args.Error(1)
 }
 
 type MockRoleService struct {
@@ -55,7 +63,11 @@ func (m *MockRoleService) CreateRole(ctx context.Context, name string, departmen
 	if args.Get(0) == nil {
 		return nil, args.Error(1)
 	}
-	return args.Get(0).(*role.Role), args.Error(1)
+	result, ok := args.Get(0).(*role.Role)
+	if !ok {
+		panic("unexpected type for arg 0 in CreateRole")
+	}
+	return result, args.Error(1)
 }
 
 func (m *MockRoleService) DeleteRole(ctx context.Context, id int64) error {
@@ -68,7 +80,11 @@ func (m *MockRoleService) GetRole(ctx context.Context, id int64) (*role.Role, er
 	if args.Get(0) == nil {
 		return nil, args.Error(1)
 	}
-	return args.Get(0).(*role.Role), args.Error(1)
+	result, ok := args.Get(0).(*role.Role)
+	if !ok {
+		panic("unexpected type for arg 0 in GetRole")
+	}
+	return result, args.Error(1)
 }
 
 func (m *MockRoleService) UpdateRole(ctx context.Context, id int64, name string, departmentID int64, updateMask *fieldmaskpb.FieldMask) (*role.Role, error) {
@@ -76,7 +92,11 @@ func (m *MockRoleService) UpdateRole(ctx context.Context, id int64, name string,
 	if args.Get(0) == nil {
 		return nil, args.Error(1)
 	}
-	return args.Get(0).(*role.Role), args.Error(1)
+	result, ok := args.Get(0).(*role.Role)
+	if !ok {
+		panic("unexpected type for arg 0 in UpdateRole")
+	}
+	return result, args.Error(1)
 }
 
 func (m *MockRoleService) ListRoles(ctx context.Context, departmentID int64) ([]*role.Role, error) {
@@ -84,5 +104,9 @@ func (m *MockRoleService) ListRoles(ctx context.Context, departmentID int64) ([]
 	if args.Get(0) == nil {
 		return nil, args.Error(1)
 	}
-	return args.Get(0).([]*role.Role), args.Error(1)
+	result, ok := args.Get(0).([]*role.Role)
+	if !ok {
+		panic("unexpected type for arg 0 in ListRoles")
+	}
+	return result, args.Error(1)
 }

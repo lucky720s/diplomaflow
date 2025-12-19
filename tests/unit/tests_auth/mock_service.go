@@ -47,7 +47,12 @@ type MockService struct {
 // Register принимает departmentID
 func (m *MockService) Register(ctx context.Context, email, password, firstName, lastName, role string, universityID, departmentID int64) (int64, error) {
 	args := m.Called(ctx, email, password, firstName, lastName, role, universityID, departmentID)
-	return args.Get(0).(int64), args.Error(1)
+	// Исправление:
+	res, ok := args.Get(0).(int64)
+	if !ok {
+		panic("args.Get(0) is not int64")
+	}
+	return res, args.Error(1)
 }
 
 // Login принимает userAgent и ip, возвращает 3 значения
@@ -62,17 +67,32 @@ func (m *MockService) Validate(ctx context.Context, token string) (*auth.JwtClai
 	if args.Get(0) == nil {
 		return nil, args.Error(1)
 	}
-	return args.Get(0).(*auth.JwtClaims), args.Error(1)
+	res, ok := args.Get(0).(*auth.JwtClaims)
+	if !ok {
+		panic("args.Get(0) is not *auth.JwtClaims")
+	}
+	return res, args.Error(1)
 }
 
 // ListUsers принимает excludeUserID
 func (m *MockService) ListUsers(ctx context.Context, universityID int64, role string, page, pageSize int32, excludeUserID int64) ([]*auth.User, int64, error) {
 	args := m.Called(ctx, universityID, role, page, pageSize, excludeUserID)
-	if args.Get(0) == nil {
-		return nil, args.Get(1).(int64), args.Error(2)
+
+	var users []*auth.User
+	if args.Get(0) != nil {
+		var ok bool
+		users, ok = args.Get(0).([]*auth.User)
+		if !ok {
+			panic("args.Get(0) is not []*auth.User")
+		}
 	}
-	return args.Get(0).([]*auth.User), args.Get(1).(int64), args.Error(2)
+	total, ok := args.Get(1).(int64)
+	if !ok {
+		panic("args.Get(1) is not int64")
+	}
+	return users, total, args.Error(2)
 }
+
 func (m *MockService) AssignRole(ctx context.Context, userID int64, role string) error {
 	args := m.Called(ctx, userID, role)
 	return args.Error(0)

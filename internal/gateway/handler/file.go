@@ -37,7 +37,8 @@ func (h *Handler) UploadFile(c *gin.Context) {
 
 	buffer := make([]byte, 1024*64)
 	for {
-		n, err := file.Read(buffer)
+		var n int
+		n, err = file.Read(buffer)
 		if err == io.EOF {
 			break
 		}

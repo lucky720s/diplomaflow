@@ -24,7 +24,15 @@ func (m *MockRepository) List(ctx context.Context, userID int64, onlyUnread bool
 	if args.Get(0) == nil {
 		return nil, 0, args.Error(2)
 	}
-	return args.Get(0).([]*notification.Notification), args.Get(1).(int64), args.Error(2)
+	result, ok := args.Get(0).([]*notification.Notification)
+	if !ok {
+		panic("unexpected type for arg 0 in List")
+	}
+	count, ok := args.Get(1).(int64)
+	if !ok {
+		panic("unexpected type for arg 1 in List")
+	}
+	return result, count, args.Error(2)
 }
 
 func (m *MockRepository) MarkAsRead(ctx context.Context, id int64, userID int64) error {
@@ -38,7 +46,11 @@ type MockNotificationService struct {
 
 func (m *MockNotificationService) SendNotification(ctx context.Context, userID int64, title, message, link, nType string) (int64, error) {
 	args := m.Called(ctx, userID, title, message, link, nType)
-	return args.Get(0).(int64), args.Error(1)
+	result, ok := args.Get(0).(int64)
+	if !ok {
+		panic("unexpected type for arg 0 in SendNotification")
+	}
+	return result, args.Error(1)
 }
 
 func (m *MockNotificationService) ListNotifications(ctx context.Context, userID int64, onlyUnread bool, page, pageSize int32) ([]*notification.Notification, int64, error) {
@@ -46,7 +58,15 @@ func (m *MockNotificationService) ListNotifications(ctx context.Context, userID 
 	if args.Get(0) == nil {
 		return nil, 0, args.Error(2)
 	}
-	return args.Get(0).([]*notification.Notification), args.Get(1).(int64), args.Error(2)
+	result, ok := args.Get(0).([]*notification.Notification)
+	if !ok {
+		panic("unexpected type for arg 0 in ListNotifications")
+	}
+	count, ok := args.Get(1).(int64)
+	if !ok {
+		panic("unexpected type for arg 1 in ListNotifications")
+	}
+	return result, count, args.Error(2)
 }
 
 func (m *MockNotificationService) MarkAsRead(ctx context.Context, id, userID int64) error {

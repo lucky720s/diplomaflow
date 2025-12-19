@@ -35,29 +35,26 @@ func (e *StateActionExecutor) ExecuteActions(ctx context.Context, stateID int64,
 	if err != nil {
 		return fmt.Errorf("failed to get state actions: %w", err)
 	}
-
 	for _, action := range actionsResp.Actions {
 		if action.Trigger.String() != trigger {
 			continue
 		}
-
 		if err := e.executeAction(ctx, action, project); err != nil {
 			e.logger.Error("Failed to execute action",
 				zap.Int64("action_id", action.Id),
 				zap.String("type", action.Type.String()),
 				zap.Error(err))
-
 		}
 	}
-
 	return nil
 }
 
 func (e *StateActionExecutor) executeAction(ctx context.Context, action *workflowv1.StateAction, project *Project) error {
 	configBytes, _ := action.Config.MarshalJSON()
 	var config map[string]interface{}
-	json.Unmarshal(configBytes, &config)
-
+	if err := json.Unmarshal(configBytes, &config); err != nil {
+		return fmt.Errorf("failed to unmarshal action config: %w", err)
+	}
 	switch action.Type {
 	case workflowv1.StateAction_SEND_NOTIFICATION:
 		return e.sendNotification(ctx, config, project)
@@ -73,9 +70,7 @@ func (e *StateActionExecutor) executeAction(ctx context.Context, action *workflo
 func (e *StateActionExecutor) sendNotification(ctx context.Context, config map[string]interface{}, project *Project) error {
 	title, _ := config["title"].(string)
 	message, _ := config["message"].(string)
-
 	message = fmt.Sprintf(message, project.Title)
-
 	_, err := e.notifClient.SendNotification(ctx, &notificationv1.SendNotificationRequest{
 		UserId:  project.StudentID,
 		Title:   title,
@@ -83,7 +78,6 @@ func (e *StateActionExecutor) sendNotification(ctx context.Context, config map[s
 		Link:    fmt.Sprintf("/projects/%d", project.ID),
 		Type:    "WORKFLOW_UPDATE",
 	})
-
 	return err
 }
 

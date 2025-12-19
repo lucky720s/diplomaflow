@@ -82,8 +82,8 @@ func (h *Handler) AssignProjectToTeam(c *gin.Context) {
 	var req struct {
 		ProjectID int64 `json:"project_id" binding:"required"`
 	}
-	if err := c.ShouldBindJSON(&req); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+	if bindErr := c.ShouldBindJSON(&req); bindErr != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": bindErr.Error()})
 		return
 	}
 
@@ -192,8 +192,8 @@ func (h *Handler) UpdateTeam(c *gin.Context) {
 	var reqBody struct {
 		Name string `json:"name"`
 	}
-	if err := c.ShouldBindJSON(&reqBody); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+	if bindErr := c.ShouldBindJSON(&reqBody); bindErr != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": bindErr.Error()})
 		return
 	}
 
@@ -243,8 +243,8 @@ func (h *Handler) AddMember(c *gin.Context) {
 		UserID int64  `json:"user_id" binding:"required"`
 		Role   string `json:"role"`
 	}
-	if err := c.ShouldBindJSON(&reqBody); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+	if bindErr := c.ShouldBindJSON(&reqBody); bindErr != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": bindErr.Error()})
 		return
 	}
 
@@ -271,8 +271,8 @@ func (h *Handler) RemoveMember(c *gin.Context) {
 	var reqBody struct {
 		UserID int64 `json:"user_id" binding:"required"`
 	}
-	if err := c.ShouldBindJSON(&reqBody); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+	if bindErr := c.ShouldBindJSON(&reqBody); bindErr != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": bindErr.Error()})
 		return
 	}
 

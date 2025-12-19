@@ -1,9 +1,9 @@
 run:
-  timeout: 5m
-  modules-download-mode: readonly
+  timeout: 10m
+  go: '1.25'
+  tests: true
 
 linters:
-  disable-all: true
   enable:
     - errcheck
     - gosimple
@@ -11,21 +11,40 @@ linters:
     - ineffassign
     - staticcheck
     - unused
+    - gofmt
+    - goimports
+
+linters-settings:
+  govet:
+    enable:
+      - shadow
+  errcheck:
+    check-type-assertions: true
+    exclude-functions:
+      - (go.uber.org/zap.Logger).Sync
+      - (*go.uber.org/zap.Logger).Sync
+      - (github.com/lucky720s/diplomaflow/pkg/logger.Logger).Sync
+      - github.com/spf13/viper.BindEnv
+      - (io.Closer).Close
+
+
+
 
 issues:
+  exclude-dirs:
+    - pkg/protobuf
+    - third_party
   exclude-rules:
     - path: _test\.go
       linters:
         - errcheck
     - path: wire_gen\.go
       linters:
-        - errcheck
         - unused
+        - deadcode
     - path: \.pb\.go
       linters:
-        - errcheck
-        - unused
+        - all
     - path: \.pb\.validate\.go
       linters:
-        - errcheck
-        - unused
+        - all
