@@ -23,43 +23,62 @@ func (m *MockRepository) CreateWithOutbox(ctx context.Context, p *project.Projec
 	}
 	return args.Error(0)
 }
+
 func (m *MockRepository) GetByID(ctx context.Context, id uint64) (*project.Project, error) {
 	args := m.Called(ctx, id)
 	if args.Get(0) == nil {
 		return nil, args.Error(1)
 	}
-	return args.Get(0).(*project.Project), args.Error(1)
+	// ИСПРАВЛЕНИЕ: Разбиваем на две строки и используем _
+	res, _ := args.Get(0).(*project.Project)
+	return res, args.Error(1)
 }
+
 func (m *MockRepository) Update(ctx context.Context, p *project.Project) error {
 	return m.Called(ctx, p).Error(0)
 }
+
 func (m *MockRepository) ListByStudent(ctx context.Context, sid int64) ([]*project.Project, error) {
 	args := m.Called(ctx, sid)
 	if args.Get(0) == nil {
 		return nil, args.Error(1)
 	}
-	return args.Get(0).([]*project.Project), args.Error(1)
+	// ИСПРАВЛЕНИЕ
+	res, _ := args.Get(0).([]*project.Project)
+	return res, args.Error(1)
 }
+
 func (m *MockRepository) AddHistory(ctx context.Context, h *project.StateHistory) error {
 	return m.Called(ctx, h).Error(0)
 }
+
 func (m *MockRepository) ListAll(ctx context.Context, did int64, l, o int) ([]*project.Project, int64, error) {
 	args := m.Called(ctx, did, l, o)
-	return args.Get(0).([]*project.Project), args.Get(1).(int64), args.Error(2)
+	// ИСПРАВЛЕНИЕ: Разбиваем получение обоих значений
+	res, _ := args.Get(0).([]*project.Project)
+	total, _ := args.Get(1).(int64)
+	return res, total, args.Error(2)
 }
+
 func (m *MockRepository) GetPendingEvents(ctx context.Context, limit int) ([]project.OutboxEvent, error) {
 	args := m.Called(ctx, limit)
-	return args.Get(0).([]project.OutboxEvent), args.Error(1)
+	// ИСПРАВЛЕНИЕ
+	res, _ := args.Get(0).([]project.OutboxEvent)
+	return res, args.Error(1)
 }
+
 func (m *MockRepository) DeleteEvent(ctx context.Context, id uint) error {
 	return m.Called(ctx, id).Error(0)
 }
 func (m *MockRepository) MarkEventProcessed(ctx context.Context, id uint) error {
 	return m.Called(ctx, id).Error(0)
 }
+
 func (m *MockRepository) GetProjectsWithExpiredDeadlines(ctx context.Context) ([]*project.Project, error) {
 	args := m.Called(ctx)
-	return args.Get(0).([]*project.Project), args.Error(1)
+	// ИСПРАВЛЕНИЕ
+	res, _ := args.Get(0).([]*project.Project)
+	return res, args.Error(1)
 }
 
 // --- Mock Service (для Handler) ---
@@ -72,28 +91,35 @@ func (m *MockProjectService) CreateProject(ctx context.Context, req *projectv1.C
 	if args.Get(0) == nil {
 		return nil, args.Error(1)
 	}
-	return args.Get(0).(*projectv1.CreateProjectResponse), args.Error(1)
+	res, _ := args.Get(0).(*projectv1.CreateProjectResponse)
+	return res, args.Error(1)
 }
+
 func (m *MockProjectService) GetProject(ctx context.Context, id uint64) (*project.Project, error) {
 	args := m.Called(ctx, id)
 	if args.Get(0) == nil {
 		return nil, args.Error(1)
 	}
-	return args.Get(0).(*project.Project), args.Error(1)
+	res, _ := args.Get(0).(*project.Project)
+	return res, args.Error(1)
 }
+
 func (m *MockProjectService) GetStudentProjects(ctx context.Context, sid int64) ([]*project.Project, error) {
 	args := m.Called(ctx, sid)
 	if args.Get(0) == nil {
 		return nil, args.Error(1)
 	}
-	return args.Get(0).([]*project.Project), args.Error(1)
+	res, _ := args.Get(0).([]*project.Project)
+	return res, args.Error(1)
 }
+
 func (m *MockProjectService) PerformAction(ctx context.Context, pid int64, action string, payload map[string]interface{}) (*project.Project, error) {
 	args := m.Called(ctx, pid, action, payload)
 	if args.Get(0) == nil {
 		return nil, args.Error(1)
 	}
-	return args.Get(0).(*project.Project), args.Error(1)
+	res, _ := args.Get(0).(*project.Project)
+	return res, args.Error(1)
 }
 
 // --- Mock gRPC Clients ---
@@ -107,28 +133,35 @@ func (m *MockWorkflowClient) GetActiveWorkflowByDepartment(ctx context.Context, 
 	if args.Get(0) == nil {
 		return nil, args.Error(1)
 	}
-	return args.Get(0).(*workflowv1.Workflow), args.Error(1)
+	res, _ := args.Get(0).(*workflowv1.Workflow)
+	return res, args.Error(1)
 }
+
 func (m *MockWorkflowClient) GetState(ctx context.Context, in *workflowv1.GetStateRequest, opts ...grpc.CallOption) (*workflowv1.State, error) {
 	args := m.Called(ctx, in)
 	if args.Get(0) == nil {
 		return nil, args.Error(1)
 	}
-	return args.Get(0).(*workflowv1.State), args.Error(1)
+	res, _ := args.Get(0).(*workflowv1.State)
+	return res, args.Error(1)
 }
+
 func (m *MockWorkflowClient) GetNextState(ctx context.Context, in *workflowv1.GetNextStateRequest, opts ...grpc.CallOption) (*workflowv1.State, error) {
 	args := m.Called(ctx, in)
 	if args.Get(0) == nil {
 		return nil, args.Error(1)
 	}
-	return args.Get(0).(*workflowv1.State), args.Error(1)
+	res, _ := args.Get(0).(*workflowv1.State)
+	return res, args.Error(1)
 }
+
 func (m *MockWorkflowClient) ListStateActions(ctx context.Context, in *workflowv1.ListStateActionsRequest, opts ...grpc.CallOption) (*workflowv1.ListStateActionsResponse, error) {
 	args := m.Called(ctx, in)
 	if args.Get(0) == nil {
 		return nil, args.Error(1)
 	}
-	return args.Get(0).(*workflowv1.ListStateActionsResponse), args.Error(1)
+	res, _ := args.Get(0).(*workflowv1.ListStateActionsResponse)
+	return res, args.Error(1)
 }
 
 type MockNotificationClient struct {
@@ -141,5 +174,6 @@ func (m *MockNotificationClient) SendNotification(ctx context.Context, in *notif
 	if args.Get(0) == nil {
 		return nil, args.Error(1)
 	}
-	return args.Get(0).(*notificationv1.SendNotificationResponse), args.Error(1)
+	res, _ := args.Get(0).(*notificationv1.SendNotificationResponse)
+	return res, args.Error(1)
 }
