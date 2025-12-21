@@ -32,8 +32,7 @@ func (m *MockRepository) GetByID(ctx context.Context, id uint64) (*project.Proje
 	if args.Get(0) == nil {
 		return nil, args.Error(1)
 	}
-	// ИСПРАВЛЕНИЕ: Убрали ", _" (прямое приведение типа)
-	res := args.Get(0).(*project.Project)
+	res, _ := args.Get(0).(*project.Project)
 	return res, args.Error(1)
 }
 
@@ -46,8 +45,7 @@ func (m *MockRepository) ListByStudent(ctx context.Context, sid int64) ([]*proje
 	if args.Get(0) == nil {
 		return nil, args.Error(1)
 	}
-	// ИСПРАВЛЕНИЕ: Убрали ", _"
-	res := args.Get(0).([]*project.Project)
+	res, _ := args.Get(0).([]*project.Project)
 	return res, args.Error(1)
 }
 
@@ -58,7 +56,7 @@ func (m *MockRepository) AddHistory(ctx context.Context, h *project.StateHistory
 func (m *MockRepository) ListAll(ctx context.Context, did int64, l, o int) ([]*project.Project, int64, error) {
 	args := m.Called(ctx, did, l, o)
 	// ИСПРАВЛЕНИЕ: Убрали ", _" у обоих значений
-	res := args.Get(0).([]*project.Project)
+	res, _ := args.Get(0).([]*project.Project)
 	total := args.Get(1).(int64)
 	return res, total, args.Error(2)
 }
