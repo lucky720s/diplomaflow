@@ -13,7 +13,6 @@ import (
 	"google.golang.org/protobuf/types/known/structpb"
 )
 
-// Тест СЕРВИСА: PerformAction (успешный переход)
 func TestService_PerformAction(t *testing.T) {
 	repo := new(MockRepository)
 	wfClient := new(MockWorkflowClient)
@@ -23,21 +22,15 @@ func TestService_PerformAction(t *testing.T) {
 
 	svc := project.NewService(repo, wfClient, registry, nil, zap.NewNop())
 
-	// 1. Получаем проект из БД
 	proj := &project.Project{ID: 1, CurrentStepID: "10", CurrentState: "Start"}
 	repo.On("GetByID", mock.Anything, uint64(1)).Return(proj, nil)
 
-	// 2. Получаем текущее состояние
 	state := &workflowv1.State{Id: 10, Config: nil}
-	// ИСПРАВЛЕНИЕ: Два аргумента для gRPC клиента
 	wfClient.On("GetState", mock.Anything, mock.Anything).Return(state, nil)
 
-	// 3. Получаем следующее состояние
 	nextState := &workflowv1.State{Id: 20, Name: "Review"}
-	// ИСПРАВЛЕНИЕ: Два аргумента для gRPC клиента
 	wfClient.On("GetNextState", mock.Anything, mock.Anything).Return(nextState, nil)
 
-	// 4. Сохраняем историю и обновляем проект
 	repo.On("AddHistory", mock.Anything, mock.Anything).Return(nil)
 	repo.On("Update", mock.Anything, mock.MatchedBy(func(p *project.Project) bool {
 		return p.CurrentState == "Review"
@@ -51,7 +44,6 @@ func TestService_PerformAction(t *testing.T) {
 	require.Equal(t, "Review", res.CurrentState)
 }
 
-// Тест ХЕНДЛЕРА: PerformAction
 func TestHandler_PerformAction(t *testing.T) {
 	mockSvc := new(MockProjectService)
 	handler := project.NewHandler(mockSvc)

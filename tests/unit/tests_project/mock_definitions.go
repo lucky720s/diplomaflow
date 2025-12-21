@@ -11,10 +11,6 @@ import (
 	"google.golang.org/grpc"
 )
 
-// --------------------------------------------------------
-// MockRepository (реализует project.Repository)
-// --------------------------------------------------------
-
 type MockRepository struct {
 	mock.Mock
 }

@@ -11,17 +11,13 @@ import (
 func TestHandlers_TeamFormed(t *testing.T) {
 	h := &project.TeamFormedHandler{}
 
-	// Конфиг требует минимум 2 человека
 	config := map[string]interface{}{
 		"team_config": map[string]interface{}{"min_size": 2.0},
 	}
-	// Мы пока не передаем размер команды в payload, но проверим логику
-	// В вашем коде: if memberCount < minSize return error. (MemberCount hardcoded to 1)
 
 	payload := map[string]interface{}{"team_id": "team_1"}
 	data := make(map[string]interface{})
 
-	// Ожидаем ошибку, так как memberCount=1, а minSize=2
 	_, err := h.Handle(context.Background(), data, payload, config)
 	require.Error(t, err)
 	require.Contains(t, err.Error(), "at least 2 members")

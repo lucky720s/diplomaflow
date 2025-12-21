@@ -12,22 +12,18 @@ import (
 	"go.uber.org/zap"
 )
 
-// Тест СЕРВИСА: CreateProject
 func TestService_CreateProject(t *testing.T) {
 	repo := new(MockRepository)
 	wfClient := new(MockWorkflowClient)
 
 	svc := project.NewService(repo, wfClient, nil, nil, zap.NewNop())
 
-	// 1. Мокаем получение активного воркфлоу
 	wf := &workflowv1.Workflow{
 		Id: 10, Name: "Diploma",
 		Steps: []*workflowv1.State{{Id: 1, Name: "Start"}},
 	}
-	// ИСПРАВЛЕНИЕ: Добавлен второй mock.Anything (Context, Request)
 	wfClient.On("GetActiveWorkflowByDepartment", mock.Anything, mock.Anything).Return(wf, nil)
 
-	// 2. Мокаем создание проекта в БД (с outbox)
 	repo.On("CreateWithOutbox", mock.Anything, mock.MatchedBy(func(p *project.Project) bool {
 		return p.Title == "My Project" && p.CurrentState == "Start"
 	}), "ProjectCreated", "project-events", mock.Anything).Return(nil)
@@ -39,20 +35,16 @@ func TestService_CreateProject(t *testing.T) {
 	res, err := svc.CreateProject(context.Background(), req)
 
 	require.NoError(t, err)
-	require.Equal(t, int64(100), res.ProjectId) // ID устанавливает мок
+	require.Equal(t, int64(100), res.ProjectId)
 	repo.AssertExpectations(t)
 }
 
-// Тест ХЕНДЛЕРА: CreateProject
-// Тест ХЕНДЛЕРА: CreateProject
 func TestHandler_CreateProject(t *testing.T) {
 	mockSvc := new(MockProjectService)
 	handler := project.NewHandler(mockSvc)
 
 	respMock := &projectv1.CreateProjectResponse{ProjectId: 555}
 
-	// ИСПРАВЛЕНИЕ: Добавлен второй mock.Anything
-	// 1-й аргумент: context, 2-й аргумент: request
 	mockSvc.On("CreateProject", mock.Anything, mock.Anything).Return(respMock, nil)
 
 	req := &projectv1.CreateProjectRequest{Title: "P1", StudentId: 1, DepartmentId: 1, UniversityId: 1}
