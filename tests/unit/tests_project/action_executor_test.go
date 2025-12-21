@@ -31,11 +31,9 @@ func TestStateActionExecutor_SendNotification(t *testing.T) {
 		Config: cfgStruct,
 	}
 
-	// ИСПРАВЛЕНИЕ: Два аргумента (Context, Request)
 	wfClient.On("ListStateActions", mock.Anything, mock.Anything).
 		Return(&workflowv1.ListStateActionsResponse{Actions: []*workflowv1.StateAction{action}}, nil)
 
-	// ИСПРАВЛЕНИЕ: Два аргумента (Context, Request)
 	notifClient.On("SendNotification", mock.Anything, mock.Anything).
 		Return(&notificationv1.SendNotificationResponse{}, nil)
 

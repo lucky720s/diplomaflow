@@ -23,6 +23,7 @@ func TestHandlers_TeamFormed(t *testing.T) {
 	require.Contains(t, err.Error(), "at least 2 members")
 }
 
+// /wfwefewf
 func TestHandlers_SelectSupervisor(t *testing.T) {
 	h := &project.SelectSupervisorHandler{}
 
