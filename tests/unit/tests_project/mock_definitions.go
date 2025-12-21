@@ -32,8 +32,8 @@ func (m *MockRepository) GetByID(ctx context.Context, id uint64) (*project.Proje
 	if args.Get(0) == nil {
 		return nil, args.Error(1)
 	}
-	// ИСПРАВЛЕНИЕ: Разбиваем на две строки
-	res, _ := args.Get(0).(*project.Project)
+	// ИСПРАВЛЕНИЕ: Убрали ", _"
+	res := args.Get(0).(*project.Project)
 	return res, args.Error(1)
 }
 
@@ -46,8 +46,7 @@ func (m *MockRepository) ListByStudent(ctx context.Context, sid int64) ([]*proje
 	if args.Get(0) == nil {
 		return nil, args.Error(1)
 	}
-	// ИСПРАВЛЕНИЕ
-	res, _ := args.Get(0).([]*project.Project)
+	res := args.Get(0).([]*project.Project)
 	return res, args.Error(1)
 }
 
@@ -57,9 +56,8 @@ func (m *MockRepository) AddHistory(ctx context.Context, h *project.StateHistory
 
 func (m *MockRepository) ListAll(ctx context.Context, did int64, l, o int) ([]*project.Project, int64, error) {
 	args := m.Called(ctx, did, l, o)
-	// ИСПРАВЛЕНИЕ: Разбиваем получение обоих значений
-	res, _ := args.Get(0).([]*project.Project)
-	total, _ := args.Get(1).(int64)
+	res := args.Get(0).([]*project.Project)
+	total := args.Get(1).(int64)
 	return res, total, args.Error(2)
 }
 
@@ -68,8 +66,7 @@ func (m *MockRepository) GetPendingEvents(ctx context.Context, limit int) ([]pro
 	if args.Get(0) == nil {
 		return nil, args.Error(1)
 	}
-	// ИСПРАВЛЕНИЕ
-	res, _ := args.Get(0).([]project.OutboxEvent)
+	res := args.Get(0).([]project.OutboxEvent)
 	return res, args.Error(1)
 }
 
@@ -86,8 +83,7 @@ func (m *MockRepository) GetProjectsWithExpiredDeadlines(ctx context.Context) ([
 	if args.Get(0) == nil {
 		return nil, args.Error(1)
 	}
-	// ИСПРАВЛЕНИЕ
-	res, _ := args.Get(0).([]*project.Project)
+	res := args.Get(0).([]*project.Project)
 	return res, args.Error(1)
 }
 
@@ -104,7 +100,7 @@ func (m *MockProjectService) CreateProject(ctx context.Context, req *projectv1.C
 	if args.Get(0) == nil {
 		return nil, args.Error(1)
 	}
-	res, _ := args.Get(0).(*projectv1.CreateProjectResponse)
+	res := args.Get(0).(*projectv1.CreateProjectResponse)
 	return res, args.Error(1)
 }
 
@@ -113,7 +109,7 @@ func (m *MockProjectService) GetProject(ctx context.Context, id uint64) (*projec
 	if args.Get(0) == nil {
 		return nil, args.Error(1)
 	}
-	res, _ := args.Get(0).(*project.Project)
+	res := args.Get(0).(*project.Project)
 	return res, args.Error(1)
 }
 
@@ -122,7 +118,7 @@ func (m *MockProjectService) GetStudentProjects(ctx context.Context, sid int64) 
 	if args.Get(0) == nil {
 		return nil, args.Error(1)
 	}
-	res, _ := args.Get(0).([]*project.Project)
+	res := args.Get(0).([]*project.Project)
 	return res, args.Error(1)
 }
 
@@ -131,7 +127,7 @@ func (m *MockProjectService) PerformAction(ctx context.Context, pid int64, actio
 	if args.Get(0) == nil {
 		return nil, args.Error(1)
 	}
-	res, _ := args.Get(0).(*project.Project)
+	res := args.Get(0).(*project.Project)
 	return res, args.Error(1)
 }
 
@@ -149,7 +145,7 @@ func (m *MockWorkflowClient) GetActiveWorkflowByDepartment(ctx context.Context, 
 	if args.Get(0) == nil {
 		return nil, args.Error(1)
 	}
-	res, _ := args.Get(0).(*workflowv1.Workflow)
+	res := args.Get(0).(*workflowv1.Workflow)
 	return res, args.Error(1)
 }
 
@@ -158,7 +154,7 @@ func (m *MockWorkflowClient) GetState(ctx context.Context, in *workflowv1.GetSta
 	if args.Get(0) == nil {
 		return nil, args.Error(1)
 	}
-	res, _ := args.Get(0).(*workflowv1.State)
+	res := args.Get(0).(*workflowv1.State)
 	return res, args.Error(1)
 }
 
@@ -167,7 +163,7 @@ func (m *MockWorkflowClient) GetNextState(ctx context.Context, in *workflowv1.Ge
 	if args.Get(0) == nil {
 		return nil, args.Error(1)
 	}
-	res, _ := args.Get(0).(*workflowv1.State)
+	res := args.Get(0).(*workflowv1.State)
 	return res, args.Error(1)
 }
 
@@ -176,7 +172,7 @@ func (m *MockWorkflowClient) ListStateActions(ctx context.Context, in *workflowv
 	if args.Get(0) == nil {
 		return nil, args.Error(1)
 	}
-	res, _ := args.Get(0).(*workflowv1.ListStateActionsResponse)
+	res := args.Get(0).(*workflowv1.ListStateActionsResponse)
 	return res, args.Error(1)
 }
 
@@ -190,6 +186,6 @@ func (m *MockNotificationClient) SendNotification(ctx context.Context, in *notif
 	if args.Get(0) == nil {
 		return nil, args.Error(1)
 	}
-	res, _ := args.Get(0).(*notificationv1.SendNotificationResponse)
+	res := args.Get(0).(*notificationv1.SendNotificationResponse)
 	return res, args.Error(1)
 }
