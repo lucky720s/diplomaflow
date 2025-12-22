@@ -9,12 +9,18 @@ import (
 	"google.golang.org/grpc/status"
 )
 
+type ProjectUseCase interface {
+	CreateProject(ctx context.Context, req *projectv1.CreateProjectRequest) (*projectv1.CreateProjectResponse, error)
+	GetProject(ctx context.Context, id uint64) (*Project, error)
+	GetStudentProjects(ctx context.Context, studentID int64) ([]*Project, error)
+	PerformAction(ctx context.Context, projectID int64, actionName string, payload map[string]interface{}) (*Project, error)
+}
 type Handler struct {
 	projectv1.UnimplementedProjectServiceServer
-	service *Service
+	service ProjectUseCase
 }
 
-func NewHandler(service *Service) *Handler {
+func NewHandler(service ProjectUseCase) *Handler {
 	return &Handler{service: service}
 }
 
