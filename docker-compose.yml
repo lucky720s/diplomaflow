@@ -77,6 +77,37 @@ services:
     networks:
       - app_network
 
+#Admin service(ADDED BY SULA)
+  admin_service:
+    build:
+      context: .
+      dockerfile: cmd/admin_service/Dockerfile
+    container_name: admin_service
+    env_file:
+      - .env
+    environment:
+      - GRPC_PORT=${PORT_ADMIN}
+      - GOMEMLIMIT=64MiB
+    deploy:
+      resources:
+        limits:
+          memory: 128M
+    ports:
+      - "${PORT_ADMIN}:${PORT_ADMIN}"
+    depends_on:
+      main_postgres:
+        condition: service_healthy
+      auth_service:
+        condition: service_started
+      project_service:
+        condition: service_started
+      team_service:
+        condition: service_started
+      workflow_service:
+        condition: service_started
+    networks:
+      - app_network
+
   role_service:
     build:
       context: .
@@ -354,3 +385,5 @@ volumes:
 networks:
   app_network:
     driver: bridge
+
+

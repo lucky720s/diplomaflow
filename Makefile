@@ -59,6 +59,7 @@ tools:
 	go install github.com/golangci/golangci-lint/cmd/golangci-lint@latest
 
 proto:
+	@if not exist "$(PROTO_OUT)\admin\v1" mkdir "$(PROTO_OUT)\admin\v1"
 	@if not exist "$(PROTO_OUT)\auth\v1" mkdir "$(PROTO_OUT)\auth\v1"
 	@if not exist "$(PROTO_OUT)\role\v1" mkdir "$(PROTO_OUT)\role\v1"
 	@if not exist "$(PROTO_OUT)\project\v1" mkdir "$(PROTO_OUT)\project\v1"
