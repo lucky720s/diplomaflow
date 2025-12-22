@@ -1,0 +1,9 @@
+env: "local"
+grpc_port: 8090
+database:
+  dsn: ""
+services:
+  auth_addr: "auth_service:8082"
+  project_addr: "project_service:8083"
+  team_addr: "team_service:8084"
+  workflow_addr: "workflow_service:8085"

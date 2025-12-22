@@ -74,6 +74,30 @@ func main() {
 			admin.POST("/assign-role", handler.AssignRole)
 		}
 
+		// Admin Panel routes (Commission & Tech Support)
+		adminPanel := v1.Group("/admin-panel")
+		adminPanel.Use(middleware.AuthMiddleware(cfg.JWTSecret))
+		adminPanel.Use(middleware.RBACMiddleware("admin", "commission", "tech_support"))
+		{
+			adminPanel.GET("/dashboard", handler.GetAdminDashboard)
+			adminPanel.GET("/stats", handler.GetDepartmentStats)
+			adminPanel.GET("/students", handler.AdminListStudents)
+			adminPanel.GET("/students/:id", handler.AdminGetStudent)
+			adminPanel.GET("/teams", handler.AdminListTeams)
+			adminPanel.GET("/teams/:id", handler.AdminGetTeamDetails)
+			adminPanel.PATCH("/teams/:id", handler.AdminUpdateTeam)
+			adminPanel.DELETE("/teams/:id", handler.AdminDeleteTeam)
+			adminPanel.GET("/supervisors", handler.ListSupervisors)
+			adminPanel.POST("/supervisors/assign", handler.AssignSupervisor)
+			adminPanel.GET("/submissions", handler.ListSubmissions)
+			adminPanel.GET("/submissions/:id", handler.GetSubmission)
+			adminPanel.POST("/submissions/:id/review", handler.ReviewSubmission)
+			adminPanel.GET("/projects/:id/grades", handler.GetProjectGrades)
+			adminPanel.POST("/projects/:id/grades", handler.SetStepGrade)
+			adminPanel.GET("/workflow/progress", handler.GetWorkflowProgress)
+			adminPanel.GET("/pending-reviews", handler.ListPendingReviews)
+		}
+
 		projects := v1.Group("/projects")
 		projects.Use(middleware.AuthMiddleware(cfg.JWTSecret))
 		{
