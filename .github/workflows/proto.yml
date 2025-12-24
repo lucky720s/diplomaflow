@@ -5,43 +5,92 @@ on:
     paths:
       - 'api/proto/**'
       - 'third_party/**'
+      - 'pkg/protobuf/**'
 
 jobs:
   proto-check:
+    name: Protobuf
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout code
+        uses: actions/checkout@v4
 
-      - uses: actions/setup-go@v5
+      - name: Setup Go
+        uses: actions/setup-go@v5
         with:
           go-version: '1.25'
           cache: true
 
-      - name: Install protoc
+      # Фиксированная версия protoc
+      - name: Setup protoc
+        uses: arduino/setup-protoc@v3
+        with:
+          version: "25.x"
+          repo-token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Install protoc plugins
         run: |
-          sudo apt-get update
-          sudo apt-get install -y protobuf-compiler
           go install google.golang.org/protobuf/cmd/protoc-gen-go@latest
           go install google.golang.org/grpc/cmd/protoc-gen-go-grpc@latest
           go install github.com/envoyproxy/protoc-gen-validate@latest
+          
+          # Добавляем GOPATH/bin в PATH
+          echo "$(go env GOPATH)/bin" >> $GITHUB_PATH
+
+      - name: Verify installation
+        run: |
+          echo "protoc version:"
+          protoc --version
+          echo ""
+          echo "Plugins installed:"
+          which protoc-gen-go
+          which protoc-gen-go-grpc
+          which protoc-gen-validate
+
+      - name: Check proto files exist
+        run: |
+          if [ ! -d "api/proto" ]; then
+            echo "Error: api/proto directory not found"
+            exit 1
+          fi
+          
+          proto_count=$(find api/proto -name "*.proto" | wc -l)
+          if [ "$proto_count" -eq 0 ]; then
+            echo "Error: No .proto files found in api/proto"
+            exit 1
+          fi
+          
+          echo "Found $proto_count proto files"
 
       - name: Generate protobuf
         run: |
           mkdir -p pkg/protobuf
+          
+          # Собираем все proto файлы
+          proto_files=$(find api/proto -name "*.proto")
+          
           protoc \
-            --plugin=protoc-gen-validate=$(go env GOPATH)/bin/protoc-gen-validate \
             --proto_path=api/proto \
             --proto_path=third_party \
             --go_out=pkg/protobuf --go_opt=paths=source_relative \
             --go-grpc_out=pkg/protobuf --go-grpc_opt=paths=source_relative \
-            --validate_out="lang=go:pkg/protobuf" --validate_opt=paths=source_relative \
-            $(find api/proto -name "*.proto")
+            --validate_out="lang=go,paths=source_relative:pkg/protobuf" \
+            $proto_files
 
       - name: Check for uncommitted changes
         run: |
           if [[ -n $(git status --porcelain pkg/protobuf) ]]; then
-            echo "::error::Generated protobuf files are out of date!"
-            echo "Run 'make proto' locally and commit the changes."
+            echo "========================================="
+            echo "Generated protobuf files are out of date"
+            echo "========================================="
+            echo ""
+            echo "Changed files:"
+            git status --porcelain pkg/protobuf
+            echo ""
+            echo "Diff:"
             git diff pkg/protobuf
+            echo ""
+            echo "Fix: Run 'make proto' locally and commit the changes"
             exit 1
           fi
+          echo "Protobuf files are up to date"

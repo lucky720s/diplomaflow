@@ -1,0 +1,450 @@
+syntax = "proto3";
+package admin.v1;
+import "validate/validate.proto";
+
+import "google/protobuf/timestamp.proto";
+import "google/protobuf/struct.proto";
+import "google/protobuf/empty.proto";
+
+option go_package = "github.com/lucky720s/diplomaflow/pkg/protobuf/admin/v1";
+
+service AdminService {
+  // ==================== Dashboard ====================
+  rpc GetDashboard(GetDashboardRequest) returns (GetDashboardResponse);
+  rpc GetDepartmentStats(GetDepartmentStatsRequest) returns (GetDepartmentStatsResponse);
+  
+  // ==================== Students ====================
+  rpc ListStudents(ListStudentsRequest) returns (ListStudentsResponse);
+  rpc GetStudent(GetStudentRequest) returns (GetStudentResponse);
+  
+  // ==================== Teams ====================
+  rpc ListAllTeams(ListAllTeamsRequest) returns (ListAllTeamsResponse);
+  rpc GetTeamDetails(GetTeamDetailsRequest) returns (GetTeamDetailsResponse);
+  rpc UpdateTeamAdmin(UpdateTeamAdminRequest) returns (UpdateTeamAdminResponse);
+  rpc DeleteTeamAdmin(DeleteTeamAdminRequest) returns (google.protobuf.Empty);
+  
+  // ==================== Supervisors ====================
+  rpc ListSupervisors(ListSupervisorsRequest) returns (ListSupervisorsResponse);
+  rpc AssignSupervisor(AssignSupervisorRequest) returns (AssignSupervisorResponse);
+  
+  // ==================== Submissions (Заявления/Отчеты) ====================
+  rpc ListSubmissions(ListSubmissionsRequest) returns (ListSubmissionsResponse);
+  rpc GetSubmission(GetSubmissionRequest) returns (GetSubmissionResponse);
+  rpc ReviewSubmission(ReviewSubmissionRequest) returns (ReviewSubmissionResponse);
+  
+  // ==================== Grading (Оценивание) ====================
+  rpc GetProjectGrades(GetProjectGradesRequest) returns (GetProjectGradesResponse);
+  rpc SetStepGrade(SetStepGradeRequest) returns (SetStepGradeResponse);
+  rpc GetGradingHistory(GetGradingHistoryRequest) returns (GetGradingHistoryResponse);
+  
+  // ==================== Workflow Steps (Пункты сдачи) ====================
+  rpc GetWorkflowProgress(GetWorkflowProgressRequest) returns (GetWorkflowProgressResponse);
+  rpc ListPendingReviews(ListPendingReviewsRequest) returns (ListPendingReviewsResponse);
+}
+
+// ==================== Dashboard Messages ====================
+message GetDashboardRequest {
+  int64 department_id = 1;
+}
+
+message GetDashboardResponse {
+  DashboardStats stats = 1;
+  repeated StepProgress step_progress = 2;
+  repeated RecentActivity recent_activities = 3;
+}
+
+message DashboardStats {
+  int32 total_students = 1;
+  int32 total_teams = 2;
+  int32 total_projects = 3;
+  int32 completed_projects = 4;
+  int32 pending_reviews = 5;
+  int32 active_supervisors = 6;
+}
+
+message StepProgress {
+  int64 step_id = 1;
+  string step_name = 2;
+  string step_type = 3;
+  int32 total_teams = 4;
+  int32 completed_teams = 5;
+  int32 pending_teams = 6;
+  int32 rejected_teams = 7;
+  float completion_percentage = 8;
+}
+
+message RecentActivity {
+  int64 id = 1;
+  string activity_type = 2; // SUBMISSION, GRADE, TEAM_UPDATE, etc.
+  string description = 3;
+  int64 actor_id = 4;
+  string actor_name = 5;
+  int64 target_id = 6;
+  string target_type = 7;
+  google.protobuf.Timestamp created_at = 8;
+}
+
+message GetDepartmentStatsRequest {
+  int64 department_id = 1;
+}
+
+message GetDepartmentStatsResponse {
+  DashboardStats stats = 1;
+  repeated WorkflowStepStats workflow_stats = 2;
+}
+
+message WorkflowStepStats {
+  int64 step_id = 1;
+  string step_name = 2;
+  int32 awaiting_count = 3;
+  int32 approved_count = 4;
+  int32 rejected_count = 5;
+}
+
+// ==================== Students Messages ====================
+message ListStudentsRequest {
+  int64 department_id = 1;
+  int64 university_id = 2;
+  string search = 3; // поиск по имени/email
+  bool only_without_team = 4;
+  int32 page = 5;
+  int32 page_size = 6;
+}
+
+message ListStudentsResponse {
+  repeated StudentInfo students = 1;
+  int64 total_count = 2;
+}
+
+message StudentInfo {
+  int64 id = 1;
+  string email = 2;
+  string first_name = 3;
+  string last_name = 4;
+  int64 team_id = 5;
+  string team_name = 6;
+  int64 project_id = 7;
+  string project_title = 8;
+  string current_step = 9;
+  google.protobuf.Timestamp created_at = 10;
+}
+
+message GetStudentRequest {
+  int64 student_id = 1;
+}
+
+message GetStudentResponse {
+  StudentInfo student = 1;
+  repeated GradeInfo grades = 2;
+  repeated SubmissionPreview submissions = 3;
+}
+
+// ==================== Teams Messages ====================
+message ListAllTeamsRequest {
+  int64 department_id = 1;
+  int64 project_id = 2;
+  string status = 3; // active, completed, etc.
+  string search = 4;
+  int32 page = 5;
+  int32 page_size = 6;
+}
+
+message ListAllTeamsResponse {
+  repeated TeamAdminInfo teams = 1;
+  int64 total_count = 2;
+}
+
+message TeamAdminInfo {
+  int64 id = 1;
+  string name = 2;
+  int64 project_id = 3;
+  string project_title = 4;
+  string current_step = 5;
+  int32 member_count = 6;
+  repeated TeamMemberInfo members = 7;
+  SupervisorInfo supervisor = 8;
+  string status = 9;
+  google.protobuf.Timestamp created_at = 10;
+  google.protobuf.Timestamp updated_at = 11;
+}
+
+message TeamMemberInfo {
+  int64 user_id = 1;
+  string full_name = 2;
+  string email = 3;
+  string role = 4; // leader, member
+}
+
+message SupervisorInfo {
+  int64 id = 1;
+  string full_name = 2;
+  string email = 3;
+  string position = 4; // Senior Lecturer, Professor, etc.
+}
+
+message GetTeamDetailsRequest {
+  int64 team_id = 1;
+}
+
+message GetTeamDetailsResponse {
+  TeamAdminInfo team = 1;
+  ProjectProgress project_progress = 2;
+  repeated GradeInfo grades = 3;
+  repeated SubmissionPreview submissions = 4;
+}
+
+message ProjectProgress {
+  int64 project_id = 1;
+  string title = 2;
+  string current_state = 3;
+  int64 current_step_id = 4;
+  repeated StepStatus steps = 5;
+}
+
+message StepStatus {
+  int64 step_id = 1;
+  string step_name = 2;
+  string status = 3; // pending, submitted, approved, rejected
+  google.protobuf.Timestamp completed_at = 4;
+  GradeInfo grade = 5;
+}
+
+message UpdateTeamAdminRequest {
+  int64 team_id = 1;
+  string name = 2;
+  int64 supervisor_id = 3;
+  repeated int64 member_ids = 4;
+}
+
+message UpdateTeamAdminResponse {
+  TeamAdminInfo team = 1;
+}
+
+message DeleteTeamAdminRequest {
+  int64 team_id = 1;
+  string reason = 2;
+}
+
+// ==================== Supervisors Messages ====================
+message ListSupervisorsRequest {
+  int64 department_id = 1;
+  int64 university_id = 2;
+  int32 page = 3;
+  int32 page_size = 4;
+}
+
+message ListSupervisorsResponse {
+  repeated SupervisorDetails supervisors = 1;
+  int64 total_count = 2;
+}
+
+message SupervisorDetails {
+  int64 id = 1;
+  string full_name = 2;
+  string email = 3;
+  string position = 4;
+  int32 teams_count = 5;
+  int32 max_teams = 6;
+  repeated TeamPreview assigned_teams = 7;
+}
+
+message TeamPreview {
+  int64 id = 1;
+  string name = 2;
+  string project_title = 3;
+}
+
+message AssignSupervisorRequest {
+  int64 team_id = 1;
+  int64 supervisor_id = 2;
+}
+
+message AssignSupervisorResponse {
+  bool success = 1;
+  string message = 2;
+}
+
+// ==================== Submissions Messages ====================
+message ListSubmissionsRequest {
+  int64 department_id = 1;
+  int64 step_id = 2;
+  string status = 3; // pending, approved, rejected, all
+  int64 team_id = 4;
+  int32 page = 5;
+  int32 page_size = 6;
+}
+
+message ListSubmissionsResponse {
+  repeated SubmissionInfo submissions = 1;
+  int64 total_count = 2;
+}
+
+message SubmissionInfo {
+  string id = 1;
+  int64 project_id = 2;
+  string project_title = 3;
+  int64 team_id = 4;
+  string team_name = 5;
+  int64 step_id = 6;
+  string step_name = 7;
+  int64 submitted_by = 8;
+  string submitter_name = 9;
+  string status = 10; // pending, approved, rejected
+  google.protobuf.Struct data = 11;
+  repeated FileAttachment files = 12;
+  google.protobuf.Timestamp submitted_at = 13;
+  ReviewInfo review = 14;
+}
+
+message SubmissionPreview {
+  string id = 1;
+  string step_name = 2;
+  string status = 3;
+  google.protobuf.Timestamp submitted_at = 4;
+}
+
+message FileAttachment {
+  string id = 1;
+  string file_name = 2;
+  string file_type = 3;
+  int64 size = 4;
+  string download_url = 5;
+}
+
+message ReviewInfo {
+  int64 reviewer_id = 1;
+  string reviewer_name = 2;
+  string status = 3;
+  string comment = 4;
+  google.protobuf.Timestamp reviewed_at = 5;
+}
+
+message GetSubmissionRequest {
+  string submission_id = 1;
+}
+
+message GetSubmissionResponse {
+  SubmissionInfo submission = 1;
+  repeated ReviewHistory history = 2;
+}
+
+message ReviewHistory {
+  int64 id = 1;
+  int64 reviewer_id = 2;
+  string reviewer_name = 3;
+  string action = 4; // submitted, approved, rejected, requested_changes
+  string comment = 5;
+  google.protobuf.Timestamp created_at = 6;
+}
+
+message ReviewSubmissionRequest {
+  string submission_id = 1 [(validate.rules).string.min_len = 1];
+  int64 reviewer_id = 2 [(validate.rules).int64.gt = 0];
+  string action = 3 [(validate.rules).string = {in: ["approve", "reject", "request_changes"]}];
+  string comment = 4;
+  int32 grade = 5 [(validate.rules).int32 = {gte: 0, lte: 100}];
+}
+
+message ReviewSubmissionResponse {
+  bool success = 1;
+  string message = 2;
+  SubmissionInfo updated_submission = 3;
+}
+
+// ==================== Grading Messages ====================
+message GradeInfo {
+  int64 id = 1;
+  int64 project_id = 2;
+  int64 step_id = 3;
+  string step_name = 4;
+  int32 grade = 5; // 0-100
+  string letter_grade = 6; // A, B, C, D, F
+  int64 graded_by = 7;
+  string grader_name = 8;
+  string comment = 9;
+  google.protobuf.Timestamp graded_at = 10;
+}
+
+message GetProjectGradesRequest {
+  int64 project_id = 1;
+}
+
+message GetProjectGradesResponse {
+  int64 project_id = 1;
+  string project_title = 2;
+  int64 team_id = 3;
+  string team_name = 4;
+  repeated GradeInfo step_grades = 5;
+  float average_grade = 6;
+  string final_letter_grade = 7;
+}
+
+message SetStepGradeRequest {
+  int64 project_id = 1;
+  int64 step_id = 2;
+  int32 grade = 3; // 0-100
+  string comment = 4;
+  int64 grader_id = 5;
+}
+
+message SetStepGradeResponse {
+  bool success = 1;
+  GradeInfo grade = 2;
+}
+
+message GetGradingHistoryRequest {
+  int64 project_id = 1;
+  int64 step_id = 2;
+}
+
+message GetGradingHistoryResponse {
+  repeated GradeHistoryItem history = 1;
+}
+
+message GradeHistoryItem {
+  int64 id = 1;
+  int32 old_grade = 2;
+  int32 new_grade = 3;
+  int64 changed_by = 4;
+  string changer_name = 5;
+  string reason = 6;
+  google.protobuf.Timestamp changed_at = 7;
+}
+
+// ==================== Workflow Progress Messages ====================
+message GetWorkflowProgressRequest {
+  int64 department_id = 1;
+  int64 workflow_id = 2;
+}
+
+message GetWorkflowProgressResponse {
+  int64 workflow_id = 1;
+  string workflow_name = 2;
+  repeated StepProgress steps = 3;
+}
+
+message ListPendingReviewsRequest {
+  int64 department_id = 1;
+  int64 reviewer_id = 2; // optional - для конкретного проверяющего
+  int64 step_id = 3; // optional - для конкретного этапа
+  int32 page = 4;
+  int32 page_size = 5;
+}
+
+message ListPendingReviewsResponse {
+  repeated PendingReview reviews = 1;
+  int64 total_count = 2;
+}
+
+message PendingReview {
+  string submission_id = 1;
+  int64 project_id = 2;
+  string project_title = 3;
+  int64 team_id = 4;
+  string team_name = 5;
+  int64 step_id = 6;
+  string step_name = 7;
+  google.protobuf.Timestamp submitted_at = 8;
+  int32 days_pending = 9;
+  string priority = 10; // low, medium, high, urgent
+}
