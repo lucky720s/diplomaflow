@@ -52,9 +52,8 @@ func (m *MockRepository) AddHistory(ctx context.Context, h *project.StateHistory
 
 func (m *MockRepository) ListAll(ctx context.Context, did int64, l, o int) ([]*project.Project, int64, error) {
 	args := m.Called(ctx, did, l, o)
-	// ИСПРАВЛЕНИЕ: Убрали ", _" у обоих значений
 	res, _ := args.Get(0).([]*project.Project)
-	total := args.Get(1).(int64)
+	total, _ := args.Get(1).(int64)
 	return res, total, args.Error(2)
 }
 
@@ -63,8 +62,7 @@ func (m *MockRepository) GetPendingEvents(ctx context.Context, limit int) ([]pro
 	if args.Get(0) == nil {
 		return nil, args.Error(1)
 	}
-	// ИСПРАВЛЕНИЕ: Убрали ", _"
-	res := args.Get(0).([]project.OutboxEvent)
+	res, _ := args.Get(0).([]project.OutboxEvent)
 	return res, args.Error(1)
 }
 
@@ -81,8 +79,7 @@ func (m *MockRepository) GetProjectsWithExpiredDeadlines(ctx context.Context) ([
 	if args.Get(0) == nil {
 		return nil, args.Error(1)
 	}
-	// ИСПРАВЛЕНИЕ: Убрали ", _"
-	res := args.Get(0).([]*project.Project)
+	res, _ := args.Get(0).([]*project.Project)
 	return res, args.Error(1)
 }
 
