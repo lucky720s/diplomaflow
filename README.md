@@ -1,5 +1,18 @@
-Для запуска проекта DiplomaFlow необходимо установить Docker и Docker Compose.
-Клонируйте репозиторий командой git clone https://github.com/lucky720s/diplomaflow.git и перейдите в директорию проекта командой cd diplomaflow.
-Создайте файл .env в корне проекта со следующими переменными окружения: POSTGRES_USER=diplomaflow, POSTGRES_PASSWORD=your_secure_password, POSTGRES_DB=diplomaflow, POSTGRES_PORT=5432, DATABASE_DSN="host=main_postgres user=diplomaflow password=your_secure_password dbname=diplomaflow port=5432 sslmode=disable", JWT_SECRET=your_jwt_secret_key_min_32_chars, PORT_GATEWAY=8080, PORT_UNIVERSITY=8081, PORT_AUTH=8082, PORT_PROJECT=8083, PORT_TEAM=8084, PORT_WORKFLOW=8085, PORT_ROLE=8086, PORT_NOTIFICATION=8087, PORT_FILE=8088, PORT_FORM=8089.
-Запустите все сервисы командой docker-compose up -d и дождитесь полной инициализации (около 1-2 минут). Проверьте готовность системы командой curl http://localhost:8080/health, которая должна вернуть {"status": "ok"}.
-После запуска доступны тестовые пользователи: student@example.com, teacher@example.com и admin@example.com с паролем 12345678. API Gateway доступен на порту 8080, документация по эндпоинтам находится в README проекта.
+# DiplomaFlow
+
+Микросервисная платформа для управления дипломными проектами.
+
+## 📋 Требования
+
+- **Go** 1.25
+- **Docker** и **Docker Compose**
+- **Make** (для Windows: через Git Bash или WSL)
+- **Protocol Buffers** compiler (`protoc`)
+
+## 🚀 Быстрый старт
+
+### 1. Клонирование репозитория
+
+```bash
+git clone https://github.com/lucky720s/diplomaflow.git
+cd diplomaflow
