@@ -39,6 +39,17 @@ async function collectFiles(dir) {
     return results;
 }
 
+// Функция для чтения .env файла
+async function readEnvFile(envPath) {
+    try {
+        const content = await fs.promises.readFile(envPath, "utf8");
+        return content;
+    } catch (err) {
+        console.error("Ошибка при чтении .env файла:", err);
+        return null;  // Возвращаем null, если файл не найден или не удалось прочитать
+    }
+}
+
 // === Запуск ===
 (async () => {
     const startDir = path.resolve("./");
@@ -46,15 +57,28 @@ async function collectFiles(dir) {
 
     let output = "=== Собранные файлы ===\n\n";
 
+    // Сначала добавляем содержимое .env файла, если он существует
+    const envPath = path.join(startDir, ".env");
+    const envContent = await readEnvFile(envPath);
+
+    if (envContent) {
+        output += "=== .env Файл ===\n";
+        output += `${envContent}\n`;
+        output += "----------------------------------------\n\n";
+    }
+
+    // Добавляем остальные файлы
     for (const file of files) {
         output += `FILE: ${file.path}\n`;
         output += `CONTENT:\n${file.content}\n`;
         output += "----------------------------------------\n\n";
     }
+
     output = output
         .split("\n")
         .filter(line => line.trim() !== "")
         .join("\n");
+
     const txtPath = path.join(__dirname, "collected.txt");
 
     // --- УДАЛЯЕМ ФАЙЛ collected.txt ПЕРЕД ЗАПУСКОМ ---

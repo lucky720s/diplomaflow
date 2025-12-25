@@ -20,29 +20,33 @@ PROTO_FILES := $(shell go run tools/detect.go proto 2>NUL || echo auth/v1/auth.p
 WIRE_PACKAGES := $(shell go run tools/detect.go wire 2>NUL || echo ./internal/auth)
 SERVICES := $(shell go run tools/detect.go services 2>NUL || echo api_gateway)
 
-
 VERSION    := $(shell git describe --tags --always --dirty 2>NUL || echo dev)
 BUILD_TIME := $(shell echo %DATE% %TIME%)
 LDFLAGS    := -ldflags "-s -w -X main.Version=$(VERSION)"
 
-.PHONY: help all deps tools proto wire generate test coverage build clean docker-up docker-down lint
+.PHONY: help all deps tools proto wire generate test coverage build clean docker-up docker-down lint fmt vet
 
 help:
 	@echo.
 	@echo DiplomaFlow Build System
 	@echo ========================
 	@echo.
-	@echo   make deps      - Download dependencies
-	@echo   make tools     - Install dev tools
-	@echo   make proto     - Generate protobuf
-	@echo   make wire      - Generate Wire DI
-	@echo   make generate  - Generate all
-	@echo   make test      - Run tests
-	@echo   make coverage  - Tests with coverage
-	@echo   make build     - Build services
-	@echo   make clean     - Clean artifacts
-	@echo   make docker-up - Start Docker
-	@echo   make lint      - Run linter
+	@echo   make deps        - Download dependencies
+	@echo   make tools       - Install dev tools
+	@echo   make proto       - Generate protobuf
+	@echo   make wire        - Generate Wire DI
+	@echo   make generate    - Generate all (proto + wire)
+	@echo   make test        - Run all unit tests
+	@echo   make coverage    - Tests with coverage report
+	@echo   make build       - Build all services (Windows)
+	@echo   make build-linux - Build all services (Linux)
+	@echo   make clean       - Clean artifacts
+	@echo   make docker-up   - Start Docker containers
+	@echo   make docker-down - Stop Docker containers
+	@echo   make lint        - Run linter
+	@echo   make fmt         - Format code
+	@echo   make vet         - Run go vet
+	@echo   make pre-push    - Run all checks before push
 	@echo.
 
 all: deps proto wire build
@@ -72,6 +76,7 @@ proto:
 	$(PROTOC) --plugin=protoc-gen-validate=$(VALIDATE) --proto_path=$(PROTO_DIR) --proto_path=$(THIRD_PARTY) --go_out=$(PROTO_OUT) --go_opt=paths=source_relative --go-grpc_out=$(PROTO_OUT) --go-grpc_opt=paths=source_relative --validate_out="lang=go:$(PROTO_OUT)" --validate_opt=paths=source_relative $(PROTO_FILES)
 
 wire:
+	$(WIRE) gen ./internal/admin
 	$(WIRE) gen ./internal/auth
 	$(WIRE) gen ./internal/file
 	$(WIRE) gen ./internal/form
@@ -85,6 +90,7 @@ wire:
 
 generate: proto wire
 
+# ==================== TESTING ====================
 test:
 	go test -v ./tests/unit/...
 
@@ -103,15 +109,23 @@ test-notif:
 test-role:
 	go test -v ./tests/unit/tests_role/...
 
+test-project:
+	go test -v ./tests/unit/tests_project/...
+
+test-workflow:
+	go test -v ./tests/unit/tests_workflow/...
+
 coverage:
 	@if not exist "coverage" mkdir coverage
 	go test -coverprofile=coverage/coverage.out -covermode=atomic ./tests/unit/...
 	go tool cover -html=coverage/coverage.out -o coverage/coverage.html
 	go tool cover -func=coverage/coverage.out
 
+# ==================== BUILD ====================
 build:
 	@if not exist "bin" mkdir bin
 	set CGO_ENABLED=0&& go build $(LDFLAGS) -o bin/api_gateway.exe ./cmd/api_gateway
+	set CGO_ENABLED=0&& go build $(LDFLAGS) -o bin/admin_service.exe ./cmd/admin_service
 	set CGO_ENABLED=0&& go build $(LDFLAGS) -o bin/auth_service.exe ./cmd/auth_service
 	set CGO_ENABLED=0&& go build $(LDFLAGS) -o bin/file_service.exe ./cmd/file_service
 	set CGO_ENABLED=0&& go build $(LDFLAGS) -o bin/form_service.exe ./cmd/form_service
@@ -125,6 +139,7 @@ build:
 build-linux:
 	@if not exist "bin\linux" mkdir "bin\linux"
 	set CGO_ENABLED=0&& set GOOS=linux&& set GOARCH=amd64&& go build $(LDFLAGS) -o bin/linux/api_gateway ./cmd/api_gateway
+	set CGO_ENABLED=0&& set GOOS=linux&& set GOARCH=amd64&& go build $(LDFLAGS) -o bin/linux/admin_service ./cmd/admin_service
 	set CGO_ENABLED=0&& set GOOS=linux&& set GOARCH=amd64&& go build $(LDFLAGS) -o bin/linux/auth_service ./cmd/auth_service
 	set CGO_ENABLED=0&& set GOOS=linux&& set GOARCH=amd64&& go build $(LDFLAGS) -o bin/linux/file_service ./cmd/file_service
 	set CGO_ENABLED=0&& set GOOS=linux&& set GOARCH=amd64&& go build $(LDFLAGS) -o bin/linux/form_service ./cmd/form_service
@@ -135,6 +150,7 @@ build-linux:
 	set CGO_ENABLED=0&& set GOOS=linux&& set GOARCH=amd64&& go build $(LDFLAGS) -o bin/linux/university_service ./cmd/university_service
 	set CGO_ENABLED=0&& set GOOS=linux&& set GOARCH=amd64&& go build $(LDFLAGS) -o bin/linux/workflow_service ./cmd/workflow_service
 
+# ==================== DOCKER ====================
 docker-up:
 	docker-compose up -d
 
@@ -147,6 +163,11 @@ docker-build:
 docker-logs:
 	docker-compose logs -f
 
+docker-restart:
+	docker-compose down
+	docker-compose up -d --build
+
+# ==================== CODE QUALITY ====================
 lint:
 	$(GOLINT) run ./...
 
@@ -156,11 +177,22 @@ fmt:
 vet:
 	go vet ./...
 
+# ==================== PRE-PUSH / CI ====================
+pre-push: fmt vet lint test build
+	@echo.
+	@echo ========================================
+	@echo   All checks passed! Ready to push.
+	@echo ========================================
+
+ci: deps generate lint test build
+
+# ==================== SETUP ====================
+dev-setup: deps tools proto wire
+	@echo.
+	@echo Development environment ready!
+
+# ==================== CLEANUP ====================
 clean:
 	@if exist "bin" rmdir /s /q bin
 	@if exist "coverage" rmdir /s /q coverage
 	go clean -cache -testcache
-
-dev-setup: deps tools proto wire
-
-ci: deps generate lint test build
