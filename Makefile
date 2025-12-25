@@ -31,22 +31,50 @@ help:
 	@echo DiplomaFlow Build System
 	@echo ========================
 	@echo.
-	@echo   make deps        - Download dependencies
-	@echo   make tools       - Install dev tools
-	@echo   make proto       - Generate protobuf
-	@echo   make wire        - Generate Wire DI
-	@echo   make generate    - Generate all (proto + wire)
-	@echo   make test        - Run all unit tests
-	@echo   make coverage    - Tests with coverage report
-	@echo   make build       - Build all services (Windows)
-	@echo   make build-linux - Build all services (Linux)
-	@echo   make clean       - Clean artifacts
-	@echo   make docker-up   - Start Docker containers
-	@echo   make docker-down - Stop Docker containers
-	@echo   make lint        - Run linter
-	@echo   make fmt         - Format code
-	@echo   make vet         - Run go vet
-	@echo   make pre-push    - Run all checks before push
+	@echo Dependencies:
+	@echo   make deps          - Download Go dependencies
+	@echo   make tools         - Install dev tools (protoc, wire, lint)
+	@echo.
+	@echo Code Generation:
+	@echo   make proto         - Generate protobuf code
+	@echo   make wire          - Generate Wire DI
+	@echo   make generate      - Generate all (proto + wire)
+	@echo.
+	@echo Testing:
+	@echo   make test          - Run all unit tests
+	@echo   make test-auth     - Run auth service tests
+	@echo   make test-file     - Run file service tests
+	@echo   make test-form     - Run form service tests
+	@echo   make test-notif    - Run notification tests
+	@echo   make test-role     - Run role service tests
+	@echo   make test-project  - Run project service tests
+	@echo   make test-workflow - Run workflow service tests
+	@echo   make coverage      - Tests with coverage report
+	@echo.
+	@echo Build:
+	@echo   make build         - Build all services (Windows)
+	@echo   make build-linux   - Build all services (Linux)
+	@echo.
+	@echo Docker:
+	@echo   make docker-up     - Start Docker containers
+	@echo   make docker-down   - Stop Docker containers
+	@echo   make docker-build  - Build Docker images
+	@echo   make docker-logs   - View Docker logs
+	@echo   make docker-restart - Restart with rebuild
+	@echo.
+	@echo Code Quality:
+	@echo   make lint          - Run golangci-lint
+	@echo   make fmt           - Format code (go fmt)
+	@echo   make vet           - Run go vet
+	@echo.
+	@echo Workflows:
+	@echo   make pre-push      - Run all checks before push
+	@echo   make ci            - CI pipeline
+	@echo   make dev-setup     - Full dev environment setup
+	@echo   make all           - deps + proto + wire + build
+	@echo.
+	@echo Cleanup:
+	@echo   make clean         - Clean build artifacts
 	@echo.
 
 all: deps proto wire build
