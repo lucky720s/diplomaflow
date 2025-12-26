@@ -36,5 +36,7 @@ func Load(path string, cfg interface{}) error {
 	viper.BindEnv("jwt.refresh_token_ttl", "JWT_REFRESH_TOKEN_TTL")
 	viper.BindEnv("redis_addr", "REDIS_ADDR")
 
+	viper.BindEnv("services.admin_addr", "SERVICES_ADMIN_ADDR")
+
 	return viper.Unmarshal(cfg)
 }
