@@ -10,6 +10,7 @@ services_workflow_addr: "workflow_service:8085"
 services_notification_addr: "notification_service:8087"
 services_file_addr: "file_service:8088"
 services_form_addr: "form_service:8089"
+services_admin_addr: "admin_service:8090"
 redis_addr: "redis:6379"
 allowed_origins:
   - "https://diplomaflow.kz"

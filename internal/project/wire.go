@@ -73,6 +73,7 @@ func InitializeApp(
 		ProvideStateActionExecutor,
 		NewService,
 		NewHandler,
+		wire.Bind(new(ProjectUseCase), new(*Service)),
 		NewApp,
 	)
 	return &App{}, nil, nil

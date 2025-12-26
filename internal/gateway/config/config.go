@@ -20,6 +20,7 @@ type Config struct {
 	FileServiceAddr         string   `mapstructure:"services_file_addr"`
 	FormServiceAddr         string   `mapstructure:"services_form_addr"`
 	RedisAddr               string   `mapstructure:"redis_addr"`
+	AdminServiceAddr        string   `mapstructure:"services_admin_addr"`
 	AllowedOrigins          []string `mapstructure:"allowed_origins"`
 }
 
