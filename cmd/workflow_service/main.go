@@ -10,11 +10,14 @@ import (
 	"time"
 
 	"github.com/lucky720s/diplomaflow/internal/workflow"
+	"github.com/lucky720s/diplomaflow/internal/workflow/plugins/builtin"
 	"github.com/lucky720s/diplomaflow/pkg/config"
 	"github.com/lucky720s/diplomaflow/pkg/logger"
 	workflowv1 "github.com/lucky720s/diplomaflow/pkg/protobuf/workflow/v1"
 	"go.uber.org/zap"
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/health"
+	"google.golang.org/grpc/health/grpc_health_v1"
 	"google.golang.org/grpc/reflection"
 )
 
@@ -23,11 +26,14 @@ func main() {
 	if err := config.Load("config.yaml", &cfg); err != nil {
 		panic(fmt.Sprintf("failed to load config: %v", err))
 	}
-
 	log := logger.New(cfg.Env)
 	defer log.Sync()
 
-	h, cleanup, err := workflow.InitializeApp(&cfg, log)
+	builtin.RegisterWithoutNotification()
+	log.Info("Builtin plugins registered",
+		zap.Strings("plugins", builtin.RegisteredPlugins()))
+
+	handler, cleanup, err := workflow.InitializeApp(&cfg, log)
 	if err != nil {
 		log.Fatal("failed to initialize app", zap.Error(err))
 	}
@@ -37,18 +43,19 @@ func main() {
 	if err != nil {
 		log.Fatal("failed to listen", zap.Error(err))
 	}
-
 	grpcServer := grpc.NewServer()
-	workflowv1.RegisterWorkflowServiceServer(grpcServer, h)
-	reflection.Register(grpcServer)
+	workflowv1.RegisterWorkflowServiceServer(grpcServer, handler)
+	healthServer := health.NewServer()
+	grpc_health_v1.RegisterHealthServer(grpcServer, healthServer)
+	healthServer.SetServingStatus("workflow.v1.WorkflowService", grpc_health_v1.HealthCheckResponse_SERVING)
 
+	reflection.Register(grpcServer)
 	go func() {
 		log.Info("Workflow Service starting", zap.String("port", cfg.GRPCPort))
 		if err := grpcServer.Serve(lis); err != nil {
 			log.Fatal("failed to serve", zap.Error(err))
 		}
 	}()
-
 	quit := make(chan os.Signal, 1)
 	signal.Notify(quit, syscall.SIGINT, syscall.SIGTERM)
 	<-quit
@@ -57,6 +64,7 @@ func main() {
 	_, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 
+	healthServer.SetServingStatus("workflow.v1.WorkflowService", grpc_health_v1.HealthCheckResponse_NOT_SERVING)
 	grpcServer.GracefulStop()
 	log.Info("Workflow Service exited")
 }

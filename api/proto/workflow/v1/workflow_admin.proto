@@ -1,0 +1,248 @@
+syntax = "proto3";
+package workflow.v1;
+
+import "google/protobuf/struct.proto";
+import "google/protobuf/timestamp.proto";
+
+option go_package = "github.com/lucky720s/diplomaflow/pkg/protobuf/workflow/v1";
+
+// ==================== ADMIN API ====================
+service WorkflowAdminService {
+  // Department Configs
+  rpc CreateDepartmentConfig(CreateDepartmentConfigRequest) returns (DepartmentConfig);
+  rpc GetDepartmentConfig(GetDepartmentConfigRequest) returns (DepartmentConfig);
+  rpc ListDepartmentConfigs(ListDepartmentConfigsRequest) returns (ListDepartmentConfigsResponse);
+  rpc UpdateDepartmentConfig(UpdateDepartmentConfigRequest) returns (DepartmentConfig);
+  rpc ActivateDepartmentConfig(ActivateDepartmentConfigRequest) returns (DepartmentConfig);
+  rpc DeleteDepartmentConfig(DeleteDepartmentConfigRequest) returns (google.protobuf.Empty);
+
+  // Custom Steps
+  rpc AddCustomStep(AddCustomStepRequest) returns (CustomStep);
+  rpc UpdateCustomStep(UpdateCustomStepRequest) returns (CustomStep);
+  rpc DeleteCustomStep(DeleteCustomStepRequest) returns (google.protobuf.Empty);
+  rpc ReorderCustomSteps(ReorderCustomStepsRequest) returns (ListCustomStepsResponse);
+
+  // Action Registry
+  rpc ListAvailableActions(ListAvailableActionsRequest) returns (ListAvailableActionsResponse);
+  rpc GetActionSchema(GetActionSchemaRequest) returns (ActionSchema);
+
+  // Workflow Builder
+  rpc GetWorkflowBuilder(GetWorkflowBuilderRequest) returns (WorkflowBuilderResponse);
+  rpc SaveWorkflowDraft(SaveWorkflowDraftRequest) returns (Workflow);
+  rpc PublishWorkflow(PublishWorkflowRequest) returns (Workflow);
+
+  // Preview & Test
+  rpc PreviewWorkflow(PreviewWorkflowRequest) returns (WorkflowPreview);
+  rpc SimulateTransition(SimulateTransitionRequest) returns (SimulateTransitionResponse);
+}
+
+message DepartmentConfig {
+  int64 id = 1;
+  int64 department_id = 2;
+  int64 workflow_id = 3;
+  string academic_year = 4;
+  bool is_active = 5;
+  TeamSettings team_settings = 6;
+  repeated DeadlineOverride deadline_overrides = 7;
+  google.protobuf.Struct config_overrides = 8;
+  repeated CustomStep custom_steps = 9;
+  google.protobuf.Timestamp created_at = 10;
+  google.protobuf.Timestamp updated_at = 11;
+}
+
+message TeamSettings {
+  bool allow_solo = 1;
+  int32 min_size = 2;
+  int32 max_size = 3;
+  bool require_same_group = 4;
+  int32 invite_expire_days = 5;
+}
+
+message DeadlineOverride {
+  int64 state_id = 1;
+  string state_name = 2;
+  google.protobuf.Timestamp fixed_date = 3;
+  int32 duration_days = 4;
+  string start_from = 5; // "workflow_start", "previous_step", "fixed_date"
+}
+
+message CustomStep {
+  int64 id = 1;
+  string name = 2;
+  string display_name = 3;
+  string step_type = 4;
+  int64 insert_after_state_id = 5;
+  google.protobuf.Struct config = 6;
+  bool is_required = 7;
+  int32 duration_days = 8;
+  int32 order_index = 9;
+}
+
+message ActionSchema {
+  string id = 1;
+  string name = 2;
+  string description = 3;
+  string category = 4;
+  google.protobuf.Struct config_schema = 5; // JSON Schema
+  bool is_system = 6;
+}
+
+message WorkflowBuilderResponse {
+  Workflow workflow = 1;
+  repeated State states = 2;
+  repeated Transition transitions = 3;
+  repeated ActionSchema available_actions = 4;
+  repeated StateTypeInfo state_types = 5;
+}
+
+message StateTypeInfo {
+  string type = 1;
+  string display_name = 2;
+  string description = 3;
+  string icon = 4;
+  string color = 5;
+  google.protobuf.Struct default_config = 6;
+}
+
+message WorkflowPreview {
+  repeated PreviewState states = 1;
+  repeated PreviewTransition transitions = 2;
+  repeated string warnings = 3;
+  repeated string errors = 4;
+}
+
+message PreviewState {
+  int64 id = 1;
+  string name = 2;
+  string display_name = 3;
+  string type = 4;
+  int32 order = 5;
+  google.protobuf.Timestamp estimated_deadline = 6;
+  repeated string required_actions = 7;
+}
+
+message PreviewTransition {
+  string from_state = 1;
+  string to_state = 2;
+  string event_name = 3;
+  string display_name = 4;
+}
+
+// Request/Response messages...
+message CreateDepartmentConfigRequest {
+  int64 department_id = 1;
+  int64 workflow_id = 2;
+  string academic_year = 3;
+  TeamSettings team_settings = 4;
+  repeated DeadlineOverride deadline_overrides = 5;
+}
+
+message GetDepartmentConfigRequest {
+  int64 config_id = 1;
+}
+
+message ListDepartmentConfigsRequest {
+  int64 department_id = 1;
+  string academic_year = 2;
+}
+
+message ListDepartmentConfigsResponse {
+  repeated DepartmentConfig configs = 1;
+}
+
+message UpdateDepartmentConfigRequest {
+  int64 config_id = 1;
+  TeamSettings team_settings = 2;
+  repeated DeadlineOverride deadline_overrides = 3;
+  google.protobuf.Struct config_overrides = 4;
+}
+
+message ActivateDepartmentConfigRequest {
+  int64 config_id = 1;
+}
+
+message DeleteDepartmentConfigRequest {
+  int64 config_id = 1;
+}
+
+message AddCustomStepRequest {
+  int64 config_id = 1;
+  string name = 2;
+  string display_name = 3;
+  string step_type = 4;
+  int64 insert_after_state_id = 5;
+  google.protobuf.Struct config = 6;
+  bool is_required = 7;
+  int32 duration_days = 8;
+}
+
+message UpdateCustomStepRequest {
+  int64 step_id = 1;
+  string display_name = 2;
+  google.protobuf.Struct config = 3;
+  bool is_required = 4;
+  int32 duration_days = 5;
+}
+
+message DeleteCustomStepRequest {
+  int64 step_id = 1;
+}
+
+message ReorderCustomStepsRequest {
+  int64 config_id = 1;
+  repeated int64 step_ids = 2;
+}
+
+message ListCustomStepsResponse {
+  repeated CustomStep steps = 1;
+}
+
+message ListAvailableActionsRequest {
+  string category = 1; // filter by category
+}
+
+message ListAvailableActionsResponse {
+  repeated ActionSchema actions = 1;
+}
+
+message GetActionSchemaRequest {
+  string action_id = 1;
+}
+
+message GetWorkflowBuilderRequest {
+  int64 workflow_id = 1;
+  int64 department_id = 2;
+}
+
+message SaveWorkflowDraftRequest {
+  int64 workflow_id = 1;
+  repeated State states = 2;
+  repeated Transition transitions = 3;
+  google.protobuf.Struct settings = 4;
+}
+
+message PublishWorkflowRequest {
+  int64 workflow_id = 1;
+  string changelog = 2;
+}
+
+message PreviewWorkflowRequest {
+  int64 workflow_id = 1;
+  int64 department_id = 2;
+  google.protobuf.Timestamp start_date = 3;
+}
+
+message SimulateTransitionRequest {
+  int64 workflow_id = 1;
+  int64 from_state_id = 2;
+  string event_name = 3;
+  google.protobuf.Struct mock_data = 4;
+}
+
+message SimulateTransitionResponse {
+  bool can_transition = 1;
+  int64 to_state_id = 2;
+  string to_state_name = 3;
+  repeated string executed_actions = 4;
+  repeated string blocked_reasons = 5;
+}

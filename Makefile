@@ -24,7 +24,7 @@ VERSION    := $(shell git describe --tags --always --dirty 2>NUL || echo dev)
 BUILD_TIME := $(shell echo %DATE% %TIME%)
 LDFLAGS    := -ldflags "-s -w -X main.Version=$(VERSION)"
 
-.PHONY: help all deps tools proto wire generate test coverage build clean docker-up docker-down lint fmt vet
+.PHONY: help all deps tools proto wire generate test coverage build clean docker-up docker-down lint fmt vet migrate-up migrate-down migrate-create migrate-version migrate-force
 
 help:
 	@echo.
@@ -180,7 +180,9 @@ build-linux:
 
 # ==================== DOCKER ====================
 docker-up:
-	docker-compose up -d
+	docker compose up -d main_postgres
+	docker compose run --rm migrations
+	docker compose up -d
 
 docker-down:
 	docker-compose down
@@ -194,6 +196,13 @@ docker-logs:
 docker-restart:
 	docker-compose down
 	docker-compose up -d --build
+
+docker-reset-db:
+	docker compose down -v
+	docker volume rm diplomaflow_diplomaflow_data || true
+	docker compose up -d main_postgres
+	sleep 5
+	docker compose run --rm migrations
 
 # ==================== CODE QUALITY ====================
 lint:
@@ -224,3 +233,24 @@ clean:
 	@if exist "bin" rmdir /s /q bin
 	@if exist "coverage" rmdir /s /q coverage
 	go clean -cache -testcache
+migrate-up:
+	go run ./cmd/migrate -cmd=up
+
+migrate-down:
+	go run ./cmd/migrate -cmd=down -steps=1
+
+migrate-down-all:
+	go run ./cmd/migrate -cmd=down
+
+migrate-version:
+	go run ./cmd/migrate -cmd=version
+
+migrate-force:
+	@read -p "Version: " version; \
+	go run ./cmd/migrate -cmd=force -version=$$version
+
+migrate-create:
+	@read -p "Migration name: " name; \
+	touch db/migrations/$$(date +%Y%m%d%H%M%S)_$$name.up.sql; \
+	touch db/migrations/$$(date +%Y%m%d%H%M%S)_$$name.down.sql; \
+	echo "Created migration: $$name"

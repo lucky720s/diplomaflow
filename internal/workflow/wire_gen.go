@@ -9,6 +9,7 @@ package workflow
 import (
 	"github.com/lucky720s/diplomaflow/pkg/database"
 	"github.com/lucky720s/diplomaflow/pkg/logger"
+	"go.uber.org/zap"
 	"gorm.io/gorm"
 )
 
@@ -19,9 +20,10 @@ func InitializeApp(cfg *Config, log *logger.Logger) (*Handler, func(), error) {
 	if err != nil {
 		return nil, nil, err
 	}
-	workflowRepository := NewRepository(db)
-	service := NewService(workflowRepository)
-	handler := NewHandler(service)
+	workflowRepository := ProvideRepository(db)
+	zapLogger := ProvideLogger(log)
+	service := ProvideService(workflowRepository, zapLogger)
+	handler := ProvideHandler(service, zapLogger)
 	return handler, func() {
 		cleanup()
 	}, nil
@@ -31,4 +33,20 @@ func InitializeApp(cfg *Config, log *logger.Logger) (*Handler, func(), error) {
 
 func ProvideDB(cfg *Config) (*gorm.DB, func(), error) {
 	return database.NewConnection(cfg.Database.DSN)
+}
+
+func ProvideLogger(log *logger.Logger) *zap.Logger {
+	return log.Logger
+}
+
+func ProvideRepository(db *gorm.DB) Repository {
+	return NewRepository(db)
+}
+
+func ProvideService(repo Repository, logger2 *zap.Logger) *Service {
+	return NewService(repo, logger2)
+}
+
+func ProvideHandler(service *Service, logger2 *zap.Logger) *Handler {
+	return NewHandler(service, logger2)
 }
