@@ -12,18 +12,26 @@ async function collectFiles(dir) {
 
             const fullPath = path.join(currentPath, item.name);
 
-            if (item.isDirectory()) {
-                await walk(fullPath);
+            let stat;
+            try {
+                stat = await fs.promises.stat(fullPath);
+            } catch {
+                continue;
+            }
 
-            } else if (item.isFile()) {
-                // --- ПРОПУСКАЕМ ВСЕ .pb.go ФАЙЛЫ ---
-                if (item.name.endsWith(".pb.go")) continue;
-                if (item.name.endsWith(".js")) continue;
-                if (item.name.endsWith(".txt")) continue;
-                if (item.name.endsWith("validate.go")) continue;
-                if (item.name.endsWith(".mod")) continue;
-                if (item.name.endsWith(".work")) continue;
-                if (item.name.endsWith(".sum")) continue;
+            if (stat.isDirectory()) {
+                await walk(fullPath);
+            } else if (stat.isFile()) {
+                if (
+                    item.name.endsWith(".pb.go") ||
+                    item.name.endsWith(".js") ||
+                    item.name.endsWith(".txt") ||
+                    item.name.endsWith("validate.go") ||
+                    item.name.endsWith(".mod") ||
+                    item.name.endsWith(".work") ||
+                    item.name.endsWith(".sum") ||
+                    item.name.endsWith(".exe")
+                ) continue;
 
                 const content = await fs.promises.readFile(fullPath, "utf8");
 
@@ -39,26 +47,29 @@ async function collectFiles(dir) {
     return results;
 }
 
-// Функция для чтения .env файла
 async function readEnvFile(envPath) {
     try {
         const content = await fs.promises.readFile(envPath, "utf8");
         return content;
     } catch (err) {
         console.error("Ошибка при чтении .env файла:", err);
-        return null;  // Возвращаем null, если файл не найден или не удалось прочитать
+        return null;
     }
 }
 
-// === Запуск ===
+function normalizePath(filePath) {
+    return filePath.split(path.sep).join('/');
+}
+
 (async () => {
     const startDir = path.resolve("./");
-    const files = await collectFiles(startDir);
+    const baseDir = path.resolve("./");
+   // const baseDir = path.resolve("internal/workflow");
+    const files = await collectFiles(baseDir);
 
     let output = "=== Собранные файлы ===\n\n";
 
-    // Сначала добавляем содержимое .env файла, если он существует
-    const envPath = path.join(startDir, ".env");
+    const envPath = path.join(baseDir, ".env");
     const envContent = await readEnvFile(envPath);
 
     if (envContent) {
@@ -67,12 +78,16 @@ async function readEnvFile(envPath) {
         output += "----------------------------------------\n\n";
     }
 
-    // Добавляем остальные файлы
     for (const file of files) {
-        output += `FILE: ${file.path}\n`;
-        output += `CONTENT:\n${file.content}\n`;
-        output += "----------------------------------------\n\n";
+        output += `===== FILE START =====\n`;
+        output += `PATH: ${normalizePath(file.path)}\n`;
+        output += `===== FILE CONTENT =====\n`;
+        output += `${file.content}\n`;
+        output += `===== FILE END =====\n\n`;
+        output += `SIZE: ${Buffer.byteLength(file.content, "utf8")} bytes\n`;
+
     }
+
 
     output = output
         .split("\n")
@@ -81,7 +96,6 @@ async function readEnvFile(envPath) {
 
     const txtPath = path.join(__dirname, "collected.txt");
 
-    // --- УДАЛЯЕМ ФАЙЛ collected.txt ПЕРЕД ЗАПУСКОМ ---
     if (fs.existsSync(txtPath)) {
         fs.unlinkSync(txtPath);
     }

@@ -74,7 +74,6 @@ func InitializeApp(
 		NewService,
 		wire.Bind(new(ProjectUseCase), new(*Service)),
 		NewHandler,
-		wire.Bind(new(ProjectUseCase), new(*Service)),
 		NewApp,
 	)
 	return &App{}, nil, nil

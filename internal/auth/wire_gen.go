@@ -57,8 +57,10 @@ func ProvideUniversityClient(cfg *Config) (v1.UniversityServiceClient, func(), e
 	if err != nil {
 		return nil, nil, err
 	}
+
 	client := v1.NewUniversityServiceClient(conn)
 	cleanup := func() { conn.Close() }
+
 	return client, cleanup, nil
 }
 
@@ -67,14 +69,17 @@ func ProvideRoleClient(cfg *Config) (v1_2.RoleServiceClient, func(), error) {
 	if err != nil {
 		return nil, nil, err
 	}
+
 	client := v1_2.NewRoleServiceClient(conn)
 	cleanup := func() { conn.Close() }
+
 	return client, cleanup, nil
 }
 
 func ProvideJwtWrapper(cfg *Config) JwtWrapper {
 	accessTTL, _ := time.ParseDuration(cfg.JWT.AccessTokenTTL)
 	refreshTTL, _ := time.ParseDuration(cfg.JWT.RefreshTokenTTL)
+
 	return JwtWrapper{
 		SecretKey:       cfg.JWT.Secret,
 		Issuer:          "diplomaflow",
