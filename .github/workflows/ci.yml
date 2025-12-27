@@ -82,6 +82,11 @@ jobs:
       - name: Download dependencies
         run: go mod download
 
+      - name: Install migrate CLI
+        run: |
+          curl -L https://github.com/golang-migrate/migrate/releases/download/v4.17.0/migrate.linux-amd64.tar.gz | tar xvz
+          sudo mv migrate /usr/local/bin/migrate
+
       - name: Wait for PostgreSQL
         run: |
           until pg_isready -h localhost -p 5432; do
@@ -89,10 +94,9 @@ jobs:
             sleep 2
           done
 
-      - name: Initialize database
+      - name: Run database migrations
         run: |
-          sudo apt-get update && sudo apt-get install -y postgresql-client
-          PGPASSWORD=test psql -h localhost -U test -d test -f db/init.sql
+          migrate -path ./migrations -database "postgres://test:test@localhost:5432/test?sslmode=disable" up
 
       - name: Run tests
         run: go test -v -race -coverprofile=coverage.out -covermode=atomic ./tests/unit/...
