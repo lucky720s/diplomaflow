@@ -65,9 +65,11 @@ func (s *Service) CreateProject(ctx context.Context, req *projectv1.CreateProjec
 		UpdatedAt:     time.Now(),
 	}
 	eventPayload := map[string]interface{}{
-		"student_id":    req.StudentId,
-		"university_id": req.UniversityId,
-		"title":         req.Title,
+		"student_id":     req.StudentId,
+		"university_id":  req.UniversityId,
+		"department_id":  req.DepartmentId,
+		"first_state_id": initialStep.Id,
+		"title":          req.Title,
 	}
 	if err := s.repo.CreateWithOutbox(ctx, project, "ProjectCreated", "project-events", eventPayload); err != nil {
 		s.logger.Error("Failed to create project", zap.Error(err))

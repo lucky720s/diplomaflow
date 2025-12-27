@@ -8,6 +8,7 @@ import (
 	"github.com/google/wire"
 	authv1 "github.com/lucky720s/diplomaflow/pkg/protobuf/auth/v1"
 	notificationv1 "github.com/lucky720s/diplomaflow/pkg/protobuf/notification/v1"
+	workflowv1 "github.com/lucky720s/diplomaflow/pkg/protobuf/workflow/v1"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
 
@@ -34,6 +35,14 @@ func ProvideNotificationClient(cfg *Config) (notificationv1.NotificationServiceC
 	cleanup := func() { conn.Close() }
 	return notificationv1.NewNotificationServiceClient(conn), cleanup, nil
 }
+func ProvideWorkflowClient(cfg *Config) (workflowv1.WorkflowServiceClient, func(), error) {
+	conn, err := grpc.NewClient(cfg.Services.WorkflowAddr, grpc.WithTransportCredentials(insecure.NewCredentials()))
+	if err != nil {
+		return nil, nil, err
+	}
+	cleanup := func() { conn.Close() }
+	return workflowv1.NewWorkflowServiceClient(conn), cleanup, nil
+}
 
 func InitializeApp(
 	cfg *Config,
@@ -43,11 +52,12 @@ func InitializeApp(
 ) (*App, func(), error) {
 	wire.Build(
 		NewRepository,
+		ProvideNotificationClient,
+		ProvideWorkflowClient,
 		NewService,
 		NewEventHandler,
 		NewHandler,
 		NewApp,
-		ProvideNotificationClient,
 	)
 	return &App{}, nil, nil
 }

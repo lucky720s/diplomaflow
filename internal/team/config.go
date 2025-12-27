@@ -9,6 +9,7 @@ type Config struct {
 	Services struct {
 		AuthAddr         string `mapstructure:"auth_addr"`
 		NotificationAddr string `mapstructure:"notification_addr"`
+		WorkflowAddr     string `mapstructure:"workflow_addr"`
 	} `mapstructure:"services"`
 	Kafka struct {
 		Brokers string `mapstructure:"brokers"`
