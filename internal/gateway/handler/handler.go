@@ -1,6 +1,7 @@
 package handler
 
 import (
+	adminv1 "github.com/lucky720s/diplomaflow/pkg/protobuf/admin/v1"
 	authv1 "github.com/lucky720s/diplomaflow/pkg/protobuf/auth/v1"
 	filev1 "github.com/lucky720s/diplomaflow/pkg/protobuf/file/v1"
 	formv1 "github.com/lucky720s/diplomaflow/pkg/protobuf/form/v1"
@@ -22,6 +23,7 @@ type Handler struct {
 	notificationClient notificationv1.NotificationServiceClient
 	fileClient         filev1.FileServiceClient
 	formClient         formv1.FormServiceClient
+	adminClient        adminv1.AdminServiceClient
 }
 
 func NewHandler(
@@ -34,6 +36,7 @@ func NewHandler(
 	notificationClient notificationv1.NotificationServiceClient,
 	fileClient filev1.FileServiceClient,
 	formClient formv1.FormServiceClient,
+	adminClient adminv1.AdminServiceClient,
 ) *Handler {
 	return &Handler{
 		authClient:         authClient,
@@ -45,5 +48,6 @@ func NewHandler(
 		notificationClient: notificationClient,
 		fileClient:         fileClient,
 		formClient:         formClient,
+		adminClient:        adminClient,
 	}
 }

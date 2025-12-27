@@ -11,6 +11,7 @@ import (
 	"github.com/lucky720s/diplomaflow/internal/gateway/handler"
 	grpc2 "github.com/lucky720s/diplomaflow/pkg/grpc"
 	"github.com/lucky720s/diplomaflow/pkg/logger"
+	v1_10 "github.com/lucky720s/diplomaflow/pkg/protobuf/admin/v1"
 	"github.com/lucky720s/diplomaflow/pkg/protobuf/auth/v1"
 	v1_8 "github.com/lucky720s/diplomaflow/pkg/protobuf/file/v1"
 	v1_9 "github.com/lucky720s/diplomaflow/pkg/protobuf/form/v1"
@@ -100,8 +101,22 @@ func InitializeApp(cfg *config.Config, log *logger.Logger) (*handler.Handler, fu
 		cleanup()
 		return nil, nil, err
 	}
-	handlerHandler := handler.NewHandler(authServiceClient, projectServiceClient, teamServiceClient, universityServiceClient, roleServiceClient, workflowServiceClient, notificationServiceClient, fileServiceClient, formServiceClient)
+	adminServiceClient, cleanup10, err := ProvideAdminClient(cfg)
+	if err != nil {
+		cleanup9()
+		cleanup8()
+		cleanup7()
+		cleanup6()
+		cleanup5()
+		cleanup4()
+		cleanup3()
+		cleanup2()
+		cleanup()
+		return nil, nil, err
+	}
+	handlerHandler := handler.NewHandler(authServiceClient, projectServiceClient, teamServiceClient, universityServiceClient, roleServiceClient, workflowServiceClient, notificationServiceClient, fileServiceClient, formServiceClient, adminServiceClient)
 	return handlerHandler, func() {
+		cleanup10()
 		cleanup9()
 		cleanup8()
 		cleanup7()
@@ -196,4 +211,12 @@ func ProvideFormClient(cfg *config.Config) (v1_9.FormServiceClient, func(), erro
 		return nil, nil, err
 	}
 	return v1_9.NewFormServiceClient(conn), cleanup, nil
+}
+
+func ProvideAdminClient(cfg *config.Config) (v1_10.AdminServiceClient, func(), error) {
+	conn, cleanup, err := provideConn(cfg.AdminServiceAddr)
+	if err != nil {
+		return nil, nil, err
+	}
+	return v1_10.NewAdminServiceClient(conn), cleanup, nil
 }

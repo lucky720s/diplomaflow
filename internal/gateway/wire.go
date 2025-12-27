@@ -12,6 +12,7 @@ import (
 	"github.com/lucky720s/diplomaflow/internal/gateway/handler"
 	grpcpkg "github.com/lucky720s/diplomaflow/pkg/grpc"
 	"github.com/lucky720s/diplomaflow/pkg/logger"
+	adminv1 "github.com/lucky720s/diplomaflow/pkg/protobuf/admin/v1"
 	authv1 "github.com/lucky720s/diplomaflow/pkg/protobuf/auth/v1"
 	filev1 "github.com/lucky720s/diplomaflow/pkg/protobuf/file/v1"
 	formv1 "github.com/lucky720s/diplomaflow/pkg/protobuf/form/v1"
@@ -111,6 +112,14 @@ func ProvideFormClient(cfg *config.Config) (formv1.FormServiceClient, func(), er
 	return formv1.NewFormServiceClient(conn), cleanup, nil
 }
 
+func ProvideAdminClient(cfg *config.Config) (adminv1.AdminServiceClient, func(), error) {
+	conn, cleanup, err := provideConn(cfg.AdminServiceAddr)
+	if err != nil {
+		return nil, nil, err
+	}
+	return adminv1.NewAdminServiceClient(conn), cleanup, nil
+}
+
 func InitializeApp(cfg *config.Config, log *logger.Logger) (*handler.Handler, func(), error) {
 	wire.Build(
 		ProvideAuthClient,
@@ -123,6 +132,7 @@ func InitializeApp(cfg *config.Config, log *logger.Logger) (*handler.Handler, fu
 		ProvideFileClient,
 		ProvideFormClient,
 		handler.NewHandler,
+		ProvideAdminClient,
 	)
 	return &handler.Handler{}, nil, nil
 }
