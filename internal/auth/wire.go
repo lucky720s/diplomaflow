@@ -65,6 +65,7 @@ func InitializeApp(cfg *Config, log *logger.Logger) (*Handler, func(), error) {
 		ProvideJwtWrapper,
 		NewRepository,
 		NewService,
+		wire.Bind(new(AuthService), new(*Service)),
 		NewHandler,
 	)
 	return &Handler{}, nil, nil

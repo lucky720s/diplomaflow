@@ -72,6 +72,7 @@ func InitializeApp(
 		ProvideNotificationClient,
 		ProvideStateActionExecutor,
 		NewService,
+		wire.Bind(new(ProjectUseCase), new(*Service)),
 		NewHandler,
 		NewApp,
 	)

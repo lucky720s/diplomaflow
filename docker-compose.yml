@@ -213,6 +213,7 @@ services:
     environment:
       - GRPC_PORT=${PORT_TEAM}
       - KAFKA_BROKERS=kafka:29092
+      - SERVICES_WORKFLOW_ADDR=workflow_service:${PORT_WORKFLOW}
       - GOMEMLIMIT=64MiB
     deploy:
       resources:

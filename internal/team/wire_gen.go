@@ -9,6 +9,7 @@ package team
 import (
 	"github.com/lucky720s/diplomaflow/pkg/protobuf/auth/v1"
 	v1_2 "github.com/lucky720s/diplomaflow/pkg/protobuf/notification/v1"
+	v1_3 "github.com/lucky720s/diplomaflow/pkg/protobuf/workflow/v1"
 	"go.uber.org/zap"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
@@ -25,9 +26,15 @@ func InitializeApp(cfg *Config, db *gorm.DB, log *zap.Logger, authClient v1.Auth
 	}
 	service := NewService(teamRepository, authClient, notificationServiceClient, log)
 	handler := NewHandler(service)
-	eventHandler := NewEventHandler(service, log)
+	workflowServiceClient, cleanup2, err := ProvideWorkflowClient(cfg)
+	if err != nil {
+		cleanup()
+		return nil, nil, err
+	}
+	eventHandler := NewEventHandler(service, workflowServiceClient, notificationServiceClient, log)
 	app := NewApp(handler, eventHandler)
 	return app, func() {
+		cleanup2()
 		cleanup()
 	}, nil
 }
@@ -53,4 +60,13 @@ func ProvideNotificationClient(cfg *Config) (v1_2.NotificationServiceClient, fun
 	}
 	cleanup := func() { conn.Close() }
 	return v1_2.NewNotificationServiceClient(conn), cleanup, nil
+}
+
+func ProvideWorkflowClient(cfg *Config) (v1_3.WorkflowServiceClient, func(), error) {
+	conn, err := grpc.NewClient(cfg.Services.WorkflowAddr, grpc.WithTransportCredentials(insecure.NewCredentials()))
+	if err != nil {
+		return nil, nil, err
+	}
+	cleanup := func() { conn.Close() }
+	return v1_3.NewWorkflowServiceClient(conn), cleanup, nil
 }

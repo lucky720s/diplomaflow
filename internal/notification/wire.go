@@ -20,6 +20,7 @@ func InitializeApp(cfg *Config, log *logger.Logger) (*Handler, func(), error) {
 		ProvideDB,
 		NewRepository,
 		NewService,
+		wire.Bind(new(NotificationUseCase), new(*Service)),
 		NewHandler,
 	)
 	return &Handler{}, nil, nil
