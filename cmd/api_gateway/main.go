@@ -72,6 +72,13 @@ func main() {
 			admin.POST("/workflows/:id/activate", handler.SetActiveWorkflow)
 			admin.POST("/roles", handler.CreateRole)
 			admin.POST("/assign-role", handler.AssignRole)
+			admin.POST("/workflows/:id/clone", handler.CloneWorkflow)
+			admin.POST("/workflows/:id/version", handler.CreateNewVersion)
+			admin.POST("/workflows/:id/validate", handler.ValidateWorkflow)
+			admin.POST("/workflows/:id/transitions", handler.CreateTransition)
+			admin.PUT("/workflows/:id/transitions/:tid", handler.UpdateTransition)
+			admin.DELETE("/workflows/:id/transitions/:tid", handler.DeleteTransition)
+			admin.POST("/workflows/:id/states/:sid/actions", handler.CreateStateAction)
 		}
 
 		// Admin Panel routes (Commission & Tech Support)
@@ -134,6 +141,11 @@ func main() {
 		{
 			workflows.GET("", handler.ListWorkflows)
 			workflows.GET("/:id", handler.GetWorkflow)
+			workflows.GET("/:id/full", handler.GetWorkflowFull)
+			workflows.GET("/:id/states", handler.ListStates)
+			workflows.GET("/:id/transitions", handler.ListTransitions)
+			workflows.GET("/transitions/available", handler.GetAvailableTransitions)
+			workflows.GET("/states/:state_id/config", handler.GetStepConfiguration)
 		}
 
 		roles := v1.Group("/roles")
