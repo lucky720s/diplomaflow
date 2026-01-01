@@ -238,6 +238,108 @@ func (h *Handler) AssignSupervisor(c *gin.Context) {
 	c.JSON(http.StatusOK, resp)
 }
 
+// ==================== Topic Registration ====================
+
+func (h *Handler) SubmitTopicRegistration(c *gin.Context) {
+	userID := c.GetInt64("userId")
+
+	var req struct {
+		TeamID           int64  `json:"team_id" binding:"required"`
+		ProposedTopic    string `json:"proposed_topic" binding:"required,min=5"`
+		TopicDescription string `json:"topic_description"`
+		SupervisorID     int64  `json:"supervisor_id" binding:"required"`
+	}
+
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	resp, err := h.adminClient.SubmitTopicRegistration(c.Request.Context(), &adminv1.SubmitTopicRegistrationRequest{
+		TeamId:           req.TeamID,
+		ProposedTopic:    req.ProposedTopic,
+		TopicDescription: req.TopicDescription,
+		SupervisorId:     req.SupervisorID,
+		SubmittedBy:      userID,
+	})
+	if err != nil {
+		MapGRPCError(c, err)
+		return
+	}
+
+	c.JSON(http.StatusCreated, resp)
+}
+
+func (h *Handler) ListTopicRegistrations(c *gin.Context) {
+	departmentID := c.GetInt64("departmentId")
+	status := c.Query("status")
+
+	page := int32(1)
+	pageSize := int32(20)
+	if p := c.Query("page"); p != "" {
+		if v, _ := strconv.ParseInt(p, 10, 32); v > 0 {
+			page = int32(v)
+		}
+	}
+
+	resp, err := h.adminClient.ListTopicRegistrations(c.Request.Context(), &adminv1.ListTopicRegistrationsRequest{
+		DepartmentId: departmentID,
+		Status:       status,
+		Page:         page,
+		PageSize:     pageSize,
+	})
+	if err != nil {
+		MapGRPCError(c, err)
+		return
+	}
+
+	c.JSON(http.StatusOK, resp)
+}
+
+func (h *Handler) GetTopicRegistration(c *gin.Context) {
+	registrationID := c.Param("id")
+
+	resp, err := h.adminClient.GetTopicRegistration(c.Request.Context(), &adminv1.GetTopicRegistrationRequest{
+		RegistrationId: registrationID,
+	})
+	if err != nil {
+		MapGRPCError(c, err)
+		return
+	}
+
+	c.JSON(http.StatusOK, resp)
+}
+
+func (h *Handler) ReviewTopicRegistration(c *gin.Context) {
+	registrationID := c.Param("id")
+	reviewerID := c.GetInt64("userId")
+
+	var req struct {
+		Action          string `json:"action" binding:"required"` // approve, reject, request_changes
+		Comment         string `json:"comment"`
+		RejectionReason string `json:"rejection_reason"`
+	}
+
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	resp, err := h.adminClient.ReviewTopicRegistration(c.Request.Context(), &adminv1.ReviewTopicRegistrationRequest{
+		RegistrationId:  registrationID,
+		ReviewerId:      reviewerID,
+		Action:          req.Action,
+		Comment:         req.Comment,
+		RejectionReason: req.RejectionReason,
+	})
+	if err != nil {
+		MapGRPCError(c, err)
+		return
+	}
+
+	c.JSON(http.StatusOK, resp)
+}
+
 // ==================== Submissions ====================
 
 func (h *Handler) ListSubmissions(c *gin.Context) {
