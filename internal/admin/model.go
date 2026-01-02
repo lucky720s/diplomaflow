@@ -134,12 +134,12 @@ const (
 
 // ActivityType constants
 const (
-	ActivityTypeSubmission         = "SUBMISSION"
-	ActivityTypeGrade              = "GRADE"
-	ActivityTypeTeamUpdate         = "TEAM_UPDATE"
-	ActivityTypeTeamDelete         = "TEAM_DELETE"
-	ActivityTypeSupervisorAssign   = "SUPERVISOR_ASSIGN"
-	ActivityTypeReview             = "REVIEW"
-	ActivityTypeTopicRegistration  = "TOPIC_REGISTRATION"
-	ActivityTypeTopicApproval      = "TOPIC_APPROVAL"
+	ActivityTypeSubmission        = "SUBMISSION"
+	ActivityTypeGrade             = "GRADE"
+	ActivityTypeTeamUpdate        = "TEAM_UPDATE"
+	ActivityTypeTeamDelete        = "TEAM_DELETE"
+	ActivityTypeSupervisorAssign  = "SUPERVISOR_ASSIGN"
+	ActivityTypeReview            = "REVIEW"
+	ActivityTypeTopicRegistration = "TOPIC_REGISTRATION"
+	ActivityTypeTopicApproval     = "TOPIC_APPROVAL"
 )

@@ -332,6 +332,7 @@ func (h *Handler) ReviewTopicRegistration(c *gin.Context) {
 		Comment:         req.Comment,
 		RejectionReason: req.RejectionReason,
 	})
+
 	if err != nil {
 		MapGRPCError(c, err)
 		return

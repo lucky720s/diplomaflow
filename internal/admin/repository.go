@@ -71,13 +71,13 @@ type SubmissionFilter struct {
 
 // Stats data structs
 type DashboardStatsData struct {
-	TotalStudents              int32
-	TotalTeams                 int32
-	TotalProjects              int32
-	CompletedProjects          int32
-	PendingReviews             int32
-	ActiveSupervisors          int32
-	PendingTopicRegistrations  int32
+	TotalStudents             int32
+	TotalTeams                int32
+	TotalProjects             int32
+	CompletedProjects         int32
+	PendingReviews            int32
+	ActiveSupervisors         int32
+	PendingTopicRegistrations int32
 }
 
 type StepProgressData struct {
