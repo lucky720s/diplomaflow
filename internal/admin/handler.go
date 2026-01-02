@@ -42,12 +42,13 @@ func (h *Handler) GetDashboard(ctx context.Context, req *adminv1.GetDashboardReq
 
 	pbResp := &adminv1.GetDashboardResponse{
 		Stats: &adminv1.DashboardStats{
-			TotalStudents:     resp.Stats.TotalStudents,
-			TotalTeams:        resp.Stats.TotalTeams,
-			TotalProjects:     resp.Stats.TotalProjects,
-			CompletedProjects: resp.Stats.CompletedProjects,
-			PendingReviews:    resp.Stats.PendingReviews,
-			ActiveSupervisors: resp.Stats.ActiveSupervisors,
+			TotalStudents:             resp.Stats.TotalStudents,
+			TotalTeams:                resp.Stats.TotalTeams,
+			TotalProjects:             resp.Stats.TotalProjects,
+			CompletedProjects:         resp.Stats.CompletedProjects,
+			PendingReviews:            resp.Stats.PendingReviews,
+			ActiveSupervisors:         resp.Stats.ActiveSupervisors,
+			PendingTopicRegistrations: resp.Stats.PendingTopicRegistrations,
 		},
 	}
 
@@ -91,12 +92,13 @@ func (h *Handler) GetDepartmentStats(ctx context.Context, req *adminv1.GetDepart
 
 	pbResp := &adminv1.GetDepartmentStatsResponse{
 		Stats: &adminv1.DashboardStats{
-			TotalStudents:     resp.Stats.TotalStudents,
-			TotalTeams:        resp.Stats.TotalTeams,
-			TotalProjects:     resp.Stats.TotalProjects,
-			CompletedProjects: resp.Stats.CompletedProjects,
-			PendingReviews:    resp.Stats.PendingReviews,
-			ActiveSupervisors: resp.Stats.ActiveSupervisors,
+			TotalStudents:             resp.Stats.TotalStudents,
+			TotalTeams:                resp.Stats.TotalTeams,
+			TotalProjects:             resp.Stats.TotalProjects,
+			CompletedProjects:         resp.Stats.CompletedProjects,
+			PendingReviews:            resp.Stats.PendingReviews,
+			ActiveSupervisors:         resp.Stats.ActiveSupervisors,
+			PendingTopicRegistrations: resp.Stats.PendingTopicRegistrations,
 		},
 	}
 
@@ -140,7 +142,6 @@ func (h *Handler) ListStudents(ctx context.Context, req *adminv1.ListStudentsReq
 }
 
 func (h *Handler) GetStudent(ctx context.Context, req *adminv1.GetStudentRequest) (*adminv1.GetStudentResponse, error) {
-	// Implementation
 	return nil, status.Error(codes.Unimplemented, "not implemented")
 }
 
@@ -232,6 +233,183 @@ func (h *Handler) AssignSupervisor(ctx context.Context, req *adminv1.AssignSuper
 	return &adminv1.AssignSupervisorResponse{
 		Success: true,
 		Message: "Supervisor assigned successfully",
+	}, nil
+}
+
+// ==================== Topic Registration ====================
+
+func (h *Handler) SubmitTopicRegistration(ctx context.Context, req *adminv1.SubmitTopicRegistrationRequest) (*adminv1.SubmitTopicRegistrationResponse, error) {
+	if req.TeamId == 0 {
+		return nil, status.Error(codes.InvalidArgument, "team_id is required")
+	}
+	if req.ProposedTopic == "" {
+		return nil, status.Error(codes.InvalidArgument, "proposed_topic is required")
+	}
+	if req.SupervisorId == 0 {
+		return nil, status.Error(codes.InvalidArgument, "supervisor_id is required")
+	}
+
+	reg, err := h.service.SubmitTopicRegistration(ctx, &SubmitTopicRegistrationRequest{
+		TeamID:           req.TeamId,
+		ProposedTopic:    req.ProposedTopic,
+		TopicDescription: req.TopicDescription,
+		SupervisorID:     req.SupervisorId,
+		SubmittedBy:      req.SubmittedBy,
+	})
+	if err != nil {
+		return nil, status.Errorf(codes.Internal, "failed to submit topic registration: %v", err)
+	}
+
+	return &adminv1.SubmitTopicRegistrationResponse{
+		Success:        true,
+		RegistrationId: reg.ID,
+		Message:        "Заявление на регистрацию темы успешно подано",
+	}, nil
+}
+
+func (h *Handler) ListTopicRegistrations(ctx context.Context, req *adminv1.ListTopicRegistrationsRequest) (*adminv1.ListTopicRegistrationsResponse, error) {
+	pageSize := int(req.PageSize)
+	if pageSize <= 0 {
+		pageSize = 20
+	}
+	page := int(req.Page)
+	if page <= 0 {
+		page = 1
+	}
+
+	filter := TopicRegistrationFilter{
+		DepartmentID: req.DepartmentId,
+		Status:       req.Status,
+		Limit:        pageSize,
+		Offset:       (page - 1) * pageSize,
+	}
+
+	regs, total, err := h.service.ListTopicRegistrations(ctx, filter)
+	if err != nil {
+		return nil, status.Errorf(codes.Internal, "failed to list topic registrations: %v", err)
+	}
+
+	var pbRegs []*adminv1.TopicRegistrationInfo
+	for _, r := range regs {
+		pbReg := &adminv1.TopicRegistrationInfo{
+			Id:               r.ID,
+			TeamId:           r.TeamID,
+			ProjectId:        r.ProjectID,
+			ProposedTopic:    r.ProposedTopic,
+			TopicDescription: r.TopicDescription,
+			SupervisorId:     r.SupervisorID,
+			SubmittedBy:      r.SubmittedBy,
+			Status:           r.Status,
+			RejectionReason:  r.RejectionReason,
+			Comment:          r.Comment,
+			SubmittedAt:      timestamppb.New(r.CreatedAt),
+		}
+		if r.ReviewerID != nil {
+			pbReg.ReviewedBy = *r.ReviewerID
+		}
+		if r.ReviewedAt != nil {
+			pbReg.ReviewedAt = timestamppb.New(*r.ReviewedAt)
+		}
+		pbRegs = append(pbRegs, pbReg)
+	}
+
+	return &adminv1.ListTopicRegistrationsResponse{
+		Registrations: pbRegs,
+		TotalCount:    total,
+	}, nil
+}
+
+func (h *Handler) GetTopicRegistration(ctx context.Context, req *adminv1.GetTopicRegistrationRequest) (*adminv1.GetTopicRegistrationResponse, error) {
+	if req.RegistrationId == "" {
+		return nil, status.Error(codes.InvalidArgument, "registration_id is required")
+	}
+
+	reg, reviews, err := h.service.GetTopicRegistration(ctx, req.RegistrationId)
+	if err != nil {
+		return nil, status.Errorf(codes.NotFound, "topic registration not found: %v", err)
+	}
+
+	pbReg := &adminv1.TopicRegistrationInfo{
+		Id:               reg.ID,
+		TeamId:           reg.TeamID,
+		ProjectId:        reg.ProjectID,
+		ProposedTopic:    reg.ProposedTopic,
+		TopicDescription: reg.TopicDescription,
+		SupervisorId:     reg.SupervisorID,
+		SubmittedBy:      reg.SubmittedBy,
+		Status:           reg.Status,
+		RejectionReason:  reg.RejectionReason,
+		Comment:          reg.Comment,
+		SubmittedAt:      timestamppb.New(reg.CreatedAt),
+	}
+	if reg.ReviewerID != nil {
+		pbReg.ReviewedBy = *reg.ReviewerID
+	}
+	if reg.ReviewedAt != nil {
+		pbReg.ReviewedAt = timestamppb.New(*reg.ReviewedAt)
+	}
+
+	var pbHistory []*adminv1.TopicRegistrationHistory
+	for _, r := range reviews {
+		pbHistory = append(pbHistory, &adminv1.TopicRegistrationHistory{
+			Id:         r.ID,
+			ReviewerId: r.ReviewerID,
+			Action:     r.Action,
+			Comment:    r.Comment,
+			CreatedAt:  timestamppb.New(r.CreatedAt),
+		})
+	}
+
+	return &adminv1.GetTopicRegistrationResponse{
+		Registration: pbReg,
+		History:      pbHistory,
+	}, nil
+}
+
+func (h *Handler) ReviewTopicRegistration(ctx context.Context, req *adminv1.ReviewTopicRegistrationRequest) (*adminv1.ReviewTopicRegistrationResponse, error) {
+	if req.RegistrationId == "" {
+		return nil, status.Error(codes.InvalidArgument, "registration_id is required")
+	}
+	if req.ReviewerId == 0 {
+		return nil, status.Error(codes.InvalidArgument, "reviewer_id is required")
+	}
+	if req.Action == "" {
+		return nil, status.Error(codes.InvalidArgument, "action is required")
+	}
+
+	reg, err := h.service.ReviewTopicRegistration(ctx, &ReviewTopicRegistrationRequest{
+		RegistrationID:  req.RegistrationId,
+		ReviewerID:      req.ReviewerId,
+		Action:          req.Action,
+		Comment:         req.Comment,
+		RejectionReason: req.RejectionReason,
+	})
+	if err != nil {
+		return nil, status.Errorf(codes.Internal, "failed to review topic registration: %v", err)
+	}
+
+	pbReg := &adminv1.TopicRegistrationInfo{
+		Id:               reg.ID,
+		TeamId:           reg.TeamID,
+		ProposedTopic:    reg.ProposedTopic,
+		TopicDescription: reg.TopicDescription,
+		SupervisorId:     reg.SupervisorID,
+		Status:           reg.Status,
+		Comment:          reg.Comment,
+		RejectionReason:  reg.RejectionReason,
+		SubmittedAt:      timestamppb.New(reg.CreatedAt),
+	}
+	if reg.ReviewerID != nil {
+		pbReg.ReviewedBy = *reg.ReviewerID
+	}
+	if reg.ReviewedAt != nil {
+		pbReg.ReviewedAt = timestamppb.New(*reg.ReviewedAt)
+	}
+
+	return &adminv1.ReviewTopicRegistrationResponse{
+		Success:             true,
+		Message:             "Заявление успешно рассмотрено",
+		UpdatedRegistration: pbReg,
 	}, nil
 }
 
@@ -375,7 +553,7 @@ func (h *Handler) ReviewSubmission(ctx context.Context, req *adminv1.ReviewSubmi
 	}, nil
 }
 
-// ==================== Grading ====================
+// ==================== Grading (только баллы, без буквенных оценок) ====================
 
 func (h *Handler) GetProjectGrades(ctx context.Context, req *adminv1.GetProjectGradesRequest) (*adminv1.GetProjectGradesResponse, error) {
 	grades, avg, err := h.service.GetProjectGrades(ctx, req.ProjectId)
@@ -386,22 +564,21 @@ func (h *Handler) GetProjectGrades(ctx context.Context, req *adminv1.GetProjectG
 	var pbGrades []*adminv1.GradeInfo
 	for _, g := range grades {
 		pbGrades = append(pbGrades, &adminv1.GradeInfo{
-			Id:          g.ID,
-			ProjectId:   g.ProjectID,
-			StepId:      g.StepID,
-			Grade:       g.Grade,
-			LetterGrade: g.LetterGrade,
-			GradedBy:    g.GradedBy,
-			Comment:     g.Comment,
-			GradedAt:    timestamppb.New(g.CreatedAt),
+			Id:        g.ID,
+			ProjectId: g.ProjectID,
+			StepId:    g.StepID,
+			Grade:     g.Grade,
+			GradedBy:  g.GradedBy,
+			Comment:   g.Comment,
+			GradedAt:  timestamppb.New(g.CreatedAt),
 		})
 	}
 
 	return &adminv1.GetProjectGradesResponse{
-		ProjectId:        req.ProjectId,
-		StepGrades:       pbGrades,
-		AverageGrade:     avg,
-		FinalLetterGrade: CalculateLetterGrade(int32(avg)),
+		ProjectId:    req.ProjectId,
+		StepGrades:   pbGrades,
+		AverageGrade: avg,
+		TotalScore:   avg, // Итоговый балл = средний балл
 	}, nil
 }
 
@@ -427,14 +604,13 @@ func (h *Handler) SetStepGrade(ctx context.Context, req *adminv1.SetStepGradeReq
 	return &adminv1.SetStepGradeResponse{
 		Success: true,
 		Grade: &adminv1.GradeInfo{
-			Id:          grade.ID,
-			ProjectId:   grade.ProjectID,
-			StepId:      grade.StepID,
-			Grade:       grade.Grade,
-			LetterGrade: grade.LetterGrade,
-			GradedBy:    grade.GradedBy,
-			Comment:     grade.Comment,
-			GradedAt:    timestamppb.New(grade.CreatedAt),
+			Id:        grade.ID,
+			ProjectId: grade.ProjectID,
+			StepId:    grade.StepID,
+			Grade:     grade.Grade,
+			GradedBy:  grade.GradedBy,
+			Comment:   grade.Comment,
+			GradedAt:  timestamppb.New(grade.CreatedAt),
 		},
 	}, nil
 }

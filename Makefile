@@ -7,7 +7,7 @@ else
 endif
 
 GOBIN     := $(shell go env GOPATH)/bin
-PROTOC    := protoc$(EXE)
+PROTOC    := "C:/Tools/protoc/bin/protoc.exe"
 WIRE      := $(GOBIN)/wire$(EXE)
 GOLINT    := $(GOBIN)/golangci-lint$(EXE)
 VALIDATE  := $(GOBIN)/protoc-gen-validate$(EXE)

@@ -20,24 +20,28 @@ import (
 const _ = grpc.SupportPackageIsVersion9
 
 const (
-	AdminService_GetDashboard_FullMethodName        = "/admin.v1.AdminService/GetDashboard"
-	AdminService_GetDepartmentStats_FullMethodName  = "/admin.v1.AdminService/GetDepartmentStats"
-	AdminService_ListStudents_FullMethodName        = "/admin.v1.AdminService/ListStudents"
-	AdminService_GetStudent_FullMethodName          = "/admin.v1.AdminService/GetStudent"
-	AdminService_ListAllTeams_FullMethodName        = "/admin.v1.AdminService/ListAllTeams"
-	AdminService_GetTeamDetails_FullMethodName      = "/admin.v1.AdminService/GetTeamDetails"
-	AdminService_UpdateTeamAdmin_FullMethodName     = "/admin.v1.AdminService/UpdateTeamAdmin"
-	AdminService_DeleteTeamAdmin_FullMethodName     = "/admin.v1.AdminService/DeleteTeamAdmin"
-	AdminService_ListSupervisors_FullMethodName     = "/admin.v1.AdminService/ListSupervisors"
-	AdminService_AssignSupervisor_FullMethodName    = "/admin.v1.AdminService/AssignSupervisor"
-	AdminService_ListSubmissions_FullMethodName     = "/admin.v1.AdminService/ListSubmissions"
-	AdminService_GetSubmission_FullMethodName       = "/admin.v1.AdminService/GetSubmission"
-	AdminService_ReviewSubmission_FullMethodName    = "/admin.v1.AdminService/ReviewSubmission"
-	AdminService_GetProjectGrades_FullMethodName    = "/admin.v1.AdminService/GetProjectGrades"
-	AdminService_SetStepGrade_FullMethodName        = "/admin.v1.AdminService/SetStepGrade"
-	AdminService_GetGradingHistory_FullMethodName   = "/admin.v1.AdminService/GetGradingHistory"
-	AdminService_GetWorkflowProgress_FullMethodName = "/admin.v1.AdminService/GetWorkflowProgress"
-	AdminService_ListPendingReviews_FullMethodName  = "/admin.v1.AdminService/ListPendingReviews"
+	AdminService_GetDashboard_FullMethodName            = "/admin.v1.AdminService/GetDashboard"
+	AdminService_GetDepartmentStats_FullMethodName      = "/admin.v1.AdminService/GetDepartmentStats"
+	AdminService_ListStudents_FullMethodName            = "/admin.v1.AdminService/ListStudents"
+	AdminService_GetStudent_FullMethodName              = "/admin.v1.AdminService/GetStudent"
+	AdminService_ListAllTeams_FullMethodName            = "/admin.v1.AdminService/ListAllTeams"
+	AdminService_GetTeamDetails_FullMethodName          = "/admin.v1.AdminService/GetTeamDetails"
+	AdminService_UpdateTeamAdmin_FullMethodName         = "/admin.v1.AdminService/UpdateTeamAdmin"
+	AdminService_DeleteTeamAdmin_FullMethodName         = "/admin.v1.AdminService/DeleteTeamAdmin"
+	AdminService_ListSupervisors_FullMethodName         = "/admin.v1.AdminService/ListSupervisors"
+	AdminService_AssignSupervisor_FullMethodName        = "/admin.v1.AdminService/AssignSupervisor"
+	AdminService_SubmitTopicRegistration_FullMethodName = "/admin.v1.AdminService/SubmitTopicRegistration"
+	AdminService_ListTopicRegistrations_FullMethodName  = "/admin.v1.AdminService/ListTopicRegistrations"
+	AdminService_ReviewTopicRegistration_FullMethodName = "/admin.v1.AdminService/ReviewTopicRegistration"
+	AdminService_GetTopicRegistration_FullMethodName    = "/admin.v1.AdminService/GetTopicRegistration"
+	AdminService_ListSubmissions_FullMethodName         = "/admin.v1.AdminService/ListSubmissions"
+	AdminService_GetSubmission_FullMethodName           = "/admin.v1.AdminService/GetSubmission"
+	AdminService_ReviewSubmission_FullMethodName        = "/admin.v1.AdminService/ReviewSubmission"
+	AdminService_GetProjectGrades_FullMethodName        = "/admin.v1.AdminService/GetProjectGrades"
+	AdminService_SetStepGrade_FullMethodName            = "/admin.v1.AdminService/SetStepGrade"
+	AdminService_GetGradingHistory_FullMethodName       = "/admin.v1.AdminService/GetGradingHistory"
+	AdminService_GetWorkflowProgress_FullMethodName     = "/admin.v1.AdminService/GetWorkflowProgress"
+	AdminService_ListPendingReviews_FullMethodName      = "/admin.v1.AdminService/ListPendingReviews"
 )
 
 // AdminServiceClient is the client API for AdminService service.
@@ -58,15 +62,20 @@ type AdminServiceClient interface {
 	// ==================== Supervisors ====================
 	ListSupervisors(ctx context.Context, in *ListSupervisorsRequest, opts ...grpc.CallOption) (*ListSupervisorsResponse, error)
 	AssignSupervisor(ctx context.Context, in *AssignSupervisorRequest, opts ...grpc.CallOption) (*AssignSupervisorResponse, error)
-	// ==================== Submissions (Заявления/Отчеты) ====================
+	// ==================== Topic Registration (Заявление на тему) ====================
+	SubmitTopicRegistration(ctx context.Context, in *SubmitTopicRegistrationRequest, opts ...grpc.CallOption) (*SubmitTopicRegistrationResponse, error)
+	ListTopicRegistrations(ctx context.Context, in *ListTopicRegistrationsRequest, opts ...grpc.CallOption) (*ListTopicRegistrationsResponse, error)
+	ReviewTopicRegistration(ctx context.Context, in *ReviewTopicRegistrationRequest, opts ...grpc.CallOption) (*ReviewTopicRegistrationResponse, error)
+	GetTopicRegistration(ctx context.Context, in *GetTopicRegistrationRequest, opts ...grpc.CallOption) (*GetTopicRegistrationResponse, error)
+	// ==================== Submissions (Отчеты/Документы) ====================
 	ListSubmissions(ctx context.Context, in *ListSubmissionsRequest, opts ...grpc.CallOption) (*ListSubmissionsResponse, error)
 	GetSubmission(ctx context.Context, in *GetSubmissionRequest, opts ...grpc.CallOption) (*GetSubmissionResponse, error)
 	ReviewSubmission(ctx context.Context, in *ReviewSubmissionRequest, opts ...grpc.CallOption) (*ReviewSubmissionResponse, error)
-	// ==================== Grading (Оценивание) ====================
+	// ==================== Grading (Оценивание - только баллы) ====================
 	GetProjectGrades(ctx context.Context, in *GetProjectGradesRequest, opts ...grpc.CallOption) (*GetProjectGradesResponse, error)
 	SetStepGrade(ctx context.Context, in *SetStepGradeRequest, opts ...grpc.CallOption) (*SetStepGradeResponse, error)
 	GetGradingHistory(ctx context.Context, in *GetGradingHistoryRequest, opts ...grpc.CallOption) (*GetGradingHistoryResponse, error)
-	// ==================== Workflow Steps (Пункты сдачи) ====================
+	// ==================== Workflow Progress ====================
 	GetWorkflowProgress(ctx context.Context, in *GetWorkflowProgressRequest, opts ...grpc.CallOption) (*GetWorkflowProgressResponse, error)
 	ListPendingReviews(ctx context.Context, in *ListPendingReviewsRequest, opts ...grpc.CallOption) (*ListPendingReviewsResponse, error)
 }
@@ -179,6 +188,46 @@ func (c *adminServiceClient) AssignSupervisor(ctx context.Context, in *AssignSup
 	return out, nil
 }
 
+func (c *adminServiceClient) SubmitTopicRegistration(ctx context.Context, in *SubmitTopicRegistrationRequest, opts ...grpc.CallOption) (*SubmitTopicRegistrationResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(SubmitTopicRegistrationResponse)
+	err := c.cc.Invoke(ctx, AdminService_SubmitTopicRegistration_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *adminServiceClient) ListTopicRegistrations(ctx context.Context, in *ListTopicRegistrationsRequest, opts ...grpc.CallOption) (*ListTopicRegistrationsResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(ListTopicRegistrationsResponse)
+	err := c.cc.Invoke(ctx, AdminService_ListTopicRegistrations_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *adminServiceClient) ReviewTopicRegistration(ctx context.Context, in *ReviewTopicRegistrationRequest, opts ...grpc.CallOption) (*ReviewTopicRegistrationResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(ReviewTopicRegistrationResponse)
+	err := c.cc.Invoke(ctx, AdminService_ReviewTopicRegistration_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *adminServiceClient) GetTopicRegistration(ctx context.Context, in *GetTopicRegistrationRequest, opts ...grpc.CallOption) (*GetTopicRegistrationResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(GetTopicRegistrationResponse)
+	err := c.cc.Invoke(ctx, AdminService_GetTopicRegistration_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 func (c *adminServiceClient) ListSubmissions(ctx context.Context, in *ListSubmissionsRequest, opts ...grpc.CallOption) (*ListSubmissionsResponse, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
 	out := new(ListSubmissionsResponse)
@@ -277,15 +326,20 @@ type AdminServiceServer interface {
 	// ==================== Supervisors ====================
 	ListSupervisors(context.Context, *ListSupervisorsRequest) (*ListSupervisorsResponse, error)
 	AssignSupervisor(context.Context, *AssignSupervisorRequest) (*AssignSupervisorResponse, error)
-	// ==================== Submissions (Заявления/Отчеты) ====================
+	// ==================== Topic Registration (Заявление на тему) ====================
+	SubmitTopicRegistration(context.Context, *SubmitTopicRegistrationRequest) (*SubmitTopicRegistrationResponse, error)
+	ListTopicRegistrations(context.Context, *ListTopicRegistrationsRequest) (*ListTopicRegistrationsResponse, error)
+	ReviewTopicRegistration(context.Context, *ReviewTopicRegistrationRequest) (*ReviewTopicRegistrationResponse, error)
+	GetTopicRegistration(context.Context, *GetTopicRegistrationRequest) (*GetTopicRegistrationResponse, error)
+	// ==================== Submissions (Отчеты/Документы) ====================
 	ListSubmissions(context.Context, *ListSubmissionsRequest) (*ListSubmissionsResponse, error)
 	GetSubmission(context.Context, *GetSubmissionRequest) (*GetSubmissionResponse, error)
 	ReviewSubmission(context.Context, *ReviewSubmissionRequest) (*ReviewSubmissionResponse, error)
-	// ==================== Grading (Оценивание) ====================
+	// ==================== Grading (Оценивание - только баллы) ====================
 	GetProjectGrades(context.Context, *GetProjectGradesRequest) (*GetProjectGradesResponse, error)
 	SetStepGrade(context.Context, *SetStepGradeRequest) (*SetStepGradeResponse, error)
 	GetGradingHistory(context.Context, *GetGradingHistoryRequest) (*GetGradingHistoryResponse, error)
-	// ==================== Workflow Steps (Пункты сдачи) ====================
+	// ==================== Workflow Progress ====================
 	GetWorkflowProgress(context.Context, *GetWorkflowProgressRequest) (*GetWorkflowProgressResponse, error)
 	ListPendingReviews(context.Context, *ListPendingReviewsRequest) (*ListPendingReviewsResponse, error)
 	mustEmbedUnimplementedAdminServiceServer()
@@ -327,6 +381,18 @@ func (UnimplementedAdminServiceServer) ListSupervisors(context.Context, *ListSup
 }
 func (UnimplementedAdminServiceServer) AssignSupervisor(context.Context, *AssignSupervisorRequest) (*AssignSupervisorResponse, error) {
 	return nil, status.Error(codes.Unimplemented, "method AssignSupervisor not implemented")
+}
+func (UnimplementedAdminServiceServer) SubmitTopicRegistration(context.Context, *SubmitTopicRegistrationRequest) (*SubmitTopicRegistrationResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method SubmitTopicRegistration not implemented")
+}
+func (UnimplementedAdminServiceServer) ListTopicRegistrations(context.Context, *ListTopicRegistrationsRequest) (*ListTopicRegistrationsResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method ListTopicRegistrations not implemented")
+}
+func (UnimplementedAdminServiceServer) ReviewTopicRegistration(context.Context, *ReviewTopicRegistrationRequest) (*ReviewTopicRegistrationResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method ReviewTopicRegistration not implemented")
+}
+func (UnimplementedAdminServiceServer) GetTopicRegistration(context.Context, *GetTopicRegistrationRequest) (*GetTopicRegistrationResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method GetTopicRegistration not implemented")
 }
 func (UnimplementedAdminServiceServer) ListSubmissions(context.Context, *ListSubmissionsRequest) (*ListSubmissionsResponse, error) {
 	return nil, status.Error(codes.Unimplemented, "method ListSubmissions not implemented")
@@ -553,6 +619,78 @@ func _AdminService_AssignSupervisor_Handler(srv interface{}, ctx context.Context
 	return interceptor(ctx, in, info, handler)
 }
 
+func _AdminService_SubmitTopicRegistration_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(SubmitTopicRegistrationRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(AdminServiceServer).SubmitTopicRegistration(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: AdminService_SubmitTopicRegistration_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(AdminServiceServer).SubmitTopicRegistration(ctx, req.(*SubmitTopicRegistrationRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _AdminService_ListTopicRegistrations_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(ListTopicRegistrationsRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(AdminServiceServer).ListTopicRegistrations(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: AdminService_ListTopicRegistrations_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(AdminServiceServer).ListTopicRegistrations(ctx, req.(*ListTopicRegistrationsRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _AdminService_ReviewTopicRegistration_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(ReviewTopicRegistrationRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(AdminServiceServer).ReviewTopicRegistration(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: AdminService_ReviewTopicRegistration_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(AdminServiceServer).ReviewTopicRegistration(ctx, req.(*ReviewTopicRegistrationRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _AdminService_GetTopicRegistration_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetTopicRegistrationRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(AdminServiceServer).GetTopicRegistration(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: AdminService_GetTopicRegistration_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(AdminServiceServer).GetTopicRegistration(ctx, req.(*GetTopicRegistrationRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 func _AdminService_ListSubmissions_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(ListSubmissionsRequest)
 	if err := dec(in); err != nil {
@@ -743,6 +881,22 @@ var AdminService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "AssignSupervisor",
 			Handler:    _AdminService_AssignSupervisor_Handler,
+		},
+		{
+			MethodName: "SubmitTopicRegistration",
+			Handler:    _AdminService_SubmitTopicRegistration_Handler,
+		},
+		{
+			MethodName: "ListTopicRegistrations",
+			Handler:    _AdminService_ListTopicRegistrations_Handler,
+		},
+		{
+			MethodName: "ReviewTopicRegistration",
+			Handler:    _AdminService_ReviewTopicRegistration_Handler,
+		},
+		{
+			MethodName: "GetTopicRegistration",
+			Handler:    _AdminService_GetTopicRegistration_Handler,
 		},
 		{
 			MethodName: "ListSubmissions",

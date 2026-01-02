@@ -43,8 +43,153 @@ func NewService(
 	}
 }
 
-// ==================== Dashboard ====================
+// ==================== Topic Registration ====================
 
+// SubmitTopicRegistration - команда отправляет заявление на регистрацию темы
+func (s *Service) SubmitTopicRegistration(ctx context.Context, req *SubmitTopicRegistrationRequest) (*TopicRegistration, error) {
+	// Проверяем, нет ли уже активного заявления для этой команды
+	existing, err := s.repo.GetTopicRegistrationByTeam(ctx, req.TeamID)
+	if err == nil && existing != nil {
+		if existing.Status == StatusPending {
+			return nil, errors.New("у команды уже есть заявление на рассмотрении")
+		}
+		if existing.Status == StatusApproved {
+			return nil, errors.New("тема уже утверждена для этой команды")
+		}
+	}
+
+	reg := &TopicRegistration{
+		ID:               uuid.New().String(),
+		TeamID:           req.TeamID,
+		ProposedTopic:    req.ProposedTopic,
+		TopicDescription: req.TopicDescription,
+		SupervisorID:     req.SupervisorID,
+		SubmittedBy:      req.SubmittedBy,
+		Status:           StatusPending,
+	}
+
+	if err := s.repo.CreateTopicRegistration(ctx, reg); err != nil {
+		return nil, fmt.Errorf("не удалось создать заявление: %w", err)
+	}
+
+	// Создаём запись в истории
+	review := &TopicRegistrationReview{
+		RegistrationID: reg.ID,
+		ReviewerID:     req.SubmittedBy,
+		Action:         "submitted",
+		Comment:        "Заявление подано",
+	}
+	_ = s.repo.CreateTopicRegistrationReview(ctx, review)
+
+	// Логируем активность
+	_ = s.repo.LogActivity(ctx, &AdminActivity{
+		ActivityType: ActivityTypeTopicRegistration,
+		Description:  fmt.Sprintf("Заявление на тему '%s' подано командой %d", req.ProposedTopic, req.TeamID),
+		ActorID:      req.SubmittedBy,
+		TargetID:     req.TeamID,
+		TargetType:   "team",
+	})
+
+	s.logger.Info("Topic registration submitted",
+		zap.String("registration_id", reg.ID),
+		zap.Int64("team_id", req.TeamID),
+		zap.String("topic", req.ProposedTopic))
+
+	return reg, nil
+}
+
+type SubmitTopicRegistrationRequest struct {
+	TeamID           int64
+	ProposedTopic    string
+	TopicDescription string
+	SupervisorID     int64
+	SubmittedBy      int64
+}
+
+// ReviewTopicRegistration - комиссия проверяет заявление
+func (s *Service) ReviewTopicRegistration(ctx context.Context, req *ReviewTopicRegistrationRequest) (*TopicRegistration, error) {
+	reg, err := s.repo.GetTopicRegistration(ctx, req.RegistrationID)
+	if err != nil {
+		return nil, fmt.Errorf("заявление не найдено: %w", err)
+	}
+
+	if reg.Status != StatusPending && reg.Status != StatusRevisionRequested {
+		return nil, errors.New("заявление не может быть рассмотрено в текущем статусе")
+	}
+
+	now := time.Now()
+	reg.ReviewerID = &req.ReviewerID
+	reg.ReviewedAt = &now
+	reg.Comment = req.Comment
+
+	switch req.Action {
+	case "approve":
+		reg.Status = StatusApproved
+		// Здесь можно добавить логику создания проекта или обновления существующего
+		s.logger.Info("Topic registration approved",
+			zap.String("registration_id", req.RegistrationID),
+			zap.Int64("team_id", reg.TeamID))
+
+	case "reject":
+		reg.Status = StatusRejected
+		reg.RejectionReason = req.RejectionReason
+
+	case "request_changes":
+		reg.Status = StatusRevisionRequested
+
+	default:
+		return nil, errors.New("недопустимое действие")
+	}
+
+	if err := s.repo.UpdateTopicRegistration(ctx, reg); err != nil {
+		return nil, fmt.Errorf("не удалось обновить заявление: %w", err)
+	}
+
+	// Создаём запись в истории
+	review := &TopicRegistrationReview{
+		RegistrationID: reg.ID,
+		ReviewerID:     req.ReviewerID,
+		Action:         req.Action,
+		Comment:        req.Comment,
+	}
+	_ = s.repo.CreateTopicRegistrationReview(ctx, review)
+
+	// Логируем активность
+	_ = s.repo.LogActivity(ctx, &AdminActivity{
+		ActivityType: ActivityTypeTopicApproval,
+		Description:  fmt.Sprintf("Заявление %s: %s", reg.ID, req.Action),
+		ActorID:      req.ReviewerID,
+		TargetID:     reg.TeamID,
+		TargetType:   "topic_registration",
+	})
+
+	return reg, nil
+}
+
+type ReviewTopicRegistrationRequest struct {
+	RegistrationID  string
+	ReviewerID      int64
+	Action          string // approve, reject, request_changes
+	Comment         string
+	RejectionReason string
+}
+
+// ListTopicRegistrations - список заявлений на регистрацию темы
+func (s *Service) ListTopicRegistrations(ctx context.Context, filter TopicRegistrationFilter) ([]*TopicRegistration, int64, error) {
+	return s.repo.ListTopicRegistrations(ctx, filter)
+}
+
+// GetTopicRegistration - получить заявление с историей
+func (s *Service) GetTopicRegistration(ctx context.Context, id string) (*TopicRegistration, []*TopicRegistrationReview, error) {
+	reg, err := s.repo.GetTopicRegistration(ctx, id)
+	if err != nil {
+		return nil, nil, err
+	}
+	reviews, _ := s.repo.GetTopicRegistrationReviews(ctx, id)
+	return reg, reviews, nil
+}
+
+// ==================== Dashboard ====================
 func (s *Service) GetDashboard(ctx context.Context, departmentID int64) (*DashboardResponse, error) {
 	stats, err := s.repo.GetDashboardStats(ctx, departmentID)
 	if err != nil {
@@ -80,9 +225,7 @@ type DashboardResponse struct {
 }
 
 // ==================== Students ====================
-
 func (s *Service) ListStudents(ctx context.Context, req *ListStudentsRequest) ([]*StudentData, int64, error) {
-	// Call auth service to get students
 	resp, err := s.authClient.ListUsers(ctx, &authv1.ListUsersRequest{
 		UniversityId: req.UniversityID,
 		Role:         "student",
@@ -101,7 +244,6 @@ func (s *Service) ListStudents(ctx context.Context, req *ListStudentsRequest) ([
 			FirstName: u.FirstName,
 			LastName:  u.LastName,
 		}
-
 		// Get team info
 		teamResp, err := s.teamClient.GetMyTeam(ctx, &teamv1.GetMyTeamRequest{UserId: u.Id})
 		if err == nil && teamResp.HasTeam {
@@ -109,10 +251,8 @@ func (s *Service) ListStudents(ctx context.Context, req *ListStudentsRequest) ([
 			student.TeamName = teamResp.Team.Name
 			student.ProjectID = teamResp.Team.ProjectId
 		}
-
 		students = append(students, student)
 	}
-
 	return students, resp.TotalCount, nil
 }
 
@@ -138,7 +278,6 @@ type StudentData struct {
 }
 
 // ==================== Teams ====================
-
 func (s *Service) ListAllTeams(ctx context.Context, req *ListAllTeamsRequest) ([]*TeamAdminData, int64, error) {
 	resp, err := s.teamClient.ListTeams(ctx, &teamv1.ListTeamsRequest{
 		DepartmentId: req.DepartmentID,
@@ -163,6 +302,13 @@ func (s *Service) ListAllTeams(ctx context.Context, req *ListAllTeamsRequest) ([
 		assignment, err := s.repo.GetSupervisorAssignment(ctx, t.Id)
 		if err == nil && assignment != nil {
 			team.SupervisorID = assignment.SupervisorID
+		}
+
+		// Get topic registration status
+		topicReg, err := s.repo.GetTopicRegistrationByTeam(ctx, t.Id)
+		if err == nil && topicReg != nil {
+			team.TopicStatus = topicReg.Status
+			team.ProposedTopic = topicReg.ProposedTopic
 		}
 
 		// Get project info
@@ -190,18 +336,19 @@ type ListAllTeamsRequest struct {
 }
 
 type TeamAdminData struct {
-	ID           int64
-	Name         string
-	ProjectID    int64
-	ProjectTitle string
-	CurrentStep  string
-	MemberCount  int32
-	SupervisorID int64
-	Status       string
+	ID            int64
+	Name          string
+	ProjectID     int64
+	ProjectTitle  string
+	CurrentStep   string
+	MemberCount   int32
+	SupervisorID  int64
+	Status        string
+	TopicStatus   string
+	ProposedTopic string
 }
 
 // ==================== Submissions ====================
-
 func (s *Service) CreateSubmission(ctx context.Context, req *CreateSubmissionRequest) (*Submission, error) {
 	dataBytes, err := json.Marshal(req.Data)
 	if err != nil {
@@ -219,7 +366,7 @@ func (s *Service) CreateSubmission(ctx context.Context, req *CreateSubmissionReq
 		TeamID:      req.TeamID,
 		StepID:      req.StepID,
 		SubmittedBy: req.SubmittedBy,
-		Status:      SubmissionStatusPending,
+		Status:      StatusPending,
 		Data:        datatypes.JSON(dataBytes),
 		Files:       datatypes.JSON(filesBytes),
 	}
@@ -263,11 +410,10 @@ func (s *Service) ReviewSubmission(ctx context.Context, req *ReviewSubmissionReq
 		return nil, fmt.Errorf("submission not found: %w", err)
 	}
 
-	if sub.Status != SubmissionStatusPending && sub.Status != SubmissionStatusRevisionRequested {
+	if sub.Status != StatusPending && sub.Status != StatusRevisionRequested {
 		return nil, errors.New("submission cannot be reviewed in current status")
 	}
 
-	// Update submission
 	now := time.Now()
 	sub.ReviewerID = &req.ReviewerID
 	sub.ReviewComment = req.Comment
@@ -275,8 +421,8 @@ func (s *Service) ReviewSubmission(ctx context.Context, req *ReviewSubmissionReq
 
 	switch req.Action {
 	case "approve":
-		sub.Status = SubmissionStatusApproved
-		// If grade provided, create grade record
+		sub.Status = StatusApproved
+		// Если указана оценка, создаём запись об оценке
 		if req.Grade > 0 {
 			grade := &Grade{
 				ProjectID: sub.ProjectID,
@@ -289,9 +435,9 @@ func (s *Service) ReviewSubmission(ctx context.Context, req *ReviewSubmissionReq
 			_ = s.repo.CreateGrade(ctx, grade)
 		}
 	case "reject":
-		sub.Status = SubmissionStatusRejected
+		sub.Status = StatusRejected
 	case "request_changes":
-		sub.Status = SubmissionStatusRevisionRequested
+		sub.Status = StatusRevisionRequested
 	default:
 		return nil, errors.New("invalid action")
 	}
@@ -327,7 +473,7 @@ func (s *Service) ReviewSubmission(ctx context.Context, req *ReviewSubmissionReq
 type ReviewSubmissionRequest struct {
 	SubmissionID string
 	ReviewerID   int64
-	Action       string // approve, reject, request_changes
+	Action       string
 	Comment      string
 	Grade        int32
 }
@@ -341,18 +487,19 @@ func (s *Service) GetSubmission(ctx context.Context, id string) (*Submission, []
 	if err != nil {
 		return nil, nil, err
 	}
-
 	reviews, _ := s.repo.GetSubmissionReviews(ctx, id)
-
 	return sub, reviews, nil
 }
 
-// ==================== Grading ====================
-
+// ==================== Grading (только баллы) ====================
 func (s *Service) SetStepGrade(ctx context.Context, req *SetGradeRequest) (*Grade, error) {
+	// Проверяем валидность оценки
+	if req.Grade < 0 || req.Grade > 100 {
+		return nil, errors.New("оценка должна быть от 0 до 100 баллов")
+	}
+
 	// Check if grade exists
 	existing, err := s.repo.GetGrade(ctx, req.ProjectID, req.StepID)
-
 	if err == nil && existing != nil {
 		// Update existing grade
 		oldGrade := existing.Grade
@@ -394,7 +541,7 @@ func (s *Service) SetStepGrade(ctx context.Context, req *SetGradeRequest) (*Grad
 	// Log activity
 	_ = s.repo.LogActivity(ctx, &AdminActivity{
 		ActivityType: ActivityTypeGrade,
-		Description:  fmt.Sprintf("Grade %d set for project %d, step %d", req.Grade, req.ProjectID, req.StepID),
+		Description:  fmt.Sprintf("Оценка %d баллов выставлена для проекта %d, этап %d", req.Grade, req.ProjectID, req.StepID),
 		ActorID:      req.GraderID,
 		TargetID:     req.ProjectID,
 		TargetType:   "project",
@@ -431,7 +578,6 @@ func (s *Service) GetProjectGrades(ctx context.Context, projectID int64) ([]*Gra
 }
 
 // ==================== Supervisors ====================
-
 func (s *Service) AssignSupervisor(ctx context.Context, teamID, supervisorID, assignedBy int64) error {
 	existing, err := s.repo.GetSupervisorAssignment(ctx, teamID)
 	if err == nil && existing != nil {
@@ -481,14 +627,12 @@ func (s *Service) ListSupervisors(ctx context.Context, departmentID, universityI
 			ID:       u.Id,
 			FullName: u.FirstName + " " + u.LastName,
 			Email:    u.Email,
-			MaxTeams: 5, // configurable
+			MaxTeams: 5,
 		}
 
-		// Count assigned teams
 		count, _ := s.repo.CountTeamsBySupervisor(ctx, u.Id)
 		sup.TeamsCount = int32(count)
 
-		// Get assigned team IDs
 		teamIDs, _ := s.repo.GetTeamsBySupervisor(ctx, u.Id)
 		sup.AssignedTeamIDs = teamIDs
 
@@ -509,7 +653,6 @@ type SupervisorData struct {
 }
 
 // ==================== Workflow Progress ====================
-
 func (s *Service) GetWorkflowProgress(ctx context.Context, departmentID, workflowID int64) ([]*StepProgressData, error) {
 	return s.repo.GetStepProgressStats(ctx, departmentID, workflowID)
 }
@@ -517,7 +660,7 @@ func (s *Service) GetWorkflowProgress(ctx context.Context, departmentID, workflo
 func (s *Service) ListPendingReviews(ctx context.Context, departmentID int64, page, pageSize int32) ([]*Submission, int64, error) {
 	filter := SubmissionFilter{
 		DepartmentID: departmentID,
-		Status:       SubmissionStatusPending,
+		Status:       StatusPending,
 		Limit:        int(pageSize),
 		Offset:       int((page - 1) * pageSize),
 	}
