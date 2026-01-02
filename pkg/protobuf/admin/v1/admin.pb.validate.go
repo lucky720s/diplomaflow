@@ -35,6 +35,1398 @@ var (
 	_ = sort.Sort
 )
 
+// Validate checks the field values on TopicRegistrationInfo with the rules
+// defined in the proto definition for this message. If any rules are
+// violated, the first error encountered is returned, or nil if there are no violations.
+func (m *TopicRegistrationInfo) Validate() error {
+	return m.validate(false)
+}
+
+// ValidateAll checks the field values on TopicRegistrationInfo with the rules
+// defined in the proto definition for this message. If any rules are
+// violated, the result is a list of violation errors wrapped in
+// TopicRegistrationInfoMultiError, or nil if none found.
+func (m *TopicRegistrationInfo) ValidateAll() error {
+	return m.validate(true)
+}
+
+func (m *TopicRegistrationInfo) validate(all bool) error {
+	if m == nil {
+		return nil
+	}
+
+	var errors []error
+
+	// no validation rules for Id
+
+	// no validation rules for TeamId
+
+	// no validation rules for TeamName
+
+	// no validation rules for ProjectId
+
+	// no validation rules for ProposedTopic
+
+	// no validation rules for TopicDescription
+
+	// no validation rules for SupervisorId
+
+	// no validation rules for SupervisorName
+
+	// no validation rules for SubmittedBy
+
+	// no validation rules for SubmitterName
+
+	// no validation rules for Status
+
+	// no validation rules for RejectionReason
+
+	// no validation rules for Comment
+
+	if all {
+		switch v := interface{}(m.GetSubmittedAt()).(type) {
+		case interface{ ValidateAll() error }:
+			if err := v.ValidateAll(); err != nil {
+				errors = append(errors, TopicRegistrationInfoValidationError{
+					field:  "SubmittedAt",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		case interface{ Validate() error }:
+			if err := v.Validate(); err != nil {
+				errors = append(errors, TopicRegistrationInfoValidationError{
+					field:  "SubmittedAt",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		}
+	} else if v, ok := interface{}(m.GetSubmittedAt()).(interface{ Validate() error }); ok {
+		if err := v.Validate(); err != nil {
+			return TopicRegistrationInfoValidationError{
+				field:  "SubmittedAt",
+				reason: "embedded message failed validation",
+				cause:  err,
+			}
+		}
+	}
+
+	if all {
+		switch v := interface{}(m.GetReviewedAt()).(type) {
+		case interface{ ValidateAll() error }:
+			if err := v.ValidateAll(); err != nil {
+				errors = append(errors, TopicRegistrationInfoValidationError{
+					field:  "ReviewedAt",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		case interface{ Validate() error }:
+			if err := v.Validate(); err != nil {
+				errors = append(errors, TopicRegistrationInfoValidationError{
+					field:  "ReviewedAt",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		}
+	} else if v, ok := interface{}(m.GetReviewedAt()).(interface{ Validate() error }); ok {
+		if err := v.Validate(); err != nil {
+			return TopicRegistrationInfoValidationError{
+				field:  "ReviewedAt",
+				reason: "embedded message failed validation",
+				cause:  err,
+			}
+		}
+	}
+
+	// no validation rules for ReviewedBy
+
+	// no validation rules for ReviewerName
+
+	if len(errors) > 0 {
+		return TopicRegistrationInfoMultiError(errors)
+	}
+
+	return nil
+}
+
+// TopicRegistrationInfoMultiError is an error wrapping multiple validation
+// errors returned by TopicRegistrationInfo.ValidateAll() if the designated
+// constraints aren't met.
+type TopicRegistrationInfoMultiError []error
+
+// Error returns a concatenation of all the error messages it wraps.
+func (m TopicRegistrationInfoMultiError) Error() string {
+	msgs := make([]string, 0, len(m))
+	for _, err := range m {
+		msgs = append(msgs, err.Error())
+	}
+	return strings.Join(msgs, "; ")
+}
+
+// AllErrors returns a list of validation violation errors.
+func (m TopicRegistrationInfoMultiError) AllErrors() []error { return m }
+
+// TopicRegistrationInfoValidationError is the validation error returned by
+// TopicRegistrationInfo.Validate if the designated constraints aren't met.
+type TopicRegistrationInfoValidationError struct {
+	field  string
+	reason string
+	cause  error
+	key    bool
+}
+
+// Field function returns field value.
+func (e TopicRegistrationInfoValidationError) Field() string { return e.field }
+
+// Reason function returns reason value.
+func (e TopicRegistrationInfoValidationError) Reason() string { return e.reason }
+
+// Cause function returns cause value.
+func (e TopicRegistrationInfoValidationError) Cause() error { return e.cause }
+
+// Key function returns key value.
+func (e TopicRegistrationInfoValidationError) Key() bool { return e.key }
+
+// ErrorName returns error name.
+func (e TopicRegistrationInfoValidationError) ErrorName() string {
+	return "TopicRegistrationInfoValidationError"
+}
+
+// Error satisfies the builtin error interface
+func (e TopicRegistrationInfoValidationError) Error() string {
+	cause := ""
+	if e.cause != nil {
+		cause = fmt.Sprintf(" | caused by: %v", e.cause)
+	}
+
+	key := ""
+	if e.key {
+		key = "key for "
+	}
+
+	return fmt.Sprintf(
+		"invalid %sTopicRegistrationInfo.%s: %s%s",
+		key,
+		e.field,
+		e.reason,
+		cause)
+}
+
+var _ error = TopicRegistrationInfoValidationError{}
+
+var _ interface {
+	Field() string
+	Reason() string
+	Key() bool
+	Cause() error
+	ErrorName() string
+} = TopicRegistrationInfoValidationError{}
+
+// Validate checks the field values on SubmitTopicRegistrationRequest with the
+// rules defined in the proto definition for this message. If any rules are
+// violated, the first error encountered is returned, or nil if there are no violations.
+func (m *SubmitTopicRegistrationRequest) Validate() error {
+	return m.validate(false)
+}
+
+// ValidateAll checks the field values on SubmitTopicRegistrationRequest with
+// the rules defined in the proto definition for this message. If any rules
+// are violated, the result is a list of violation errors wrapped in
+// SubmitTopicRegistrationRequestMultiError, or nil if none found.
+func (m *SubmitTopicRegistrationRequest) ValidateAll() error {
+	return m.validate(true)
+}
+
+func (m *SubmitTopicRegistrationRequest) validate(all bool) error {
+	if m == nil {
+		return nil
+	}
+
+	var errors []error
+
+	if m.GetTeamId() <= 0 {
+		err := SubmitTopicRegistrationRequestValidationError{
+			field:  "TeamId",
+			reason: "value must be greater than 0",
+		}
+		if !all {
+			return err
+		}
+		errors = append(errors, err)
+	}
+
+	if utf8.RuneCountInString(m.GetProposedTopic()) < 5 {
+		err := SubmitTopicRegistrationRequestValidationError{
+			field:  "ProposedTopic",
+			reason: "value length must be at least 5 runes",
+		}
+		if !all {
+			return err
+		}
+		errors = append(errors, err)
+	}
+
+	// no validation rules for TopicDescription
+
+	if m.GetSupervisorId() <= 0 {
+		err := SubmitTopicRegistrationRequestValidationError{
+			field:  "SupervisorId",
+			reason: "value must be greater than 0",
+		}
+		if !all {
+			return err
+		}
+		errors = append(errors, err)
+	}
+
+	if m.GetSubmittedBy() <= 0 {
+		err := SubmitTopicRegistrationRequestValidationError{
+			field:  "SubmittedBy",
+			reason: "value must be greater than 0",
+		}
+		if !all {
+			return err
+		}
+		errors = append(errors, err)
+	}
+
+	if len(errors) > 0 {
+		return SubmitTopicRegistrationRequestMultiError(errors)
+	}
+
+	return nil
+}
+
+// SubmitTopicRegistrationRequestMultiError is an error wrapping multiple
+// validation errors returned by SubmitTopicRegistrationRequest.ValidateAll()
+// if the designated constraints aren't met.
+type SubmitTopicRegistrationRequestMultiError []error
+
+// Error returns a concatenation of all the error messages it wraps.
+func (m SubmitTopicRegistrationRequestMultiError) Error() string {
+	msgs := make([]string, 0, len(m))
+	for _, err := range m {
+		msgs = append(msgs, err.Error())
+	}
+	return strings.Join(msgs, "; ")
+}
+
+// AllErrors returns a list of validation violation errors.
+func (m SubmitTopicRegistrationRequestMultiError) AllErrors() []error { return m }
+
+// SubmitTopicRegistrationRequestValidationError is the validation error
+// returned by SubmitTopicRegistrationRequest.Validate if the designated
+// constraints aren't met.
+type SubmitTopicRegistrationRequestValidationError struct {
+	field  string
+	reason string
+	cause  error
+	key    bool
+}
+
+// Field function returns field value.
+func (e SubmitTopicRegistrationRequestValidationError) Field() string { return e.field }
+
+// Reason function returns reason value.
+func (e SubmitTopicRegistrationRequestValidationError) Reason() string { return e.reason }
+
+// Cause function returns cause value.
+func (e SubmitTopicRegistrationRequestValidationError) Cause() error { return e.cause }
+
+// Key function returns key value.
+func (e SubmitTopicRegistrationRequestValidationError) Key() bool { return e.key }
+
+// ErrorName returns error name.
+func (e SubmitTopicRegistrationRequestValidationError) ErrorName() string {
+	return "SubmitTopicRegistrationRequestValidationError"
+}
+
+// Error satisfies the builtin error interface
+func (e SubmitTopicRegistrationRequestValidationError) Error() string {
+	cause := ""
+	if e.cause != nil {
+		cause = fmt.Sprintf(" | caused by: %v", e.cause)
+	}
+
+	key := ""
+	if e.key {
+		key = "key for "
+	}
+
+	return fmt.Sprintf(
+		"invalid %sSubmitTopicRegistrationRequest.%s: %s%s",
+		key,
+		e.field,
+		e.reason,
+		cause)
+}
+
+var _ error = SubmitTopicRegistrationRequestValidationError{}
+
+var _ interface {
+	Field() string
+	Reason() string
+	Key() bool
+	Cause() error
+	ErrorName() string
+} = SubmitTopicRegistrationRequestValidationError{}
+
+// Validate checks the field values on SubmitTopicRegistrationResponse with the
+// rules defined in the proto definition for this message. If any rules are
+// violated, the first error encountered is returned, or nil if there are no violations.
+func (m *SubmitTopicRegistrationResponse) Validate() error {
+	return m.validate(false)
+}
+
+// ValidateAll checks the field values on SubmitTopicRegistrationResponse with
+// the rules defined in the proto definition for this message. If any rules
+// are violated, the result is a list of violation errors wrapped in
+// SubmitTopicRegistrationResponseMultiError, or nil if none found.
+func (m *SubmitTopicRegistrationResponse) ValidateAll() error {
+	return m.validate(true)
+}
+
+func (m *SubmitTopicRegistrationResponse) validate(all bool) error {
+	if m == nil {
+		return nil
+	}
+
+	var errors []error
+
+	// no validation rules for Success
+
+	// no validation rules for RegistrationId
+
+	// no validation rules for Message
+
+	if len(errors) > 0 {
+		return SubmitTopicRegistrationResponseMultiError(errors)
+	}
+
+	return nil
+}
+
+// SubmitTopicRegistrationResponseMultiError is an error wrapping multiple
+// validation errors returned by SubmitTopicRegistrationResponse.ValidateAll()
+// if the designated constraints aren't met.
+type SubmitTopicRegistrationResponseMultiError []error
+
+// Error returns a concatenation of all the error messages it wraps.
+func (m SubmitTopicRegistrationResponseMultiError) Error() string {
+	msgs := make([]string, 0, len(m))
+	for _, err := range m {
+		msgs = append(msgs, err.Error())
+	}
+	return strings.Join(msgs, "; ")
+}
+
+// AllErrors returns a list of validation violation errors.
+func (m SubmitTopicRegistrationResponseMultiError) AllErrors() []error { return m }
+
+// SubmitTopicRegistrationResponseValidationError is the validation error
+// returned by SubmitTopicRegistrationResponse.Validate if the designated
+// constraints aren't met.
+type SubmitTopicRegistrationResponseValidationError struct {
+	field  string
+	reason string
+	cause  error
+	key    bool
+}
+
+// Field function returns field value.
+func (e SubmitTopicRegistrationResponseValidationError) Field() string { return e.field }
+
+// Reason function returns reason value.
+func (e SubmitTopicRegistrationResponseValidationError) Reason() string { return e.reason }
+
+// Cause function returns cause value.
+func (e SubmitTopicRegistrationResponseValidationError) Cause() error { return e.cause }
+
+// Key function returns key value.
+func (e SubmitTopicRegistrationResponseValidationError) Key() bool { return e.key }
+
+// ErrorName returns error name.
+func (e SubmitTopicRegistrationResponseValidationError) ErrorName() string {
+	return "SubmitTopicRegistrationResponseValidationError"
+}
+
+// Error satisfies the builtin error interface
+func (e SubmitTopicRegistrationResponseValidationError) Error() string {
+	cause := ""
+	if e.cause != nil {
+		cause = fmt.Sprintf(" | caused by: %v", e.cause)
+	}
+
+	key := ""
+	if e.key {
+		key = "key for "
+	}
+
+	return fmt.Sprintf(
+		"invalid %sSubmitTopicRegistrationResponse.%s: %s%s",
+		key,
+		e.field,
+		e.reason,
+		cause)
+}
+
+var _ error = SubmitTopicRegistrationResponseValidationError{}
+
+var _ interface {
+	Field() string
+	Reason() string
+	Key() bool
+	Cause() error
+	ErrorName() string
+} = SubmitTopicRegistrationResponseValidationError{}
+
+// Validate checks the field values on ListTopicRegistrationsRequest with the
+// rules defined in the proto definition for this message. If any rules are
+// violated, the first error encountered is returned, or nil if there are no violations.
+func (m *ListTopicRegistrationsRequest) Validate() error {
+	return m.validate(false)
+}
+
+// ValidateAll checks the field values on ListTopicRegistrationsRequest with
+// the rules defined in the proto definition for this message. If any rules
+// are violated, the result is a list of violation errors wrapped in
+// ListTopicRegistrationsRequestMultiError, or nil if none found.
+func (m *ListTopicRegistrationsRequest) ValidateAll() error {
+	return m.validate(true)
+}
+
+func (m *ListTopicRegistrationsRequest) validate(all bool) error {
+	if m == nil {
+		return nil
+	}
+
+	var errors []error
+
+	// no validation rules for DepartmentId
+
+	// no validation rules for Status
+
+	// no validation rules for Page
+
+	// no validation rules for PageSize
+
+	if len(errors) > 0 {
+		return ListTopicRegistrationsRequestMultiError(errors)
+	}
+
+	return nil
+}
+
+// ListTopicRegistrationsRequestMultiError is an error wrapping multiple
+// validation errors returned by ListTopicRegistrationsRequest.ValidateAll()
+// if the designated constraints aren't met.
+type ListTopicRegistrationsRequestMultiError []error
+
+// Error returns a concatenation of all the error messages it wraps.
+func (m ListTopicRegistrationsRequestMultiError) Error() string {
+	msgs := make([]string, 0, len(m))
+	for _, err := range m {
+		msgs = append(msgs, err.Error())
+	}
+	return strings.Join(msgs, "; ")
+}
+
+// AllErrors returns a list of validation violation errors.
+func (m ListTopicRegistrationsRequestMultiError) AllErrors() []error { return m }
+
+// ListTopicRegistrationsRequestValidationError is the validation error
+// returned by ListTopicRegistrationsRequest.Validate if the designated
+// constraints aren't met.
+type ListTopicRegistrationsRequestValidationError struct {
+	field  string
+	reason string
+	cause  error
+	key    bool
+}
+
+// Field function returns field value.
+func (e ListTopicRegistrationsRequestValidationError) Field() string { return e.field }
+
+// Reason function returns reason value.
+func (e ListTopicRegistrationsRequestValidationError) Reason() string { return e.reason }
+
+// Cause function returns cause value.
+func (e ListTopicRegistrationsRequestValidationError) Cause() error { return e.cause }
+
+// Key function returns key value.
+func (e ListTopicRegistrationsRequestValidationError) Key() bool { return e.key }
+
+// ErrorName returns error name.
+func (e ListTopicRegistrationsRequestValidationError) ErrorName() string {
+	return "ListTopicRegistrationsRequestValidationError"
+}
+
+// Error satisfies the builtin error interface
+func (e ListTopicRegistrationsRequestValidationError) Error() string {
+	cause := ""
+	if e.cause != nil {
+		cause = fmt.Sprintf(" | caused by: %v", e.cause)
+	}
+
+	key := ""
+	if e.key {
+		key = "key for "
+	}
+
+	return fmt.Sprintf(
+		"invalid %sListTopicRegistrationsRequest.%s: %s%s",
+		key,
+		e.field,
+		e.reason,
+		cause)
+}
+
+var _ error = ListTopicRegistrationsRequestValidationError{}
+
+var _ interface {
+	Field() string
+	Reason() string
+	Key() bool
+	Cause() error
+	ErrorName() string
+} = ListTopicRegistrationsRequestValidationError{}
+
+// Validate checks the field values on ListTopicRegistrationsResponse with the
+// rules defined in the proto definition for this message. If any rules are
+// violated, the first error encountered is returned, or nil if there are no violations.
+func (m *ListTopicRegistrationsResponse) Validate() error {
+	return m.validate(false)
+}
+
+// ValidateAll checks the field values on ListTopicRegistrationsResponse with
+// the rules defined in the proto definition for this message. If any rules
+// are violated, the result is a list of violation errors wrapped in
+// ListTopicRegistrationsResponseMultiError, or nil if none found.
+func (m *ListTopicRegistrationsResponse) ValidateAll() error {
+	return m.validate(true)
+}
+
+func (m *ListTopicRegistrationsResponse) validate(all bool) error {
+	if m == nil {
+		return nil
+	}
+
+	var errors []error
+
+	for idx, item := range m.GetRegistrations() {
+		_, _ = idx, item
+
+		if all {
+			switch v := interface{}(item).(type) {
+			case interface{ ValidateAll() error }:
+				if err := v.ValidateAll(); err != nil {
+					errors = append(errors, ListTopicRegistrationsResponseValidationError{
+						field:  fmt.Sprintf("Registrations[%v]", idx),
+						reason: "embedded message failed validation",
+						cause:  err,
+					})
+				}
+			case interface{ Validate() error }:
+				if err := v.Validate(); err != nil {
+					errors = append(errors, ListTopicRegistrationsResponseValidationError{
+						field:  fmt.Sprintf("Registrations[%v]", idx),
+						reason: "embedded message failed validation",
+						cause:  err,
+					})
+				}
+			}
+		} else if v, ok := interface{}(item).(interface{ Validate() error }); ok {
+			if err := v.Validate(); err != nil {
+				return ListTopicRegistrationsResponseValidationError{
+					field:  fmt.Sprintf("Registrations[%v]", idx),
+					reason: "embedded message failed validation",
+					cause:  err,
+				}
+			}
+		}
+
+	}
+
+	// no validation rules for TotalCount
+
+	if len(errors) > 0 {
+		return ListTopicRegistrationsResponseMultiError(errors)
+	}
+
+	return nil
+}
+
+// ListTopicRegistrationsResponseMultiError is an error wrapping multiple
+// validation errors returned by ListTopicRegistrationsResponse.ValidateAll()
+// if the designated constraints aren't met.
+type ListTopicRegistrationsResponseMultiError []error
+
+// Error returns a concatenation of all the error messages it wraps.
+func (m ListTopicRegistrationsResponseMultiError) Error() string {
+	msgs := make([]string, 0, len(m))
+	for _, err := range m {
+		msgs = append(msgs, err.Error())
+	}
+	return strings.Join(msgs, "; ")
+}
+
+// AllErrors returns a list of validation violation errors.
+func (m ListTopicRegistrationsResponseMultiError) AllErrors() []error { return m }
+
+// ListTopicRegistrationsResponseValidationError is the validation error
+// returned by ListTopicRegistrationsResponse.Validate if the designated
+// constraints aren't met.
+type ListTopicRegistrationsResponseValidationError struct {
+	field  string
+	reason string
+	cause  error
+	key    bool
+}
+
+// Field function returns field value.
+func (e ListTopicRegistrationsResponseValidationError) Field() string { return e.field }
+
+// Reason function returns reason value.
+func (e ListTopicRegistrationsResponseValidationError) Reason() string { return e.reason }
+
+// Cause function returns cause value.
+func (e ListTopicRegistrationsResponseValidationError) Cause() error { return e.cause }
+
+// Key function returns key value.
+func (e ListTopicRegistrationsResponseValidationError) Key() bool { return e.key }
+
+// ErrorName returns error name.
+func (e ListTopicRegistrationsResponseValidationError) ErrorName() string {
+	return "ListTopicRegistrationsResponseValidationError"
+}
+
+// Error satisfies the builtin error interface
+func (e ListTopicRegistrationsResponseValidationError) Error() string {
+	cause := ""
+	if e.cause != nil {
+		cause = fmt.Sprintf(" | caused by: %v", e.cause)
+	}
+
+	key := ""
+	if e.key {
+		key = "key for "
+	}
+
+	return fmt.Sprintf(
+		"invalid %sListTopicRegistrationsResponse.%s: %s%s",
+		key,
+		e.field,
+		e.reason,
+		cause)
+}
+
+var _ error = ListTopicRegistrationsResponseValidationError{}
+
+var _ interface {
+	Field() string
+	Reason() string
+	Key() bool
+	Cause() error
+	ErrorName() string
+} = ListTopicRegistrationsResponseValidationError{}
+
+// Validate checks the field values on ReviewTopicRegistrationRequest with the
+// rules defined in the proto definition for this message. If any rules are
+// violated, the first error encountered is returned, or nil if there are no violations.
+func (m *ReviewTopicRegistrationRequest) Validate() error {
+	return m.validate(false)
+}
+
+// ValidateAll checks the field values on ReviewTopicRegistrationRequest with
+// the rules defined in the proto definition for this message. If any rules
+// are violated, the result is a list of violation errors wrapped in
+// ReviewTopicRegistrationRequestMultiError, or nil if none found.
+func (m *ReviewTopicRegistrationRequest) ValidateAll() error {
+	return m.validate(true)
+}
+
+func (m *ReviewTopicRegistrationRequest) validate(all bool) error {
+	if m == nil {
+		return nil
+	}
+
+	var errors []error
+
+	if utf8.RuneCountInString(m.GetRegistrationId()) < 1 {
+		err := ReviewTopicRegistrationRequestValidationError{
+			field:  "RegistrationId",
+			reason: "value length must be at least 1 runes",
+		}
+		if !all {
+			return err
+		}
+		errors = append(errors, err)
+	}
+
+	if m.GetReviewerId() <= 0 {
+		err := ReviewTopicRegistrationRequestValidationError{
+			field:  "ReviewerId",
+			reason: "value must be greater than 0",
+		}
+		if !all {
+			return err
+		}
+		errors = append(errors, err)
+	}
+
+	if _, ok := _ReviewTopicRegistrationRequest_Action_InLookup[m.GetAction()]; !ok {
+		err := ReviewTopicRegistrationRequestValidationError{
+			field:  "Action",
+			reason: "value must be in list [approve reject request_changes]",
+		}
+		if !all {
+			return err
+		}
+		errors = append(errors, err)
+	}
+
+	// no validation rules for Comment
+
+	// no validation rules for RejectionReason
+
+	if len(errors) > 0 {
+		return ReviewTopicRegistrationRequestMultiError(errors)
+	}
+
+	return nil
+}
+
+// ReviewTopicRegistrationRequestMultiError is an error wrapping multiple
+// validation errors returned by ReviewTopicRegistrationRequest.ValidateAll()
+// if the designated constraints aren't met.
+type ReviewTopicRegistrationRequestMultiError []error
+
+// Error returns a concatenation of all the error messages it wraps.
+func (m ReviewTopicRegistrationRequestMultiError) Error() string {
+	msgs := make([]string, 0, len(m))
+	for _, err := range m {
+		msgs = append(msgs, err.Error())
+	}
+	return strings.Join(msgs, "; ")
+}
+
+// AllErrors returns a list of validation violation errors.
+func (m ReviewTopicRegistrationRequestMultiError) AllErrors() []error { return m }
+
+// ReviewTopicRegistrationRequestValidationError is the validation error
+// returned by ReviewTopicRegistrationRequest.Validate if the designated
+// constraints aren't met.
+type ReviewTopicRegistrationRequestValidationError struct {
+	field  string
+	reason string
+	cause  error
+	key    bool
+}
+
+// Field function returns field value.
+func (e ReviewTopicRegistrationRequestValidationError) Field() string { return e.field }
+
+// Reason function returns reason value.
+func (e ReviewTopicRegistrationRequestValidationError) Reason() string { return e.reason }
+
+// Cause function returns cause value.
+func (e ReviewTopicRegistrationRequestValidationError) Cause() error { return e.cause }
+
+// Key function returns key value.
+func (e ReviewTopicRegistrationRequestValidationError) Key() bool { return e.key }
+
+// ErrorName returns error name.
+func (e ReviewTopicRegistrationRequestValidationError) ErrorName() string {
+	return "ReviewTopicRegistrationRequestValidationError"
+}
+
+// Error satisfies the builtin error interface
+func (e ReviewTopicRegistrationRequestValidationError) Error() string {
+	cause := ""
+	if e.cause != nil {
+		cause = fmt.Sprintf(" | caused by: %v", e.cause)
+	}
+
+	key := ""
+	if e.key {
+		key = "key for "
+	}
+
+	return fmt.Sprintf(
+		"invalid %sReviewTopicRegistrationRequest.%s: %s%s",
+		key,
+		e.field,
+		e.reason,
+		cause)
+}
+
+var _ error = ReviewTopicRegistrationRequestValidationError{}
+
+var _ interface {
+	Field() string
+	Reason() string
+	Key() bool
+	Cause() error
+	ErrorName() string
+} = ReviewTopicRegistrationRequestValidationError{}
+
+var _ReviewTopicRegistrationRequest_Action_InLookup = map[string]struct{}{
+	"approve":         {},
+	"reject":          {},
+	"request_changes": {},
+}
+
+// Validate checks the field values on ReviewTopicRegistrationResponse with the
+// rules defined in the proto definition for this message. If any rules are
+// violated, the first error encountered is returned, or nil if there are no violations.
+func (m *ReviewTopicRegistrationResponse) Validate() error {
+	return m.validate(false)
+}
+
+// ValidateAll checks the field values on ReviewTopicRegistrationResponse with
+// the rules defined in the proto definition for this message. If any rules
+// are violated, the result is a list of violation errors wrapped in
+// ReviewTopicRegistrationResponseMultiError, or nil if none found.
+func (m *ReviewTopicRegistrationResponse) ValidateAll() error {
+	return m.validate(true)
+}
+
+func (m *ReviewTopicRegistrationResponse) validate(all bool) error {
+	if m == nil {
+		return nil
+	}
+
+	var errors []error
+
+	// no validation rules for Success
+
+	// no validation rules for Message
+
+	if all {
+		switch v := interface{}(m.GetUpdatedRegistration()).(type) {
+		case interface{ ValidateAll() error }:
+			if err := v.ValidateAll(); err != nil {
+				errors = append(errors, ReviewTopicRegistrationResponseValidationError{
+					field:  "UpdatedRegistration",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		case interface{ Validate() error }:
+			if err := v.Validate(); err != nil {
+				errors = append(errors, ReviewTopicRegistrationResponseValidationError{
+					field:  "UpdatedRegistration",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		}
+	} else if v, ok := interface{}(m.GetUpdatedRegistration()).(interface{ Validate() error }); ok {
+		if err := v.Validate(); err != nil {
+			return ReviewTopicRegistrationResponseValidationError{
+				field:  "UpdatedRegistration",
+				reason: "embedded message failed validation",
+				cause:  err,
+			}
+		}
+	}
+
+	if len(errors) > 0 {
+		return ReviewTopicRegistrationResponseMultiError(errors)
+	}
+
+	return nil
+}
+
+// ReviewTopicRegistrationResponseMultiError is an error wrapping multiple
+// validation errors returned by ReviewTopicRegistrationResponse.ValidateAll()
+// if the designated constraints aren't met.
+type ReviewTopicRegistrationResponseMultiError []error
+
+// Error returns a concatenation of all the error messages it wraps.
+func (m ReviewTopicRegistrationResponseMultiError) Error() string {
+	msgs := make([]string, 0, len(m))
+	for _, err := range m {
+		msgs = append(msgs, err.Error())
+	}
+	return strings.Join(msgs, "; ")
+}
+
+// AllErrors returns a list of validation violation errors.
+func (m ReviewTopicRegistrationResponseMultiError) AllErrors() []error { return m }
+
+// ReviewTopicRegistrationResponseValidationError is the validation error
+// returned by ReviewTopicRegistrationResponse.Validate if the designated
+// constraints aren't met.
+type ReviewTopicRegistrationResponseValidationError struct {
+	field  string
+	reason string
+	cause  error
+	key    bool
+}
+
+// Field function returns field value.
+func (e ReviewTopicRegistrationResponseValidationError) Field() string { return e.field }
+
+// Reason function returns reason value.
+func (e ReviewTopicRegistrationResponseValidationError) Reason() string { return e.reason }
+
+// Cause function returns cause value.
+func (e ReviewTopicRegistrationResponseValidationError) Cause() error { return e.cause }
+
+// Key function returns key value.
+func (e ReviewTopicRegistrationResponseValidationError) Key() bool { return e.key }
+
+// ErrorName returns error name.
+func (e ReviewTopicRegistrationResponseValidationError) ErrorName() string {
+	return "ReviewTopicRegistrationResponseValidationError"
+}
+
+// Error satisfies the builtin error interface
+func (e ReviewTopicRegistrationResponseValidationError) Error() string {
+	cause := ""
+	if e.cause != nil {
+		cause = fmt.Sprintf(" | caused by: %v", e.cause)
+	}
+
+	key := ""
+	if e.key {
+		key = "key for "
+	}
+
+	return fmt.Sprintf(
+		"invalid %sReviewTopicRegistrationResponse.%s: %s%s",
+		key,
+		e.field,
+		e.reason,
+		cause)
+}
+
+var _ error = ReviewTopicRegistrationResponseValidationError{}
+
+var _ interface {
+	Field() string
+	Reason() string
+	Key() bool
+	Cause() error
+	ErrorName() string
+} = ReviewTopicRegistrationResponseValidationError{}
+
+// Validate checks the field values on GetTopicRegistrationRequest with the
+// rules defined in the proto definition for this message. If any rules are
+// violated, the first error encountered is returned, or nil if there are no violations.
+func (m *GetTopicRegistrationRequest) Validate() error {
+	return m.validate(false)
+}
+
+// ValidateAll checks the field values on GetTopicRegistrationRequest with the
+// rules defined in the proto definition for this message. If any rules are
+// violated, the result is a list of violation errors wrapped in
+// GetTopicRegistrationRequestMultiError, or nil if none found.
+func (m *GetTopicRegistrationRequest) ValidateAll() error {
+	return m.validate(true)
+}
+
+func (m *GetTopicRegistrationRequest) validate(all bool) error {
+	if m == nil {
+		return nil
+	}
+
+	var errors []error
+
+	// no validation rules for RegistrationId
+
+	if len(errors) > 0 {
+		return GetTopicRegistrationRequestMultiError(errors)
+	}
+
+	return nil
+}
+
+// GetTopicRegistrationRequestMultiError is an error wrapping multiple
+// validation errors returned by GetTopicRegistrationRequest.ValidateAll() if
+// the designated constraints aren't met.
+type GetTopicRegistrationRequestMultiError []error
+
+// Error returns a concatenation of all the error messages it wraps.
+func (m GetTopicRegistrationRequestMultiError) Error() string {
+	msgs := make([]string, 0, len(m))
+	for _, err := range m {
+		msgs = append(msgs, err.Error())
+	}
+	return strings.Join(msgs, "; ")
+}
+
+// AllErrors returns a list of validation violation errors.
+func (m GetTopicRegistrationRequestMultiError) AllErrors() []error { return m }
+
+// GetTopicRegistrationRequestValidationError is the validation error returned
+// by GetTopicRegistrationRequest.Validate if the designated constraints
+// aren't met.
+type GetTopicRegistrationRequestValidationError struct {
+	field  string
+	reason string
+	cause  error
+	key    bool
+}
+
+// Field function returns field value.
+func (e GetTopicRegistrationRequestValidationError) Field() string { return e.field }
+
+// Reason function returns reason value.
+func (e GetTopicRegistrationRequestValidationError) Reason() string { return e.reason }
+
+// Cause function returns cause value.
+func (e GetTopicRegistrationRequestValidationError) Cause() error { return e.cause }
+
+// Key function returns key value.
+func (e GetTopicRegistrationRequestValidationError) Key() bool { return e.key }
+
+// ErrorName returns error name.
+func (e GetTopicRegistrationRequestValidationError) ErrorName() string {
+	return "GetTopicRegistrationRequestValidationError"
+}
+
+// Error satisfies the builtin error interface
+func (e GetTopicRegistrationRequestValidationError) Error() string {
+	cause := ""
+	if e.cause != nil {
+		cause = fmt.Sprintf(" | caused by: %v", e.cause)
+	}
+
+	key := ""
+	if e.key {
+		key = "key for "
+	}
+
+	return fmt.Sprintf(
+		"invalid %sGetTopicRegistrationRequest.%s: %s%s",
+		key,
+		e.field,
+		e.reason,
+		cause)
+}
+
+var _ error = GetTopicRegistrationRequestValidationError{}
+
+var _ interface {
+	Field() string
+	Reason() string
+	Key() bool
+	Cause() error
+	ErrorName() string
+} = GetTopicRegistrationRequestValidationError{}
+
+// Validate checks the field values on GetTopicRegistrationResponse with the
+// rules defined in the proto definition for this message. If any rules are
+// violated, the first error encountered is returned, or nil if there are no violations.
+func (m *GetTopicRegistrationResponse) Validate() error {
+	return m.validate(false)
+}
+
+// ValidateAll checks the field values on GetTopicRegistrationResponse with the
+// rules defined in the proto definition for this message. If any rules are
+// violated, the result is a list of violation errors wrapped in
+// GetTopicRegistrationResponseMultiError, or nil if none found.
+func (m *GetTopicRegistrationResponse) ValidateAll() error {
+	return m.validate(true)
+}
+
+func (m *GetTopicRegistrationResponse) validate(all bool) error {
+	if m == nil {
+		return nil
+	}
+
+	var errors []error
+
+	if all {
+		switch v := interface{}(m.GetRegistration()).(type) {
+		case interface{ ValidateAll() error }:
+			if err := v.ValidateAll(); err != nil {
+				errors = append(errors, GetTopicRegistrationResponseValidationError{
+					field:  "Registration",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		case interface{ Validate() error }:
+			if err := v.Validate(); err != nil {
+				errors = append(errors, GetTopicRegistrationResponseValidationError{
+					field:  "Registration",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		}
+	} else if v, ok := interface{}(m.GetRegistration()).(interface{ Validate() error }); ok {
+		if err := v.Validate(); err != nil {
+			return GetTopicRegistrationResponseValidationError{
+				field:  "Registration",
+				reason: "embedded message failed validation",
+				cause:  err,
+			}
+		}
+	}
+
+	for idx, item := range m.GetHistory() {
+		_, _ = idx, item
+
+		if all {
+			switch v := interface{}(item).(type) {
+			case interface{ ValidateAll() error }:
+				if err := v.ValidateAll(); err != nil {
+					errors = append(errors, GetTopicRegistrationResponseValidationError{
+						field:  fmt.Sprintf("History[%v]", idx),
+						reason: "embedded message failed validation",
+						cause:  err,
+					})
+				}
+			case interface{ Validate() error }:
+				if err := v.Validate(); err != nil {
+					errors = append(errors, GetTopicRegistrationResponseValidationError{
+						field:  fmt.Sprintf("History[%v]", idx),
+						reason: "embedded message failed validation",
+						cause:  err,
+					})
+				}
+			}
+		} else if v, ok := interface{}(item).(interface{ Validate() error }); ok {
+			if err := v.Validate(); err != nil {
+				return GetTopicRegistrationResponseValidationError{
+					field:  fmt.Sprintf("History[%v]", idx),
+					reason: "embedded message failed validation",
+					cause:  err,
+				}
+			}
+		}
+
+	}
+
+	if len(errors) > 0 {
+		return GetTopicRegistrationResponseMultiError(errors)
+	}
+
+	return nil
+}
+
+// GetTopicRegistrationResponseMultiError is an error wrapping multiple
+// validation errors returned by GetTopicRegistrationResponse.ValidateAll() if
+// the designated constraints aren't met.
+type GetTopicRegistrationResponseMultiError []error
+
+// Error returns a concatenation of all the error messages it wraps.
+func (m GetTopicRegistrationResponseMultiError) Error() string {
+	msgs := make([]string, 0, len(m))
+	for _, err := range m {
+		msgs = append(msgs, err.Error())
+	}
+	return strings.Join(msgs, "; ")
+}
+
+// AllErrors returns a list of validation violation errors.
+func (m GetTopicRegistrationResponseMultiError) AllErrors() []error { return m }
+
+// GetTopicRegistrationResponseValidationError is the validation error returned
+// by GetTopicRegistrationResponse.Validate if the designated constraints
+// aren't met.
+type GetTopicRegistrationResponseValidationError struct {
+	field  string
+	reason string
+	cause  error
+	key    bool
+}
+
+// Field function returns field value.
+func (e GetTopicRegistrationResponseValidationError) Field() string { return e.field }
+
+// Reason function returns reason value.
+func (e GetTopicRegistrationResponseValidationError) Reason() string { return e.reason }
+
+// Cause function returns cause value.
+func (e GetTopicRegistrationResponseValidationError) Cause() error { return e.cause }
+
+// Key function returns key value.
+func (e GetTopicRegistrationResponseValidationError) Key() bool { return e.key }
+
+// ErrorName returns error name.
+func (e GetTopicRegistrationResponseValidationError) ErrorName() string {
+	return "GetTopicRegistrationResponseValidationError"
+}
+
+// Error satisfies the builtin error interface
+func (e GetTopicRegistrationResponseValidationError) Error() string {
+	cause := ""
+	if e.cause != nil {
+		cause = fmt.Sprintf(" | caused by: %v", e.cause)
+	}
+
+	key := ""
+	if e.key {
+		key = "key for "
+	}
+
+	return fmt.Sprintf(
+		"invalid %sGetTopicRegistrationResponse.%s: %s%s",
+		key,
+		e.field,
+		e.reason,
+		cause)
+}
+
+var _ error = GetTopicRegistrationResponseValidationError{}
+
+var _ interface {
+	Field() string
+	Reason() string
+	Key() bool
+	Cause() error
+	ErrorName() string
+} = GetTopicRegistrationResponseValidationError{}
+
+// Validate checks the field values on TopicRegistrationHistory with the rules
+// defined in the proto definition for this message. If any rules are
+// violated, the first error encountered is returned, or nil if there are no violations.
+func (m *TopicRegistrationHistory) Validate() error {
+	return m.validate(false)
+}
+
+// ValidateAll checks the field values on TopicRegistrationHistory with the
+// rules defined in the proto definition for this message. If any rules are
+// violated, the result is a list of violation errors wrapped in
+// TopicRegistrationHistoryMultiError, or nil if none found.
+func (m *TopicRegistrationHistory) ValidateAll() error {
+	return m.validate(true)
+}
+
+func (m *TopicRegistrationHistory) validate(all bool) error {
+	if m == nil {
+		return nil
+	}
+
+	var errors []error
+
+	// no validation rules for Id
+
+	// no validation rules for ReviewerId
+
+	// no validation rules for ReviewerName
+
+	// no validation rules for Action
+
+	// no validation rules for Comment
+
+	if all {
+		switch v := interface{}(m.GetCreatedAt()).(type) {
+		case interface{ ValidateAll() error }:
+			if err := v.ValidateAll(); err != nil {
+				errors = append(errors, TopicRegistrationHistoryValidationError{
+					field:  "CreatedAt",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		case interface{ Validate() error }:
+			if err := v.Validate(); err != nil {
+				errors = append(errors, TopicRegistrationHistoryValidationError{
+					field:  "CreatedAt",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		}
+	} else if v, ok := interface{}(m.GetCreatedAt()).(interface{ Validate() error }); ok {
+		if err := v.Validate(); err != nil {
+			return TopicRegistrationHistoryValidationError{
+				field:  "CreatedAt",
+				reason: "embedded message failed validation",
+				cause:  err,
+			}
+		}
+	}
+
+	if len(errors) > 0 {
+		return TopicRegistrationHistoryMultiError(errors)
+	}
+
+	return nil
+}
+
+// TopicRegistrationHistoryMultiError is an error wrapping multiple validation
+// errors returned by TopicRegistrationHistory.ValidateAll() if the designated
+// constraints aren't met.
+type TopicRegistrationHistoryMultiError []error
+
+// Error returns a concatenation of all the error messages it wraps.
+func (m TopicRegistrationHistoryMultiError) Error() string {
+	msgs := make([]string, 0, len(m))
+	for _, err := range m {
+		msgs = append(msgs, err.Error())
+	}
+	return strings.Join(msgs, "; ")
+}
+
+// AllErrors returns a list of validation violation errors.
+func (m TopicRegistrationHistoryMultiError) AllErrors() []error { return m }
+
+// TopicRegistrationHistoryValidationError is the validation error returned by
+// TopicRegistrationHistory.Validate if the designated constraints aren't met.
+type TopicRegistrationHistoryValidationError struct {
+	field  string
+	reason string
+	cause  error
+	key    bool
+}
+
+// Field function returns field value.
+func (e TopicRegistrationHistoryValidationError) Field() string { return e.field }
+
+// Reason function returns reason value.
+func (e TopicRegistrationHistoryValidationError) Reason() string { return e.reason }
+
+// Cause function returns cause value.
+func (e TopicRegistrationHistoryValidationError) Cause() error { return e.cause }
+
+// Key function returns key value.
+func (e TopicRegistrationHistoryValidationError) Key() bool { return e.key }
+
+// ErrorName returns error name.
+func (e TopicRegistrationHistoryValidationError) ErrorName() string {
+	return "TopicRegistrationHistoryValidationError"
+}
+
+// Error satisfies the builtin error interface
+func (e TopicRegistrationHistoryValidationError) Error() string {
+	cause := ""
+	if e.cause != nil {
+		cause = fmt.Sprintf(" | caused by: %v", e.cause)
+	}
+
+	key := ""
+	if e.key {
+		key = "key for "
+	}
+
+	return fmt.Sprintf(
+		"invalid %sTopicRegistrationHistory.%s: %s%s",
+		key,
+		e.field,
+		e.reason,
+		cause)
+}
+
+var _ error = TopicRegistrationHistoryValidationError{}
+
+var _ interface {
+	Field() string
+	Reason() string
+	Key() bool
+	Cause() error
+	ErrorName() string
+} = TopicRegistrationHistoryValidationError{}
+
 // Validate checks the field values on GetDashboardRequest with the rules
 // defined in the proto definition for this message. If any rules are
 // violated, the first error encountered is returned, or nil if there are no violations.
@@ -371,6 +1763,8 @@ func (m *DashboardStats) validate(all bool) error {
 	// no validation rules for PendingReviews
 
 	// no validation rules for ActiveSupervisors
+
+	// no validation rules for PendingTopicRegistrations
 
 	if len(errors) > 0 {
 		return DashboardStatsMultiError(errors)
@@ -5793,8 +7187,6 @@ func (m *GradeInfo) validate(all bool) error {
 
 	// no validation rules for Grade
 
-	// no validation rules for LetterGrade
-
 	// no validation rules for GradedBy
 
 	// no validation rules for GraderName
@@ -6077,7 +7469,7 @@ func (m *GetProjectGradesResponse) validate(all bool) error {
 
 	// no validation rules for AverageGrade
 
-	// no validation rules for FinalLetterGrade
+	// no validation rules for TotalScore
 
 	if len(errors) > 0 {
 		return GetProjectGradesResponseMultiError(errors)
@@ -6185,7 +7577,16 @@ func (m *SetStepGradeRequest) validate(all bool) error {
 
 	// no validation rules for StepId
 
-	// no validation rules for Grade
+	if val := m.GetGrade(); val < 0 || val > 100 {
+		err := SetStepGradeRequestValidationError{
+			field:  "Grade",
+			reason: "value must be inside range [0, 100]",
+		}
+		if !all {
+			return err
+		}
+		errors = append(errors, err)
+	}
 
 	// no validation rules for Comment
 
