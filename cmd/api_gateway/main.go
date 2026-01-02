@@ -103,6 +103,9 @@ func main() {
 			adminPanel.POST("/projects/:id/grades", handler.SetStepGrade)
 			adminPanel.GET("/workflow/progress", handler.GetWorkflowProgress)
 			adminPanel.GET("/pending-reviews", handler.ListPendingReviews)
+			adminPanel.GET("/topic-registrations", handler.ListTopicRegistrations)
+			adminPanel.GET("/topic-registrations/:id", handler.GetTopicRegistration)
+			adminPanel.POST("/topic-registrations/:id/review", handler.ReviewTopicRegistration)
 		}
 
 		projects := v1.Group("/projects")
@@ -128,6 +131,8 @@ func main() {
 			teams.POST("/:id/assign-project", handler.AssignProjectToTeam)
 			teams.POST("/:id/members", handler.AddMember)
 			teams.DELETE("/:id/members", handler.RemoveMember)
+			teams.POST("/:id/topic-registration", handler.SubmitTopicRegistration)
+
 		}
 		invites := v1.Group("/invites")
 		invites.Use(middleware.AuthMiddleware(cfg.JWTSecret))

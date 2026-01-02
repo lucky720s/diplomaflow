@@ -16,6 +16,16 @@ type Repository interface {
 	CreateGradeHistory(ctx context.Context, history *GradeHistory) error
 	GetGradeHistory(ctx context.Context, projectID, stepID int64) ([]*GradeHistory, error)
 
+	// Topic Registrations
+	CreateTopicRegistration(ctx context.Context, reg *TopicRegistration) error
+	GetTopicRegistration(ctx context.Context, id string) (*TopicRegistration, error)
+	GetTopicRegistrationByTeam(ctx context.Context, teamID int64) (*TopicRegistration, error)
+	ListTopicRegistrations(ctx context.Context, filter TopicRegistrationFilter) ([]*TopicRegistration, int64, error)
+	UpdateTopicRegistration(ctx context.Context, reg *TopicRegistration) error
+	CreateTopicRegistrationReview(ctx context.Context, review *TopicRegistrationReview) error
+	GetTopicRegistrationReviews(ctx context.Context, registrationID string) ([]*TopicRegistrationReview, error)
+	CountPendingTopicRegistrations(ctx context.Context, departmentID int64) (int64, error)
+
 	// Submissions
 	CreateSubmission(ctx context.Context, sub *Submission) error
 	GetSubmission(ctx context.Context, id string) (*Submission, error)
@@ -35,13 +45,21 @@ type Repository interface {
 	LogActivity(ctx context.Context, activity *AdminActivity) error
 	GetRecentActivities(ctx context.Context, departmentID int64, limit int) ([]*AdminActivity, error)
 
-	// Dashboard Stats (cross-table queries)
+	// Dashboard Stats
 	GetDashboardStats(ctx context.Context, departmentID int64) (*DashboardStatsData, error)
 	GetStepProgressStats(ctx context.Context, departmentID int64, workflowID int64) ([]*StepProgressData, error)
 	GetPendingReviewsCount(ctx context.Context, departmentID int64) (int64, error)
 }
 
 // Filter structs
+type TopicRegistrationFilter struct {
+	DepartmentID int64
+	TeamID       int64
+	Status       string
+	Limit        int
+	Offset       int
+}
+
 type SubmissionFilter struct {
 	DepartmentID int64
 	StepID       int64
@@ -53,12 +71,13 @@ type SubmissionFilter struct {
 
 // Stats data structs
 type DashboardStatsData struct {
-	TotalStudents     int32
-	TotalTeams        int32
-	TotalProjects     int32
-	CompletedProjects int32
-	PendingReviews    int32
-	ActiveSupervisors int32
+	TotalStudents              int32
+	TotalTeams                 int32
+	TotalProjects              int32
+	CompletedProjects          int32
+	PendingReviews             int32
+	ActiveSupervisors          int32
+	PendingTopicRegistrations  int32
 }
 
 type StepProgressData struct {
@@ -80,6 +99,8 @@ func NewRepository(db *gorm.DB) Repository {
 	_ = db.AutoMigrate(
 		&Grade{},
 		&GradeHistory{},
+		&TopicRegistration{},
+		&TopicRegistrationReview{},
 		&Submission{},
 		&SubmissionReview{},
 		&SupervisorAssignment{},
@@ -89,9 +110,7 @@ func NewRepository(db *gorm.DB) Repository {
 }
 
 // ==================== Grades ====================
-
 func (r *repository) CreateGrade(ctx context.Context, grade *Grade) error {
-	grade.LetterGrade = CalculateLetterGrade(grade.Grade)
 	grade.CreatedAt = time.Now()
 	grade.UpdatedAt = time.Now()
 	return r.db.WithContext(ctx).Create(grade).Error
@@ -118,7 +137,6 @@ func (r *repository) GetGradesByProject(ctx context.Context, projectID int64) ([
 }
 
 func (r *repository) UpdateGrade(ctx context.Context, grade *Grade) error {
-	grade.LetterGrade = CalculateLetterGrade(grade.Grade)
 	grade.UpdatedAt = time.Now()
 	return r.db.WithContext(ctx).Save(grade).Error
 }
@@ -138,8 +156,89 @@ func (r *repository) GetGradeHistory(ctx context.Context, projectID, stepID int6
 	return history, err
 }
 
-// ==================== Submissions ====================
+// ==================== Topic Registrations ====================
+func (r *repository) CreateTopicRegistration(ctx context.Context, reg *TopicRegistration) error {
+	reg.CreatedAt = time.Now()
+	reg.UpdatedAt = time.Now()
+	return r.db.WithContext(ctx).Create(reg).Error
+}
 
+func (r *repository) GetTopicRegistration(ctx context.Context, id string) (*TopicRegistration, error) {
+	var reg TopicRegistration
+	err := r.db.WithContext(ctx).First(&reg, "id = ?", id).Error
+	if err != nil {
+		return nil, err
+	}
+	return &reg, nil
+}
+
+func (r *repository) GetTopicRegistrationByTeam(ctx context.Context, teamID int64) (*TopicRegistration, error) {
+	var reg TopicRegistration
+	err := r.db.WithContext(ctx).
+		Where("team_id = ? AND status != ?", teamID, StatusRejected).
+		Order("created_at DESC").
+		First(&reg).Error
+	if err != nil {
+		return nil, err
+	}
+	return &reg, nil
+}
+
+func (r *repository) ListTopicRegistrations(ctx context.Context, filter TopicRegistrationFilter) ([]*TopicRegistration, int64, error) {
+	var regs []*TopicRegistration
+	var total int64
+
+	query := r.db.WithContext(ctx).Model(&TopicRegistration{})
+
+	if filter.TeamID > 0 {
+		query = query.Where("team_id = ?", filter.TeamID)
+	}
+	if filter.Status != "" && filter.Status != "all" {
+		query = query.Where("status = ?", filter.Status)
+	}
+
+	if err := query.Count(&total).Error; err != nil {
+		return nil, 0, err
+	}
+
+	err := query.
+		Order("created_at DESC").
+		Limit(filter.Limit).
+		Offset(filter.Offset).
+		Find(&regs).Error
+
+	return regs, total, err
+}
+
+func (r *repository) UpdateTopicRegistration(ctx context.Context, reg *TopicRegistration) error {
+	reg.UpdatedAt = time.Now()
+	return r.db.WithContext(ctx).Save(reg).Error
+}
+
+func (r *repository) CreateTopicRegistrationReview(ctx context.Context, review *TopicRegistrationReview) error {
+	review.CreatedAt = time.Now()
+	return r.db.WithContext(ctx).Create(review).Error
+}
+
+func (r *repository) GetTopicRegistrationReviews(ctx context.Context, registrationID string) ([]*TopicRegistrationReview, error) {
+	var reviews []*TopicRegistrationReview
+	err := r.db.WithContext(ctx).
+		Where("registration_id = ?", registrationID).
+		Order("created_at DESC").
+		Find(&reviews).Error
+	return reviews, err
+}
+
+func (r *repository) CountPendingTopicRegistrations(ctx context.Context, departmentID int64) (int64, error) {
+	var count int64
+	err := r.db.WithContext(ctx).
+		Model(&TopicRegistration{}).
+		Where("status = ?", StatusPending).
+		Count(&count).Error
+	return count, err
+}
+
+// ==================== Submissions ====================
 func (r *repository) CreateSubmission(ctx context.Context, sub *Submission) error {
 	sub.CreatedAt = time.Now()
 	sub.UpdatedAt = time.Now()
@@ -204,7 +303,6 @@ func (r *repository) GetSubmissionReviews(ctx context.Context, submissionID stri
 }
 
 // ==================== Supervisor Assignments ====================
-
 func (r *repository) AssignSupervisor(ctx context.Context, assignment *SupervisorAssignment) error {
 	assignment.CreatedAt = time.Now()
 	assignment.UpdatedAt = time.Now()
@@ -244,7 +342,6 @@ func (r *repository) CountTeamsBySupervisor(ctx context.Context, supervisorID in
 }
 
 // ==================== Activities ====================
-
 func (r *repository) LogActivity(ctx context.Context, activity *AdminActivity) error {
 	activity.CreatedAt = time.Now()
 	return r.db.WithContext(ctx).Create(activity).Error
@@ -260,12 +357,10 @@ func (r *repository) GetRecentActivities(ctx context.Context, departmentID int64
 }
 
 // ==================== Dashboard Stats ====================
-
 func (r *repository) GetDashboardStats(ctx context.Context, departmentID int64) (*DashboardStatsData, error) {
 	stats := &DashboardStatsData{}
 
-	// Используем временные переменные int64 для Count()
-	var totalStudents, totalTeams, totalProjects, completedProjects, pendingReviews, activeSupervisors int64
+	var totalStudents, totalTeams, totalProjects, completedProjects, pendingReviews, activeSupervisors, pendingTopicRegs int64
 
 	// Count students
 	r.db.WithContext(ctx).
@@ -296,10 +391,10 @@ func (r *repository) GetDashboardStats(ctx context.Context, departmentID int64) 
 		Count(&completedProjects)
 	stats.CompletedProjects = int32(completedProjects)
 
-	// Count pending reviews
+	// Count pending reviews (submissions)
 	r.db.WithContext(ctx).
 		Table("admin_submissions").
-		Where("status = ?", SubmissionStatusPending).
+		Where("status = ?", StatusPending).
 		Count(&pendingReviews)
 	stats.PendingReviews = int32(pendingReviews)
 
@@ -310,13 +405,19 @@ func (r *repository) GetDashboardStats(ctx context.Context, departmentID int64) 
 		Count(&activeSupervisors)
 	stats.ActiveSupervisors = int32(activeSupervisors)
 
+	// Count pending topic registrations
+	r.db.WithContext(ctx).
+		Table("admin_topic_registrations").
+		Where("status = ?", StatusPending).
+		Count(&pendingTopicRegs)
+	stats.PendingTopicRegistrations = int32(pendingTopicRegs)
+
 	return stats, nil
 }
 
 func (r *repository) GetStepProgressStats(ctx context.Context, departmentID int64, workflowID int64) ([]*StepProgressData, error) {
 	var stats []*StepProgressData
 
-	// This is a simplified query - in production, you'd want more complex joins
 	query := `
 		SELECT 
 			s.id as step_id,
@@ -331,11 +432,10 @@ func (r *repository) GetStepProgressStats(ctx context.Context, departmentID int6
 		LEFT JOIN admin_submissions sub ON sub.project_id = p.id AND sub.step_id = s.id
 		WHERE s.workflow_id = ?
 		GROUP BY s.id, s.name, s.type
-		ORDER BY s.id
+		ORDER BY s.order_index
 	`
 
 	r.db.WithContext(ctx).Raw(query, departmentID, workflowID).Scan(&stats)
-
 	return stats, nil
 }
 
@@ -343,7 +443,7 @@ func (r *repository) GetPendingReviewsCount(ctx context.Context, departmentID in
 	var count int64
 	err := r.db.WithContext(ctx).
 		Model(&Submission{}).
-		Where("status = ?", SubmissionStatusPending).
+		Where("status = ?", StatusPending).
 		Count(&count).Error
 	return count, err
 }
