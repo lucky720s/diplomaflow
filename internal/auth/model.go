@@ -22,7 +22,7 @@ type User struct {
 type RefreshToken struct {
 	ID        uint64    `gorm:"primaryKey"`
 	UserID    int64     `gorm:"index;not null"`
-	Token     string    `gorm:"uniqueIndex;not null"`
+	Token     string    `gorm:"not null"`
 	UserAgent string    `gorm:"type:varchar(255)"`
 	ClientIP  string    `gorm:"type:varchar(45)"`
 	ExpiresAt time.Time `gorm:"not null"`

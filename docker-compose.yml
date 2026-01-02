@@ -11,7 +11,7 @@ services:
     volumes:
       - diplomaflow_data:/var/lib/postgresql/data
     healthcheck:
-      test: [ "CMD-SHELL", "pg_isready -U diplomaflow -d diplomaflow && psql -U diplomaflow -d diplomaflow -c 'SELECT 1 FROM states LIMIT 1'" ]
+      test: [ "CMD-SHELL", "pg_isready -U diplomaflow -d diplomaflow" ]
       interval: 5s
       timeout: 5s
       retries: 10

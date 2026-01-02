@@ -3,7 +3,8 @@ package workflow.v1;
 
 import "google/protobuf/struct.proto";
 import "google/protobuf/timestamp.proto";
-
+import "workflow/v1/workflow.proto";
+import "google/protobuf/empty.proto";
 option go_package = "github.com/lucky720s/diplomaflow/pkg/protobuf/workflow/v1";
 
 // ==================== ADMIN API ====================
