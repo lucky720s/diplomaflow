@@ -52,6 +52,7 @@ func main() {
 		users := v1.Group("/users")
 		users.Use(middleware.AuthMiddleware(cfg.JWTSecret))
 		{
+			users.GET("/me", handler.GetMe)
 			users.GET("", handler.ListUsers)
 		}
 		universities := v1.Group("/universities")

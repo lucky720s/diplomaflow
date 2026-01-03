@@ -149,3 +149,18 @@ func (h *Handler) AssignRole(c *gin.Context) {
 
 	c.JSON(http.StatusOK, res)
 }
+func (h *Handler) GetMe(c *gin.Context) {
+	userID := c.GetInt64("userId")
+	email := c.GetString("email")
+	role := c.GetString("role")
+	universityID := c.GetInt64("universityId")
+	departmentID := c.GetInt64("departmentId")
+
+	c.JSON(http.StatusOK, gin.H{
+		"id":            userID,
+		"email":         email,
+		"role":          role,
+		"university_id": universityID,
+		"department_id": departmentID,
+	})
+}
