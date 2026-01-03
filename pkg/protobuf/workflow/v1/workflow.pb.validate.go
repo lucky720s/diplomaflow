@@ -7892,3 +7892,1290 @@ var _ interface {
 	Cause() error
 	ErrorName() string
 } = PositionValidationError{}
+
+// Validate checks the field values on GetTeamConfigurationRequest with the
+// rules defined in the proto definition for this message. If any rules are
+// violated, the first error encountered is returned, or nil if there are no violations.
+func (m *GetTeamConfigurationRequest) Validate() error {
+	return m.validate(false)
+}
+
+// ValidateAll checks the field values on GetTeamConfigurationRequest with the
+// rules defined in the proto definition for this message. If any rules are
+// violated, the result is a list of violation errors wrapped in
+// GetTeamConfigurationRequestMultiError, or nil if none found.
+func (m *GetTeamConfigurationRequest) ValidateAll() error {
+	return m.validate(true)
+}
+
+func (m *GetTeamConfigurationRequest) validate(all bool) error {
+	if m == nil {
+		return nil
+	}
+
+	var errors []error
+
+	// no validation rules for DepartmentId
+
+	// no validation rules for WorkflowId
+
+	// no validation rules for StateId
+
+	if len(errors) > 0 {
+		return GetTeamConfigurationRequestMultiError(errors)
+	}
+
+	return nil
+}
+
+// GetTeamConfigurationRequestMultiError is an error wrapping multiple
+// validation errors returned by GetTeamConfigurationRequest.ValidateAll() if
+// the designated constraints aren't met.
+type GetTeamConfigurationRequestMultiError []error
+
+// Error returns a concatenation of all the error messages it wraps.
+func (m GetTeamConfigurationRequestMultiError) Error() string {
+	msgs := make([]string, 0, len(m))
+	for _, err := range m {
+		msgs = append(msgs, err.Error())
+	}
+	return strings.Join(msgs, "; ")
+}
+
+// AllErrors returns a list of validation violation errors.
+func (m GetTeamConfigurationRequestMultiError) AllErrors() []error { return m }
+
+// GetTeamConfigurationRequestValidationError is the validation error returned
+// by GetTeamConfigurationRequest.Validate if the designated constraints
+// aren't met.
+type GetTeamConfigurationRequestValidationError struct {
+	field  string
+	reason string
+	cause  error
+	key    bool
+}
+
+// Field function returns field value.
+func (e GetTeamConfigurationRequestValidationError) Field() string { return e.field }
+
+// Reason function returns reason value.
+func (e GetTeamConfigurationRequestValidationError) Reason() string { return e.reason }
+
+// Cause function returns cause value.
+func (e GetTeamConfigurationRequestValidationError) Cause() error { return e.cause }
+
+// Key function returns key value.
+func (e GetTeamConfigurationRequestValidationError) Key() bool { return e.key }
+
+// ErrorName returns error name.
+func (e GetTeamConfigurationRequestValidationError) ErrorName() string {
+	return "GetTeamConfigurationRequestValidationError"
+}
+
+// Error satisfies the builtin error interface
+func (e GetTeamConfigurationRequestValidationError) Error() string {
+	cause := ""
+	if e.cause != nil {
+		cause = fmt.Sprintf(" | caused by: %v", e.cause)
+	}
+
+	key := ""
+	if e.key {
+		key = "key for "
+	}
+
+	return fmt.Sprintf(
+		"invalid %sGetTeamConfigurationRequest.%s: %s%s",
+		key,
+		e.field,
+		e.reason,
+		cause)
+}
+
+var _ error = GetTeamConfigurationRequestValidationError{}
+
+var _ interface {
+	Field() string
+	Reason() string
+	Key() bool
+	Cause() error
+	ErrorName() string
+} = GetTeamConfigurationRequestValidationError{}
+
+// Validate checks the field values on TeamConfigurationResponse with the rules
+// defined in the proto definition for this message. If any rules are
+// violated, the first error encountered is returned, or nil if there are no violations.
+func (m *TeamConfigurationResponse) Validate() error {
+	return m.validate(false)
+}
+
+// ValidateAll checks the field values on TeamConfigurationResponse with the
+// rules defined in the proto definition for this message. If any rules are
+// violated, the result is a list of violation errors wrapped in
+// TeamConfigurationResponseMultiError, or nil if none found.
+func (m *TeamConfigurationResponse) ValidateAll() error {
+	return m.validate(true)
+}
+
+func (m *TeamConfigurationResponse) validate(all bool) error {
+	if m == nil {
+		return nil
+	}
+
+	var errors []error
+
+	if all {
+		switch v := interface{}(m.GetTeamConfig()).(type) {
+		case interface{ ValidateAll() error }:
+			if err := v.ValidateAll(); err != nil {
+				errors = append(errors, TeamConfigurationResponseValidationError{
+					field:  "TeamConfig",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		case interface{ Validate() error }:
+			if err := v.Validate(); err != nil {
+				errors = append(errors, TeamConfigurationResponseValidationError{
+					field:  "TeamConfig",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		}
+	} else if v, ok := interface{}(m.GetTeamConfig()).(interface{ Validate() error }); ok {
+		if err := v.Validate(); err != nil {
+			return TeamConfigurationResponseValidationError{
+				field:  "TeamConfig",
+				reason: "embedded message failed validation",
+				cause:  err,
+			}
+		}
+	}
+
+	// no validation rules for WorkflowId
+
+	// no validation rules for StateId
+
+	// no validation rules for StateName
+
+	// no validation rules for InviteExpireDays
+
+	// no validation rules for TeamStepRequired
+
+	if len(errors) > 0 {
+		return TeamConfigurationResponseMultiError(errors)
+	}
+
+	return nil
+}
+
+// TeamConfigurationResponseMultiError is an error wrapping multiple validation
+// errors returned by TeamConfigurationResponse.ValidateAll() if the
+// designated constraints aren't met.
+type TeamConfigurationResponseMultiError []error
+
+// Error returns a concatenation of all the error messages it wraps.
+func (m TeamConfigurationResponseMultiError) Error() string {
+	msgs := make([]string, 0, len(m))
+	for _, err := range m {
+		msgs = append(msgs, err.Error())
+	}
+	return strings.Join(msgs, "; ")
+}
+
+// AllErrors returns a list of validation violation errors.
+func (m TeamConfigurationResponseMultiError) AllErrors() []error { return m }
+
+// TeamConfigurationResponseValidationError is the validation error returned by
+// TeamConfigurationResponse.Validate if the designated constraints aren't met.
+type TeamConfigurationResponseValidationError struct {
+	field  string
+	reason string
+	cause  error
+	key    bool
+}
+
+// Field function returns field value.
+func (e TeamConfigurationResponseValidationError) Field() string { return e.field }
+
+// Reason function returns reason value.
+func (e TeamConfigurationResponseValidationError) Reason() string { return e.reason }
+
+// Cause function returns cause value.
+func (e TeamConfigurationResponseValidationError) Cause() error { return e.cause }
+
+// Key function returns key value.
+func (e TeamConfigurationResponseValidationError) Key() bool { return e.key }
+
+// ErrorName returns error name.
+func (e TeamConfigurationResponseValidationError) ErrorName() string {
+	return "TeamConfigurationResponseValidationError"
+}
+
+// Error satisfies the builtin error interface
+func (e TeamConfigurationResponseValidationError) Error() string {
+	cause := ""
+	if e.cause != nil {
+		cause = fmt.Sprintf(" | caused by: %v", e.cause)
+	}
+
+	key := ""
+	if e.key {
+		key = "key for "
+	}
+
+	return fmt.Sprintf(
+		"invalid %sTeamConfigurationResponse.%s: %s%s",
+		key,
+		e.field,
+		e.reason,
+		cause)
+}
+
+var _ error = TeamConfigurationResponseValidationError{}
+
+var _ interface {
+	Field() string
+	Reason() string
+	Key() bool
+	Cause() error
+	ErrorName() string
+} = TeamConfigurationResponseValidationError{}
+
+// Validate checks the field values on CanExecuteTransitionRequest with the
+// rules defined in the proto definition for this message. If any rules are
+// violated, the first error encountered is returned, or nil if there are no violations.
+func (m *CanExecuteTransitionRequest) Validate() error {
+	return m.validate(false)
+}
+
+// ValidateAll checks the field values on CanExecuteTransitionRequest with the
+// rules defined in the proto definition for this message. If any rules are
+// violated, the result is a list of violation errors wrapped in
+// CanExecuteTransitionRequestMultiError, or nil if none found.
+func (m *CanExecuteTransitionRequest) ValidateAll() error {
+	return m.validate(true)
+}
+
+func (m *CanExecuteTransitionRequest) validate(all bool) error {
+	if m == nil {
+		return nil
+	}
+
+	var errors []error
+
+	// no validation rules for ProjectId
+
+	// no validation rules for CurrentStateId
+
+	// no validation rules for TransitionId
+
+	// no validation rules for UserId
+
+	// no validation rules for UserRole
+
+	if all {
+		switch v := interface{}(m.GetProjectData()).(type) {
+		case interface{ ValidateAll() error }:
+			if err := v.ValidateAll(); err != nil {
+				errors = append(errors, CanExecuteTransitionRequestValidationError{
+					field:  "ProjectData",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		case interface{ Validate() error }:
+			if err := v.Validate(); err != nil {
+				errors = append(errors, CanExecuteTransitionRequestValidationError{
+					field:  "ProjectData",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		}
+	} else if v, ok := interface{}(m.GetProjectData()).(interface{ Validate() error }); ok {
+		if err := v.Validate(); err != nil {
+			return CanExecuteTransitionRequestValidationError{
+				field:  "ProjectData",
+				reason: "embedded message failed validation",
+				cause:  err,
+			}
+		}
+	}
+
+	if len(errors) > 0 {
+		return CanExecuteTransitionRequestMultiError(errors)
+	}
+
+	return nil
+}
+
+// CanExecuteTransitionRequestMultiError is an error wrapping multiple
+// validation errors returned by CanExecuteTransitionRequest.ValidateAll() if
+// the designated constraints aren't met.
+type CanExecuteTransitionRequestMultiError []error
+
+// Error returns a concatenation of all the error messages it wraps.
+func (m CanExecuteTransitionRequestMultiError) Error() string {
+	msgs := make([]string, 0, len(m))
+	for _, err := range m {
+		msgs = append(msgs, err.Error())
+	}
+	return strings.Join(msgs, "; ")
+}
+
+// AllErrors returns a list of validation violation errors.
+func (m CanExecuteTransitionRequestMultiError) AllErrors() []error { return m }
+
+// CanExecuteTransitionRequestValidationError is the validation error returned
+// by CanExecuteTransitionRequest.Validate if the designated constraints
+// aren't met.
+type CanExecuteTransitionRequestValidationError struct {
+	field  string
+	reason string
+	cause  error
+	key    bool
+}
+
+// Field function returns field value.
+func (e CanExecuteTransitionRequestValidationError) Field() string { return e.field }
+
+// Reason function returns reason value.
+func (e CanExecuteTransitionRequestValidationError) Reason() string { return e.reason }
+
+// Cause function returns cause value.
+func (e CanExecuteTransitionRequestValidationError) Cause() error { return e.cause }
+
+// Key function returns key value.
+func (e CanExecuteTransitionRequestValidationError) Key() bool { return e.key }
+
+// ErrorName returns error name.
+func (e CanExecuteTransitionRequestValidationError) ErrorName() string {
+	return "CanExecuteTransitionRequestValidationError"
+}
+
+// Error satisfies the builtin error interface
+func (e CanExecuteTransitionRequestValidationError) Error() string {
+	cause := ""
+	if e.cause != nil {
+		cause = fmt.Sprintf(" | caused by: %v", e.cause)
+	}
+
+	key := ""
+	if e.key {
+		key = "key for "
+	}
+
+	return fmt.Sprintf(
+		"invalid %sCanExecuteTransitionRequest.%s: %s%s",
+		key,
+		e.field,
+		e.reason,
+		cause)
+}
+
+var _ error = CanExecuteTransitionRequestValidationError{}
+
+var _ interface {
+	Field() string
+	Reason() string
+	Key() bool
+	Cause() error
+	ErrorName() string
+} = CanExecuteTransitionRequestValidationError{}
+
+// Validate checks the field values on CanExecuteTransitionResponse with the
+// rules defined in the proto definition for this message. If any rules are
+// violated, the first error encountered is returned, or nil if there are no violations.
+func (m *CanExecuteTransitionResponse) Validate() error {
+	return m.validate(false)
+}
+
+// ValidateAll checks the field values on CanExecuteTransitionResponse with the
+// rules defined in the proto definition for this message. If any rules are
+// violated, the result is a list of violation errors wrapped in
+// CanExecuteTransitionResponseMultiError, or nil if none found.
+func (m *CanExecuteTransitionResponse) ValidateAll() error {
+	return m.validate(true)
+}
+
+func (m *CanExecuteTransitionResponse) validate(all bool) error {
+	if m == nil {
+		return nil
+	}
+
+	var errors []error
+
+	// no validation rules for CanExecute
+
+	// no validation rules for BlockedReason
+
+	for idx, item := range m.GetRequiredActions() {
+		_, _ = idx, item
+
+		if all {
+			switch v := interface{}(item).(type) {
+			case interface{ ValidateAll() error }:
+				if err := v.ValidateAll(); err != nil {
+					errors = append(errors, CanExecuteTransitionResponseValidationError{
+						field:  fmt.Sprintf("RequiredActions[%v]", idx),
+						reason: "embedded message failed validation",
+						cause:  err,
+					})
+				}
+			case interface{ Validate() error }:
+				if err := v.Validate(); err != nil {
+					errors = append(errors, CanExecuteTransitionResponseValidationError{
+						field:  fmt.Sprintf("RequiredActions[%v]", idx),
+						reason: "embedded message failed validation",
+						cause:  err,
+					})
+				}
+			}
+		} else if v, ok := interface{}(item).(interface{ Validate() error }); ok {
+			if err := v.Validate(); err != nil {
+				return CanExecuteTransitionResponseValidationError{
+					field:  fmt.Sprintf("RequiredActions[%v]", idx),
+					reason: "embedded message failed validation",
+					cause:  err,
+				}
+			}
+		}
+
+	}
+
+	if len(errors) > 0 {
+		return CanExecuteTransitionResponseMultiError(errors)
+	}
+
+	return nil
+}
+
+// CanExecuteTransitionResponseMultiError is an error wrapping multiple
+// validation errors returned by CanExecuteTransitionResponse.ValidateAll() if
+// the designated constraints aren't met.
+type CanExecuteTransitionResponseMultiError []error
+
+// Error returns a concatenation of all the error messages it wraps.
+func (m CanExecuteTransitionResponseMultiError) Error() string {
+	msgs := make([]string, 0, len(m))
+	for _, err := range m {
+		msgs = append(msgs, err.Error())
+	}
+	return strings.Join(msgs, "; ")
+}
+
+// AllErrors returns a list of validation violation errors.
+func (m CanExecuteTransitionResponseMultiError) AllErrors() []error { return m }
+
+// CanExecuteTransitionResponseValidationError is the validation error returned
+// by CanExecuteTransitionResponse.Validate if the designated constraints
+// aren't met.
+type CanExecuteTransitionResponseValidationError struct {
+	field  string
+	reason string
+	cause  error
+	key    bool
+}
+
+// Field function returns field value.
+func (e CanExecuteTransitionResponseValidationError) Field() string { return e.field }
+
+// Reason function returns reason value.
+func (e CanExecuteTransitionResponseValidationError) Reason() string { return e.reason }
+
+// Cause function returns cause value.
+func (e CanExecuteTransitionResponseValidationError) Cause() error { return e.cause }
+
+// Key function returns key value.
+func (e CanExecuteTransitionResponseValidationError) Key() bool { return e.key }
+
+// ErrorName returns error name.
+func (e CanExecuteTransitionResponseValidationError) ErrorName() string {
+	return "CanExecuteTransitionResponseValidationError"
+}
+
+// Error satisfies the builtin error interface
+func (e CanExecuteTransitionResponseValidationError) Error() string {
+	cause := ""
+	if e.cause != nil {
+		cause = fmt.Sprintf(" | caused by: %v", e.cause)
+	}
+
+	key := ""
+	if e.key {
+		key = "key for "
+	}
+
+	return fmt.Sprintf(
+		"invalid %sCanExecuteTransitionResponse.%s: %s%s",
+		key,
+		e.field,
+		e.reason,
+		cause)
+}
+
+var _ error = CanExecuteTransitionResponseValidationError{}
+
+var _ interface {
+	Field() string
+	Reason() string
+	Key() bool
+	Cause() error
+	ErrorName() string
+} = CanExecuteTransitionResponseValidationError{}
+
+// Validate checks the field values on RequiredAction with the rules defined in
+// the proto definition for this message. If any rules are violated, the first
+// error encountered is returned, or nil if there are no violations.
+func (m *RequiredAction) Validate() error {
+	return m.validate(false)
+}
+
+// ValidateAll checks the field values on RequiredAction with the rules defined
+// in the proto definition for this message. If any rules are violated, the
+// result is a list of violation errors wrapped in RequiredActionMultiError,
+// or nil if none found.
+func (m *RequiredAction) ValidateAll() error {
+	return m.validate(true)
+}
+
+func (m *RequiredAction) validate(all bool) error {
+	if m == nil {
+		return nil
+	}
+
+	var errors []error
+
+	// no validation rules for ActionType
+
+	// no validation rules for Description
+
+	// no validation rules for Link
+
+	if len(errors) > 0 {
+		return RequiredActionMultiError(errors)
+	}
+
+	return nil
+}
+
+// RequiredActionMultiError is an error wrapping multiple validation errors
+// returned by RequiredAction.ValidateAll() if the designated constraints
+// aren't met.
+type RequiredActionMultiError []error
+
+// Error returns a concatenation of all the error messages it wraps.
+func (m RequiredActionMultiError) Error() string {
+	msgs := make([]string, 0, len(m))
+	for _, err := range m {
+		msgs = append(msgs, err.Error())
+	}
+	return strings.Join(msgs, "; ")
+}
+
+// AllErrors returns a list of validation violation errors.
+func (m RequiredActionMultiError) AllErrors() []error { return m }
+
+// RequiredActionValidationError is the validation error returned by
+// RequiredAction.Validate if the designated constraints aren't met.
+type RequiredActionValidationError struct {
+	field  string
+	reason string
+	cause  error
+	key    bool
+}
+
+// Field function returns field value.
+func (e RequiredActionValidationError) Field() string { return e.field }
+
+// Reason function returns reason value.
+func (e RequiredActionValidationError) Reason() string { return e.reason }
+
+// Cause function returns cause value.
+func (e RequiredActionValidationError) Cause() error { return e.cause }
+
+// Key function returns key value.
+func (e RequiredActionValidationError) Key() bool { return e.key }
+
+// ErrorName returns error name.
+func (e RequiredActionValidationError) ErrorName() string { return "RequiredActionValidationError" }
+
+// Error satisfies the builtin error interface
+func (e RequiredActionValidationError) Error() string {
+	cause := ""
+	if e.cause != nil {
+		cause = fmt.Sprintf(" | caused by: %v", e.cause)
+	}
+
+	key := ""
+	if e.key {
+		key = "key for "
+	}
+
+	return fmt.Sprintf(
+		"invalid %sRequiredAction.%s: %s%s",
+		key,
+		e.field,
+		e.reason,
+		cause)
+}
+
+var _ error = RequiredActionValidationError{}
+
+var _ interface {
+	Field() string
+	Reason() string
+	Key() bool
+	Cause() error
+	ErrorName() string
+} = RequiredActionValidationError{}
+
+// Validate checks the field values on GetDepartmentWorkflowConfigRequest with
+// the rules defined in the proto definition for this message. If any rules
+// are violated, the first error encountered is returned, or nil if there are
+// no violations.
+func (m *GetDepartmentWorkflowConfigRequest) Validate() error {
+	return m.validate(false)
+}
+
+// ValidateAll checks the field values on GetDepartmentWorkflowConfigRequest
+// with the rules defined in the proto definition for this message. If any
+// rules are violated, the result is a list of violation errors wrapped in
+// GetDepartmentWorkflowConfigRequestMultiError, or nil if none found.
+func (m *GetDepartmentWorkflowConfigRequest) ValidateAll() error {
+	return m.validate(true)
+}
+
+func (m *GetDepartmentWorkflowConfigRequest) validate(all bool) error {
+	if m == nil {
+		return nil
+	}
+
+	var errors []error
+
+	// no validation rules for DepartmentId
+
+	// no validation rules for AcademicYear
+
+	if len(errors) > 0 {
+		return GetDepartmentWorkflowConfigRequestMultiError(errors)
+	}
+
+	return nil
+}
+
+// GetDepartmentWorkflowConfigRequestMultiError is an error wrapping multiple
+// validation errors returned by
+// GetDepartmentWorkflowConfigRequest.ValidateAll() if the designated
+// constraints aren't met.
+type GetDepartmentWorkflowConfigRequestMultiError []error
+
+// Error returns a concatenation of all the error messages it wraps.
+func (m GetDepartmentWorkflowConfigRequestMultiError) Error() string {
+	msgs := make([]string, 0, len(m))
+	for _, err := range m {
+		msgs = append(msgs, err.Error())
+	}
+	return strings.Join(msgs, "; ")
+}
+
+// AllErrors returns a list of validation violation errors.
+func (m GetDepartmentWorkflowConfigRequestMultiError) AllErrors() []error { return m }
+
+// GetDepartmentWorkflowConfigRequestValidationError is the validation error
+// returned by GetDepartmentWorkflowConfigRequest.Validate if the designated
+// constraints aren't met.
+type GetDepartmentWorkflowConfigRequestValidationError struct {
+	field  string
+	reason string
+	cause  error
+	key    bool
+}
+
+// Field function returns field value.
+func (e GetDepartmentWorkflowConfigRequestValidationError) Field() string { return e.field }
+
+// Reason function returns reason value.
+func (e GetDepartmentWorkflowConfigRequestValidationError) Reason() string { return e.reason }
+
+// Cause function returns cause value.
+func (e GetDepartmentWorkflowConfigRequestValidationError) Cause() error { return e.cause }
+
+// Key function returns key value.
+func (e GetDepartmentWorkflowConfigRequestValidationError) Key() bool { return e.key }
+
+// ErrorName returns error name.
+func (e GetDepartmentWorkflowConfigRequestValidationError) ErrorName() string {
+	return "GetDepartmentWorkflowConfigRequestValidationError"
+}
+
+// Error satisfies the builtin error interface
+func (e GetDepartmentWorkflowConfigRequestValidationError) Error() string {
+	cause := ""
+	if e.cause != nil {
+		cause = fmt.Sprintf(" | caused by: %v", e.cause)
+	}
+
+	key := ""
+	if e.key {
+		key = "key for "
+	}
+
+	return fmt.Sprintf(
+		"invalid %sGetDepartmentWorkflowConfigRequest.%s: %s%s",
+		key,
+		e.field,
+		e.reason,
+		cause)
+}
+
+var _ error = GetDepartmentWorkflowConfigRequestValidationError{}
+
+var _ interface {
+	Field() string
+	Reason() string
+	Key() bool
+	Cause() error
+	ErrorName() string
+} = GetDepartmentWorkflowConfigRequestValidationError{}
+
+// Validate checks the field values on DepartmentWorkflowConfigResponse with
+// the rules defined in the proto definition for this message. If any rules
+// are violated, the first error encountered is returned, or nil if there are
+// no violations.
+func (m *DepartmentWorkflowConfigResponse) Validate() error {
+	return m.validate(false)
+}
+
+// ValidateAll checks the field values on DepartmentWorkflowConfigResponse with
+// the rules defined in the proto definition for this message. If any rules
+// are violated, the result is a list of violation errors wrapped in
+// DepartmentWorkflowConfigResponseMultiError, or nil if none found.
+func (m *DepartmentWorkflowConfigResponse) ValidateAll() error {
+	return m.validate(true)
+}
+
+func (m *DepartmentWorkflowConfigResponse) validate(all bool) error {
+	if m == nil {
+		return nil
+	}
+
+	var errors []error
+
+	// no validation rules for WorkflowId
+
+	// no validation rules for WorkflowName
+
+	if all {
+		switch v := interface{}(m.GetTeamConfig()).(type) {
+		case interface{ ValidateAll() error }:
+			if err := v.ValidateAll(); err != nil {
+				errors = append(errors, DepartmentWorkflowConfigResponseValidationError{
+					field:  "TeamConfig",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		case interface{ Validate() error }:
+			if err := v.Validate(); err != nil {
+				errors = append(errors, DepartmentWorkflowConfigResponseValidationError{
+					field:  "TeamConfig",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		}
+	} else if v, ok := interface{}(m.GetTeamConfig()).(interface{ Validate() error }); ok {
+		if err := v.Validate(); err != nil {
+			return DepartmentWorkflowConfigResponseValidationError{
+				field:  "TeamConfig",
+				reason: "embedded message failed validation",
+				cause:  err,
+			}
+		}
+	}
+
+	for idx, item := range m.GetStates() {
+		_, _ = idx, item
+
+		if all {
+			switch v := interface{}(item).(type) {
+			case interface{ ValidateAll() error }:
+				if err := v.ValidateAll(); err != nil {
+					errors = append(errors, DepartmentWorkflowConfigResponseValidationError{
+						field:  fmt.Sprintf("States[%v]", idx),
+						reason: "embedded message failed validation",
+						cause:  err,
+					})
+				}
+			case interface{ Validate() error }:
+				if err := v.Validate(); err != nil {
+					errors = append(errors, DepartmentWorkflowConfigResponseValidationError{
+						field:  fmt.Sprintf("States[%v]", idx),
+						reason: "embedded message failed validation",
+						cause:  err,
+					})
+				}
+			}
+		} else if v, ok := interface{}(item).(interface{ Validate() error }); ok {
+			if err := v.Validate(); err != nil {
+				return DepartmentWorkflowConfigResponseValidationError{
+					field:  fmt.Sprintf("States[%v]", idx),
+					reason: "embedded message failed validation",
+					cause:  err,
+				}
+			}
+		}
+
+	}
+
+	for idx, item := range m.GetDeadlines() {
+		_, _ = idx, item
+
+		if all {
+			switch v := interface{}(item).(type) {
+			case interface{ ValidateAll() error }:
+				if err := v.ValidateAll(); err != nil {
+					errors = append(errors, DepartmentWorkflowConfigResponseValidationError{
+						field:  fmt.Sprintf("Deadlines[%v]", idx),
+						reason: "embedded message failed validation",
+						cause:  err,
+					})
+				}
+			case interface{ Validate() error }:
+				if err := v.Validate(); err != nil {
+					errors = append(errors, DepartmentWorkflowConfigResponseValidationError{
+						field:  fmt.Sprintf("Deadlines[%v]", idx),
+						reason: "embedded message failed validation",
+						cause:  err,
+					})
+				}
+			}
+		} else if v, ok := interface{}(item).(interface{ Validate() error }); ok {
+			if err := v.Validate(); err != nil {
+				return DepartmentWorkflowConfigResponseValidationError{
+					field:  fmt.Sprintf("Deadlines[%v]", idx),
+					reason: "embedded message failed validation",
+					cause:  err,
+				}
+			}
+		}
+
+	}
+
+	if all {
+		switch v := interface{}(m.GetSettings()).(type) {
+		case interface{ ValidateAll() error }:
+			if err := v.ValidateAll(); err != nil {
+				errors = append(errors, DepartmentWorkflowConfigResponseValidationError{
+					field:  "Settings",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		case interface{ Validate() error }:
+			if err := v.Validate(); err != nil {
+				errors = append(errors, DepartmentWorkflowConfigResponseValidationError{
+					field:  "Settings",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		}
+	} else if v, ok := interface{}(m.GetSettings()).(interface{ Validate() error }); ok {
+		if err := v.Validate(); err != nil {
+			return DepartmentWorkflowConfigResponseValidationError{
+				field:  "Settings",
+				reason: "embedded message failed validation",
+				cause:  err,
+			}
+		}
+	}
+
+	if len(errors) > 0 {
+		return DepartmentWorkflowConfigResponseMultiError(errors)
+	}
+
+	return nil
+}
+
+// DepartmentWorkflowConfigResponseMultiError is an error wrapping multiple
+// validation errors returned by
+// DepartmentWorkflowConfigResponse.ValidateAll() if the designated
+// constraints aren't met.
+type DepartmentWorkflowConfigResponseMultiError []error
+
+// Error returns a concatenation of all the error messages it wraps.
+func (m DepartmentWorkflowConfigResponseMultiError) Error() string {
+	msgs := make([]string, 0, len(m))
+	for _, err := range m {
+		msgs = append(msgs, err.Error())
+	}
+	return strings.Join(msgs, "; ")
+}
+
+// AllErrors returns a list of validation violation errors.
+func (m DepartmentWorkflowConfigResponseMultiError) AllErrors() []error { return m }
+
+// DepartmentWorkflowConfigResponseValidationError is the validation error
+// returned by DepartmentWorkflowConfigResponse.Validate if the designated
+// constraints aren't met.
+type DepartmentWorkflowConfigResponseValidationError struct {
+	field  string
+	reason string
+	cause  error
+	key    bool
+}
+
+// Field function returns field value.
+func (e DepartmentWorkflowConfigResponseValidationError) Field() string { return e.field }
+
+// Reason function returns reason value.
+func (e DepartmentWorkflowConfigResponseValidationError) Reason() string { return e.reason }
+
+// Cause function returns cause value.
+func (e DepartmentWorkflowConfigResponseValidationError) Cause() error { return e.cause }
+
+// Key function returns key value.
+func (e DepartmentWorkflowConfigResponseValidationError) Key() bool { return e.key }
+
+// ErrorName returns error name.
+func (e DepartmentWorkflowConfigResponseValidationError) ErrorName() string {
+	return "DepartmentWorkflowConfigResponseValidationError"
+}
+
+// Error satisfies the builtin error interface
+func (e DepartmentWorkflowConfigResponseValidationError) Error() string {
+	cause := ""
+	if e.cause != nil {
+		cause = fmt.Sprintf(" | caused by: %v", e.cause)
+	}
+
+	key := ""
+	if e.key {
+		key = "key for "
+	}
+
+	return fmt.Sprintf(
+		"invalid %sDepartmentWorkflowConfigResponse.%s: %s%s",
+		key,
+		e.field,
+		e.reason,
+		cause)
+}
+
+var _ error = DepartmentWorkflowConfigResponseValidationError{}
+
+var _ interface {
+	Field() string
+	Reason() string
+	Key() bool
+	Cause() error
+	ErrorName() string
+} = DepartmentWorkflowConfigResponseValidationError{}
+
+// Validate checks the field values on StateConfig with the rules defined in
+// the proto definition for this message. If any rules are violated, the first
+// error encountered is returned, or nil if there are no violations.
+func (m *StateConfig) Validate() error {
+	return m.validate(false)
+}
+
+// ValidateAll checks the field values on StateConfig with the rules defined in
+// the proto definition for this message. If any rules are violated, the
+// result is a list of violation errors wrapped in StateConfigMultiError, or
+// nil if none found.
+func (m *StateConfig) ValidateAll() error {
+	return m.validate(true)
+}
+
+func (m *StateConfig) validate(all bool) error {
+	if m == nil {
+		return nil
+	}
+
+	var errors []error
+
+	// no validation rules for Id
+
+	// no validation rules for Name
+
+	// no validation rules for DisplayName
+
+	// no validation rules for Type
+
+	// no validation rules for OrderIndex
+
+	if all {
+		switch v := interface{}(m.GetConfig()).(type) {
+		case interface{ ValidateAll() error }:
+			if err := v.ValidateAll(); err != nil {
+				errors = append(errors, StateConfigValidationError{
+					field:  "Config",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		case interface{ Validate() error }:
+			if err := v.Validate(); err != nil {
+				errors = append(errors, StateConfigValidationError{
+					field:  "Config",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		}
+	} else if v, ok := interface{}(m.GetConfig()).(interface{ Validate() error }); ok {
+		if err := v.Validate(); err != nil {
+			return StateConfigValidationError{
+				field:  "Config",
+				reason: "embedded message failed validation",
+				cause:  err,
+			}
+		}
+	}
+
+	if all {
+		switch v := interface{}(m.GetDeadline()).(type) {
+		case interface{ ValidateAll() error }:
+			if err := v.ValidateAll(); err != nil {
+				errors = append(errors, StateConfigValidationError{
+					field:  "Deadline",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		case interface{ Validate() error }:
+			if err := v.Validate(); err != nil {
+				errors = append(errors, StateConfigValidationError{
+					field:  "Deadline",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		}
+	} else if v, ok := interface{}(m.GetDeadline()).(interface{ Validate() error }); ok {
+		if err := v.Validate(); err != nil {
+			return StateConfigValidationError{
+				field:  "Deadline",
+				reason: "embedded message failed validation",
+				cause:  err,
+			}
+		}
+	}
+
+	// no validation rules for DurationDays
+
+	if len(errors) > 0 {
+		return StateConfigMultiError(errors)
+	}
+
+	return nil
+}
+
+// StateConfigMultiError is an error wrapping multiple validation errors
+// returned by StateConfig.ValidateAll() if the designated constraints aren't met.
+type StateConfigMultiError []error
+
+// Error returns a concatenation of all the error messages it wraps.
+func (m StateConfigMultiError) Error() string {
+	msgs := make([]string, 0, len(m))
+	for _, err := range m {
+		msgs = append(msgs, err.Error())
+	}
+	return strings.Join(msgs, "; ")
+}
+
+// AllErrors returns a list of validation violation errors.
+func (m StateConfigMultiError) AllErrors() []error { return m }
+
+// StateConfigValidationError is the validation error returned by
+// StateConfig.Validate if the designated constraints aren't met.
+type StateConfigValidationError struct {
+	field  string
+	reason string
+	cause  error
+	key    bool
+}
+
+// Field function returns field value.
+func (e StateConfigValidationError) Field() string { return e.field }
+
+// Reason function returns reason value.
+func (e StateConfigValidationError) Reason() string { return e.reason }
+
+// Cause function returns cause value.
+func (e StateConfigValidationError) Cause() error { return e.cause }
+
+// Key function returns key value.
+func (e StateConfigValidationError) Key() bool { return e.key }
+
+// ErrorName returns error name.
+func (e StateConfigValidationError) ErrorName() string { return "StateConfigValidationError" }
+
+// Error satisfies the builtin error interface
+func (e StateConfigValidationError) Error() string {
+	cause := ""
+	if e.cause != nil {
+		cause = fmt.Sprintf(" | caused by: %v", e.cause)
+	}
+
+	key := ""
+	if e.key {
+		key = "key for "
+	}
+
+	return fmt.Sprintf(
+		"invalid %sStateConfig.%s: %s%s",
+		key,
+		e.field,
+		e.reason,
+		cause)
+}
+
+var _ error = StateConfigValidationError{}
+
+var _ interface {
+	Field() string
+	Reason() string
+	Key() bool
+	Cause() error
+	ErrorName() string
+} = StateConfigValidationError{}
+
+// Validate checks the field values on DeadlineConfig with the rules defined in
+// the proto definition for this message. If any rules are violated, the first
+// error encountered is returned, or nil if there are no violations.
+func (m *DeadlineConfig) Validate() error {
+	return m.validate(false)
+}
+
+// ValidateAll checks the field values on DeadlineConfig with the rules defined
+// in the proto definition for this message. If any rules are violated, the
+// result is a list of violation errors wrapped in DeadlineConfigMultiError,
+// or nil if none found.
+func (m *DeadlineConfig) ValidateAll() error {
+	return m.validate(true)
+}
+
+func (m *DeadlineConfig) validate(all bool) error {
+	if m == nil {
+		return nil
+	}
+
+	var errors []error
+
+	// no validation rules for StateId
+
+	// no validation rules for StateName
+
+	if all {
+		switch v := interface{}(m.GetFixedDeadline()).(type) {
+		case interface{ ValidateAll() error }:
+			if err := v.ValidateAll(); err != nil {
+				errors = append(errors, DeadlineConfigValidationError{
+					field:  "FixedDeadline",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		case interface{ Validate() error }:
+			if err := v.Validate(); err != nil {
+				errors = append(errors, DeadlineConfigValidationError{
+					field:  "FixedDeadline",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		}
+	} else if v, ok := interface{}(m.GetFixedDeadline()).(interface{ Validate() error }); ok {
+		if err := v.Validate(); err != nil {
+			return DeadlineConfigValidationError{
+				field:  "FixedDeadline",
+				reason: "embedded message failed validation",
+				cause:  err,
+			}
+		}
+	}
+
+	// no validation rules for RelativeDays
+
+	if len(errors) > 0 {
+		return DeadlineConfigMultiError(errors)
+	}
+
+	return nil
+}
+
+// DeadlineConfigMultiError is an error wrapping multiple validation errors
+// returned by DeadlineConfig.ValidateAll() if the designated constraints
+// aren't met.
+type DeadlineConfigMultiError []error
+
+// Error returns a concatenation of all the error messages it wraps.
+func (m DeadlineConfigMultiError) Error() string {
+	msgs := make([]string, 0, len(m))
+	for _, err := range m {
+		msgs = append(msgs, err.Error())
+	}
+	return strings.Join(msgs, "; ")
+}
+
+// AllErrors returns a list of validation violation errors.
+func (m DeadlineConfigMultiError) AllErrors() []error { return m }
+
+// DeadlineConfigValidationError is the validation error returned by
+// DeadlineConfig.Validate if the designated constraints aren't met.
+type DeadlineConfigValidationError struct {
+	field  string
+	reason string
+	cause  error
+	key    bool
+}
+
+// Field function returns field value.
+func (e DeadlineConfigValidationError) Field() string { return e.field }
+
+// Reason function returns reason value.
+func (e DeadlineConfigValidationError) Reason() string { return e.reason }
+
+// Cause function returns cause value.
+func (e DeadlineConfigValidationError) Cause() error { return e.cause }
+
+// Key function returns key value.
+func (e DeadlineConfigValidationError) Key() bool { return e.key }
+
+// ErrorName returns error name.
+func (e DeadlineConfigValidationError) ErrorName() string { return "DeadlineConfigValidationError" }
+
+// Error satisfies the builtin error interface
+func (e DeadlineConfigValidationError) Error() string {
+	cause := ""
+	if e.cause != nil {
+		cause = fmt.Sprintf(" | caused by: %v", e.cause)
+	}
+
+	key := ""
+	if e.key {
+		key = "key for "
+	}
+
+	return fmt.Sprintf(
+		"invalid %sDeadlineConfig.%s: %s%s",
+		key,
+		e.field,
+		e.reason,
+		cause)
+}
+
+var _ error = DeadlineConfigValidationError{}
+
+var _ interface {
+	Field() string
+	Reason() string
+	Key() bool
+	Cause() error
+	ErrorName() string
+} = DeadlineConfigValidationError{}

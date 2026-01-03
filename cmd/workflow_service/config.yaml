@@ -3,4 +3,4 @@ grpc_port: 8085
 database:
   dsn: ""
 services:
-  notification_addr: "notification_service:8086"
+  notification_addr: "notification_service:8087"

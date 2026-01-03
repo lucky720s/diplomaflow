@@ -100,7 +100,7 @@ func (r *repository) CreateTeamWithInvites(ctx context.Context, team *Team, invi
 			return err
 		}
 		for _, inv := range invites {
-			inv.TeamID = team.ID
+			inv.TeamID = int64(team.ID)
 			if err := tx.Create(inv).Error; err != nil {
 				return err
 			}

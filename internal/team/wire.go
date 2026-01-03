@@ -36,7 +36,8 @@ func ProvideNotificationClient(cfg *Config) (notificationv1.NotificationServiceC
 	return notificationv1.NewNotificationServiceClient(conn), cleanup, nil
 }
 func ProvideWorkflowClient(cfg *Config) (workflowv1.WorkflowServiceClient, func(), error) {
-	conn, err := grpc.NewClient(cfg.Services.WorkflowAddr, grpc.WithTransportCredentials(insecure.NewCredentials()))
+	conn, err := grpc.NewClient(cfg.Services.WorkflowAddr,
+		grpc.WithTransportCredentials(insecure.NewCredentials()))
 	if err != nil {
 		return nil, nil, err
 	}
@@ -55,6 +56,7 @@ func InitializeApp(
 		ProvideNotificationClient,
 		ProvideWorkflowClient,
 		NewService,
+		wire.Bind(new(TeamUseCase), new(*Service)),
 		NewEventHandler,
 		NewHandler,
 		NewApp,

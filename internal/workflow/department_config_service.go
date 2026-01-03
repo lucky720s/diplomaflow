@@ -147,9 +147,7 @@ func (s *DepartmentConfigService) workflowToEffective(wf *Workflow, config *Depa
 			if override.FixedDate != nil {
 				es.EffectiveDeadline = override.FixedDate
 			} else if override.DurationDays != nil {
-				// Рассчитываем от начала workflow или предыдущего этапа
-				// (упрощённо - от текущей даты)
-				deadline := time.Now().AddDate(0, 0, *override.DurationDays)
+				deadline := time.Now().AddDate(0, 0, int(*override.DurationDays))
 				es.EffectiveDeadline = &deadline
 			}
 		}
@@ -163,7 +161,10 @@ func (s *DepartmentConfigService) workflowToEffective(wf *Workflow, config *Depa
 // AddCustomStep добавляет кастомный этап для кафедры
 func (s *DepartmentConfigService) AddCustomStep(ctx context.Context, configID int64, input *AddCustomStepInput) (*DepartmentCustomStep, error) {
 	configJSON, _ := json.Marshal(input.Config)
-
+	var durationDays int32 = 7
+	if input.DurationDays != nil {
+		durationDays = *input.DurationDays
+	}
 	step := &DepartmentCustomStep{
 		DepartmentConfigID: configID,
 		Name:               input.Name,
@@ -172,7 +173,7 @@ func (s *DepartmentConfigService) AddCustomStep(ctx context.Context, configID in
 		InsertAfterStateID: input.InsertAfterStateID,
 		Config:             datatypes.JSON(configJSON),
 		IsRequired:         input.IsRequired,
-		DurationDays:       input.DurationDays,
+		DurationDays:       durationDays,
 		CreatedAt:          time.Now(),
 	}
 
@@ -218,5 +219,5 @@ type AddCustomStepInput struct {
 	InsertAfterStateID *int64
 	Config             map[string]interface{}
 	IsRequired         bool
-	DurationDays       int32
+	DurationDays       *int32
 }

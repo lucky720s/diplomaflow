@@ -86,7 +86,6 @@ func (h *Handler) GetWorkflowFull(ctx context.Context, req *workflowv1.GetWorkfl
 		Workflow:    h.workflowToProto(wf),
 		States:      h.statesToProto(wf.States),
 		Transitions: h.transitionsToProto(wf.Transitions),
-		Stats:       h.getWorkflowStats(ctx, wf.ID),
 	}, nil
 }
 
@@ -105,14 +104,20 @@ func (h *Handler) ListWorkflows(ctx context.Context, req *workflowv1.ListWorkflo
 }
 
 func (h *Handler) UpdateWorkflow(ctx context.Context, req *workflowv1.UpdateWorkflowRequest) (*workflowv1.Workflow, error) {
+	var settings map[string]interface{}
+	if req.Settings != nil {
+		settings = req.Settings.AsMap()
+	}
+
 	wf, err := h.service.UpdateWorkflow(ctx, req.Id, &UpdateWorkflowInput{
 		Name:        req.Name,
 		Description: req.Description,
-		Settings:    req.Settings.AsMap(),
+		Settings:    settings,
 	})
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, "failed to update workflow: %v", err)
 	}
+
 	return h.workflowToProto(wf), nil
 }
 
@@ -136,13 +141,13 @@ func (h *Handler) SetActiveWorkflow(ctx context.Context, req *workflowv1.SetActi
 func (h *Handler) GetActiveWorkflowByDepartment(ctx context.Context, req *workflowv1.GetActiveWorkflowByDepartmentRequest) (*workflowv1.Workflow, error) {
 	wf, err := h.service.GetActiveWorkflowByDepartment(ctx, req.DepartmentId)
 	if err != nil {
-		return nil, status.Errorf(codes.NotFound, "no active workflow found: %v", err)
+		return nil, status.Errorf(codes.NotFound, "no active workflow for department: %v", err)
 	}
 	return h.workflowToProto(wf), nil
 }
 
 func (h *Handler) CloneWorkflow(ctx context.Context, req *workflowv1.CloneWorkflowRequest) (*workflowv1.Workflow, error) {
-	wf, err := h.service.CloneWorkflow(ctx, req.SourceWorkflowId, req.TargetDepartmentId, req.NewName, req.CloneAsTemplate)
+	wf, err := h.service.CloneWorkflow(ctx, req.SourceWorkflowId, req.TargetDepartmentId, req.NewName)
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, "failed to clone workflow: %v", err)
 	}
@@ -150,7 +155,7 @@ func (h *Handler) CloneWorkflow(ctx context.Context, req *workflowv1.CloneWorkfl
 }
 
 func (h *Handler) CreateNewVersion(ctx context.Context, req *workflowv1.CreateNewVersionRequest) (*workflowv1.Workflow, error) {
-	wf, err := h.service.CreateNewVersion(ctx, req.WorkflowId, req.Changelog)
+	wf, err := h.service.CreateNewVersion(ctx, req.WorkflowId)
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, "failed to create new version: %v", err)
 	}
@@ -163,41 +168,32 @@ func (h *Handler) ValidateWorkflow(ctx context.Context, req *workflowv1.Validate
 		return nil, status.Errorf(codes.Internal, "failed to validate workflow: %v", err)
 	}
 
-	var errors []*workflowv1.ValidationError
+	resp := &workflowv1.ValidateWorkflowResponse{
+		IsValid: result.IsValid,
+	}
+
 	for _, e := range result.Errors {
-		errors = append(errors, &workflowv1.ValidationError{
+		resp.Errors = append(resp.Errors, &workflowv1.ValidationError{
 			Code:    e.Code,
 			Message: e.Message,
 			Path:    e.Path,
 		})
 	}
 
-	var warnings []*workflowv1.ValidationWarning
 	for _, w := range result.Warnings {
-		warnings = append(warnings, &workflowv1.ValidationWarning{
+		resp.Warnings = append(resp.Warnings, &workflowv1.ValidationWarning{
 			Code:    w.Code,
 			Message: w.Message,
 			Path:    w.Path,
 		})
 	}
 
-	return &workflowv1.ValidateWorkflowResponse{
-		IsValid:  result.IsValid,
-		Errors:   errors,
-		Warnings: warnings,
-	}, nil
+	return resp, nil
 }
 
 // ==================== STATE CRUD ====================
 
 func (h *Handler) CreateState(ctx context.Context, req *workflowv1.CreateStateRequest) (*workflowv1.State, error) {
-	if req.WorkflowId == 0 {
-		return nil, status.Error(codes.InvalidArgument, "workflow_id is required")
-	}
-	if req.Name == "" {
-		return nil, status.Error(codes.InvalidArgument, "name is required")
-	}
-
 	var config map[string]interface{}
 	if req.Config != nil {
 		config = req.Config.AsMap()
@@ -208,13 +204,13 @@ func (h *Handler) CreateState(ctx context.Context, req *workflowv1.CreateStateRe
 		Name:         req.Name,
 		DisplayName:  req.DisplayName,
 		Description:  req.Description,
+		OrderIndex:   req.OrderIndex,
 		Type:         req.Type.String(),
-		Config:       config,
-		DurationDays: req.DurationDays,
 		IsInitial:    req.IsInitial,
 		IsFinal:      req.IsFinal,
 		IsOptional:   req.IsOptional,
-		OrderIndex:   req.OrderIndex,
+		Config:       config,
+		DurationDays: req.DurationDays,
 	})
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, "failed to create state: %v", err)
@@ -236,7 +232,10 @@ func (h *Handler) ListStates(ctx context.Context, req *workflowv1.ListStatesRequ
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, "failed to list states: %v", err)
 	}
-	return &workflowv1.ListStatesResponse{States: h.statesToProto(states)}, nil
+
+	return &workflowv1.ListStatesResponse{
+		States: h.statesToProto(states),
+	}, nil
 }
 
 func (h *Handler) UpdateState(ctx context.Context, req *workflowv1.UpdateStateRequest) (*workflowv1.State, error) {
@@ -251,12 +250,13 @@ func (h *Handler) UpdateState(ctx context.Context, req *workflowv1.UpdateStateRe
 		Description:  req.Description,
 		Config:       config,
 		DurationDays: req.DurationDays,
-		IsOptional:   req.IsOptional,
 		OrderIndex:   req.OrderIndex,
+		IsOptional:   req.IsOptional,
 	})
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, "failed to update state: %v", err)
 	}
+
 	return h.stateToProto(state), nil
 }
 
@@ -268,11 +268,18 @@ func (h *Handler) DeleteState(ctx context.Context, req *workflowv1.DeleteStateRe
 }
 
 func (h *Handler) ReorderStates(ctx context.Context, req *workflowv1.ReorderStatesRequest) (*workflowv1.ListStatesResponse, error) {
-	if err := h.service.ReorderStates(ctx, req.WorkflowId, req.StateIds); err != nil {
+	if err := h.service.repo.ReorderStates(ctx, req.WorkflowId, req.StateIds); err != nil {
 		return nil, status.Errorf(codes.Internal, "failed to reorder states: %v", err)
 	}
-	states, _ := h.service.ListStates(ctx, req.WorkflowId)
-	return &workflowv1.ListStatesResponse{States: h.statesToProto(states)}, nil
+
+	states, err := h.service.ListStates(ctx, req.WorkflowId)
+	if err != nil {
+		return nil, status.Errorf(codes.Internal, "failed to list states: %v", err)
+	}
+
+	return &workflowv1.ListStatesResponse{
+		States: h.statesToProto(states),
+	}, nil
 }
 
 // ==================== TRANSITION CRUD ====================
@@ -291,6 +298,7 @@ func (h *Handler) CreateTransition(ctx context.Context, req *workflowv1.CreateTr
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, "failed to create transition: %v", err)
 	}
+
 	return h.transitionToProto(tr), nil
 }
 
@@ -304,6 +312,7 @@ func (h *Handler) UpdateTransition(ctx context.Context, req *workflowv1.UpdateTr
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, "failed to update transition: %v", err)
 	}
+
 	return h.transitionToProto(tr), nil
 }
 
@@ -319,10 +328,13 @@ func (h *Handler) ListTransitions(ctx context.Context, req *workflowv1.ListTrans
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, "failed to list transitions: %v", err)
 	}
-	return &workflowv1.ListTransitionsResponse{Transitions: h.transitionsToProto(transitions)}, nil
+
+	return &workflowv1.ListTransitionsResponse{
+		Transitions: h.transitionsToProto(transitions),
+	}, nil
 }
 
-// ==================== ACTION CRUD ====================
+// ==================== STATE ACTIONS ====================
 
 func (h *Handler) CreateStateAction(ctx context.Context, req *workflowv1.CreateStateActionRequest) (*workflowv1.StateAction, error) {
 	var config map[string]interface{}
@@ -340,9 +352,10 @@ func (h *Handler) CreateStateAction(ctx context.Context, req *workflowv1.CreateS
 		IsEnabled:  req.IsEnabled,
 	})
 	if err != nil {
-		return nil, status.Errorf(codes.Internal, "failed to create action: %v", err)
+		return nil, status.Errorf(codes.Internal, "failed to create state action: %v", err)
 	}
-	return h.actionToProto(action), nil
+
+	return h.stateActionToProto(action), nil
 }
 
 func (h *Handler) UpdateStateAction(ctx context.Context, req *workflowv1.UpdateStateActionRequest) (*workflowv1.StateAction, error) {
@@ -358,14 +371,15 @@ func (h *Handler) UpdateStateAction(ctx context.Context, req *workflowv1.UpdateS
 		IsEnabled:  req.IsEnabled,
 	})
 	if err != nil {
-		return nil, status.Errorf(codes.Internal, "failed to update action: %v", err)
+		return nil, status.Errorf(codes.Internal, "failed to update state action: %v", err)
 	}
-	return h.actionToProto(action), nil
+
+	return h.stateActionToProto(action), nil
 }
 
 func (h *Handler) DeleteStateAction(ctx context.Context, req *workflowv1.DeleteStateActionRequest) (*emptypb.Empty, error) {
 	if err := h.service.DeleteStateAction(ctx, req.ActionId); err != nil {
-		return nil, status.Errorf(codes.Internal, "failed to delete action: %v", err)
+		return nil, status.Errorf(codes.Internal, "failed to delete state action: %v", err)
 	}
 	return &emptypb.Empty{}, nil
 }
@@ -373,9 +387,15 @@ func (h *Handler) DeleteStateAction(ctx context.Context, req *workflowv1.DeleteS
 func (h *Handler) ListStateActions(ctx context.Context, req *workflowv1.ListStateActionsRequest) (*workflowv1.ListStateActionsResponse, error) {
 	actions, err := h.service.ListStateActions(ctx, req.StateId)
 	if err != nil {
-		return nil, status.Errorf(codes.Internal, "failed to list actions: %v", err)
+		return nil, status.Errorf(codes.Internal, "failed to list state actions: %v", err)
 	}
-	return &workflowv1.ListStateActionsResponse{Actions: h.actionsToProto(actions)}, nil
+
+	var pbActions []*workflowv1.StateAction
+	for _, a := range actions {
+		pbActions = append(pbActions, h.stateActionToProto(&a))
+	}
+
+	return &workflowv1.ListStateActionsResponse{Actions: pbActions}, nil
 }
 
 // ==================== RUNTIME ====================
@@ -389,134 +409,91 @@ func (h *Handler) GetNextState(ctx context.Context, req *workflowv1.GetNextState
 }
 
 func (h *Handler) GetAvailableTransitions(ctx context.Context, req *workflowv1.GetAvailableTransitionsRequest) (*workflowv1.GetAvailableTransitionsResponse, error) {
-	transitions, err := h.service.GetAvailableTransitions(ctx, req.ProjectId, req.CurrentStateId, req.UserId, req.UserRole)
+	// TODO: Integrate with engine
+	transitions, err := h.service.repo.GetTransitionsFromState(ctx, req.CurrentStateId)
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, "failed to get transitions: %v", err)
 	}
 
 	var pbTransitions []*workflowv1.AvailableTransition
-	for _, t := range transitions {
+	for _, tr := range transitions {
 		pbTransitions = append(pbTransitions, &workflowv1.AvailableTransition{
-			Transition:          h.transitionToProto(t.Transition),
-			CanExecute:          t.CanExecute,
-			BlockedReason:       t.BlockedReason,
-			MissingRequirements: t.MissingRequirements,
+			Transition: h.transitionToProto(&tr),
+			CanExecute: true, // TODO: Check conditions
 		})
 	}
 
-	return &workflowv1.GetAvailableTransitionsResponse{Transitions: pbTransitions}, nil
-}
-
-func (h *Handler) GetStepConfiguration(ctx context.Context, req *workflowv1.GetStepConfigurationRequest) (*workflowv1.StepConfiguration, error) {
-	state, err := h.service.GetState(ctx, req.StateId)
-	if err != nil {
-		return nil, status.Errorf(codes.NotFound, "state not found: %v", err)
-	}
-
-	config := &workflowv1.StepConfiguration{
-		StateId:      state.ID,
-		StateName:    state.Name,
-		StateType:    h.parseStateType(state.Type),
-		DurationDays: state.DurationDays,
-	}
-
-	// Parse config JSON
-	var configMap map[string]interface{}
-	if err := json.Unmarshal(state.Config, &configMap); err == nil {
-		if tc, ok := configMap["team_config"].(map[string]interface{}); ok {
-			config.TeamConfig = &workflowv1.TeamConfig{
-				MinSize:   int32(getIntFromMap(tc, "min_size", 1)),
-				MaxSize:   int32(getIntFromMap(tc, "max_size", 3)),
-				AllowSolo: getBoolFromMap(tc, "allow_solo", true),
-			}
-		}
-		if fc, ok := configMap["file_config"].(map[string]interface{}); ok {
-			config.FileConfig = &workflowv1.FileConfig{
-				MaxFiles:     int32(getIntFromMap(fc, "max_files", 1)),
-				MaxSizeBytes: int64(getIntFromMap(fc, "max_size_bytes", 10485760)),
-			}
-		}
-	}
-
-	return config, nil
-}
-
-func (h *Handler) ExecuteTransition(ctx context.Context, req *workflowv1.ExecuteTransitionRequest) (*workflowv1.ExecuteTransitionResponse, error) {
-	var payload map[string]interface{}
-	if req.Payload != nil {
-		payload = req.Payload.AsMap()
-	}
-
-	result, err := h.service.ExecuteTransition(ctx, &ExecuteTransitionInput{
-		ProjectID:    req.ProjectId,
-		TransitionID: req.TransitionId,
-		UserID:       req.UserId,
-		Payload:      payload,
-	})
-	if err != nil {
-		return &workflowv1.ExecuteTransitionResponse{
-			Success:      false,
-			ErrorMessage: err.Error(),
-		}, nil
-	}
-
-	return &workflowv1.ExecuteTransitionResponse{
-		Success:         true,
-		NewStateId:      result.NewStateID,
-		NewStateName:    result.NewStateName,
-		ExecutedActions: result.ExecutedActions,
+	return &workflowv1.GetAvailableTransitionsResponse{
+		Transitions: pbTransitions,
 	}, nil
 }
 
-// ==================== TEMPLATES ====================
-
-func (h *Handler) ListTemplates(ctx context.Context, req *workflowv1.ListTemplatesRequest) (*workflowv1.ListTemplatesResponse, error) {
-	templates, err := h.service.ListTemplates(ctx)
+func (h *Handler) GetStepConfiguration(ctx context.Context, req *workflowv1.GetStepConfigurationRequest) (*workflowv1.StepConfiguration, error) {
+	result, err := h.service.GetStepConfiguration(ctx, req.StateId, req.ProjectId)
 	if err != nil {
-		return nil, status.Errorf(codes.Internal, "failed to list templates: %v", err)
+		return nil, status.Errorf(codes.NotFound, "step configuration not found: %v", err)
 	}
 
-	var pbTemplates []*workflowv1.WorkflowTemplate
-	for _, t := range templates {
-		pbTemplates = append(pbTemplates, &workflowv1.WorkflowTemplate{
-			Id:          t.ID,
-			Name:        t.Name,
-			Description: t.Description,
-			Category:    t.Category,
-		})
+	resp := &workflowv1.StepConfiguration{
+		StateId:      result.StateID,
+		StateName:    result.StateName,
+		StateType:    workflowv1.StateType(workflowv1.StateType_value[result.StateType]),
+		DurationDays: result.DurationDays,
 	}
 
-	return &workflowv1.ListTemplatesResponse{Templates: pbTemplates}, nil
+	if result.TeamConfig != nil {
+		resp.TeamConfig = &workflowv1.TeamConfig{
+			MinSize:       result.TeamConfig.MinSize,
+			MaxSize:       result.TeamConfig.MaxSize,
+			AllowSolo:     result.TeamConfig.AllowSolo,
+			RequireLeader: result.TeamConfig.RequireLeader,
+		}
+	}
+
+	if result.FileConfig != nil {
+		resp.FileConfig = &workflowv1.FileConfig{
+			MaxFiles:          result.FileConfig.MaxFiles,
+			MaxSizeBytes:      result.FileConfig.MaxSizeBytes,
+			AllowedExtensions: result.FileConfig.AllowedExtensions,
+		}
+	}
+
+	if result.FormConfig != nil {
+		resp.FormConfig = &workflowv1.FormConfig{
+			FormId: result.FormConfig.FormID,
+		}
+		if result.FormConfig.Schema != nil {
+			schemaJSON, _ := json.Marshal(result.FormConfig.Schema)
+			resp.FormConfig.JsonSchema, _ = structpb.NewStruct(map[string]interface{}{
+				"schema": string(schemaJSON),
+			})
+		}
+	}
+
+	if result.ReviewConfig != nil {
+		resp.ReviewConfig = &workflowv1.ReviewConfig{
+			ReviewerRoles:  result.ReviewConfig.ReviewerRoles,
+			MinReviewers:   result.ReviewConfig.MinReviewers,
+			RequireComment: result.ReviewConfig.RequireComment,
+		}
+	}
+
+	return resp, nil
 }
 
-func (h *Handler) CreateFromTemplate(ctx context.Context, req *workflowv1.CreateFromTemplateRequest) (*workflowv1.Workflow, error) {
-	wf, err := h.service.CreateFromTemplate(ctx, req.TemplateId, req.DepartmentId, req.Name)
-	if err != nil {
-		return nil, status.Errorf(codes.Internal, "failed to create from template: %v", err)
-	}
-	return h.workflowToProto(wf), nil
+func (h *Handler) ExecuteTransition(ctx context.Context, req *workflowv1.ExecuteTransitionRequest) (*workflowv1.ExecuteTransitionResponse, error) {
+	// TODO: Integrate with engine
+	return nil, status.Error(codes.Unimplemented, "not implemented - use engine directly")
 }
 
-// ==================== HELPERS ====================
+// ==================== CONVERTERS ====================
 
 func (h *Handler) workflowToProto(wf *Workflow) *workflowv1.Workflow {
 	if wf == nil {
 		return nil
 	}
 
-	var settings *structpb.Struct
-	if len(wf.Settings) > 0 {
-		var settingsMap map[string]interface{}
-		if err := json.Unmarshal(wf.Settings, &settingsMap); err == nil {
-			settings, _ = structpb.NewStruct(settingsMap)
-		}
-	}
-
-	var parentID int64
-	if wf.ParentID != nil {
-		parentID = *wf.ParentID
-	}
-	return &workflowv1.Workflow{
+	pb := &workflowv1.Workflow{
 		Id:           wf.ID,
 		Name:         wf.Name,
 		Description:  wf.Description,
@@ -524,13 +501,25 @@ func (h *Handler) workflowToProto(wf *Workflow) *workflowv1.Workflow {
 		Version:      wf.Version,
 		IsActive:     wf.IsActive,
 		IsTemplate:   wf.IsTemplate,
-		ParentId:     parentID,
-		Settings:     settings,
-		States:       h.statesToProto(wf.States),
-		Transitions:  h.transitionsToProto(wf.Transitions),
 		CreatedAt:    timestamppb.New(wf.CreatedAt),
 		UpdatedAt:    timestamppb.New(wf.UpdatedAt),
 	}
+
+	if wf.ParentID != nil {
+		pb.ParentId = *wf.ParentID
+	}
+
+	if len(wf.Settings) > 0 {
+		var settings map[string]interface{}
+		if err := json.Unmarshal(wf.Settings, &settings); err == nil {
+			pb.Settings, _ = structpb.NewStruct(settings)
+		}
+	}
+
+	pb.States = h.statesToProto(wf.States)
+	pb.Transitions = h.transitionsToProto(wf.Transitions)
+
+	return pb
 }
 
 func (h *Handler) stateToProto(s *State) *workflowv1.State {
@@ -538,32 +527,39 @@ func (h *Handler) stateToProto(s *State) *workflowv1.State {
 		return nil
 	}
 
-	var config *structpb.Struct
-	if len(s.Config) > 0 {
-		var configMap map[string]interface{}
-		if err := json.Unmarshal(s.Config, &configMap); err == nil {
-			config, _ = structpb.NewStruct(configMap)
-		}
-	}
-
-	return &workflowv1.State{
+	pb := &workflowv1.State{
 		Id:           s.ID,
 		WorkflowId:   s.WorkflowID,
 		Name:         s.Name,
 		DisplayName:  s.DisplayName,
 		Description:  s.Description,
 		OrderIndex:   s.OrderIndex,
-		Type:         h.parseStateType(s.Type),
+		Type:         workflowv1.StateType(workflowv1.StateType_value[s.Type]),
 		IsInitial:    s.IsInitial,
 		IsFinal:      s.IsFinal,
 		IsOptional:   s.IsOptional,
-		Config:       config,
 		DurationDays: s.DurationDays,
 		DurationMode: s.DurationMode,
 		Color:        s.Color,
 		Icon:         s.Icon,
-		Actions:      h.actionsToProto(s.Actions),
 	}
+
+	if len(s.Config) > 0 {
+		var config map[string]interface{}
+		if err := json.Unmarshal(s.Config, &config); err == nil {
+			pb.Config, _ = structpb.NewStruct(config)
+		}
+	}
+
+	if s.FixedDeadline != nil {
+		pb.FixedDeadline = timestamppb.New(*s.FixedDeadline)
+	}
+
+	for _, a := range s.Actions {
+		pb.Actions = append(pb.Actions, h.stateActionToProto(&a))
+	}
+
+	return pb
 }
 
 func (h *Handler) statesToProto(states []State) []*workflowv1.State {
@@ -578,7 +574,8 @@ func (h *Handler) transitionToProto(t *Transition) *workflowv1.Transition {
 	if t == nil {
 		return nil
 	}
-	return &workflowv1.Transition{
+
+	pb := &workflowv1.Transition{
 		Id:          t.ID,
 		WorkflowId:  t.WorkflowID,
 		EventName:   t.EventName,
@@ -589,6 +586,27 @@ func (h *Handler) transitionToProto(t *Transition) *workflowv1.Transition {
 		ButtonColor: t.ButtonColor,
 		ConfirmText: t.ConfirmText,
 	}
+
+	if len(t.Conditions) > 0 {
+		var conditions []map[string]interface{}
+		if err := json.Unmarshal(t.Conditions, &conditions); err == nil {
+			for _, c := range conditions {
+				cond := &workflowv1.TransitionCondition{}
+				if v, ok := c["type"].(string); ok {
+					cond.Type = v
+				}
+				if v, ok := c["field"].(string); ok {
+					cond.Field = v
+				}
+				if v, ok := c["operator"].(string); ok {
+					cond.Operator = v
+				}
+				pb.Conditions = append(pb.Conditions, cond)
+			}
+		}
+	}
+
+	return pb
 }
 
 func (h *Handler) transitionsToProto(transitions []Transition) []*workflowv1.Transition {
@@ -599,113 +617,99 @@ func (h *Handler) transitionsToProto(transitions []Transition) []*workflowv1.Tra
 	return result
 }
 
-func (h *Handler) actionToProto(a *StateAction) *workflowv1.StateAction {
+func (h *Handler) stateActionToProto(a *StateAction) *workflowv1.StateAction {
 	if a == nil {
 		return nil
 	}
 
-	var config *structpb.Struct
-	if len(a.Config) > 0 {
-		var configMap map[string]interface{}
-		if err := json.Unmarshal(a.Config, &configMap); err == nil {
-			config, _ = structpb.NewStruct(configMap)
-		}
-	}
-
-	return &workflowv1.StateAction{
+	pb := &workflowv1.StateAction{
 		Id:         a.ID,
 		StateId:    a.StateID,
 		Name:       a.Name,
-		Type:       h.parseActionType(a.Type),
-		Trigger:    h.parseActionTrigger(a.Trigger),
+		Type:       workflowv1.ActionType(workflowv1.ActionType_value[a.Type]),
+		Trigger:    workflowv1.ActionTrigger(workflowv1.ActionTrigger_value[a.Trigger]),
 		OrderIndex: a.OrderIndex,
-		Config:     config,
 		IsEnabled:  a.IsEnabled,
 	}
-}
 
-func (h *Handler) actionsToProto(actions []StateAction) []*workflowv1.StateAction {
-	var result []*workflowv1.StateAction
-	for _, a := range actions {
-		result = append(result, h.actionToProto(&a))
+	if len(a.Config) > 0 {
+		var config map[string]interface{}
+		if err := json.Unmarshal(a.Config, &config); err == nil {
+			pb.Config, _ = structpb.NewStruct(config)
+		}
 	}
-	return result
+
+	return pb
 }
 
-func (h *Handler) parseStateType(t string) workflowv1.StateType {
-	switch t {
-	case "TEAM_FORMATION":
-		return workflowv1.StateType_TEAM_FORMATION
-	case "SUPERVISOR_SELECTION":
-		return workflowv1.StateType_SUPERVISOR_SELECTION
-	case "TOPIC_APPROVAL":
-		return workflowv1.StateType_TOPIC_APPROVAL
-	case "DOCUMENT_UPLOAD":
-		return workflowv1.StateType_DOCUMENT_UPLOAD
-	case "FORM_SUBMIT":
-		return workflowv1.StateType_FORM_SUBMIT
-	case "EXTERNAL_CHECK":
-		return workflowv1.StateType_EXTERNAL_CHECK
-	case "REVIEW":
-		return workflowv1.StateType_REVIEW
-	case "APPROVAL":
-		return workflowv1.StateType_APPROVAL
-	case "DEFENSE":
-		return workflowv1.StateType_DEFENSE
-	case "MILESTONE":
-		return workflowv1.StateType_MILESTONE
-	case "GRADING":
-		return workflowv1.StateType_GRADING
-	case "COMPLETED":
-		return workflowv1.StateType_COMPLETED
-	default:
-		return workflowv1.StateType_STATE_TYPE_UNSPECIFIED
+func (h *Handler) GetTeamConfiguration(ctx context.Context, req *workflowv1.GetTeamConfigurationRequest) (*workflowv1.TeamConfigurationResponse, error) {
+	result, err := h.service.GetTeamConfiguration(ctx, req.DepartmentId, req.WorkflowId, req.StateId)
+	if err != nil {
+		return nil, status.Errorf(codes.Internal, "failed to get team configuration: %v", err)
 	}
-}
 
-func (h *Handler) parseActionType(t string) workflowv1.ActionType {
-	switch t {
-	case "SEND_NOTIFICATION":
-		return workflowv1.ActionType_SEND_NOTIFICATION
-	case "SEND_EMAIL":
-		return workflowv1.ActionType_SEND_EMAIL
-	case "ASSIGN_TASK":
-		return workflowv1.ActionType_ASSIGN_TASK
-	case "CALL_WEBHOOK":
-		return workflowv1.ActionType_CALL_WEBHOOK
-	default:
-		return workflowv1.ActionType_ACTION_TYPE_UNSPECIFIED
+	resp := &workflowv1.TeamConfigurationResponse{
+		WorkflowId:       result.WorkflowID,
+		StateId:          result.StateID,
+		StateName:        result.StateName,
+		InviteExpireDays: result.InviteExpireDays,
+		TeamStepRequired: result.TeamStepRequired,
 	}
-}
 
-func (h *Handler) parseActionTrigger(t string) workflowv1.ActionTrigger {
-	switch t {
-	case "ON_ENTER":
-		return workflowv1.ActionTrigger_ON_ENTER
-	case "ON_EXIT":
-		return workflowv1.ActionTrigger_ON_EXIT
-	case "ON_DEADLINE":
-		return workflowv1.ActionTrigger_ON_DEADLINE
-	default:
-		return workflowv1.ActionTrigger_TRIGGER_UNSPECIFIED
+	if result.TeamConfig != nil {
+		resp.TeamConfig = &workflowv1.TeamConfig{
+			MinSize:       result.TeamConfig.MinSize,
+			MaxSize:       result.TeamConfig.MaxSize,
+			AllowSolo:     result.TeamConfig.AllowSolo,
+			RequireLeader: result.TeamConfig.RequireLeader,
+		}
 	}
+
+	return resp, nil
 }
 
-func (h *Handler) getWorkflowStats(ctx context.Context, workflowID int64) *workflowv1.WorkflowStats {
-	// TODO: implement stats query
-	return &workflowv1.WorkflowStats{}
+// CanExecuteTransition проверяет возможность выполнения перехода
+func (h *Handler) CanExecuteTransition(ctx context.Context, req *workflowv1.CanExecuteTransitionRequest) (*workflowv1.CanExecuteTransitionResponse, error) {
+	// TODO: Implement with engine integration
+	return &workflowv1.CanExecuteTransitionResponse{
+		CanExecute:    true,
+		BlockedReason: "",
+	}, nil
 }
 
-func getIntFromMap(m map[string]interface{}, key string, defaultVal int) int {
-	if v, ok := m[key].(float64); ok {
-		return int(v)
+// GetDepartmentWorkflowConfig возвращает полную конфигурацию workflow для кафедры
+func (h *Handler) GetDepartmentWorkflowConfig(ctx context.Context, req *workflowv1.GetDepartmentWorkflowConfigRequest) (*workflowv1.DepartmentWorkflowConfigResponse, error) {
+	config, err := h.service.GetDepartmentWorkflowConfiguration(ctx, req.DepartmentId, req.AcademicYear)
+	if err != nil {
+		return nil, status.Errorf(codes.Internal, "failed to get department workflow config: %v", err)
 	}
-	return defaultVal
-}
 
-func getBoolFromMap(m map[string]interface{}, key string, defaultVal bool) bool {
-	if v, ok := m[key].(bool); ok {
-		return v
+	resp := &workflowv1.DepartmentWorkflowConfigResponse{
+		WorkflowId:   config.WorkflowID,
+		WorkflowName: config.WorkflowName,
 	}
-	return defaultVal
+
+	if config.TeamConfig != nil {
+		resp.TeamConfig = &workflowv1.TeamConfig{
+			MinSize:   config.TeamConfig.MinSize,
+			MaxSize:   config.TeamConfig.MaxSize,
+			AllowSolo: config.TeamConfig.AllowSolo,
+		}
+	}
+
+	for _, s := range config.States {
+		sc := &workflowv1.StateConfig{
+			Id:           s.ID,
+			Name:         s.Name,
+			DisplayName:  s.DisplayName,
+			OrderIndex:   s.OrderIndex,
+			DurationDays: s.DurationDays,
+		}
+		if s.Deadline != nil {
+			sc.Deadline = timestamppb.New(*s.Deadline)
+		}
+		resp.States = append(resp.States, sc)
+	}
+
+	return resp, nil
 }
