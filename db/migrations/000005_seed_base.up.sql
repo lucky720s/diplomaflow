@@ -33,11 +33,4 @@ INSERT INTO roles (name, department_id) VALUES
                                             ('Head of Department', 1)
     ON CONFLICT (name, department_id) DO NOTHING;
 
--- System admin user (password: admin123)
-INSERT INTO users (email, password, first_name, last_name, role, university_id, department_id)
-VALUES (
-           'admin@diplomaflow.kz',
-           '$2a$14$ajq8Q7fbtFRQvXikDrten.rXMkmy.mQdIT.Z5JtM9.g/q.wj.uAm',
-           'System', 'Admin', 'admin', 1, NULL
-       )
-    ON CONFLICT (email) DO NOTHING;
+
