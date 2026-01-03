@@ -72,7 +72,6 @@ func (e *WorkflowEngine) GetAvailableTransitions(
 	return available, nil
 }
 
-// ExecuteTransition выполняет переход с выполнением всех actions
 func (e *WorkflowEngine) ExecuteTransition(ctx context.Context, req *ExecuteTransitionRequest) (*ExecuteTransitionResult, error) {
 	// 1. Получаем transition
 	transition, err := e.repo.GetTransition(ctx, req.TransitionID)
@@ -131,7 +130,8 @@ func (e *WorkflowEngine) ExecuteTransition(ctx context.Context, req *ExecuteTran
 		actionCtx.Config = e.parseConfig(action.Config)
 
 		actionResult := e.executeAction(ctx, &action, actionCtx)
-		if !actionResult.Success && !action.IsOptional() {
+		// ✅ ИСПРАВЛЕНО: используем поле action.IsOptional вместо метода
+		if !actionResult.Success && !action.IsOptional {
 			return nil, fmt.Errorf("exit action '%s' failed: %w", action.Name, actionResult.Error)
 		}
 		result.ExecutedActions = append(result.ExecutedActions, action.Name)
@@ -145,7 +145,8 @@ func (e *WorkflowEngine) ExecuteTransition(ctx context.Context, req *ExecuteTran
 		actionCtx.Config = e.parseConfig(action.Config)
 
 		actionResult := e.executeAction(ctx, &action, actionCtx)
-		if !actionResult.Success && !action.IsOptional() {
+		// ✅ ИСПРАВЛЕНО: используем поле action.IsOptional вместо метода
+		if !actionResult.Success && !action.IsOptional {
 			e.logger.Error("Enter action failed",
 				zap.Int64("action_id", action.ID),
 				zap.String("action_name", action.Name),

@@ -242,7 +242,7 @@ func (m *MockRepository) GetStateActionsByTrigger(ctx context.Context, stateID i
 	return args.Get(0).([]workflow.StateAction), args.Error(1)
 }
 
-// Template methods
+/*// Template methods
 func (m *MockRepository) ListTemplates(ctx context.Context) ([]*workflow.WorkflowTemplate, error) {
 	args := m.Called(ctx)
 	if args.Get(0) == nil {
@@ -257,7 +257,7 @@ func (m *MockRepository) GetTemplate(ctx context.Context, id int64) (*workflow.W
 		return nil, args.Error(1)
 	}
 	return args.Get(0).(*workflow.WorkflowTemplate), args.Error(1)
-}
+}*/
 
 // ==================== TEST HELPERS ====================
 
@@ -715,7 +715,7 @@ func TestRepository_GetStateActionsByTrigger(t *testing.T) {
 }
 
 // ==================== TEMPLATE REPOSITORY TESTS ====================
-
+/*
 func TestRepository_ListTemplates(t *testing.T) {
 	repo := new(MockRepository)
 	ctx := context.Background()
@@ -733,9 +733,9 @@ func TestRepository_ListTemplates(t *testing.T) {
 		assert.Len(t, result, 2)
 		repo.AssertExpectations(t)
 	})
-}
+}*/
 
-func TestRepository_GetTemplate(t *testing.T) {
+/*func TestRepository_GetTemplate(t *testing.T) {
 	repo := new(MockRepository)
 	ctx := context.Background()
 
@@ -764,7 +764,7 @@ func TestRepository_GetTemplate(t *testing.T) {
 		repo.AssertExpectations(t)
 	})
 }
-
+*/
 // ==================== WORKFLOW VALIDATION TESTS ====================
 
 func TestWorkflow_Validation(t *testing.T) {

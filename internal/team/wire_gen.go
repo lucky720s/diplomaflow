@@ -24,13 +24,13 @@ func InitializeApp(cfg *Config, db *gorm.DB, log *zap.Logger, authClient v1.Auth
 	if err != nil {
 		return nil, nil, err
 	}
-	service := NewService(teamRepository, authClient, notificationServiceClient, log)
-	handler := NewHandler(service)
 	workflowServiceClient, cleanup2, err := ProvideWorkflowClient(cfg)
 	if err != nil {
 		cleanup()
 		return nil, nil, err
 	}
+	service := NewService(teamRepository, authClient, notificationServiceClient, workflowServiceClient, log)
+	handler := NewHandler(service, log)
 	eventHandler := NewEventHandler(service, workflowServiceClient, notificationServiceClient, log)
 	app := NewApp(handler, eventHandler)
 	return app, func() {

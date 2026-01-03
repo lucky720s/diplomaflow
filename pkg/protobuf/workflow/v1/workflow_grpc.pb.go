@@ -53,6 +53,9 @@ const (
 	WorkflowService_ExecuteTransition_FullMethodName             = "/workflow.v1.WorkflowService/ExecuteTransition"
 	WorkflowService_ListTemplates_FullMethodName                 = "/workflow.v1.WorkflowService/ListTemplates"
 	WorkflowService_CreateFromTemplate_FullMethodName            = "/workflow.v1.WorkflowService/CreateFromTemplate"
+	WorkflowService_GetTeamConfiguration_FullMethodName          = "/workflow.v1.WorkflowService/GetTeamConfiguration"
+	WorkflowService_CanExecuteTransition_FullMethodName          = "/workflow.v1.WorkflowService/CanExecuteTransition"
+	WorkflowService_GetDepartmentWorkflowConfig_FullMethodName   = "/workflow.v1.WorkflowService/GetDepartmentWorkflowConfig"
 )
 
 // WorkflowServiceClient is the client API for WorkflowService service.
@@ -97,6 +100,9 @@ type WorkflowServiceClient interface {
 	// === TEMPLATES ===
 	ListTemplates(ctx context.Context, in *ListTemplatesRequest, opts ...grpc.CallOption) (*ListTemplatesResponse, error)
 	CreateFromTemplate(ctx context.Context, in *CreateFromTemplateRequest, opts ...grpc.CallOption) (*Workflow, error)
+	GetTeamConfiguration(ctx context.Context, in *GetTeamConfigurationRequest, opts ...grpc.CallOption) (*TeamConfigurationResponse, error)
+	CanExecuteTransition(ctx context.Context, in *CanExecuteTransitionRequest, opts ...grpc.CallOption) (*CanExecuteTransitionResponse, error)
+	GetDepartmentWorkflowConfig(ctx context.Context, in *GetDepartmentWorkflowConfigRequest, opts ...grpc.CallOption) (*DepartmentWorkflowConfigResponse, error)
 }
 
 type workflowServiceClient struct {
@@ -417,6 +423,36 @@ func (c *workflowServiceClient) CreateFromTemplate(ctx context.Context, in *Crea
 	return out, nil
 }
 
+func (c *workflowServiceClient) GetTeamConfiguration(ctx context.Context, in *GetTeamConfigurationRequest, opts ...grpc.CallOption) (*TeamConfigurationResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(TeamConfigurationResponse)
+	err := c.cc.Invoke(ctx, WorkflowService_GetTeamConfiguration_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *workflowServiceClient) CanExecuteTransition(ctx context.Context, in *CanExecuteTransitionRequest, opts ...grpc.CallOption) (*CanExecuteTransitionResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(CanExecuteTransitionResponse)
+	err := c.cc.Invoke(ctx, WorkflowService_CanExecuteTransition_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *workflowServiceClient) GetDepartmentWorkflowConfig(ctx context.Context, in *GetDepartmentWorkflowConfigRequest, opts ...grpc.CallOption) (*DepartmentWorkflowConfigResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(DepartmentWorkflowConfigResponse)
+	err := c.cc.Invoke(ctx, WorkflowService_GetDepartmentWorkflowConfig_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // WorkflowServiceServer is the server API for WorkflowService service.
 // All implementations must embed UnimplementedWorkflowServiceServer
 // for forward compatibility.
@@ -459,6 +495,9 @@ type WorkflowServiceServer interface {
 	// === TEMPLATES ===
 	ListTemplates(context.Context, *ListTemplatesRequest) (*ListTemplatesResponse, error)
 	CreateFromTemplate(context.Context, *CreateFromTemplateRequest) (*Workflow, error)
+	GetTeamConfiguration(context.Context, *GetTeamConfigurationRequest) (*TeamConfigurationResponse, error)
+	CanExecuteTransition(context.Context, *CanExecuteTransitionRequest) (*CanExecuteTransitionResponse, error)
+	GetDepartmentWorkflowConfig(context.Context, *GetDepartmentWorkflowConfigRequest) (*DepartmentWorkflowConfigResponse, error)
 	mustEmbedUnimplementedWorkflowServiceServer()
 }
 
@@ -561,6 +600,15 @@ func (UnimplementedWorkflowServiceServer) ListTemplates(context.Context, *ListTe
 }
 func (UnimplementedWorkflowServiceServer) CreateFromTemplate(context.Context, *CreateFromTemplateRequest) (*Workflow, error) {
 	return nil, status.Error(codes.Unimplemented, "method CreateFromTemplate not implemented")
+}
+func (UnimplementedWorkflowServiceServer) GetTeamConfiguration(context.Context, *GetTeamConfigurationRequest) (*TeamConfigurationResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method GetTeamConfiguration not implemented")
+}
+func (UnimplementedWorkflowServiceServer) CanExecuteTransition(context.Context, *CanExecuteTransitionRequest) (*CanExecuteTransitionResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method CanExecuteTransition not implemented")
+}
+func (UnimplementedWorkflowServiceServer) GetDepartmentWorkflowConfig(context.Context, *GetDepartmentWorkflowConfigRequest) (*DepartmentWorkflowConfigResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method GetDepartmentWorkflowConfig not implemented")
 }
 func (UnimplementedWorkflowServiceServer) mustEmbedUnimplementedWorkflowServiceServer() {}
 func (UnimplementedWorkflowServiceServer) testEmbeddedByValue()                         {}
@@ -1141,6 +1189,60 @@ func _WorkflowService_CreateFromTemplate_Handler(srv interface{}, ctx context.Co
 	return interceptor(ctx, in, info, handler)
 }
 
+func _WorkflowService_GetTeamConfiguration_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetTeamConfigurationRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(WorkflowServiceServer).GetTeamConfiguration(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: WorkflowService_GetTeamConfiguration_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(WorkflowServiceServer).GetTeamConfiguration(ctx, req.(*GetTeamConfigurationRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _WorkflowService_CanExecuteTransition_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(CanExecuteTransitionRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(WorkflowServiceServer).CanExecuteTransition(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: WorkflowService_CanExecuteTransition_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(WorkflowServiceServer).CanExecuteTransition(ctx, req.(*CanExecuteTransitionRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _WorkflowService_GetDepartmentWorkflowConfig_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetDepartmentWorkflowConfigRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(WorkflowServiceServer).GetDepartmentWorkflowConfig(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: WorkflowService_GetDepartmentWorkflowConfig_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(WorkflowServiceServer).GetDepartmentWorkflowConfig(ctx, req.(*GetDepartmentWorkflowConfigRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // WorkflowService_ServiceDesc is the grpc.ServiceDesc for WorkflowService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -1271,6 +1373,18 @@ var WorkflowService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "CreateFromTemplate",
 			Handler:    _WorkflowService_CreateFromTemplate_Handler,
+		},
+		{
+			MethodName: "GetTeamConfiguration",
+			Handler:    _WorkflowService_GetTeamConfiguration_Handler,
+		},
+		{
+			MethodName: "CanExecuteTransition",
+			Handler:    _WorkflowService_CanExecuteTransition_Handler,
+		},
+		{
+			MethodName: "GetDepartmentWorkflowConfig",
+			Handler:    _WorkflowService_GetDepartmentWorkflowConfig_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

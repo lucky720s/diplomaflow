@@ -5,7 +5,7 @@ RUN go mod download
 COPY . .
 RUN CGO_ENABLED=0 go build -o /bin/migrate ./cmd/migrate
 
-FROM alpine:3.20
+FROM alpine:3.22.2
 WORKDIR /app
 COPY --from=builder /bin/migrate /app/migrate
 RUN apk --no-cache add ca-certificates

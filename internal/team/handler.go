@@ -2,39 +2,70 @@ package team
 
 import (
 	"context"
+	"fmt"
 
 	pb "github.com/lucky720s/diplomaflow/pkg/protobuf/team/v1"
+	teamv1 "github.com/lucky720s/diplomaflow/pkg/protobuf/team/v1"
+	"go.uber.org/zap"
 	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/metadata"
 	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/types/known/emptypb"
 )
 
+type TeamUseCase interface {
+	CreateTeam(ctx context.Context, name string, projectID *int64, memberIDs []int64, leaderID int64, departmentID int64) (int64, error)
+	// ✅ Изменено: uint64 вместо int64
+	GetTeam(ctx context.Context, id uint64) (*Team, error)
+	GetAvailableStudents(ctx context.Context, universityID, excludeUserID int64) ([]*StudentPreview, error)
+	AssignProject(ctx context.Context, teamID, projectID int64) error
+	GetMyInvites(ctx context.Context, userID int64) ([]*TeamInvite, error)
+	RespondToInvite(ctx context.Context, inviteID, userID int64, accept bool) error
+	GetMyTeam(ctx context.Context, userID int64) (*Team, string, int64, error)
+	ListTeams(ctx context.Context, departmentID, projectID int64, page, pageSize int32) ([]*Team, int64, error)
+	UpdateTeam(ctx context.Context, teamID uint64, name string) (*Team, error)
+	DeleteTeam(ctx context.Context, teamID uint64) error
+	AddMember(ctx context.Context, teamID uint64, userID int64, role string) error
+	RemoveMember(ctx context.Context, teamID uint64, userID int64) error
+}
+
 type Handler struct {
-	pb.UnimplementedTeamServiceServer
-	service *Service
+	teamv1.UnimplementedTeamServiceServer
+	service TeamUseCase
+	log     *zap.Logger
 }
 
-func NewHandler(service *Service) *Handler {
-	return &Handler{service: service}
-}
-
-func (h *Handler) CreateTeam(ctx context.Context, req *pb.CreateTeamRequest) (*pb.CreateTeamResponse, error) {
-	if req.Name == "" {
-		return nil, status.Error(codes.InvalidArgument, "team name is required")
+func NewHandler(service TeamUseCase, log *zap.Logger) *Handler {
+	return &Handler{
+		service: service,
+		log:     log,
 	}
+}
+func (h *Handler) CreateTeam(ctx context.Context, req *teamv1.CreateTeamRequest) (*teamv1.CreateTeamResponse, error) {
+	if req.Name == "" {
+		return nil, status.Error(codes.InvalidArgument, "name is required")
+	}
+	if req.LeaderId == 0 {
+		return nil, status.Error(codes.InvalidArgument, "leader_id is required")
+	}
+
 	var projectID *int64
 	if req.ProjectId != 0 {
-		p := req.ProjectId
-		projectID = &p
+		projectID = &req.ProjectId
 	}
-	teamID, err := h.service.CreateTeam(ctx, req.Name, projectID, req.MemberIds, req.LeaderId)
+	var departmentID int64
+	if md, ok := metadata.FromIncomingContext(ctx); ok {
+		if vals := md.Get("x-department-id"); len(vals) > 0 {
+			_, _ = fmt.Sscanf(vals[0], "%d", &departmentID)
+		}
+	}
+	teamID, err := h.service.CreateTeam(ctx, req.Name, projectID, req.MemberIds, req.LeaderId, departmentID)
 	if err != nil {
+		h.log.Error("CreateTeam failed", zap.Error(err))
 		return nil, status.Errorf(codes.Internal, "failed to create team: %v", err)
 	}
 
-	return &pb.CreateTeamResponse{
-		TeamId: teamID,
-	}, nil
+	return &teamv1.CreateTeamResponse{TeamId: teamID}, nil
 }
 
 func (h *Handler) GetTeam(ctx context.Context, req *pb.GetTeamRequest) (*pb.GetTeamResponse, error) {
@@ -79,7 +110,7 @@ func (h *Handler) GetAvailableStudents(ctx context.Context, req *pb.GetAvailable
 	var pbStudents []*pb.StudentPreview
 	for _, s := range students {
 		pbStudents = append(pbStudents, &pb.StudentPreview{
-			Id:       s.Id,
+			Id:       s.ID,
 			FullName: s.FirstName + " " + s.LastName,
 			Email:    s.Email,
 		})
