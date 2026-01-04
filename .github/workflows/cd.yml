@@ -19,30 +19,36 @@ jobs:
           host: ${{ secrets.SERVER_HOST }}
           username: ${{ secrets.SERVER_USER }}
           key: ${{ secrets.SSH_PRIVATE_KEY }}
-          envs: PAT_TOKEN
           script: |
+            set -e
+            
             cd /opt/diplomaflow
             
-             if [ -d ".git" ]; then
+            # Если .git существует - обновляем, иначе очищаем и клонируем
+            if [ -d ".git" ]; then
+              echo "Git repo exists, updating..."
               git remote set-url origin https://${{ secrets.PAT_TOKEN }}@github.com/${{ github.repository }}.git
               git fetch origin dev
               git reset --hard origin/dev
+              git clean -fd
             else
-              git clone -b dev https://${{ secrets.GH_PAT }}@github.com/${{ github.repository }}.git .
+              echo "No git repo, cleaning and cloning..."
+              # Очищаем директорию
+              rm -rf /opt/diplomaflow/*
+              rm -rf /opt/diplomaflow/.[!.]*
+              # Клонируем
+              git clone -b dev https://${{ secrets.PAT_TOKEN }}@github.com/${{ github.repository }}.git .
             fi
-            # Клонируем или обновляем репозиторий
-            if [ -d ".git" ]; then
-              git fetch origin dev
-              git reset --hard origin/dev
-            else
-              git clone -b dev https://github.com/${{ github.repository }}.git .
-            fi
+            
+            echo "Current directory contents:"
+            ls -la
             
             # Создаём .env если не существует
             if [ ! -f ".env" ]; then
-              cat > .env << 'EOF'
+              echo "Creating .env file..."
+              cat > .env << 'ENVEOF'
             ENV=production
-            JWT_SECRET=${{ secrets.JWT_SECRET || 'change_me_in_production_123456' }}
+            JWT_SECRET=super_secret_jwt_key_change_me_in_prod_12345
             POSTGRES_USER=diplomaflow
             POSTGRES_PASSWORD=diplomaflow_prod_pass
             POSTGRES_DB=diplomaflow
@@ -72,21 +78,33 @@ jobs:
             SERVICES_FILE_ADDR=file_service:8088
             SERVICES_FORM_ADDR=form_service:8089
             SERVICES_ADMIN_ADDR=admin_service:8090
-            EOF
+            ENVEOF
             fi
             
-            # Билдим и запускаем
+            echo "Checking docker-compose.yml..."
+            if [ ! -f "docker-compose.yml" ]; then
+              echo "ERROR: docker-compose.yml not found!"
+              ls -la
+              exit 1
+            fi
+            
+            echo "Stopping old containers..."
             docker compose down --remove-orphans || true
+            
+            echo "Building images..."
             docker compose build --no-cache
+            
+            echo "Starting services..."
             docker compose up -d
             
-            # Ждём и проверяем health
-            sleep 60
+            echo "Waiting for services to start..."
+            sleep 90
+            
+            echo "Health check..."
             curl -f http://localhost:8080/health || echo "Health check failed but continuing..."
             
-            # Показываем статус
+            echo "Service status:"
             docker compose ps
 
-      - name: Deployment status
-        if: always()
-        run: echo "Deployment completed"
+      - name: Deployment complete
+        run: echo "✅ Deployment completed!"
