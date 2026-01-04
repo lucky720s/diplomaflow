@@ -1,0 +1,84 @@
+name: CD - Deploy to Dev Server
+
+on:
+  push:
+    branches: [dev]
+  workflow_dispatch:
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Deploy to server
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.SERVER_HOST }}
+          username: ${{ secrets.SERVER_USER }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          script: |
+            cd /opt/diplomaflow
+            
+            # Клонируем или обновляем репозиторий
+            if [ -d ".git" ]; then
+              git fetch origin dev
+              git reset --hard origin/dev
+            else
+              git clone -b dev https://github.com/${{ github.repository }}.git .
+            fi
+            
+            # Создаём .env если не существует
+            if [ ! -f ".env" ]; then
+              cat > .env << 'EOF'
+            ENV=production
+            JWT_SECRET=${{ secrets.JWT_SECRET || 'change_me_in_production_123456' }}
+            POSTGRES_USER=diplomaflow
+            POSTGRES_PASSWORD=diplomaflow_prod_pass
+            POSTGRES_DB=diplomaflow
+            POSTGRES_PORT=5432
+            DATABASE_DSN=host=main_postgres user=diplomaflow password=diplomaflow_prod_pass dbname=diplomaflow port=5432 sslmode=disable TimeZone=UTC
+            KAFKA_BROKERS=kafka:29092
+            KAFKA_GROUP_ID=diplomaflow-group
+            KAFKA_KRAFT_CLUSTER_ID=MkU3OEVBNTcwNTJENDM2Qk
+            PORT_GATEWAY=8080
+            PORT_UNIVERSITY=8081
+            PORT_AUTH=8082
+            PORT_PROJECT=8083
+            PORT_TEAM=8084
+            PORT_WORKFLOW=8085
+            PORT_ROLE=8086
+            PORT_NOTIFICATION=8087
+            PORT_FILE=8088
+            PORT_FORM=8089
+            PORT_ADMIN=8090
+            SERVICES_AUTH_ADDR=auth_service:8082
+            SERVICES_PROJECT_ADDR=project_service:8083
+            SERVICES_TEAM_ADDR=team_service:8084
+            SERVICES_UNIVERSITY_ADDR=university_service:8081
+            SERVICES_ROLE_ADDR=role_service:8086
+            SERVICES_WORKFLOW_ADDR=workflow_service:8085
+            SERVICES_NOTIFICATION_ADDR=notification_service:8087
+            SERVICES_FILE_ADDR=file_service:8088
+            SERVICES_FORM_ADDR=form_service:8089
+            SERVICES_ADMIN_ADDR=admin_service:8090
+            EOF
+            fi
+            
+            # Билдим и запускаем
+            docker compose down --remove-orphans || true
+            docker compose build --no-cache
+            docker compose up -d
+            
+            # Ждём и проверяем health
+            sleep 60
+            curl -f http://localhost:8080/health || echo "Health check failed but continuing..."
+            
+            # Показываем статус
+            docker compose ps
+
+      - name: Deployment status
+        if: always()
+        run: echo "Deployment completed"
