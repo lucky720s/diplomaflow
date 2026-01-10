@@ -313,7 +313,7 @@ func (e *WorkflowEngine) parseConfig(data []byte) map[string]interface{} {
 	return config
 }
 
-// ==================== Types ====================
+// ==================== Types ===================
 
 type AvailableTransition struct {
 	Transition          *workflow.Transition
