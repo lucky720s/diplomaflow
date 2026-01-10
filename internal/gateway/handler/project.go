@@ -127,7 +127,6 @@ func (h *Handler) PerformProjectAction(c *gin.Context) {
 		ActionName string                 `json:"action_name" binding:"required"`
 		Payload    map[string]interface{} `json:"payload"`
 	}
-
 	if err := c.ShouldBindJSON(&req); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
@@ -135,16 +134,23 @@ func (h *Handler) PerformProjectAction(c *gin.Context) {
 
 	payloadStruct, _ := structpb.NewStruct(req.Payload)
 
-	res, err := h.projectClient.PerformAction(c.Request.Context(), &projectv1.PerformActionRequest{
+	userID := c.GetInt64("userId")
+	role := c.GetString("role")
+
+	ctx := metadata.AppendToOutgoingContext(
+		c.Request.Context(),
+		"x-user-id", strconv.FormatInt(userID, 10),
+		"x-user-role", role,
+	)
+
+	res, err := h.projectClient.PerformAction(ctx, &projectv1.PerformActionRequest{
 		ProjectId:  projectID,
 		ActionName: req.ActionName,
 		Payload:    payloadStruct,
 	})
-
 	if err != nil {
 		MapGRPCError(c, err)
 		return
 	}
-
 	c.JSON(http.StatusOK, res)
 }

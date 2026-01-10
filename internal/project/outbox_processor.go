@@ -30,7 +30,6 @@ func (p *OutboxProcessor) Start(ctx context.Context) {
 	defer ticker.Stop()
 
 	p.logger.Info("Outbox processor started")
-
 	for {
 		select {
 		case <-ctx.Done():
@@ -51,7 +50,6 @@ func (p *OutboxProcessor) processEvents(ctx context.Context) {
 		p.logger.Error("Failed to fetch pending events", zap.Error(err))
 		return
 	}
-
 	if len(events) == 0 {
 		return
 	}
@@ -59,16 +57,21 @@ func (p *OutboxProcessor) processEvents(ctx context.Context) {
 	for _, event := range events {
 		payload := json.RawMessage(event.Payload)
 
-		err := p.producer.Publish(event.Topic, event.EventType, payload)
-		if err != nil {
+		if err := p.producer.Publish(event.Topic, event.EventType, payload); err != nil {
 			p.logger.Error("Failed to publish event to kafka",
-				zap.Uint("event_id", event.ID),
-				zap.Error(err))
+				zap.Int64("event_id", event.ID),
+				zap.String("topic", event.Topic),
+				zap.String("event_type", event.EventType),
+				zap.Error(err),
+			)
 			continue
 		}
 
-		if err := p.repo.MarkEventProcessed(ctx, event.ID); err != nil { // ✅
-			p.logger.Error("Failed to mark event as processed")
+		if err := p.repo.MarkEventProcessed(ctx, event.ID); err != nil {
+			p.logger.Error("Failed to mark event as processed",
+				zap.Int64("event_id", event.ID),
+				zap.Error(err),
+			)
 		}
 	}
 }

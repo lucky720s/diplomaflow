@@ -7,12 +7,10 @@
 package project
 
 import (
+	"context"
 	"github.com/lucky720s/diplomaflow/pkg/broker"
-	v1_2 "github.com/lucky720s/diplomaflow/pkg/protobuf/notification/v1"
 	"github.com/lucky720s/diplomaflow/pkg/protobuf/workflow/v1"
 	"go.uber.org/zap"
-	"google.golang.org/grpc"
-	"google.golang.org/grpc/credentials/insecure"
 	"gorm.io/gorm"
 )
 
@@ -20,62 +18,36 @@ import (
 
 func InitializeApp(cfg *Config, db *gorm.DB, log *zap.Logger, kafkaProducer *broker.Producer, wfClient v1.WorkflowServiceClient) (*App, func(), error) {
 	projectRepository := NewRepository(db)
-	processorRegistry := ProvideProcessorRegistry()
-	notificationServiceClient, cleanup, err := ProvideNotificationClient(cfg)
-	if err != nil {
-		return nil, nil, err
-	}
-	stateActionExecutor := ProvideStateActionExecutor(wfClient, notificationServiceClient, log)
-	service := NewService(projectRepository, wfClient, processorRegistry, stateActionExecutor, log)
+	workflowClient := ProvideWorkflowClient(wfClient)
+	service := NewService(projectRepository, workflowClient, log)
 	handler := NewHandler(service)
-	app := NewApp(handler, stateActionExecutor, projectRepository, log)
+	deadlineScheduler := NewDeadlineScheduler(projectRepository, log)
+	outboxProcessor := NewOutboxProcessor(projectRepository, kafkaProducer, log)
+	app := NewApp(handler, deadlineScheduler, outboxProcessor)
 	return app, func() {
-		cleanup()
 	}, nil
 }
 
 // wire.go:
 
-type App struct {
-	Handler           *Handler
-	ActionExecutor    *StateActionExecutor
-	DeadlineScheduler *DeadlineScheduler
+func ProvideWorkflowClient(c v1.WorkflowServiceClient) WorkflowClient {
+
+	return &workflowClientWrapper{c: c}
 }
 
-func NewApp(h *Handler, executor *StateActionExecutor, repo Repository, logger *zap.Logger) *App {
-	scheduler := NewDeadlineScheduler(repo, executor, logger)
-	return &App{
-		Handler:           h,
-		ActionExecutor:    executor,
-		DeadlineScheduler: scheduler,
-	}
+// wrapper converts ...grpc.CallOption to ...interface{} usage (we ignore opts)
+type workflowClientWrapper struct {
+	c v1.WorkflowServiceClient
 }
 
-func ProvideProcessorRegistry() *ProcessorRegistry {
-	registry := NewProcessorRegistry()
-	registry.Register("TEAM_FORMED", &TeamFormedHandler{})
-	registry.Register("SELECT_SUPERVISOR", &SelectSupervisorHandler{})
-	registry.Register("TOPIC_APPROVED", &TopicApprovedHandler{})
-	registry.Register("UPLOAD_TASK", &UploadTaskHandler{})
-	registry.Register("TASK_UPLOADED", &TaskUploadedHandler{})
-	registry.Register("APPROVE", &ApproveHandler{})
-	registry.Register("REJECT", &RejectHandler{})
-	return registry
+func (w *workflowClientWrapper) GetActiveWorkflowByDepartment(ctx context.Context, in *v1.GetActiveWorkflowByDepartmentRequest, _ ...interface{}) (*v1.Workflow, error) {
+	return w.c.GetActiveWorkflowByDepartment(ctx, in)
 }
 
-func ProvideNotificationClient(cfg *Config) (v1_2.NotificationServiceClient, func(), error) {
-	conn, err := grpc.NewClient(cfg.Services.NotificationAddr, grpc.WithTransportCredentials(insecure.NewCredentials()))
-	if err != nil {
-		return nil, nil, err
-	}
-	cleanup := func() { conn.Close() }
-	return v1_2.NewNotificationServiceClient(conn), cleanup, nil
+func (w *workflowClientWrapper) GetAvailableTransitions(ctx context.Context, in *v1.GetAvailableTransitionsRequest, _ ...interface{}) (*v1.GetAvailableTransitionsResponse, error) {
+	return w.c.GetAvailableTransitions(ctx, in)
 }
 
-func ProvideStateActionExecutor(
-	wfClient v1.WorkflowServiceClient,
-	notifClient v1_2.NotificationServiceClient,
-	logger *zap.Logger,
-) *StateActionExecutor {
-	return NewStateActionExecutor(wfClient, notifClient, logger)
+func (w *workflowClientWrapper) ExecuteTransition(ctx context.Context, in *v1.ExecuteTransitionRequest, _ ...interface{}) (*v1.ExecuteTransitionResponse, error) {
+	return w.c.ExecuteTransition(ctx, in)
 }

@@ -1208,3 +1208,717 @@ var _ interface {
 	Cause() error
 	ErrorName() string
 } = PerformActionResponseValidationError{}
+
+// Validate checks the field values on GetProjectRuntimeRequest with the rules
+// defined in the proto definition for this message. If any rules are
+// violated, the first error encountered is returned, or nil if there are no violations.
+func (m *GetProjectRuntimeRequest) Validate() error {
+	return m.validate(false)
+}
+
+// ValidateAll checks the field values on GetProjectRuntimeRequest with the
+// rules defined in the proto definition for this message. If any rules are
+// violated, the result is a list of violation errors wrapped in
+// GetProjectRuntimeRequestMultiError, or nil if none found.
+func (m *GetProjectRuntimeRequest) ValidateAll() error {
+	return m.validate(true)
+}
+
+func (m *GetProjectRuntimeRequest) validate(all bool) error {
+	if m == nil {
+		return nil
+	}
+
+	var errors []error
+
+	// no validation rules for ProjectId
+
+	if len(errors) > 0 {
+		return GetProjectRuntimeRequestMultiError(errors)
+	}
+
+	return nil
+}
+
+// GetProjectRuntimeRequestMultiError is an error wrapping multiple validation
+// errors returned by GetProjectRuntimeRequest.ValidateAll() if the designated
+// constraints aren't met.
+type GetProjectRuntimeRequestMultiError []error
+
+// Error returns a concatenation of all the error messages it wraps.
+func (m GetProjectRuntimeRequestMultiError) Error() string {
+	msgs := make([]string, 0, len(m))
+	for _, err := range m {
+		msgs = append(msgs, err.Error())
+	}
+	return strings.Join(msgs, "; ")
+}
+
+// AllErrors returns a list of validation violation errors.
+func (m GetProjectRuntimeRequestMultiError) AllErrors() []error { return m }
+
+// GetProjectRuntimeRequestValidationError is the validation error returned by
+// GetProjectRuntimeRequest.Validate if the designated constraints aren't met.
+type GetProjectRuntimeRequestValidationError struct {
+	field  string
+	reason string
+	cause  error
+	key    bool
+}
+
+// Field function returns field value.
+func (e GetProjectRuntimeRequestValidationError) Field() string { return e.field }
+
+// Reason function returns reason value.
+func (e GetProjectRuntimeRequestValidationError) Reason() string { return e.reason }
+
+// Cause function returns cause value.
+func (e GetProjectRuntimeRequestValidationError) Cause() error { return e.cause }
+
+// Key function returns key value.
+func (e GetProjectRuntimeRequestValidationError) Key() bool { return e.key }
+
+// ErrorName returns error name.
+func (e GetProjectRuntimeRequestValidationError) ErrorName() string {
+	return "GetProjectRuntimeRequestValidationError"
+}
+
+// Error satisfies the builtin error interface
+func (e GetProjectRuntimeRequestValidationError) Error() string {
+	cause := ""
+	if e.cause != nil {
+		cause = fmt.Sprintf(" | caused by: %v", e.cause)
+	}
+
+	key := ""
+	if e.key {
+		key = "key for "
+	}
+
+	return fmt.Sprintf(
+		"invalid %sGetProjectRuntimeRequest.%s: %s%s",
+		key,
+		e.field,
+		e.reason,
+		cause)
+}
+
+var _ error = GetProjectRuntimeRequestValidationError{}
+
+var _ interface {
+	Field() string
+	Reason() string
+	Key() bool
+	Cause() error
+	ErrorName() string
+} = GetProjectRuntimeRequestValidationError{}
+
+// Validate checks the field values on GetProjectRuntimeResponse with the rules
+// defined in the proto definition for this message. If any rules are
+// violated, the first error encountered is returned, or nil if there are no violations.
+func (m *GetProjectRuntimeResponse) Validate() error {
+	return m.validate(false)
+}
+
+// ValidateAll checks the field values on GetProjectRuntimeResponse with the
+// rules defined in the proto definition for this message. If any rules are
+// violated, the result is a list of violation errors wrapped in
+// GetProjectRuntimeResponseMultiError, or nil if none found.
+func (m *GetProjectRuntimeResponse) ValidateAll() error {
+	return m.validate(true)
+}
+
+func (m *GetProjectRuntimeResponse) validate(all bool) error {
+	if m == nil {
+		return nil
+	}
+
+	var errors []error
+
+	// no validation rules for ProjectId
+
+	// no validation rules for StudentId
+
+	// no validation rules for UniversityId
+
+	// no validation rules for DepartmentId
+
+	// no validation rules for TeamId
+
+	// no validation rules for WorkflowId
+
+	// no validation rules for WorkflowVersion
+
+	// no validation rules for WorkflowName
+
+	// no validation rules for CurrentStateId
+
+	// no validation rules for CurrentStateName
+
+	// no validation rules for Status
+
+	if all {
+		switch v := interface{}(m.GetData()).(type) {
+		case interface{ ValidateAll() error }:
+			if err := v.ValidateAll(); err != nil {
+				errors = append(errors, GetProjectRuntimeResponseValidationError{
+					field:  "Data",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		case interface{ Validate() error }:
+			if err := v.Validate(); err != nil {
+				errors = append(errors, GetProjectRuntimeResponseValidationError{
+					field:  "Data",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		}
+	} else if v, ok := interface{}(m.GetData()).(interface{ Validate() error }); ok {
+		if err := v.Validate(); err != nil {
+			return GetProjectRuntimeResponseValidationError{
+				field:  "Data",
+				reason: "embedded message failed validation",
+				cause:  err,
+			}
+		}
+	}
+
+	if all {
+		switch v := interface{}(m.GetDeadlineAt()).(type) {
+		case interface{ ValidateAll() error }:
+			if err := v.ValidateAll(); err != nil {
+				errors = append(errors, GetProjectRuntimeResponseValidationError{
+					field:  "DeadlineAt",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		case interface{ Validate() error }:
+			if err := v.Validate(); err != nil {
+				errors = append(errors, GetProjectRuntimeResponseValidationError{
+					field:  "DeadlineAt",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		}
+	} else if v, ok := interface{}(m.GetDeadlineAt()).(interface{ Validate() error }); ok {
+		if err := v.Validate(); err != nil {
+			return GetProjectRuntimeResponseValidationError{
+				field:  "DeadlineAt",
+				reason: "embedded message failed validation",
+				cause:  err,
+			}
+		}
+	}
+
+	if len(errors) > 0 {
+		return GetProjectRuntimeResponseMultiError(errors)
+	}
+
+	return nil
+}
+
+// GetProjectRuntimeResponseMultiError is an error wrapping multiple validation
+// errors returned by GetProjectRuntimeResponse.ValidateAll() if the
+// designated constraints aren't met.
+type GetProjectRuntimeResponseMultiError []error
+
+// Error returns a concatenation of all the error messages it wraps.
+func (m GetProjectRuntimeResponseMultiError) Error() string {
+	msgs := make([]string, 0, len(m))
+	for _, err := range m {
+		msgs = append(msgs, err.Error())
+	}
+	return strings.Join(msgs, "; ")
+}
+
+// AllErrors returns a list of validation violation errors.
+func (m GetProjectRuntimeResponseMultiError) AllErrors() []error { return m }
+
+// GetProjectRuntimeResponseValidationError is the validation error returned by
+// GetProjectRuntimeResponse.Validate if the designated constraints aren't met.
+type GetProjectRuntimeResponseValidationError struct {
+	field  string
+	reason string
+	cause  error
+	key    bool
+}
+
+// Field function returns field value.
+func (e GetProjectRuntimeResponseValidationError) Field() string { return e.field }
+
+// Reason function returns reason value.
+func (e GetProjectRuntimeResponseValidationError) Reason() string { return e.reason }
+
+// Cause function returns cause value.
+func (e GetProjectRuntimeResponseValidationError) Cause() error { return e.cause }
+
+// Key function returns key value.
+func (e GetProjectRuntimeResponseValidationError) Key() bool { return e.key }
+
+// ErrorName returns error name.
+func (e GetProjectRuntimeResponseValidationError) ErrorName() string {
+	return "GetProjectRuntimeResponseValidationError"
+}
+
+// Error satisfies the builtin error interface
+func (e GetProjectRuntimeResponseValidationError) Error() string {
+	cause := ""
+	if e.cause != nil {
+		cause = fmt.Sprintf(" | caused by: %v", e.cause)
+	}
+
+	key := ""
+	if e.key {
+		key = "key for "
+	}
+
+	return fmt.Sprintf(
+		"invalid %sGetProjectRuntimeResponse.%s: %s%s",
+		key,
+		e.field,
+		e.reason,
+		cause)
+}
+
+var _ error = GetProjectRuntimeResponseValidationError{}
+
+var _ interface {
+	Field() string
+	Reason() string
+	Key() bool
+	Cause() error
+	ErrorName() string
+} = GetProjectRuntimeResponseValidationError{}
+
+// Validate checks the field values on PostCommitActionGroup with the rules
+// defined in the proto definition for this message. If any rules are
+// violated, the first error encountered is returned, or nil if there are no violations.
+func (m *PostCommitActionGroup) Validate() error {
+	return m.validate(false)
+}
+
+// ValidateAll checks the field values on PostCommitActionGroup with the rules
+// defined in the proto definition for this message. If any rules are
+// violated, the result is a list of violation errors wrapped in
+// PostCommitActionGroupMultiError, or nil if none found.
+func (m *PostCommitActionGroup) ValidateAll() error {
+	return m.validate(true)
+}
+
+func (m *PostCommitActionGroup) validate(all bool) error {
+	if m == nil {
+		return nil
+	}
+
+	var errors []error
+
+	// no validation rules for Trigger
+
+	if len(errors) > 0 {
+		return PostCommitActionGroupMultiError(errors)
+	}
+
+	return nil
+}
+
+// PostCommitActionGroupMultiError is an error wrapping multiple validation
+// errors returned by PostCommitActionGroup.ValidateAll() if the designated
+// constraints aren't met.
+type PostCommitActionGroupMultiError []error
+
+// Error returns a concatenation of all the error messages it wraps.
+func (m PostCommitActionGroupMultiError) Error() string {
+	msgs := make([]string, 0, len(m))
+	for _, err := range m {
+		msgs = append(msgs, err.Error())
+	}
+	return strings.Join(msgs, "; ")
+}
+
+// AllErrors returns a list of validation violation errors.
+func (m PostCommitActionGroupMultiError) AllErrors() []error { return m }
+
+// PostCommitActionGroupValidationError is the validation error returned by
+// PostCommitActionGroup.Validate if the designated constraints aren't met.
+type PostCommitActionGroupValidationError struct {
+	field  string
+	reason string
+	cause  error
+	key    bool
+}
+
+// Field function returns field value.
+func (e PostCommitActionGroupValidationError) Field() string { return e.field }
+
+// Reason function returns reason value.
+func (e PostCommitActionGroupValidationError) Reason() string { return e.reason }
+
+// Cause function returns cause value.
+func (e PostCommitActionGroupValidationError) Cause() error { return e.cause }
+
+// Key function returns key value.
+func (e PostCommitActionGroupValidationError) Key() bool { return e.key }
+
+// ErrorName returns error name.
+func (e PostCommitActionGroupValidationError) ErrorName() string {
+	return "PostCommitActionGroupValidationError"
+}
+
+// Error satisfies the builtin error interface
+func (e PostCommitActionGroupValidationError) Error() string {
+	cause := ""
+	if e.cause != nil {
+		cause = fmt.Sprintf(" | caused by: %v", e.cause)
+	}
+
+	key := ""
+	if e.key {
+		key = "key for "
+	}
+
+	return fmt.Sprintf(
+		"invalid %sPostCommitActionGroup.%s: %s%s",
+		key,
+		e.field,
+		e.reason,
+		cause)
+}
+
+var _ error = PostCommitActionGroupValidationError{}
+
+var _ interface {
+	Field() string
+	Reason() string
+	Key() bool
+	Cause() error
+	ErrorName() string
+} = PostCommitActionGroupValidationError{}
+
+// Validate checks the field values on CommitTransitionRequest with the rules
+// defined in the proto definition for this message. If any rules are
+// violated, the first error encountered is returned, or nil if there are no violations.
+func (m *CommitTransitionRequest) Validate() error {
+	return m.validate(false)
+}
+
+// ValidateAll checks the field values on CommitTransitionRequest with the
+// rules defined in the proto definition for this message. If any rules are
+// violated, the result is a list of violation errors wrapped in
+// CommitTransitionRequestMultiError, or nil if none found.
+func (m *CommitTransitionRequest) ValidateAll() error {
+	return m.validate(true)
+}
+
+func (m *CommitTransitionRequest) validate(all bool) error {
+	if m == nil {
+		return nil
+	}
+
+	var errors []error
+
+	// no validation rules for ProjectId
+
+	// no validation rules for ExpectedFromStateId
+
+	// no validation rules for TransitionId
+
+	// no validation rules for EventName
+
+	// no validation rules for ToStateId
+
+	// no validation rules for ToStateName
+
+	// no validation rules for ChangedBy
+
+	// no validation rules for Comment
+
+	if all {
+		switch v := interface{}(m.GetNewDeadlineAt()).(type) {
+		case interface{ ValidateAll() error }:
+			if err := v.ValidateAll(); err != nil {
+				errors = append(errors, CommitTransitionRequestValidationError{
+					field:  "NewDeadlineAt",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		case interface{ Validate() error }:
+			if err := v.Validate(); err != nil {
+				errors = append(errors, CommitTransitionRequestValidationError{
+					field:  "NewDeadlineAt",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		}
+	} else if v, ok := interface{}(m.GetNewDeadlineAt()).(interface{ Validate() error }); ok {
+		if err := v.Validate(); err != nil {
+			return CommitTransitionRequestValidationError{
+				field:  "NewDeadlineAt",
+				reason: "embedded message failed validation",
+				cause:  err,
+			}
+		}
+	}
+
+	if all {
+		switch v := interface{}(m.GetDataPatch()).(type) {
+		case interface{ ValidateAll() error }:
+			if err := v.ValidateAll(); err != nil {
+				errors = append(errors, CommitTransitionRequestValidationError{
+					field:  "DataPatch",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		case interface{ Validate() error }:
+			if err := v.Validate(); err != nil {
+				errors = append(errors, CommitTransitionRequestValidationError{
+					field:  "DataPatch",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		}
+	} else if v, ok := interface{}(m.GetDataPatch()).(interface{ Validate() error }); ok {
+		if err := v.Validate(); err != nil {
+			return CommitTransitionRequestValidationError{
+				field:  "DataPatch",
+				reason: "embedded message failed validation",
+				cause:  err,
+			}
+		}
+	}
+
+	for idx, item := range m.GetPostActions() {
+		_, _ = idx, item
+
+		if all {
+			switch v := interface{}(item).(type) {
+			case interface{ ValidateAll() error }:
+				if err := v.ValidateAll(); err != nil {
+					errors = append(errors, CommitTransitionRequestValidationError{
+						field:  fmt.Sprintf("PostActions[%v]", idx),
+						reason: "embedded message failed validation",
+						cause:  err,
+					})
+				}
+			case interface{ Validate() error }:
+				if err := v.Validate(); err != nil {
+					errors = append(errors, CommitTransitionRequestValidationError{
+						field:  fmt.Sprintf("PostActions[%v]", idx),
+						reason: "embedded message failed validation",
+						cause:  err,
+					})
+				}
+			}
+		} else if v, ok := interface{}(item).(interface{ Validate() error }); ok {
+			if err := v.Validate(); err != nil {
+				return CommitTransitionRequestValidationError{
+					field:  fmt.Sprintf("PostActions[%v]", idx),
+					reason: "embedded message failed validation",
+					cause:  err,
+				}
+			}
+		}
+
+	}
+
+	// no validation rules for SetStatus
+
+	if len(errors) > 0 {
+		return CommitTransitionRequestMultiError(errors)
+	}
+
+	return nil
+}
+
+// CommitTransitionRequestMultiError is an error wrapping multiple validation
+// errors returned by CommitTransitionRequest.ValidateAll() if the designated
+// constraints aren't met.
+type CommitTransitionRequestMultiError []error
+
+// Error returns a concatenation of all the error messages it wraps.
+func (m CommitTransitionRequestMultiError) Error() string {
+	msgs := make([]string, 0, len(m))
+	for _, err := range m {
+		msgs = append(msgs, err.Error())
+	}
+	return strings.Join(msgs, "; ")
+}
+
+// AllErrors returns a list of validation violation errors.
+func (m CommitTransitionRequestMultiError) AllErrors() []error { return m }
+
+// CommitTransitionRequestValidationError is the validation error returned by
+// CommitTransitionRequest.Validate if the designated constraints aren't met.
+type CommitTransitionRequestValidationError struct {
+	field  string
+	reason string
+	cause  error
+	key    bool
+}
+
+// Field function returns field value.
+func (e CommitTransitionRequestValidationError) Field() string { return e.field }
+
+// Reason function returns reason value.
+func (e CommitTransitionRequestValidationError) Reason() string { return e.reason }
+
+// Cause function returns cause value.
+func (e CommitTransitionRequestValidationError) Cause() error { return e.cause }
+
+// Key function returns key value.
+func (e CommitTransitionRequestValidationError) Key() bool { return e.key }
+
+// ErrorName returns error name.
+func (e CommitTransitionRequestValidationError) ErrorName() string {
+	return "CommitTransitionRequestValidationError"
+}
+
+// Error satisfies the builtin error interface
+func (e CommitTransitionRequestValidationError) Error() string {
+	cause := ""
+	if e.cause != nil {
+		cause = fmt.Sprintf(" | caused by: %v", e.cause)
+	}
+
+	key := ""
+	if e.key {
+		key = "key for "
+	}
+
+	return fmt.Sprintf(
+		"invalid %sCommitTransitionRequest.%s: %s%s",
+		key,
+		e.field,
+		e.reason,
+		cause)
+}
+
+var _ error = CommitTransitionRequestValidationError{}
+
+var _ interface {
+	Field() string
+	Reason() string
+	Key() bool
+	Cause() error
+	ErrorName() string
+} = CommitTransitionRequestValidationError{}
+
+// Validate checks the field values on CommitTransitionResponse with the rules
+// defined in the proto definition for this message. If any rules are
+// violated, the first error encountered is returned, or nil if there are no violations.
+func (m *CommitTransitionResponse) Validate() error {
+	return m.validate(false)
+}
+
+// ValidateAll checks the field values on CommitTransitionResponse with the
+// rules defined in the proto definition for this message. If any rules are
+// violated, the result is a list of violation errors wrapped in
+// CommitTransitionResponseMultiError, or nil if none found.
+func (m *CommitTransitionResponse) ValidateAll() error {
+	return m.validate(true)
+}
+
+func (m *CommitTransitionResponse) validate(all bool) error {
+	if m == nil {
+		return nil
+	}
+
+	var errors []error
+
+	// no validation rules for Success
+
+	// no validation rules for ProjectId
+
+	// no validation rules for NewStateId
+
+	// no validation rules for NewStateName
+
+	// no validation rules for Status
+
+	if len(errors) > 0 {
+		return CommitTransitionResponseMultiError(errors)
+	}
+
+	return nil
+}
+
+// CommitTransitionResponseMultiError is an error wrapping multiple validation
+// errors returned by CommitTransitionResponse.ValidateAll() if the designated
+// constraints aren't met.
+type CommitTransitionResponseMultiError []error
+
+// Error returns a concatenation of all the error messages it wraps.
+func (m CommitTransitionResponseMultiError) Error() string {
+	msgs := make([]string, 0, len(m))
+	for _, err := range m {
+		msgs = append(msgs, err.Error())
+	}
+	return strings.Join(msgs, "; ")
+}
+
+// AllErrors returns a list of validation violation errors.
+func (m CommitTransitionResponseMultiError) AllErrors() []error { return m }
+
+// CommitTransitionResponseValidationError is the validation error returned by
+// CommitTransitionResponse.Validate if the designated constraints aren't met.
+type CommitTransitionResponseValidationError struct {
+	field  string
+	reason string
+	cause  error
+	key    bool
+}
+
+// Field function returns field value.
+func (e CommitTransitionResponseValidationError) Field() string { return e.field }
+
+// Reason function returns reason value.
+func (e CommitTransitionResponseValidationError) Reason() string { return e.reason }
+
+// Cause function returns cause value.
+func (e CommitTransitionResponseValidationError) Cause() error { return e.cause }
+
+// Key function returns key value.
+func (e CommitTransitionResponseValidationError) Key() bool { return e.key }
+
+// ErrorName returns error name.
+func (e CommitTransitionResponseValidationError) ErrorName() string {
+	return "CommitTransitionResponseValidationError"
+}
+
+// Error satisfies the builtin error interface
+func (e CommitTransitionResponseValidationError) Error() string {
+	cause := ""
+	if e.cause != nil {
+		cause = fmt.Sprintf(" | caused by: %v", e.cause)
+	}
+
+	key := ""
+	if e.key {
+		key = "key for "
+	}
+
+	return fmt.Sprintf(
+		"invalid %sCommitTransitionResponse.%s: %s%s",
+		key,
+		e.field,
+		e.reason,
+		cause)
+}
+
+var _ error = CommitTransitionResponseValidationError{}
+
+var _ interface {
+	Field() string
+	Reason() string
+	Key() bool
+	Cause() error
+	ErrorName() string
+} = CommitTransitionResponseValidationError{}

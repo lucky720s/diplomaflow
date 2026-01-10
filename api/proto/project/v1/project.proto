@@ -1,15 +1,23 @@
 syntax = "proto3";
 
 package project;
+
 import "google/protobuf/struct.proto";
+import "google/protobuf/timestamp.proto";
+
 option go_package = "github.com/lucky720s/diplomaflow/pkg/protobuf/project/v1";
 
 service ProjectService {
   rpc CreateProject (CreateProjectRequest) returns (CreateProjectResponse);
   rpc GetProject (GetProjectRequest) returns (GetProjectResponse);
   rpc GetStudentProjects (GetStudentProjectsRequest) returns (GetStudentProjectsResponse);
+
+  // Legacy внешний endpoint (фронт не меняем):
   rpc PerformAction (PerformActionRequest) returns (PerformActionResponse);
 
+  // === Runtime support for workflow ядра ===
+  rpc GetProjectRuntime (GetProjectRuntimeRequest) returns (GetProjectRuntimeResponse);
+  rpc CommitTransition (CommitTransitionRequest) returns (CommitTransitionResponse);
 }
 
 message CreateProjectRequest {
@@ -67,10 +75,78 @@ message GetStudentProjectsResponse {
 
 message PerformActionRequest {
   int64 project_id = 1;
-  string action_name = 2;
+  string action_name = 2; // MUST equal Transition.event_name
   google.protobuf.Struct payload = 3;
 }
+
 message PerformActionResponse {
   int64 project_id = 1;
   string new_state = 2;
+}
+
+// ================= Runtime =================
+
+message GetProjectRuntimeRequest {
+  int64 project_id = 1;
+}
+
+message GetProjectRuntimeResponse {
+  int64 project_id = 1;
+
+  int64 student_id = 2;
+  int64 university_id = 3;
+  int64 department_id = 4;
+  int64 team_id = 5;
+
+  int64 workflow_id = 6;
+  int32 workflow_version = 7;
+  string workflow_name = 8;
+
+  int64 current_state_id = 9;
+  string current_state_name = 10;
+
+  string status = 11;
+  google.protobuf.Struct data = 12;
+
+  google.protobuf.Timestamp deadline_at = 13;
+}
+
+message PostCommitActionGroup {
+  string trigger = 1; // "ON_ENTER", "ON_EXIT", "ON_DEADLINE"
+  repeated int64 action_ids = 2;
+}
+
+message CommitTransitionRequest {
+  int64 project_id = 1;
+
+  // optimistic concurrency check:
+  int64 expected_from_state_id = 2;
+
+  int64 transition_id = 3;
+  string event_name = 4;
+
+  int64 to_state_id = 5;
+  string to_state_name = 6;
+
+  int64 changed_by = 7;
+  string comment = 8;
+
+  google.protobuf.Timestamp new_deadline_at = 9;
+
+  // patch is merged into projects.data (JSONB)
+  google.protobuf.Struct data_patch = 10;
+
+  // Post actions to execute async after commit
+  repeated PostCommitActionGroup post_actions = 11;
+
+  // optional
+  string set_status = 12; // "", "active", "completed", ...
+}
+
+message CommitTransitionResponse {
+  bool success = 1;
+  int64 project_id = 2;
+  int64 new_state_id = 3;
+  string new_state_name = 4;
+  string status = 5;
 }

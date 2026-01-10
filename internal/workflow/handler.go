@@ -1,5 +1,4 @@
 // internal/workflow/handler.go
-
 package workflow
 
 import (
@@ -398,7 +397,7 @@ func (h *Handler) ListStateActions(ctx context.Context, req *workflowv1.ListStat
 	return &workflowv1.ListStateActionsResponse{Actions: pbActions}, nil
 }
 
-// ==================== RUNTIME ====================
+// ==================== RUNTIME (легаси методы, остаются только где нужны) ====================
 
 func (h *Handler) GetNextState(ctx context.Context, req *workflowv1.GetNextStateRequest) (*workflowv1.State, error) {
 	state, err := h.service.GetNextState(ctx, req.CurrentStateId, req.EventName)
@@ -406,26 +405,6 @@ func (h *Handler) GetNextState(ctx context.Context, req *workflowv1.GetNextState
 		return nil, status.Errorf(codes.NotFound, "next state not found: %v", err)
 	}
 	return h.stateToProto(state), nil
-}
-
-func (h *Handler) GetAvailableTransitions(ctx context.Context, req *workflowv1.GetAvailableTransitionsRequest) (*workflowv1.GetAvailableTransitionsResponse, error) {
-	// TODO: Integrate with engine
-	transitions, err := h.service.repo.GetTransitionsFromState(ctx, req.CurrentStateId)
-	if err != nil {
-		return nil, status.Errorf(codes.Internal, "failed to get transitions: %v", err)
-	}
-
-	var pbTransitions []*workflowv1.AvailableTransition
-	for _, tr := range transitions {
-		pbTransitions = append(pbTransitions, &workflowv1.AvailableTransition{
-			Transition: h.transitionToProto(&tr),
-			CanExecute: true, // TODO: Check conditions
-		})
-	}
-
-	return &workflowv1.GetAvailableTransitionsResponse{
-		Transitions: pbTransitions,
-	}, nil
 }
 
 func (h *Handler) GetStepConfiguration(ctx context.Context, req *workflowv1.GetStepConfigurationRequest) (*workflowv1.StepConfiguration, error) {
@@ -481,9 +460,49 @@ func (h *Handler) GetStepConfiguration(ctx context.Context, req *workflowv1.GetS
 	return resp, nil
 }
 
-func (h *Handler) ExecuteTransition(ctx context.Context, req *workflowv1.ExecuteTransitionRequest) (*workflowv1.ExecuteTransitionResponse, error) {
-	// TODO: Integrate with engine
-	return nil, status.Error(codes.Unimplemented, "not implemented - use engine directly")
+// CanExecuteTransition (пока заглушка)
+func (h *Handler) CanExecuteTransition(ctx context.Context, req *workflowv1.CanExecuteTransitionRequest) (*workflowv1.CanExecuteTransitionResponse, error) {
+	return &workflowv1.CanExecuteTransitionResponse{
+		CanExecute:    true,
+		BlockedReason: "",
+	}, nil
+}
+
+// GetDepartmentWorkflowConfig
+func (h *Handler) GetDepartmentWorkflowConfig(ctx context.Context, req *workflowv1.GetDepartmentWorkflowConfigRequest) (*workflowv1.DepartmentWorkflowConfigResponse, error) {
+	config, err := h.service.GetDepartmentWorkflowConfiguration(ctx, req.DepartmentId, req.AcademicYear)
+	if err != nil {
+		return nil, status.Errorf(codes.Internal, "failed to get department workflow config: %v", err)
+	}
+
+	resp := &workflowv1.DepartmentWorkflowConfigResponse{
+		WorkflowId:   config.WorkflowID,
+		WorkflowName: config.WorkflowName,
+	}
+
+	if config.TeamConfig != nil {
+		resp.TeamConfig = &workflowv1.TeamConfig{
+			MinSize:   config.TeamConfig.MinSize,
+			MaxSize:   config.TeamConfig.MaxSize,
+			AllowSolo: config.TeamConfig.AllowSolo,
+		}
+	}
+
+	for _, s := range config.States {
+		sc := &workflowv1.StateConfig{
+			Id:           s.ID,
+			Name:         s.Name,
+			DisplayName:  s.DisplayName,
+			OrderIndex:   s.OrderIndex,
+			DurationDays: s.DurationDays,
+		}
+		if s.Deadline != nil {
+			sc.Deadline = timestamppb.New(*s.Deadline)
+		}
+		resp.States = append(resp.States, sc)
+	}
+
+	return resp, nil
 }
 
 // ==================== CONVERTERS ====================
@@ -663,52 +682,6 @@ func (h *Handler) GetTeamConfiguration(ctx context.Context, req *workflowv1.GetT
 			AllowSolo:     result.TeamConfig.AllowSolo,
 			RequireLeader: result.TeamConfig.RequireLeader,
 		}
-	}
-
-	return resp, nil
-}
-
-// CanExecuteTransition проверяет возможность выполнения перехода
-func (h *Handler) CanExecuteTransition(ctx context.Context, req *workflowv1.CanExecuteTransitionRequest) (*workflowv1.CanExecuteTransitionResponse, error) {
-	// TODO: Implement with engine integration
-	return &workflowv1.CanExecuteTransitionResponse{
-		CanExecute:    true,
-		BlockedReason: "",
-	}, nil
-}
-
-// GetDepartmentWorkflowConfig возвращает полную конфигурацию workflow для кафедры
-func (h *Handler) GetDepartmentWorkflowConfig(ctx context.Context, req *workflowv1.GetDepartmentWorkflowConfigRequest) (*workflowv1.DepartmentWorkflowConfigResponse, error) {
-	config, err := h.service.GetDepartmentWorkflowConfiguration(ctx, req.DepartmentId, req.AcademicYear)
-	if err != nil {
-		return nil, status.Errorf(codes.Internal, "failed to get department workflow config: %v", err)
-	}
-
-	resp := &workflowv1.DepartmentWorkflowConfigResponse{
-		WorkflowId:   config.WorkflowID,
-		WorkflowName: config.WorkflowName,
-	}
-
-	if config.TeamConfig != nil {
-		resp.TeamConfig = &workflowv1.TeamConfig{
-			MinSize:   config.TeamConfig.MinSize,
-			MaxSize:   config.TeamConfig.MaxSize,
-			AllowSolo: config.TeamConfig.AllowSolo,
-		}
-	}
-
-	for _, s := range config.States {
-		sc := &workflowv1.StateConfig{
-			Id:           s.ID,
-			Name:         s.Name,
-			DisplayName:  s.DisplayName,
-			OrderIndex:   s.OrderIndex,
-			DurationDays: s.DurationDays,
-		}
-		if s.Deadline != nil {
-			sc.Deadline = timestamppb.New(*s.Deadline)
-		}
-		resp.States = append(resp.States, sc)
 	}
 
 	return resp, nil

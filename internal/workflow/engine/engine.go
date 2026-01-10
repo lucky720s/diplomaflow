@@ -13,8 +13,6 @@ import (
 )
 
 var (
-	ErrWorkflowNotFound     = errors.New("workflow not found")
-	ErrStateNotFound        = errors.New("state not found")
 	ErrTransitionNotFound   = errors.New("transition not found")
 	ErrTransitionNotAllowed = errors.New("transition not allowed")
 	ErrConditionFailed      = errors.New("transition condition failed")
@@ -26,13 +24,9 @@ type WorkflowEngine struct {
 }
 
 func NewWorkflowEngine(repo workflow.Repository, logger *zap.Logger) *WorkflowEngine {
-	return &WorkflowEngine{
-		repo:   repo,
-		logger: logger,
-	}
+	return &WorkflowEngine{repo: repo, logger: logger}
 }
 
-// GetAvailableTransitions возвращает доступные переходы для проекта
 func (e *WorkflowEngine) GetAvailableTransitions(
 	ctx context.Context,
 	projectID, currentStateID, userID int64,
@@ -51,17 +45,16 @@ func (e *WorkflowEngine) GetAvailableTransitions(
 			CanExecute: true,
 		}
 
-		// Проверяем условия
 		conditions, err := e.parseConditions(tr.Conditions)
 		if err != nil {
-			e.logger.Warn("Failed to parse conditions", zap.Error(err))
+			e.logger.Warn("failed to parse transition conditions", zap.Error(err))
 			continue
 		}
 
 		for _, cond := range conditions {
 			if !e.evaluateCondition(cond, userID, userRole, projectData) {
 				at.CanExecute = false
-				at.BlockedReason = fmt.Sprintf("Condition '%s' not met", cond.Type)
+				at.BlockedReason = fmt.Sprintf("condition '%s' not met", cond.Type)
 				at.MissingRequirements = append(at.MissingRequirements, cond.Field)
 			}
 		}
@@ -73,18 +66,15 @@ func (e *WorkflowEngine) GetAvailableTransitions(
 }
 
 func (e *WorkflowEngine) ExecuteTransition(ctx context.Context, req *ExecuteTransitionRequest) (*ExecuteTransitionResult, error) {
-	// 1. Получаем transition
 	transition, err := e.repo.GetTransition(ctx, req.TransitionID)
 	if err != nil {
 		return nil, ErrTransitionNotFound
 	}
 
-	// 2. Проверяем, что текущее состояние соответствует from_state
 	if transition.FromStateID != req.CurrentStateID {
 		return nil, ErrTransitionNotAllowed
 	}
 
-	// 3. Проверяем условия
 	conditions, _ := e.parseConditions(transition.Conditions)
 	for _, cond := range conditions {
 		if !e.evaluateCondition(cond, req.UserID, req.UserRole, req.ProjectData) {
@@ -92,12 +82,10 @@ func (e *WorkflowEngine) ExecuteTransition(ctx context.Context, req *ExecuteTran
 		}
 	}
 
-	// 4. Получаем from и to states
 	fromState, err := e.repo.GetState(ctx, transition.FromStateID)
 	if err != nil {
 		return nil, err
 	}
-
 	toState, err := e.repo.GetState(ctx, transition.ToStateID)
 	if err != nil {
 		return nil, err
@@ -105,11 +93,25 @@ func (e *WorkflowEngine) ExecuteTransition(ctx context.Context, req *ExecuteTran
 
 	result := &ExecuteTransitionResult{
 		Success:      true,
+		EventName:    transition.EventName,
 		NewStateID:   toState.ID,
 		NewStateName: toState.Name,
+		DataPatch:    map[string]interface{}{},
 	}
 
-	// 5. Создаём контекст для actions
+	// Always write workflow-owned info under "wf"
+	wfPatch := map[string]interface{}{
+		"last_transition": map[string]interface{}{
+			"event_name":    transition.EventName,
+			"transition_id": transition.ID,
+			"from_state":    fromState.Name,
+			"to_state":      toState.Name,
+			"performed_by":  req.UserID,
+			"performed_at":  time.Now().UTC().Format(time.RFC3339),
+		},
+	}
+	result.DataPatch["wf"] = wfPatch
+
 	actionCtx := &plugins.ActionContext{
 		ProjectID:     req.ProjectID,
 		UserID:        req.UserID,
@@ -119,80 +121,116 @@ func (e *WorkflowEngine) ExecuteTransition(ctx context.Context, req *ExecuteTran
 		NewState:      toState.Name,
 		TransitionID:  transition.ID,
 		Payload:       req.Payload,
-		Metadata:      make(map[string]interface{}),
+		Metadata:      map[string]interface{}{},
 	}
 
-	// 6. Выполняем ON_EXIT actions для текущего состояния
+	// EXIT actions: execute PRE, plan POST
 	exitActions, _ := e.repo.GetStateActionsByTrigger(ctx, fromState.ID, plugins.TriggerOnExit)
+	exitPost := []int64{}
 	for _, action := range exitActions {
 		actionCtx.StateID = fromState.ID
 		actionCtx.Trigger = plugins.TriggerOnExit
 		actionCtx.Config = e.parseConfig(action.Config)
 
-		actionResult := e.executeAction(ctx, &action, actionCtx)
-		// ✅ ИСПРАВЛЕНО: используем поле action.IsOptional вместо метода
-		if !actionResult.Success && !action.IsOptional {
-			return nil, fmt.Errorf("exit action '%s' failed: %w", action.Name, actionResult.Error)
+		plugin, plugErr := plugins.Get(action.Type)
+		if plugErr != nil {
+			e.logger.Warn("action plugin not found", zap.String("type", action.Type), zap.Error(plugErr))
+			continue
 		}
-		result.ExecutedActions = append(result.ExecutedActions, action.Name)
+
+		if isPreCommit(plugin) {
+			ar := plugin.Execute(ctx, actionCtx)
+			if !ar.Success && !action.IsOptional {
+				return nil, fmt.Errorf("pre-exit action '%s' failed: %w", action.Name, ar.Error)
+			}
+			result.ExecutedActionNames = append(result.ExecutedActionNames, action.Name)
+			e.mergeActionDataIntoPatch(result.DataPatch, action.Name, ar.Data)
+		} else {
+			exitPost = append(exitPost, action.ID)
+			result.ExecutedActionNames = append(result.ExecutedActionNames, action.Name) // planned
+		}
 	}
 
-	// 7. Выполняем ON_ENTER actions для нового состояния
+	// ENTER actions: execute PRE, plan POST
 	enterActions, _ := e.repo.GetStateActionsByTrigger(ctx, toState.ID, plugins.TriggerOnEnter)
+	enterPost := []int64{}
 	for _, action := range enterActions {
 		actionCtx.StateID = toState.ID
 		actionCtx.Trigger = plugins.TriggerOnEnter
 		actionCtx.Config = e.parseConfig(action.Config)
 
-		actionResult := e.executeAction(ctx, &action, actionCtx)
-		// ✅ ИСПРАВЛЕНО: используем поле action.IsOptional вместо метода
-		if !actionResult.Success && !action.IsOptional {
-			e.logger.Error("Enter action failed",
-				zap.Int64("action_id", action.ID),
-				zap.String("action_name", action.Name),
-				zap.Error(actionResult.Error))
-			// Не возвращаем ошибку, переход уже произошёл
+		plugin, plugErr := plugins.Get(action.Type)
+		if plugErr != nil {
+			e.logger.Warn("action plugin not found", zap.String("type", action.Type), zap.Error(plugErr))
+			continue
 		}
-		result.ExecutedActions = append(result.ExecutedActions, action.Name)
+
+		if isPreCommit(plugin) {
+			ar := plugin.Execute(ctx, actionCtx)
+			if !ar.Success && !action.IsOptional {
+				return nil, fmt.Errorf("pre-enter action '%s' failed: %w", action.Name, ar.Error)
+			}
+			result.ExecutedActionNames = append(result.ExecutedActionNames, action.Name)
+			e.mergeActionDataIntoPatch(result.DataPatch, action.Name, ar.Data)
+		} else {
+			enterPost = append(enterPost, action.ID)
+			result.ExecutedActionNames = append(result.ExecutedActionNames, action.Name) // planned
+		}
 	}
 
-	// 8. Рассчитываем дедлайн для нового состояния
+	if len(exitPost) > 0 {
+		result.PostCommitActions = append(result.PostCommitActions, PostCommitActionGroup{
+			Trigger:   plugins.TriggerOnExit,
+			ActionIDs: exitPost,
+		})
+	}
+	if len(enterPost) > 0 {
+		result.PostCommitActions = append(result.PostCommitActions, PostCommitActionGroup{
+			Trigger:   plugins.TriggerOnEnter,
+			ActionIDs: enterPost,
+		})
+	}
+
+	// Deadline
 	if toState.DurationDays > 0 {
-		deadline := time.Now().AddDate(0, 0, int(toState.DurationDays))
-		result.NewDeadline = &deadline
+		d := time.Now().AddDate(0, 0, int(toState.DurationDays))
+		result.NewDeadline = &d
 	} else if toState.FixedDeadline != nil {
 		result.NewDeadline = toState.FixedDeadline
 	}
 
-	e.logger.Info("Transition executed",
-		zap.Int64("project_id", req.ProjectID),
-		zap.Int64("transition_id", req.TransitionID),
-		zap.String("from_state", fromState.Name),
-		zap.String("to_state", toState.Name),
-		zap.Int("actions_executed", len(result.ExecutedActions)))
+	if toState.IsFinal {
+		result.SetStatus = "completed"
+	}
 
 	return result, nil
 }
 
-func (e *WorkflowEngine) executeAction(ctx context.Context, action *workflow.StateAction, actx *plugins.ActionContext) *plugins.ActionResult {
-	// Получаем плагин из реестра
-	plugin, err := plugins.Get(action.Type)
-	if err != nil {
-		e.logger.Warn("Action plugin not found", zap.String("type", action.Type))
-		return &plugins.ActionResult{Success: false, Error: err}
+func isPreCommit(p plugins.ActionPlugin) bool {
+	// Senior rule: only validation/grading can run before commit.
+	switch p.Category() {
+	case plugins.CategoryValidation, plugins.CategoryGrading:
+		return true
+	default:
+		return false
 	}
+}
 
-	// Выполняем действие
-	result := plugin.Execute(ctx, actx)
-
-	if !result.Success {
-		e.logger.Warn("Action execution failed",
-			zap.String("action_type", action.Type),
-			zap.String("action_name", action.Name),
-			zap.Error(result.Error))
+func (e *WorkflowEngine) mergeActionDataIntoPatch(patch map[string]interface{}, actionName string, data map[string]interface{}) {
+	if len(data) == 0 {
+		return
 	}
-
-	return result
+	wf, ok := patch["wf"].(map[string]interface{})
+	if !ok {
+		wf = map[string]interface{}{}
+		patch["wf"] = wf
+	}
+	results, ok := wf["action_results"].(map[string]interface{})
+	if !ok {
+		results = map[string]interface{}{}
+		wf["action_results"] = results
+	}
+	results[actionName] = data
 }
 
 func (e *WorkflowEngine) parseConditions(data []byte) ([]TransitionCondition, error) {
@@ -200,9 +238,18 @@ func (e *WorkflowEngine) parseConditions(data []byte) ([]TransitionCondition, er
 	if len(data) == 0 {
 		return conditions, nil
 	}
-	err := json.Unmarshal(data, &conditions)
-	return conditions, err
+	return conditions, json.Unmarshal(data, &conditions)
 }
+
+func (e *WorkflowEngine) parseConfig(data []byte) map[string]interface{} {
+	var config map[string]interface{}
+	if err := json.Unmarshal(data, &config); err != nil || config == nil {
+		config = make(map[string]interface{})
+	}
+	return config
+}
+
+// --- condition evaluation (оставляем твой подход) ---
 
 func (e *WorkflowEngine) evaluateCondition(cond TransitionCondition, userID int64, userRole string, data map[string]interface{}) bool {
 	switch cond.Type {
@@ -215,35 +262,40 @@ func (e *WorkflowEngine) evaluateCondition(cond TransitionCondition, userID int6
 			return false
 		}
 		for _, r := range allowedRoles {
-			roleStr, ok := r.(string)
-			if !ok {
-				continue
-			}
-			if roleStr == userRole {
+			if rs, ok := r.(string); ok && rs == userRole {
 				return true
 			}
 		}
 		return false
-
 	case "field":
 		fieldValue, ok := data[cond.Field]
 		if !ok {
 			return cond.Operator == "not_exists" || cond.Operator == "empty"
 		}
-		return e.compareValues(fieldValue, cond.Operator, cond.Value)
-
-	case "user":
-		if cond.Field == "id" {
-			return e.compareValues(float64(userID), cond.Operator, cond.Value)
-		}
-		return true
-
+		return compareValues(fieldValue, cond.Operator, cond.Value)
 	default:
 		return true
 	}
 }
 
-func (e *WorkflowEngine) compareValues(actual interface{}, operator string, expected interface{}) bool {
+func compareValues(actual interface{}, operator string, expected interface{}) bool {
+	toFloat := func(v interface{}) float64 {
+		switch val := v.(type) {
+		case float64:
+			return val
+		case float32:
+			return float64(val)
+		case int:
+			return float64(val)
+		case int64:
+			return float64(val)
+		case int32:
+			return float64(val)
+		default:
+			return 0
+		}
+	}
+
 	switch operator {
 	case "eq", "equals", "==":
 		return actual == expected
@@ -257,28 +309,6 @@ func (e *WorkflowEngine) compareValues(actual interface{}, operator string, expe
 		return toFloat(actual) < toFloat(expected)
 	case "lte", "<=":
 		return toFloat(actual) <= toFloat(expected)
-	case "in":
-		arr, ok := expected.([]interface{})
-		if !ok {
-			return false
-		}
-		for _, v := range arr {
-			if actual == v {
-				return true
-			}
-		}
-		return false
-	case "not_in":
-		arr, ok := expected.([]interface{})
-		if !ok {
-			return true
-		}
-		for _, v := range arr {
-			if actual == v {
-				return false
-			}
-		}
-		return true
 	case "exists", "not_empty":
 		return actual != nil && actual != ""
 	case "not_exists", "empty":
@@ -288,32 +318,7 @@ func (e *WorkflowEngine) compareValues(actual interface{}, operator string, expe
 	}
 }
 
-func toFloat(v interface{}) float64 {
-	switch val := v.(type) {
-	case float64:
-		return val
-	case float32:
-		return float64(val)
-	case int:
-		return float64(val)
-	case int64:
-		return float64(val)
-	case int32:
-		return float64(val)
-	default:
-		return 0
-	}
-}
-
-func (e *WorkflowEngine) parseConfig(data []byte) map[string]interface{} {
-	var config map[string]interface{}
-	if err := json.Unmarshal(data, &config); err != nil || config == nil {
-		config = make(map[string]interface{})
-	}
-	return config
-}
-
-// ==================== Types ====================
+// ================= Types =================
 
 type AvailableTransition struct {
 	Transition          *workflow.Transition
@@ -333,13 +338,25 @@ type ExecuteTransitionRequest struct {
 	Payload        map[string]interface{}
 }
 
+type PostCommitActionGroup struct {
+	Trigger   string
+	ActionIDs []int64
+}
+
 type ExecuteTransitionResult struct {
-	Success         bool
-	NewStateID      int64
-	NewStateName    string
-	NewDeadline     *time.Time
-	ExecutedActions []string
-	Error           string
+	Success             bool
+	EventName           string
+	NewStateID          int64
+	NewStateName        string
+	NewDeadline         *time.Time
+	SetStatus           string
+	ExecutedActionNames []string
+
+	// Patch to merge into projects.data
+	DataPatch map[string]interface{}
+
+	// Post-commit actions to run async (idempotent consumer)
+	PostCommitActions []PostCommitActionGroup
 }
 
 type TransitionCondition struct {

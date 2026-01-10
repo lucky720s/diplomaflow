@@ -5,58 +5,33 @@
 package project
 
 import (
+	"context"
+
 	"github.com/google/wire"
 	"github.com/lucky720s/diplomaflow/pkg/broker"
-	notificationv1 "github.com/lucky720s/diplomaflow/pkg/protobuf/notification/v1"
 	workflowv1 "github.com/lucky720s/diplomaflow/pkg/protobuf/workflow/v1"
 	"go.uber.org/zap"
-	"google.golang.org/grpc"
-	"google.golang.org/grpc/credentials/insecure"
 	"gorm.io/gorm"
 )
 
-type App struct {
-	Handler           *Handler
-	ActionExecutor    *StateActionExecutor
-	DeadlineScheduler *DeadlineScheduler
+func ProvideWorkflowClient(c workflowv1.WorkflowServiceClient) WorkflowClient {
+	// workflowv1 client implements the methods we need; we call without opts.
+	return &workflowClientWrapper{c: c}
 }
 
-func NewApp(h *Handler, executor *StateActionExecutor, repo Repository, logger *zap.Logger) *App {
-	scheduler := NewDeadlineScheduler(repo, executor, logger)
-	return &App{
-		Handler:           h,
-		ActionExecutor:    executor,
-		DeadlineScheduler: scheduler,
-	}
-}
-func ProvideProcessorRegistry() *ProcessorRegistry {
-	registry := NewProcessorRegistry()
-	registry.Register("TEAM_FORMED", &TeamFormedHandler{})
-	registry.Register("SELECT_SUPERVISOR", &SelectSupervisorHandler{})
-	registry.Register("TOPIC_APPROVED", &TopicApprovedHandler{})
-	registry.Register("UPLOAD_TASK", &UploadTaskHandler{})
-	registry.Register("TASK_UPLOADED", &TaskUploadedHandler{})
-	registry.Register("APPROVE", &ApproveHandler{})
-	registry.Register("REJECT", &RejectHandler{})
-	return registry
+// wrapper converts ...grpc.CallOption to ...interface{} usage (we ignore opts)
+type workflowClientWrapper struct {
+	c workflowv1.WorkflowServiceClient
 }
 
-func ProvideNotificationClient(cfg *Config) (notificationv1.NotificationServiceClient, func(), error) {
-	conn, err := grpc.NewClient(cfg.Services.NotificationAddr,
-		grpc.WithTransportCredentials(insecure.NewCredentials()))
-	if err != nil {
-		return nil, nil, err
-	}
-	cleanup := func() { conn.Close() }
-	return notificationv1.NewNotificationServiceClient(conn), cleanup, nil
+func (w *workflowClientWrapper) GetActiveWorkflowByDepartment(ctx context.Context, in *workflowv1.GetActiveWorkflowByDepartmentRequest, _ ...interface{}) (*workflowv1.Workflow, error) {
+	return w.c.GetActiveWorkflowByDepartment(ctx, in)
 }
-
-func ProvideStateActionExecutor(
-	wfClient workflowv1.WorkflowServiceClient,
-	notifClient notificationv1.NotificationServiceClient,
-	logger *zap.Logger,
-) *StateActionExecutor {
-	return NewStateActionExecutor(wfClient, notifClient, logger)
+func (w *workflowClientWrapper) GetAvailableTransitions(ctx context.Context, in *workflowv1.GetAvailableTransitionsRequest, _ ...interface{}) (*workflowv1.GetAvailableTransitionsResponse, error) {
+	return w.c.GetAvailableTransitions(ctx, in)
+}
+func (w *workflowClientWrapper) ExecuteTransition(ctx context.Context, in *workflowv1.ExecuteTransitionRequest, _ ...interface{}) (*workflowv1.ExecuteTransitionResponse, error) {
+	return w.c.ExecuteTransition(ctx, in)
 }
 
 func InitializeApp(
@@ -67,13 +42,17 @@ func InitializeApp(
 	wfClient workflowv1.WorkflowServiceClient,
 ) (*App, func(), error) {
 	wire.Build(
+		ProvideWorkflowClient,
+
 		NewRepository,
-		ProvideProcessorRegistry,
-		ProvideNotificationClient,
-		ProvideStateActionExecutor,
 		NewService,
 		wire.Bind(new(ProjectUseCase), new(*Service)),
+
 		NewHandler,
+
+		NewDeadlineScheduler,
+		NewOutboxProcessor,
+
 		NewApp,
 	)
 	return &App{}, nil, nil

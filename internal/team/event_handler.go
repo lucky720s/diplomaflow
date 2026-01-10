@@ -13,11 +13,11 @@ import (
 )
 
 type ProjectCreatedEvent struct {
-	ProjectID    int64  `json:"project_id"`
-	StudentID    int64  `json:"student_id"`
-	DepartmentID int64  `json:"department_id"`
-	FirstStateID int64  `json:"first_state_id"`
-	Title        string `json:"title"`
+	ProjectID      int64  `json:"project_id"`
+	StudentID      int64  `json:"student_id"`
+	DepartmentID   int64  `json:"department_id"`
+	InitialStateID int64  `json:"initial_state_id"`
+	Title          string `json:"title"`
 }
 
 type EventHandler struct {
@@ -43,11 +43,13 @@ func NewEventHandler(
 
 func (h *EventHandler) HandleProjectCreated(ctx context.Context, event ProjectCreatedEvent) error {
 	h.logger.Info("Processing ProjectCreated event", zap.Int64("project_id", event.ProjectID))
-	if event.FirstStateID == 0 {
+
+	if event.InitialStateID == 0 {
 		return h.createTeamWithFallback(ctx, event)
 	}
+
 	stepConfig, err := h.workflowClient.GetStepConfiguration(ctx, &workflowv1.GetStepConfigurationRequest{
-		StateId: event.FirstStateID,
+		StateId: event.InitialStateID,
 	})
 	if err != nil {
 		h.logger.Warn("Failed to get step configuration, creating team by default", zap.Error(err))
@@ -58,6 +60,7 @@ func (h *EventHandler) HandleProjectCreated(ctx context.Context, event ProjectCr
 	if teamConfig == nil || teamConfig.GetAllowSolo() || teamConfig.GetMinSize() <= 1 {
 		return h.createTeamWithFallback(ctx, event)
 	}
+
 	_, notifErr := h.notifClient.SendNotification(ctx, &notificationv1.SendNotificationRequest{
 		UserId:  event.StudentID,
 		Title:   "Соберите команду",
@@ -71,12 +74,12 @@ func (h *EventHandler) HandleProjectCreated(ctx context.Context, event ProjectCr
 
 	return nil
 }
+
 func (h *EventHandler) createTeamWithFallback(ctx context.Context, event ProjectCreatedEvent) error {
 	err := h.service.CreateTeamForProject(ctx, event.ProjectID, event.StudentID)
 	if err != nil {
 		if errors.Is(err, gorm.ErrDuplicatedKey) || strings.Contains(err.Error(), "duplicate key") {
-			h.logger.Warn("Team for project already exists, skipping (idempotency)",
-				zap.Int64("project_id", event.ProjectID))
+			h.logger.Warn("Team for project already exists, skipping (idempotency)", zap.Int64("project_id", event.ProjectID))
 			return nil
 		}
 		h.logger.Error("Failed to create team", zap.Error(err))
