@@ -2,6 +2,7 @@ package admin
 
 import (
 	"context"
+	"fmt"
 	"time"
 
 	"gorm.io/gorm"
@@ -49,6 +50,35 @@ type Repository interface {
 	GetDashboardStats(ctx context.Context, departmentID int64) (*DashboardStatsData, error)
 	GetStepProgressStats(ctx context.Context, departmentID int64, workflowID int64) ([]*StepProgressData, error)
 	GetPendingReviewsCount(ctx context.Context, departmentID int64) (int64, error)
+
+	// Students
+	GetStudentByID(ctx context.Context, studentID int64) (*StudentFullInfo, error)
+	GetStudentGrades(ctx context.Context, studentID int64) ([]*Grade, error)
+	GetStudentSubmissions(ctx context.Context, studentID int64) ([]*Submission, error)
+
+	// Teams (Admin)
+	GetTeamFullDetails(ctx context.Context, teamID int64) (*TeamFullDetails, error)
+	UpdateTeamByAdmin(ctx context.Context, teamID int64, updates *TeamAdminUpdateData) error
+	DeleteTeamByAdmin(ctx context.Context, teamID int64, reason string, deletedBy int64) error
+	AddTeamMember(ctx context.Context, teamID, userID int64, role string) error
+	RemoveTeamMember(ctx context.Context, teamID, userID int64) error
+
+	// Grading History (расширенный)
+	GetGradingHistoryFull(ctx context.Context, projectID, stepID int64) ([]*GradeHistoryFull, error)
+
+	// Supervisor Request
+	CreateSupervisorRequest(ctx context.Context, req *SupervisorRequest) error
+	GetSupervisorRequest(ctx context.Context, id string) (*SupervisorRequest, error)
+	GetSupervisorRequestWithDetails(ctx context.Context, id string) (*SupervisorRequestWithDetails, error)
+	ListSupervisorRequests(ctx context.Context, filter SupervisorRequestFilter) ([]*SupervisorRequestWithDetails, int64, error)
+	ListSupervisorRequestsByTeam(ctx context.Context, teamID int64) ([]*SupervisorRequest, error)
+	ListSupervisorRequestsBySupervisor(ctx context.Context, supervisorID int64, status string) ([]*SupervisorRequestWithDetails, int64, error)
+	UpdateSupervisorRequest(ctx context.Context, req *SupervisorRequest) error
+	CreateSupervisorRequestHistory(ctx context.Context, history *SupervisorRequestHistory) error
+	GetSupervisorRequestHistory(ctx context.Context, requestID string) ([]*SupervisorRequestHistory, error)
+	CountPendingSupervisorRequests(ctx context.Context, supervisorID int64) (int64, error)
+	HasPendingSupervisorRequest(ctx context.Context, teamID int64) (bool, error)
+	HasApprovedSupervisor(ctx context.Context, teamID int64) (bool, error)
 }
 
 // Filter structs
@@ -90,6 +120,16 @@ type StepProgressData struct {
 	RejectedTeams  int32
 }
 
+// SupervisorRequestFilter - фильтр для списка запросов
+type SupervisorRequestFilter struct {
+	DepartmentID int64
+	SupervisorID int64
+	TeamID       int64
+	Status       string
+	Limit        int
+	Offset       int
+}
+
 type repository struct {
 	db *gorm.DB
 }
@@ -110,6 +150,7 @@ func NewRepository(db *gorm.DB) Repository {
 }
 
 // ==================== Grades ====================
+
 func (r *repository) CreateGrade(ctx context.Context, grade *Grade) error {
 	grade.CreatedAt = time.Now()
 	grade.UpdatedAt = time.Now()
@@ -157,6 +198,7 @@ func (r *repository) GetGradeHistory(ctx context.Context, projectID, stepID int6
 }
 
 // ==================== Topic Registrations ====================
+
 func (r *repository) CreateTopicRegistration(ctx context.Context, reg *TopicRegistration) error {
 	reg.CreatedAt = time.Now()
 	reg.UpdatedAt = time.Now()
@@ -239,6 +281,7 @@ func (r *repository) CountPendingTopicRegistrations(ctx context.Context, departm
 }
 
 // ==================== Submissions ====================
+
 func (r *repository) CreateSubmission(ctx context.Context, sub *Submission) error {
 	sub.CreatedAt = time.Now()
 	sub.UpdatedAt = time.Now()
@@ -302,7 +345,182 @@ func (r *repository) GetSubmissionReviews(ctx context.Context, submissionID stri
 	return reviews, err
 }
 
+// ==================== Supervisor Request Implementation ====================
+
+// CreateSupervisorRequest - создание запроса к супервайзеру
+func (r *repository) CreateSupervisorRequest(ctx context.Context, req *SupervisorRequest) error {
+	req.CreatedAt = time.Now()
+	req.UpdatedAt = time.Now()
+	return r.db.WithContext(ctx).Create(req).Error
+}
+
+// GetSupervisorRequest - получение запроса по ID
+func (r *repository) GetSupervisorRequest(ctx context.Context, id string) (*SupervisorRequest, error) {
+	var req SupervisorRequest
+	err := r.db.WithContext(ctx).First(&req, "id = ?", id).Error
+	if err != nil {
+		return nil, err
+	}
+	return &req, nil
+}
+
+// GetSupervisorRequestWithDetails - получение запроса с деталями
+func (r *repository) GetSupervisorRequestWithDetails(ctx context.Context, id string) (*SupervisorRequestWithDetails, error) {
+	var result SupervisorRequestWithDetails
+
+	query := `
+		SELECT 
+			sr.*,
+			COALESCE(t.name, '') as team_name,
+			COALESCE(CONCAT(sup.first_name, ' ', sup.last_name), '') as supervisor_name,
+			COALESCE(sup.email, '') as supervisor_email,
+			COALESCE(CONCAT(req.first_name, ' ', req.last_name), '') as requester_name
+		FROM admin_supervisor_requests sr
+		LEFT JOIN teams t ON t.id = sr.team_id
+		LEFT JOIN users sup ON sup.id = sr.supervisor_id
+		LEFT JOIN users req ON req.id = sr.requested_by
+		WHERE sr.id = ?
+	`
+
+	err := r.db.WithContext(ctx).Raw(query, id).Scan(&result).Error
+	if err != nil {
+		return nil, err
+	}
+
+	if result.ID == "" {
+		return nil, gorm.ErrRecordNotFound
+	}
+
+	return &result, nil
+}
+
+// ListSupervisorRequests - список запросов с фильтрацией
+func (r *repository) ListSupervisorRequests(ctx context.Context, filter SupervisorRequestFilter) ([]*SupervisorRequestWithDetails, int64, error) {
+	var results []*SupervisorRequestWithDetails
+	var total int64
+
+	baseQuery := `
+		FROM admin_supervisor_requests sr
+		LEFT JOIN teams t ON t.id = sr.team_id
+		LEFT JOIN users sup ON sup.id = sr.supervisor_id
+		LEFT JOIN users req ON req.id = sr.requested_by
+		WHERE 1=1
+	`
+
+	args := []interface{}{}
+
+	if filter.SupervisorID > 0 {
+		baseQuery += " AND sr.supervisor_id = ?"
+		args = append(args, filter.SupervisorID)
+	}
+
+	if filter.TeamID > 0 {
+		baseQuery += " AND sr.team_id = ?"
+		args = append(args, filter.TeamID)
+	}
+
+	if filter.Status != "" && filter.Status != "all" {
+		baseQuery += " AND sr.status = ?"
+		args = append(args, filter.Status)
+	}
+
+	// Count total
+	countQuery := "SELECT COUNT(*) " + baseQuery
+	r.db.WithContext(ctx).Raw(countQuery, args...).Scan(&total)
+
+	// Get data
+	selectQuery := `
+		SELECT 
+			sr.*,
+			COALESCE(t.name, '') as team_name,
+			COALESCE(CONCAT(sup.first_name, ' ', sup.last_name), '') as supervisor_name,
+			COALESCE(sup.email, '') as supervisor_email,
+			COALESCE(CONCAT(req.first_name, ' ', req.last_name), '') as requester_name
+	` + baseQuery + " ORDER BY sr.created_at DESC"
+
+	if filter.Limit > 0 {
+		selectQuery += fmt.Sprintf(" LIMIT %d OFFSET %d", filter.Limit, filter.Offset)
+	}
+
+	err := r.db.WithContext(ctx).Raw(selectQuery, args...).Scan(&results).Error
+	return results, total, err
+}
+
+// ListSupervisorRequestsByTeam - список запросов команды
+func (r *repository) ListSupervisorRequestsByTeam(ctx context.Context, teamID int64) ([]*SupervisorRequest, error) {
+	var requests []*SupervisorRequest
+	err := r.db.WithContext(ctx).
+		Where("team_id = ?", teamID).
+		Order("created_at DESC").
+		Find(&requests).Error
+	return requests, err
+}
+
+// ListSupervisorRequestsBySupervisor - список запросов для супервайзера
+func (r *repository) ListSupervisorRequestsBySupervisor(ctx context.Context, supervisorID int64, status string) ([]*SupervisorRequestWithDetails, int64, error) {
+	filter := SupervisorRequestFilter{
+		SupervisorID: supervisorID,
+		Status:       status,
+		Limit:        100,
+		Offset:       0,
+	}
+	return r.ListSupervisorRequests(ctx, filter)
+}
+
+// UpdateSupervisorRequest - обновление запроса
+func (r *repository) UpdateSupervisorRequest(ctx context.Context, req *SupervisorRequest) error {
+	req.UpdatedAt = time.Now()
+	return r.db.WithContext(ctx).Save(req).Error
+}
+
+// CreateSupervisorRequestHistory - создание записи в истории
+func (r *repository) CreateSupervisorRequestHistory(ctx context.Context, history *SupervisorRequestHistory) error {
+	history.CreatedAt = time.Now()
+	return r.db.WithContext(ctx).Create(history).Error
+}
+
+// GetSupervisorRequestHistory - получение истории запроса
+func (r *repository) GetSupervisorRequestHistory(ctx context.Context, requestID string) ([]*SupervisorRequestHistory, error) {
+	var history []*SupervisorRequestHistory
+	err := r.db.WithContext(ctx).
+		Where("request_id = ?", requestID).
+		Order("created_at DESC").
+		Find(&history).Error
+	return history, err
+}
+
+// CountPendingSupervisorRequests - количество ожидающих запросов для супервайзера
+func (r *repository) CountPendingSupervisorRequests(ctx context.Context, supervisorID int64) (int64, error) {
+	var count int64
+	err := r.db.WithContext(ctx).
+		Model(&SupervisorRequest{}).
+		Where("supervisor_id = ? AND status = ?", supervisorID, SupervisorRequestStatusPending).
+		Count(&count).Error
+	return count, err
+}
+
+// HasPendingSupervisorRequest - есть ли активный запрос у команды
+func (r *repository) HasPendingSupervisorRequest(ctx context.Context, teamID int64) (bool, error) {
+	var count int64
+	err := r.db.WithContext(ctx).
+		Model(&SupervisorRequest{}).
+		Where("team_id = ? AND status = ?", teamID, SupervisorRequestStatusPending).
+		Count(&count).Error
+	return count > 0, err
+}
+
+// HasApprovedSupervisor - есть ли утверждённый супервайзер у команды
+func (r *repository) HasApprovedSupervisor(ctx context.Context, teamID int64) (bool, error) {
+	var count int64
+	err := r.db.WithContext(ctx).
+		Model(&SupervisorRequest{}).
+		Where("team_id = ? AND status = ?", teamID, SupervisorRequestStatusApproved).
+		Count(&count).Error
+	return count > 0, err
+}
+
 // ==================== Supervisor Assignments ====================
+
 func (r *repository) AssignSupervisor(ctx context.Context, assignment *SupervisorAssignment) error {
 	assignment.CreatedAt = time.Now()
 	assignment.UpdatedAt = time.Now()
@@ -342,6 +560,7 @@ func (r *repository) CountTeamsBySupervisor(ctx context.Context, supervisorID in
 }
 
 // ==================== Activities ====================
+
 func (r *repository) LogActivity(ctx context.Context, activity *AdminActivity) error {
 	activity.CreatedAt = time.Now()
 	return r.db.WithContext(ctx).Create(activity).Error
@@ -357,6 +576,7 @@ func (r *repository) GetRecentActivities(ctx context.Context, departmentID int64
 }
 
 // ==================== Dashboard Stats ====================
+
 func (r *repository) GetDashboardStats(ctx context.Context, departmentID int64) (*DashboardStatsData, error) {
 	stats := &DashboardStatsData{}
 
@@ -446,4 +666,304 @@ func (r *repository) GetPendingReviewsCount(ctx context.Context, departmentID in
 		Where("status = ?", StatusPending).
 		Count(&count).Error
 	return count, err
+}
+
+// GetStudentByID - получение полной информации о студенте
+func (r *repository) GetStudentByID(ctx context.Context, studentID int64) (*StudentFullInfo, error) {
+	var result StudentFullInfo
+
+	query := `
+		SELECT 
+			u.id,
+			u.email,
+			u.first_name,
+			u.last_name,
+			u.role,
+			u.university_id,
+			u.department_id,
+			COALESCE(tm.team_id, 0) as team_id,
+			COALESCE(t.name, '') as team_name,
+			COALESCE(t.project_id, 0) as project_id,
+			COALESCE(p.title, '') as project_title,
+			COALESCE(p.current_state, '') as current_step,
+			u.created_at
+		FROM users u
+		LEFT JOIN team_members tm ON tm.user_id = u.id
+		LEFT JOIN teams t ON t.id = tm.team_id AND t.deleted_at IS NULL
+		LEFT JOIN projects p ON p.id = t.project_id
+		WHERE u.id = ? AND u.deleted_at IS NULL
+	`
+
+	err := r.db.WithContext(ctx).Raw(query, studentID).Scan(&result).Error
+	if err != nil {
+		return nil, err
+	}
+
+	if result.ID == 0 {
+		return nil, gorm.ErrRecordNotFound
+	}
+
+	return &result, nil
+}
+
+// GetStudentGrades - получение оценок студента
+func (r *repository) GetStudentGrades(ctx context.Context, studentID int64) ([]*Grade, error) {
+	var grades []*Grade
+
+	query := `
+		SELECT g.*
+		FROM admin_grades g
+		JOIN projects p ON p.id = g.project_id
+		JOIN teams t ON t.project_id = p.id
+		JOIN team_members tm ON tm.team_id = t.id
+		WHERE tm.user_id = ? AND g.deleted_at IS NULL
+		ORDER BY g.created_at DESC
+	`
+
+	err := r.db.WithContext(ctx).Raw(query, studentID).Scan(&grades).Error
+	return grades, err
+}
+
+// GetStudentSubmissions - получение submissions студента
+func (r *repository) GetStudentSubmissions(ctx context.Context, studentID int64) ([]*Submission, error) {
+	var submissions []*Submission
+
+	query := `
+		SELECT s.*
+		FROM admin_submissions s
+		JOIN projects p ON p.id = s.project_id
+		JOIN teams t ON t.project_id = p.id
+		JOIN team_members tm ON tm.team_id = t.id
+		WHERE tm.user_id = ? AND s.deleted_at IS NULL
+		ORDER BY s.created_at DESC
+		LIMIT 50
+	`
+
+	err := r.db.WithContext(ctx).Raw(query, studentID).Scan(&submissions).Error
+	return submissions, err
+}
+
+// GetTeamFullDetails - полная информация о команде
+func (r *repository) GetTeamFullDetails(ctx context.Context, teamID int64) (*TeamFullDetails, error) {
+	var team TeamFullDetails
+
+	// Основная информация о команде
+	teamQuery := `
+		SELECT 
+			t.id,
+			t.name,
+			COALESCE(t.project_id, 0) as project_id,
+			COALESCE(p.title, '') as project_title,
+			COALESCE(p.current_state, '') as current_step,
+			COALESCE(p.status, 'active') as status,
+			COALESCE(sa.supervisor_id, 0) as supervisor_id,
+			t.created_at,
+			t.updated_at
+		FROM teams t
+		LEFT JOIN projects p ON p.id = t.project_id
+		LEFT JOIN admin_supervisor_assignments sa ON sa.team_id = t.id
+		WHERE t.id = ? AND t.deleted_at IS NULL
+	`
+
+	if err := r.db.WithContext(ctx).Raw(teamQuery, teamID).Scan(&team).Error; err != nil {
+		return nil, err
+	}
+
+	if team.ID == 0 {
+		return nil, gorm.ErrRecordNotFound
+	}
+
+	// Получаем участников команды
+	membersQuery := `
+		SELECT 
+			tm.user_id,
+			CONCAT(u.first_name, ' ', u.last_name) as full_name,
+			u.email,
+			tm.role,
+			tm.created_at as joined_at
+		FROM team_members tm
+		JOIN users u ON u.id = tm.user_id
+		WHERE tm.team_id = ?
+		ORDER BY tm.role DESC, tm.created_at ASC
+	`
+
+	var members []*TeamMemberDetails
+	if err := r.db.WithContext(ctx).Raw(membersQuery, teamID).Scan(&members).Error; err != nil {
+		return nil, err
+	}
+
+	team.Members = members
+	return &team, nil
+}
+
+// UpdateTeamByAdmin - обновление команды администратором
+func (r *repository) UpdateTeamByAdmin(ctx context.Context, teamID int64, updates *TeamAdminUpdateData) error {
+	return r.db.WithContext(ctx).Transaction(func(tx *gorm.DB) error {
+		// Обновляем название команды если указано
+		if updates.Name != nil && *updates.Name != "" {
+			if err := tx.Table("teams").Where("id = ?", teamID).Update("name", *updates.Name).Error; err != nil {
+				return err
+			}
+		}
+
+		// Обновляем супервайзера если указан
+		if updates.SupervisorID != nil && *updates.SupervisorID > 0 {
+			// Проверяем существует ли запись
+			var count int64
+			tx.Table("admin_supervisor_assignments").Where("team_id = ?", teamID).Count(&count)
+
+			if count > 0 {
+				// Обновляем
+				if err := tx.Table("admin_supervisor_assignments").
+					Where("team_id = ?", teamID).
+					Updates(map[string]interface{}{
+						"supervisor_id": *updates.SupervisorID,
+						"updated_at":    time.Now(),
+					}).Error; err != nil {
+					return err
+				}
+			} else {
+				// Создаём новую запись
+				if err := tx.Table("admin_supervisor_assignments").Create(map[string]interface{}{
+					"team_id":       teamID,
+					"supervisor_id": *updates.SupervisorID,
+					"assigned_by":   1, // TODO: передавать актора
+					"created_at":    time.Now(),
+					"updated_at":    time.Now(),
+				}).Error; err != nil {
+					return err
+				}
+			}
+		}
+
+		// Обновляем состав команды если указан
+		if len(updates.MemberIDs) > 0 {
+			// Получаем текущих участников
+			var currentMemberIDs []int64
+			tx.Table("team_members").Where("team_id = ?", teamID).Pluck("user_id", &currentMemberIDs)
+
+			currentMap := make(map[int64]bool)
+			for _, id := range currentMemberIDs {
+				currentMap[id] = true
+			}
+
+			newMap := make(map[int64]bool)
+			for _, id := range updates.MemberIDs {
+				newMap[id] = true
+			}
+
+			// Удаляем тех, кого нет в новом списке
+			for _, id := range currentMemberIDs {
+				if !newMap[id] {
+					if err := tx.Table("team_members").
+						Where("team_id = ? AND user_id = ?", teamID, id).
+						Delete(nil).Error; err != nil {
+						return err
+					}
+				}
+			}
+
+			// Добавляем новых
+			for _, id := range updates.MemberIDs {
+				if !currentMap[id] {
+					if err := tx.Table("team_members").Create(map[string]interface{}{
+						"team_id":    teamID,
+						"user_id":    id,
+						"role":       "member",
+						"created_at": time.Now(),
+					}).Error; err != nil {
+						return err
+					}
+				}
+			}
+		}
+
+		// Обновляем updated_at команды
+		return tx.Table("teams").Where("id = ?", teamID).Update("updated_at", time.Now()).Error
+	})
+}
+
+// DeleteTeamByAdmin - удаление команды администратором
+func (r *repository) DeleteTeamByAdmin(ctx context.Context, teamID int64, reason string, deletedBy int64) error {
+	return r.db.WithContext(ctx).Transaction(func(tx *gorm.DB) error {
+		// Логируем удаление
+		if err := tx.Create(&AdminActivity{
+			ActivityType: ActivityTypeTeamDelete,
+			Description:  fmt.Sprintf("Team %d deleted. Reason: %s", teamID, reason),
+			ActorID:      deletedBy,
+			TargetID:     teamID,
+			TargetType:   "team",
+			CreatedAt:    time.Now(),
+		}).Error; err != nil {
+			return err
+		}
+
+		// Удаляем назначение супервайзера
+		tx.Table("admin_supervisor_assignments").Where("team_id = ?", teamID).Delete(nil)
+
+		// Удаляем приглашения
+		tx.Table("team_invites").Where("team_id = ?", teamID).Delete(nil)
+
+		// Удаляем участников
+		tx.Table("team_members").Where("team_id = ?", teamID).Delete(nil)
+
+		// Мягкое удаление команды
+		return tx.Table("teams").Where("id = ?", teamID).Update("deleted_at", time.Now()).Error
+	})
+}
+
+// AddTeamMember - добавление участника в команду
+func (r *repository) AddTeamMember(ctx context.Context, teamID, userID int64, role string) error {
+	if role == "" {
+		role = "member"
+	}
+
+	return r.db.WithContext(ctx).Table("team_members").Create(map[string]interface{}{
+		"team_id":    teamID,
+		"user_id":    userID,
+		"role":       role,
+		"created_at": time.Now(),
+	}).Error
+}
+
+// RemoveTeamMember - удаление участника из команды
+func (r *repository) RemoveTeamMember(ctx context.Context, teamID, userID int64) error {
+	return r.db.WithContext(ctx).Table("team_members").
+		Where("team_id = ? AND user_id = ?", teamID, userID).
+		Delete(nil).Error
+}
+
+// GetGradingHistoryFull - расширенная история оценок
+func (r *repository) GetGradingHistoryFull(ctx context.Context, projectID, stepID int64) ([]*GradeHistoryFull, error) {
+	var history []*GradeHistoryFull
+
+	query := `
+		SELECT 
+			gh.id,
+			gh.project_id,
+			gh.step_id,
+			COALESCE(s.name, '') as step_name,
+			gh.old_grade,
+			gh.new_grade,
+			gh.changed_by,
+			CONCAT(u.first_name, ' ', u.last_name) as changer_name,
+			COALESCE(gh.reason, '') as reason,
+			gh.created_at as changed_at
+		FROM admin_grade_history gh
+		LEFT JOIN states s ON s.id = gh.step_id
+		LEFT JOIN users u ON u.id = gh.changed_by
+		WHERE gh.project_id = ?
+	`
+
+	args := []interface{}{projectID}
+
+	if stepID > 0 {
+		query += " AND gh.step_id = ?"
+		args = append(args, stepID)
+	}
+
+	query += " ORDER BY gh.created_at DESC"
+
+	err := r.db.WithContext(ctx).Raw(query, args...).Scan(&history).Error
+	return history, err
 }
