@@ -513,3 +513,176 @@ func (h *Handler) ListPendingReviews(c *gin.Context) {
 	}
 	c.JSON(http.StatusOK, resp)
 }
+
+// ==================== Supervisor Request Routes ====================
+
+// CreateSupervisorRequest - создание запроса команды к супервайзеру
+func (h *Handler) CreateSupervisorRequest(c *gin.Context) {
+	userID := c.GetInt64("userId")
+
+	var req struct {
+		TeamID        int64  `json:"team_id" binding:"required"`
+		SupervisorID  int64  `json:"supervisor_id" binding:"required"`
+		Message       string `json:"message"`
+		ProposedTopic string `json:"proposed_topic"`
+	}
+
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	resp, err := h.adminClient.CreateSupervisorRequest(c.Request.Context(), &adminv1.CreateSupervisorRequestReq{
+		TeamId:        req.TeamID,
+		SupervisorId:  req.SupervisorID,
+		RequestedBy:   userID,
+		Message:       req.Message,
+		ProposedTopic: req.ProposedTopic,
+	})
+	if err != nil {
+		MapGRPCError(c, err)
+		return
+	}
+
+	c.JSON(http.StatusCreated, resp)
+}
+
+// ListSupervisorRequests - список всех запросов (для админки)
+func (h *Handler) ListAllSupervisorRequests(c *gin.Context) {
+	departmentID := c.GetInt64("departmentId")
+
+	var supervisorID, teamID int64
+	if s := c.Query("supervisor_id"); s != "" {
+		supervisorID, _ = strconv.ParseInt(s, 10, 64)
+	}
+	if t := c.Query("team_id"); t != "" {
+		teamID, _ = strconv.ParseInt(t, 10, 64)
+	}
+
+	page := int32(1)
+	pageSize := int32(20)
+	if p := c.Query("page"); p != "" {
+		if v, _ := strconv.ParseInt(p, 10, 32); v > 0 {
+			page = int32(v)
+		}
+	}
+	if ps := c.Query("page_size"); ps != "" {
+		if v, _ := strconv.ParseInt(ps, 10, 32); v > 0 {
+			pageSize = int32(v)
+		}
+	}
+
+	resp, err := h.adminClient.ListSupervisorRequests(c.Request.Context(), &adminv1.ListSupervisorRequestsReq{
+		DepartmentId: departmentID,
+		SupervisorId: supervisorID,
+		TeamId:       teamID,
+		Status:       c.Query("status"),
+		Page:         page,
+		PageSize:     pageSize,
+	})
+	if err != nil {
+		MapGRPCError(c, err)
+		return
+	}
+
+	c.JSON(http.StatusOK, resp)
+}
+
+// GetSupervisorRequest - получение детального запроса
+func (h *Handler) GetSupervisorRequestDetails(c *gin.Context) {
+	requestID := c.Param("id")
+	if requestID == "" {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "request_id is required"})
+		return
+	}
+
+	resp, err := h.adminClient.GetSupervisorRequest(c.Request.Context(), &adminv1.GetSupervisorRequestReq{
+		RequestId: requestID,
+	})
+	if err != nil {
+		MapGRPCError(c, err)
+		return
+	}
+
+	c.JSON(http.StatusOK, resp)
+}
+
+// RespondToSupervisorRequest - ответ супервайзера на запрос
+func (h *Handler) RespondToSupervisorRequest(c *gin.Context) {
+	requestID := c.Param("id")
+	supervisorID := c.GetInt64("userId")
+
+	var req struct {
+		Action       string `json:"action" binding:"required"` // approve, reject
+		RejectReason string `json:"reject_reason"`
+		Comment      string `json:"comment"`
+	}
+
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	resp, err := h.adminClient.RespondToSupervisorRequest(c.Request.Context(), &adminv1.RespondToSupervisorRequestReq{
+		RequestId:    requestID,
+		SupervisorId: supervisorID,
+		Action:       req.Action,
+		RejectReason: req.RejectReason,
+		Comment:      req.Comment,
+	})
+	if err != nil {
+		MapGRPCError(c, err)
+		return
+	}
+
+	c.JSON(http.StatusOK, resp)
+}
+
+// ListMySupervisorRequests - входящие запросы для супервайзера
+func (h *Handler) ListMySupervisorRequests(c *gin.Context) {
+	supervisorID := c.GetInt64("userId")
+
+	page := int32(1)
+	pageSize := int32(20)
+	if p := c.Query("page"); p != "" {
+		if v, _ := strconv.ParseInt(p, 10, 32); v > 0 {
+			page = int32(v)
+		}
+	}
+
+	resp, err := h.adminClient.ListMySupervisorRequests(c.Request.Context(), &adminv1.ListMySupervisorRequestsReq{
+		SupervisorId: supervisorID,
+		Status:       c.Query("status"),
+		Page:         page,
+		PageSize:     pageSize,
+	})
+	if err != nil {
+		MapGRPCError(c, err)
+		return
+	}
+
+	c.JSON(http.StatusOK, resp)
+}
+
+// CancelSupervisorRequest - отмена запроса командой
+func (h *Handler) CancelSupervisorRequest(c *gin.Context) {
+	requestID := c.Param("id")
+	userID := c.GetInt64("userId")
+
+	var req struct {
+		Reason string `json:"reason"`
+	}
+	_ = c.ShouldBindJSON(&req)
+
+	resp, err := h.adminClient.CancelSupervisorRequest(c.Request.Context(), &adminv1.CancelSupervisorRequestReq{
+		RequestId:   requestID,
+		CancelledBy: userID,
+		Reason:      req.Reason,
+	})
+	if err != nil {
+		MapGRPCError(c, err)
+		return
+	}
+
+	c.JSON(http.StatusOK, resp)
+}

@@ -142,7 +142,59 @@ func (h *Handler) ListStudents(ctx context.Context, req *adminv1.ListStudentsReq
 }
 
 func (h *Handler) GetStudent(ctx context.Context, req *adminv1.GetStudentRequest) (*adminv1.GetStudentResponse, error) {
-	return nil, status.Error(codes.Unimplemented, "not implemented")
+	if req.StudentId == 0 {
+		return nil, status.Error(codes.InvalidArgument, "student_id is required")
+	}
+
+	resp, err := h.service.GetStudentFullInfo(ctx, req.StudentId)
+	if err != nil {
+		h.logger.Error("GetStudent failed", zap.Error(err))
+		return nil, status.Errorf(codes.NotFound, "student not found: %v", err)
+	}
+
+	// Конвертируем в protobuf
+	pbStudent := &adminv1.StudentInfo{
+		Id:           resp.Student.ID,
+		Email:        resp.Student.Email,
+		FirstName:    resp.Student.FirstName,
+		LastName:     resp.Student.LastName,
+		TeamId:       resp.Student.TeamID,
+		TeamName:     resp.Student.TeamName,
+		ProjectId:    resp.Student.ProjectID,
+		ProjectTitle: resp.Student.ProjectTitle,
+		CurrentStep:  resp.Student.CurrentStep,
+		CreatedAt:    timestamppb.New(resp.Student.CreatedAt),
+	}
+
+	// Конвертируем оценки
+	var pbGrades []*adminv1.GradeInfo
+	for _, g := range resp.Grades {
+		pbGrades = append(pbGrades, &adminv1.GradeInfo{
+			Id:        g.ID,
+			ProjectId: g.ProjectID,
+			StepId:    g.StepID,
+			Grade:     g.Grade,
+			GradedBy:  g.GradedBy,
+			Comment:   g.Comment,
+			GradedAt:  timestamppb.New(g.CreatedAt),
+		})
+	}
+
+	// Конвертируем submissions
+	var pbSubmissions []*adminv1.SubmissionPreview
+	for _, s := range resp.Submissions {
+		pbSubmissions = append(pbSubmissions, &adminv1.SubmissionPreview{
+			Id:          s.ID,
+			Status:      s.Status,
+			SubmittedAt: timestamppb.New(s.CreatedAt),
+		})
+	}
+
+	return &adminv1.GetStudentResponse{
+		Student:     pbStudent,
+		Grades:      pbGrades,
+		Submissions: pbSubmissions,
+	}, nil
 }
 
 // ==================== Teams ====================
@@ -180,15 +232,147 @@ func (h *Handler) ListAllTeams(ctx context.Context, req *adminv1.ListAllTeamsReq
 }
 
 func (h *Handler) GetTeamDetails(ctx context.Context, req *adminv1.GetTeamDetailsRequest) (*adminv1.GetTeamDetailsResponse, error) {
-	return nil, status.Error(codes.Unimplemented, "not implemented")
+	if req.TeamId == 0 {
+		return nil, status.Error(codes.InvalidArgument, "team_id is required")
+	}
+
+	resp, err := h.service.GetTeamFullDetails(ctx, req.TeamId)
+	if err != nil {
+		h.logger.Error("GetTeamDetails failed", zap.Error(err))
+		return nil, status.Errorf(codes.NotFound, "team not found: %v", err)
+	}
+
+	// Конвертируем участников
+	var pbMembers []*adminv1.TeamMemberInfo
+	for _, m := range resp.Team.Members {
+		pbMembers = append(pbMembers, &adminv1.TeamMemberInfo{
+			UserId:   m.UserID,
+			FullName: m.FullName,
+			Email:    m.Email,
+			Role:     m.Role,
+		})
+	}
+
+	// Основная информация о команде
+	pbTeam := &adminv1.TeamAdminInfo{
+		Id:           resp.Team.ID,
+		Name:         resp.Team.Name,
+		ProjectId:    resp.Team.ProjectID,
+		ProjectTitle: resp.Team.ProjectTitle,
+		CurrentStep:  resp.Team.CurrentStep,
+		MemberCount:  int32(len(resp.Team.Members)),
+		Members:      pbMembers,
+		Status:       resp.Team.Status,
+		CreatedAt:    timestamppb.New(resp.Team.CreatedAt),
+		UpdatedAt:    timestamppb.New(resp.Team.UpdatedAt),
+	}
+
+	// Информация о супервайзере
+	if resp.Supervisor != nil {
+		pbTeam.Supervisor = &adminv1.SupervisorInfo{
+			Id:       resp.Supervisor.ID,
+			FullName: resp.Supervisor.FullName,
+			Email:    resp.Supervisor.Email,
+		}
+	}
+
+	// Формируем ответ
+	pbResp := &adminv1.GetTeamDetailsResponse{
+		Team: pbTeam,
+	}
+
+	// Оценки
+	for _, g := range resp.Grades {
+		pbResp.Grades = append(pbResp.Grades, &adminv1.GradeInfo{
+			Id:        g.ID,
+			ProjectId: g.ProjectID,
+			StepId:    g.StepID,
+			Grade:     g.Grade,
+			GradedBy:  g.GradedBy,
+			Comment:   g.Comment,
+			GradedAt:  timestamppb.New(g.CreatedAt),
+		})
+	}
+
+	// Submissions
+	for _, s := range resp.Submissions {
+		pbResp.Submissions = append(pbResp.Submissions, &adminv1.SubmissionPreview{
+			Id:          s.ID,
+			Status:      s.Status,
+			SubmittedAt: timestamppb.New(s.CreatedAt),
+		})
+	}
+
+	return pbResp, nil
 }
 
 func (h *Handler) UpdateTeamAdmin(ctx context.Context, req *adminv1.UpdateTeamAdminRequest) (*adminv1.UpdateTeamAdminResponse, error) {
-	return nil, status.Error(codes.Unimplemented, "not implemented")
+	if req.TeamId == 0 {
+		return nil, status.Error(codes.InvalidArgument, "team_id is required")
+	}
+
+	// TODO: Получить actor_id из контекста аутентификации
+	actorID := int64(1)
+
+	team, err := h.service.UpdateTeamByAdmin(ctx, &UpdateTeamByAdminRequest{
+		TeamID:       req.TeamId,
+		Name:         req.Name,
+		SupervisorID: req.SupervisorId,
+		MemberIDs:    req.MemberIds,
+		UpdatedBy:    actorID,
+	})
+	if err != nil {
+		h.logger.Error("UpdateTeamAdmin failed", zap.Error(err))
+		return nil, status.Errorf(codes.Internal, "failed to update team: %v", err)
+	}
+
+	// Конвертируем участников
+	var pbMembers []*adminv1.TeamMemberInfo
+	for _, m := range team.Members {
+		pbMembers = append(pbMembers, &adminv1.TeamMemberInfo{
+			UserId:   m.UserID,
+			FullName: m.FullName,
+			Email:    m.Email,
+			Role:     m.Role,
+		})
+	}
+
+	return &adminv1.UpdateTeamAdminResponse{
+		Team: &adminv1.TeamAdminInfo{
+			Id:           team.ID,
+			Name:         team.Name,
+			ProjectId:    team.ProjectID,
+			ProjectTitle: team.ProjectTitle,
+			CurrentStep:  team.CurrentStep,
+			MemberCount:  int32(len(team.Members)),
+			Members:      pbMembers,
+			Status:       team.Status,
+			CreatedAt:    timestamppb.New(team.CreatedAt),
+			UpdatedAt:    timestamppb.New(team.UpdatedAt),
+		},
+	}, nil
 }
 
 func (h *Handler) DeleteTeamAdmin(ctx context.Context, req *adminv1.DeleteTeamAdminRequest) (*emptypb.Empty, error) {
-	return nil, status.Error(codes.Unimplemented, "not implemented")
+	if req.TeamId == 0 {
+		return nil, status.Error(codes.InvalidArgument, "team_id is required")
+	}
+
+	// TODO: Получить actor_id из контекста аутентификации
+	actorID := int64(1)
+
+	reason := req.Reason
+	if reason == "" {
+		reason = "Deleted by admin"
+	}
+
+	err := h.service.DeleteTeamByAdmin(ctx, req.TeamId, reason, actorID)
+	if err != nil {
+		h.logger.Error("DeleteTeamAdmin failed", zap.Error(err))
+		return nil, status.Errorf(codes.Internal, "failed to delete team: %v", err)
+	}
+
+	return &emptypb.Empty{}, nil
 }
 
 // ==================== Supervisors ====================
@@ -616,7 +800,32 @@ func (h *Handler) SetStepGrade(ctx context.Context, req *adminv1.SetStepGradeReq
 }
 
 func (h *Handler) GetGradingHistory(ctx context.Context, req *adminv1.GetGradingHistoryRequest) (*adminv1.GetGradingHistoryResponse, error) {
-	return nil, status.Error(codes.Unimplemented, "not implemented")
+	if req.ProjectId == 0 {
+		return nil, status.Error(codes.InvalidArgument, "project_id is required")
+	}
+
+	history, err := h.service.GetGradingHistoryFull(ctx, req.ProjectId, req.StepId)
+	if err != nil {
+		h.logger.Error("GetGradingHistory failed", zap.Error(err))
+		return nil, status.Errorf(codes.Internal, "failed to get grading history: %v", err)
+	}
+
+	var pbHistory []*adminv1.GradeHistoryItem
+	for _, item := range history {
+		pbHistory = append(pbHistory, &adminv1.GradeHistoryItem{
+			Id:          item.ID,
+			OldGrade:    item.OldGrade,
+			NewGrade:    item.NewGrade,
+			ChangedBy:   item.ChangedBy,
+			ChangerName: item.ChangerName,
+			Reason:      item.Reason,
+			ChangedAt:   timestamppb.New(item.ChangedAt),
+		})
+	}
+
+	return &adminv1.GetGradingHistoryResponse{
+		History: pbHistory,
+	}, nil
 }
 
 // ==================== Workflow Progress ====================
@@ -697,4 +906,219 @@ func (h *Handler) ListPendingReviews(ctx context.Context, req *adminv1.ListPendi
 		Reviews:    pbReviews,
 		TotalCount: total,
 	}, nil
+}
+
+// ==================== Supervisor Request Handlers ====================
+
+func (h *Handler) CreateSupervisorRequest(ctx context.Context, req *adminv1.CreateSupervisorRequestReq) (*adminv1.CreateSupervisorRequestResp, error) {
+	if req.TeamId == 0 {
+		return nil, status.Error(codes.InvalidArgument, "team_id is required")
+	}
+	if req.SupervisorId == 0 {
+		return nil, status.Error(codes.InvalidArgument, "supervisor_id is required")
+	}
+	if req.RequestedBy == 0 {
+		return nil, status.Error(codes.InvalidArgument, "requested_by is required")
+	}
+
+	result, err := h.service.CreateSupervisorRequest(ctx, &CreateSupervisorRequestInput{
+		TeamID:        req.TeamId,
+		SupervisorID:  req.SupervisorId,
+		RequestedBy:   req.RequestedBy,
+		Message:       req.Message,
+		ProposedTopic: req.ProposedTopic,
+	})
+	if err != nil {
+		h.logger.Error("CreateSupervisorRequest failed", zap.Error(err))
+		return nil, status.Errorf(codes.Internal, "failed to create supervisor request: %v", err)
+	}
+
+	return &adminv1.CreateSupervisorRequestResp{
+		Success:   true,
+		RequestId: result.ID,
+		Message:   "Запрос успешно отправлен супервайзеру",
+		Request:   h.convertSupervisorRequestToProto(result),
+	}, nil
+}
+
+func (h *Handler) ListSupervisorRequests(ctx context.Context, req *adminv1.ListSupervisorRequestsReq) (*adminv1.ListSupervisorRequestsResp, error) {
+	pageSize := int(req.PageSize)
+	if pageSize <= 0 {
+		pageSize = 20
+	}
+	page := int(req.Page)
+	if page <= 0 {
+		page = 1
+	}
+
+	filter := SupervisorRequestFilter{
+		DepartmentID: req.DepartmentId,
+		SupervisorID: req.SupervisorId,
+		TeamID:       req.TeamId,
+		Status:       req.Status,
+		Limit:        pageSize,
+		Offset:       (page - 1) * pageSize,
+	}
+
+	requests, total, err := h.service.ListSupervisorRequests(ctx, filter)
+	if err != nil {
+		h.logger.Error("ListSupervisorRequests failed", zap.Error(err))
+		return nil, status.Errorf(codes.Internal, "failed to list supervisor requests: %v", err)
+	}
+
+	var pbRequests []*adminv1.SupervisorRequest
+	for _, r := range requests {
+		pbRequests = append(pbRequests, h.convertSupervisorRequestToProto(r))
+	}
+
+	return &adminv1.ListSupervisorRequestsResp{
+		Requests:   pbRequests,
+		TotalCount: total,
+	}, nil
+}
+
+func (h *Handler) GetSupervisorRequest(ctx context.Context, req *adminv1.GetSupervisorRequestReq) (*adminv1.GetSupervisorRequestResp, error) {
+	if req.RequestId == "" {
+		return nil, status.Error(codes.InvalidArgument, "request_id is required")
+	}
+
+	supervisorReq, history, err := h.service.GetSupervisorRequest(ctx, req.RequestId)
+	if err != nil {
+		h.logger.Error("GetSupervisorRequest failed", zap.Error(err))
+		return nil, status.Errorf(codes.NotFound, "supervisor request not found: %v", err)
+	}
+
+	var pbHistory []*adminv1.SupervisorRequestHistory
+	for _, hist := range history {
+		pbHistory = append(pbHistory, &adminv1.SupervisorRequestHistory{
+			Id:        hist.ID,
+			Action:    hist.Action,
+			ActorId:   hist.ActorID,
+			Comment:   hist.Comment,
+			CreatedAt: timestamppb.New(hist.CreatedAt),
+		})
+	}
+
+	return &adminv1.GetSupervisorRequestResp{
+		Request: h.convertSupervisorRequestToProto(supervisorReq),
+		History: pbHistory,
+	}, nil
+}
+
+func (h *Handler) RespondToSupervisorRequest(ctx context.Context, req *adminv1.RespondToSupervisorRequestReq) (*adminv1.RespondToSupervisorRequestResp, error) {
+	if req.RequestId == "" {
+		return nil, status.Error(codes.InvalidArgument, "request_id is required")
+	}
+	if req.SupervisorId == 0 {
+		return nil, status.Error(codes.InvalidArgument, "supervisor_id is required")
+	}
+	if req.Action == "" {
+		return nil, status.Error(codes.InvalidArgument, "action is required")
+	}
+	if req.Action != "approve" && req.Action != "reject" {
+		return nil, status.Error(codes.InvalidArgument, "action must be 'approve' or 'reject'")
+	}
+	if req.Action == "reject" && req.RejectReason == "" {
+		return nil, status.Error(codes.InvalidArgument, "reject_reason is required when rejecting")
+	}
+
+	result, err := h.service.RespondToSupervisorRequest(ctx, &RespondToSupervisorRequestInput{
+		RequestID:    req.RequestId,
+		SupervisorID: req.SupervisorId,
+		Action:       req.Action,
+		RejectReason: req.RejectReason,
+		Comment:      req.Comment,
+	})
+	if err != nil {
+		h.logger.Error("RespondToSupervisorRequest failed", zap.Error(err))
+		return nil, status.Errorf(codes.Internal, "failed to respond to supervisor request: %v", err)
+	}
+
+	message := "Запрос одобрен"
+	if req.Action == "reject" {
+		message = "Запрос отклонён"
+	}
+
+	return &adminv1.RespondToSupervisorRequestResp{
+		Success:        true,
+		Message:        message,
+		UpdatedRequest: h.convertSupervisorRequestToProto(result),
+	}, nil
+}
+
+func (h *Handler) ListMySupervisorRequests(ctx context.Context, req *adminv1.ListMySupervisorRequestsReq) (*adminv1.ListMySupervisorRequestsResp, error) {
+	if req.SupervisorId == 0 {
+		return nil, status.Error(codes.InvalidArgument, "supervisor_id is required")
+	}
+
+	result, err := h.service.ListMySupervisorRequests(ctx, req.SupervisorId, req.Status, req.Page, req.PageSize)
+	if err != nil {
+		h.logger.Error("ListMySupervisorRequests failed", zap.Error(err))
+		return nil, status.Errorf(codes.Internal, "failed to list supervisor requests: %v", err)
+	}
+
+	var pbRequests []*adminv1.SupervisorRequest
+	for _, r := range result.Requests {
+		pbRequests = append(pbRequests, h.convertSupervisorRequestToProto(r))
+	}
+
+	return &adminv1.ListMySupervisorRequestsResp{
+		Requests:     pbRequests,
+		TotalCount:   result.TotalCount,
+		PendingCount: result.PendingCount,
+	}, nil
+}
+
+func (h *Handler) CancelSupervisorRequest(ctx context.Context, req *adminv1.CancelSupervisorRequestReq) (*adminv1.CancelSupervisorRequestResp, error) {
+	if req.RequestId == "" {
+		return nil, status.Error(codes.InvalidArgument, "request_id is required")
+	}
+	if req.CancelledBy == 0 {
+		return nil, status.Error(codes.InvalidArgument, "cancelled_by is required")
+	}
+
+	err := h.service.CancelSupervisorRequest(ctx, req.RequestId, req.CancelledBy, req.Reason)
+	if err != nil {
+		h.logger.Error("CancelSupervisorRequest failed", zap.Error(err))
+		return nil, status.Errorf(codes.Internal, "failed to cancel supervisor request: %v", err)
+	}
+
+	return &adminv1.CancelSupervisorRequestResp{
+		Success: true,
+		Message: "Запрос успешно отменён",
+	}, nil
+}
+
+// convertSupervisorRequestToProto - конвертация в protobuf
+func (h *Handler) convertSupervisorRequestToProto(req *SupervisorRequestWithDetails) *adminv1.SupervisorRequest {
+	if req == nil {
+		return nil
+	}
+
+	pbReq := &adminv1.SupervisorRequest{
+		Id:              req.ID,
+		TeamId:          req.TeamID,
+		TeamName:        req.TeamName,
+		ProjectId:       req.ProjectID,
+		SupervisorId:    req.SupervisorID,
+		SupervisorName:  req.SupervisorName,
+		SupervisorEmail: req.SupervisorEmail,
+		RequestedBy:     req.RequestedBy,
+		RequesterName:   req.RequesterName,
+		Status:          req.Status,
+		Message:         req.Message,
+		ProposedTopic:   req.ProposedTopic,
+		RejectReason:    req.RejectReason,
+		CreatedAt:       timestamppb.New(req.CreatedAt),
+	}
+
+	if req.RespondedAt != nil {
+		pbReq.RespondedAt = timestamppb.New(*req.RespondedAt)
+	}
+
+	if req.ExpiresAt != nil {
+		pbReq.ExpiresAt = timestamppb.New(*req.ExpiresAt)
+	}
+
+	return pbReq
 }

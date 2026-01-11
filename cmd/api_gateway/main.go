@@ -107,6 +107,9 @@ func main() {
 			adminPanel.GET("/topic-registrations", handler.ListTopicRegistrations)
 			adminPanel.GET("/topic-registrations/:id", handler.GetTopicRegistration)
 			adminPanel.POST("/topic-registrations/:id/review", handler.ReviewTopicRegistration)
+			adminPanel.GET("/supervisor-requests", handler.ListAllSupervisorRequests)
+			adminPanel.GET("/supervisor-requests/:id", handler.GetSupervisorRequestDetails)
+			adminPanel.POST("/supervisor-requests/:id/respond", handler.RespondToSupervisorRequest)
 		}
 
 		projects := v1.Group("/projects")
@@ -133,7 +136,8 @@ func main() {
 			teams.POST("/:id/members", handler.AddMember)
 			teams.DELETE("/:id/members", handler.RemoveMember)
 			teams.POST("/:id/topic-registration", handler.SubmitTopicRegistration)
-
+			teams.POST("/:id/supervisor-request", handler.CreateSupervisorRequest)
+			teams.DELETE("/supervisor-requests/:id", handler.CancelSupervisorRequest)
 		}
 		invites := v1.Group("/invites")
 		invites.Use(middleware.AuthMiddleware(cfg.JWTSecret))
@@ -180,6 +184,14 @@ func main() {
 		forms.Use(middleware.AuthMiddleware(cfg.JWTSecret))
 		{
 			forms.POST("", handler.SubmitForm)
+		}
+
+		supervisors := v1.Group("/supervisors")
+		supervisors.Use(middleware.AuthMiddleware(cfg.JWTSecret))
+		supervisors.Use(middleware.RBACMiddleware("teacher", "admin"))
+		{
+			supervisors.GET("/my-requests", handler.ListMySupervisorRequests)
+			supervisors.POST("/requests/:id/respond", handler.RespondToSupervisorRequest)
 		}
 	}
 

@@ -20,28 +20,44 @@ import (
 const _ = grpc.SupportPackageIsVersion9
 
 const (
-	AdminService_GetDashboard_FullMethodName            = "/admin.v1.AdminService/GetDashboard"
-	AdminService_GetDepartmentStats_FullMethodName      = "/admin.v1.AdminService/GetDepartmentStats"
-	AdminService_ListStudents_FullMethodName            = "/admin.v1.AdminService/ListStudents"
-	AdminService_GetStudent_FullMethodName              = "/admin.v1.AdminService/GetStudent"
-	AdminService_ListAllTeams_FullMethodName            = "/admin.v1.AdminService/ListAllTeams"
-	AdminService_GetTeamDetails_FullMethodName          = "/admin.v1.AdminService/GetTeamDetails"
-	AdminService_UpdateTeamAdmin_FullMethodName         = "/admin.v1.AdminService/UpdateTeamAdmin"
-	AdminService_DeleteTeamAdmin_FullMethodName         = "/admin.v1.AdminService/DeleteTeamAdmin"
-	AdminService_ListSupervisors_FullMethodName         = "/admin.v1.AdminService/ListSupervisors"
-	AdminService_AssignSupervisor_FullMethodName        = "/admin.v1.AdminService/AssignSupervisor"
-	AdminService_SubmitTopicRegistration_FullMethodName = "/admin.v1.AdminService/SubmitTopicRegistration"
-	AdminService_ListTopicRegistrations_FullMethodName  = "/admin.v1.AdminService/ListTopicRegistrations"
-	AdminService_ReviewTopicRegistration_FullMethodName = "/admin.v1.AdminService/ReviewTopicRegistration"
-	AdminService_GetTopicRegistration_FullMethodName    = "/admin.v1.AdminService/GetTopicRegistration"
-	AdminService_ListSubmissions_FullMethodName         = "/admin.v1.AdminService/ListSubmissions"
-	AdminService_GetSubmission_FullMethodName           = "/admin.v1.AdminService/GetSubmission"
-	AdminService_ReviewSubmission_FullMethodName        = "/admin.v1.AdminService/ReviewSubmission"
-	AdminService_GetProjectGrades_FullMethodName        = "/admin.v1.AdminService/GetProjectGrades"
-	AdminService_SetStepGrade_FullMethodName            = "/admin.v1.AdminService/SetStepGrade"
-	AdminService_GetGradingHistory_FullMethodName       = "/admin.v1.AdminService/GetGradingHistory"
-	AdminService_GetWorkflowProgress_FullMethodName     = "/admin.v1.AdminService/GetWorkflowProgress"
-	AdminService_ListPendingReviews_FullMethodName      = "/admin.v1.AdminService/ListPendingReviews"
+	AdminService_GetDashboard_FullMethodName                     = "/admin.v1.AdminService/GetDashboard"
+	AdminService_GetDepartmentStats_FullMethodName               = "/admin.v1.AdminService/GetDepartmentStats"
+	AdminService_ListStudents_FullMethodName                     = "/admin.v1.AdminService/ListStudents"
+	AdminService_GetStudent_FullMethodName                       = "/admin.v1.AdminService/GetStudent"
+	AdminService_ListAllTeams_FullMethodName                     = "/admin.v1.AdminService/ListAllTeams"
+	AdminService_GetTeamDetails_FullMethodName                   = "/admin.v1.AdminService/GetTeamDetails"
+	AdminService_UpdateTeamAdmin_FullMethodName                  = "/admin.v1.AdminService/UpdateTeamAdmin"
+	AdminService_DeleteTeamAdmin_FullMethodName                  = "/admin.v1.AdminService/DeleteTeamAdmin"
+	AdminService_ListSupervisors_FullMethodName                  = "/admin.v1.AdminService/ListSupervisors"
+	AdminService_AssignSupervisor_FullMethodName                 = "/admin.v1.AdminService/AssignSupervisor"
+	AdminService_CreateSupervisorRequest_FullMethodName          = "/admin.v1.AdminService/CreateSupervisorRequest"
+	AdminService_ListSupervisorRequests_FullMethodName           = "/admin.v1.AdminService/ListSupervisorRequests"
+	AdminService_GetSupervisorRequest_FullMethodName             = "/admin.v1.AdminService/GetSupervisorRequest"
+	AdminService_RespondToSupervisorRequest_FullMethodName       = "/admin.v1.AdminService/RespondToSupervisorRequest"
+	AdminService_ListMySupervisorRequests_FullMethodName         = "/admin.v1.AdminService/ListMySupervisorRequests"
+	AdminService_CancelSupervisorRequest_FullMethodName          = "/admin.v1.AdminService/CancelSupervisorRequest"
+	AdminService_SubmitTopicRegistration_FullMethodName          = "/admin.v1.AdminService/SubmitTopicRegistration"
+	AdminService_ListTopicRegistrations_FullMethodName           = "/admin.v1.AdminService/ListTopicRegistrations"
+	AdminService_ReviewTopicRegistration_FullMethodName          = "/admin.v1.AdminService/ReviewTopicRegistration"
+	AdminService_GetTopicRegistration_FullMethodName             = "/admin.v1.AdminService/GetTopicRegistration"
+	AdminService_SubmitPreDefense_FullMethodName                 = "/admin.v1.AdminService/SubmitPreDefense"
+	AdminService_ListPreDefenseSubmissions_FullMethodName        = "/admin.v1.AdminService/ListPreDefenseSubmissions"
+	AdminService_GetPreDefenseSubmission_FullMethodName          = "/admin.v1.AdminService/GetPreDefenseSubmission"
+	AdminService_SchedulePreDefense_FullMethodName               = "/admin.v1.AdminService/SchedulePreDefense"
+	AdminService_GradePreDefense_FullMethodName                  = "/admin.v1.AdminService/GradePreDefense"
+	AdminService_CompletePreDefense_FullMethodName               = "/admin.v1.AdminService/CompletePreDefense"
+	AdminService_ReschedulePreDefense_FullMethodName             = "/admin.v1.AdminService/ReschedulePreDefense"
+	AdminService_ListScheduledPreDefenses_FullMethodName         = "/admin.v1.AdminService/ListScheduledPreDefenses"
+	AdminService_AddPreDefenseCommissionMember_FullMethodName    = "/admin.v1.AdminService/AddPreDefenseCommissionMember"
+	AdminService_RemovePreDefenseCommissionMember_FullMethodName = "/admin.v1.AdminService/RemovePreDefenseCommissionMember"
+	AdminService_ListSubmissions_FullMethodName                  = "/admin.v1.AdminService/ListSubmissions"
+	AdminService_GetSubmission_FullMethodName                    = "/admin.v1.AdminService/GetSubmission"
+	AdminService_ReviewSubmission_FullMethodName                 = "/admin.v1.AdminService/ReviewSubmission"
+	AdminService_GetProjectGrades_FullMethodName                 = "/admin.v1.AdminService/GetProjectGrades"
+	AdminService_SetStepGrade_FullMethodName                     = "/admin.v1.AdminService/SetStepGrade"
+	AdminService_GetGradingHistory_FullMethodName                = "/admin.v1.AdminService/GetGradingHistory"
+	AdminService_GetWorkflowProgress_FullMethodName              = "/admin.v1.AdminService/GetWorkflowProgress"
+	AdminService_ListPendingReviews_FullMethodName               = "/admin.v1.AdminService/ListPendingReviews"
 )
 
 // AdminServiceClient is the client API for AdminService service.
@@ -62,11 +78,30 @@ type AdminServiceClient interface {
 	// ==================== Supervisors ====================
 	ListSupervisors(ctx context.Context, in *ListSupervisorsRequest, opts ...grpc.CallOption) (*ListSupervisorsResponse, error)
 	AssignSupervisor(ctx context.Context, in *AssignSupervisorRequest, opts ...grpc.CallOption) (*AssignSupervisorResponse, error)
+	// ==================== Supervisor Request (Запрос команды к руководителю) ====================
+	// Команда отправляет запрос супервайзеру стать руководителем
+	CreateSupervisorRequest(ctx context.Context, in *CreateSupervisorRequestReq, opts ...grpc.CallOption) (*CreateSupervisorRequestResp, error)
+	ListSupervisorRequests(ctx context.Context, in *ListSupervisorRequestsReq, opts ...grpc.CallOption) (*ListSupervisorRequestsResp, error)
+	GetSupervisorRequest(ctx context.Context, in *GetSupervisorRequestReq, opts ...grpc.CallOption) (*GetSupervisorRequestResp, error)
+	RespondToSupervisorRequest(ctx context.Context, in *RespondToSupervisorRequestReq, opts ...grpc.CallOption) (*RespondToSupervisorRequestResp, error)
+	ListMySupervisorRequests(ctx context.Context, in *ListMySupervisorRequestsReq, opts ...grpc.CallOption) (*ListMySupervisorRequestsResp, error)
+	CancelSupervisorRequest(ctx context.Context, in *CancelSupervisorRequestReq, opts ...grpc.CallOption) (*CancelSupervisorRequestResp, error)
 	// ==================== Topic Registration (Заявление на тему) ====================
 	SubmitTopicRegistration(ctx context.Context, in *SubmitTopicRegistrationRequest, opts ...grpc.CallOption) (*SubmitTopicRegistrationResponse, error)
 	ListTopicRegistrations(ctx context.Context, in *ListTopicRegistrationsRequest, opts ...grpc.CallOption) (*ListTopicRegistrationsResponse, error)
 	ReviewTopicRegistration(ctx context.Context, in *ReviewTopicRegistrationRequest, opts ...grpc.CallOption) (*ReviewTopicRegistrationResponse, error)
 	GetTopicRegistration(ctx context.Context, in *GetTopicRegistrationRequest, opts ...grpc.CallOption) (*GetTopicRegistrationResponse, error)
+	// ==================== Pre-Defense (Предзащита) ====================
+	SubmitPreDefense(ctx context.Context, in *SubmitPreDefenseRequest, opts ...grpc.CallOption) (*SubmitPreDefenseResponse, error)
+	ListPreDefenseSubmissions(ctx context.Context, in *ListPreDefenseSubmissionsRequest, opts ...grpc.CallOption) (*ListPreDefenseSubmissionsResponse, error)
+	GetPreDefenseSubmission(ctx context.Context, in *GetPreDefenseSubmissionRequest, opts ...grpc.CallOption) (*GetPreDefenseSubmissionResponse, error)
+	SchedulePreDefense(ctx context.Context, in *SchedulePreDefenseRequest, opts ...grpc.CallOption) (*SchedulePreDefenseResponse, error)
+	GradePreDefense(ctx context.Context, in *GradePreDefenseRequest, opts ...grpc.CallOption) (*GradePreDefenseResponse, error)
+	CompletePreDefense(ctx context.Context, in *CompletePreDefenseRequest, opts ...grpc.CallOption) (*CompletePreDefenseResponse, error)
+	ReschedulePreDefense(ctx context.Context, in *ReschedulePreDefenseRequest, opts ...grpc.CallOption) (*ReschedulePreDefenseResponse, error)
+	ListScheduledPreDefenses(ctx context.Context, in *ListScheduledPreDefensesRequest, opts ...grpc.CallOption) (*ListScheduledPreDefensesResponse, error)
+	AddPreDefenseCommissionMember(ctx context.Context, in *AddPreDefenseCommissionMemberRequest, opts ...grpc.CallOption) (*AddPreDefenseCommissionMemberResponse, error)
+	RemovePreDefenseCommissionMember(ctx context.Context, in *RemovePreDefenseCommissionMemberRequest, opts ...grpc.CallOption) (*RemovePreDefenseCommissionMemberResponse, error)
 	// ==================== Submissions (Отчеты/Документы) ====================
 	ListSubmissions(ctx context.Context, in *ListSubmissionsRequest, opts ...grpc.CallOption) (*ListSubmissionsResponse, error)
 	GetSubmission(ctx context.Context, in *GetSubmissionRequest, opts ...grpc.CallOption) (*GetSubmissionResponse, error)
@@ -188,6 +223,66 @@ func (c *adminServiceClient) AssignSupervisor(ctx context.Context, in *AssignSup
 	return out, nil
 }
 
+func (c *adminServiceClient) CreateSupervisorRequest(ctx context.Context, in *CreateSupervisorRequestReq, opts ...grpc.CallOption) (*CreateSupervisorRequestResp, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(CreateSupervisorRequestResp)
+	err := c.cc.Invoke(ctx, AdminService_CreateSupervisorRequest_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *adminServiceClient) ListSupervisorRequests(ctx context.Context, in *ListSupervisorRequestsReq, opts ...grpc.CallOption) (*ListSupervisorRequestsResp, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(ListSupervisorRequestsResp)
+	err := c.cc.Invoke(ctx, AdminService_ListSupervisorRequests_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *adminServiceClient) GetSupervisorRequest(ctx context.Context, in *GetSupervisorRequestReq, opts ...grpc.CallOption) (*GetSupervisorRequestResp, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(GetSupervisorRequestResp)
+	err := c.cc.Invoke(ctx, AdminService_GetSupervisorRequest_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *adminServiceClient) RespondToSupervisorRequest(ctx context.Context, in *RespondToSupervisorRequestReq, opts ...grpc.CallOption) (*RespondToSupervisorRequestResp, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(RespondToSupervisorRequestResp)
+	err := c.cc.Invoke(ctx, AdminService_RespondToSupervisorRequest_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *adminServiceClient) ListMySupervisorRequests(ctx context.Context, in *ListMySupervisorRequestsReq, opts ...grpc.CallOption) (*ListMySupervisorRequestsResp, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(ListMySupervisorRequestsResp)
+	err := c.cc.Invoke(ctx, AdminService_ListMySupervisorRequests_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *adminServiceClient) CancelSupervisorRequest(ctx context.Context, in *CancelSupervisorRequestReq, opts ...grpc.CallOption) (*CancelSupervisorRequestResp, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(CancelSupervisorRequestResp)
+	err := c.cc.Invoke(ctx, AdminService_CancelSupervisorRequest_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 func (c *adminServiceClient) SubmitTopicRegistration(ctx context.Context, in *SubmitTopicRegistrationRequest, opts ...grpc.CallOption) (*SubmitTopicRegistrationResponse, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
 	out := new(SubmitTopicRegistrationResponse)
@@ -222,6 +317,106 @@ func (c *adminServiceClient) GetTopicRegistration(ctx context.Context, in *GetTo
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
 	out := new(GetTopicRegistrationResponse)
 	err := c.cc.Invoke(ctx, AdminService_GetTopicRegistration_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *adminServiceClient) SubmitPreDefense(ctx context.Context, in *SubmitPreDefenseRequest, opts ...grpc.CallOption) (*SubmitPreDefenseResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(SubmitPreDefenseResponse)
+	err := c.cc.Invoke(ctx, AdminService_SubmitPreDefense_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *adminServiceClient) ListPreDefenseSubmissions(ctx context.Context, in *ListPreDefenseSubmissionsRequest, opts ...grpc.CallOption) (*ListPreDefenseSubmissionsResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(ListPreDefenseSubmissionsResponse)
+	err := c.cc.Invoke(ctx, AdminService_ListPreDefenseSubmissions_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *adminServiceClient) GetPreDefenseSubmission(ctx context.Context, in *GetPreDefenseSubmissionRequest, opts ...grpc.CallOption) (*GetPreDefenseSubmissionResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(GetPreDefenseSubmissionResponse)
+	err := c.cc.Invoke(ctx, AdminService_GetPreDefenseSubmission_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *adminServiceClient) SchedulePreDefense(ctx context.Context, in *SchedulePreDefenseRequest, opts ...grpc.CallOption) (*SchedulePreDefenseResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(SchedulePreDefenseResponse)
+	err := c.cc.Invoke(ctx, AdminService_SchedulePreDefense_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *adminServiceClient) GradePreDefense(ctx context.Context, in *GradePreDefenseRequest, opts ...grpc.CallOption) (*GradePreDefenseResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(GradePreDefenseResponse)
+	err := c.cc.Invoke(ctx, AdminService_GradePreDefense_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *adminServiceClient) CompletePreDefense(ctx context.Context, in *CompletePreDefenseRequest, opts ...grpc.CallOption) (*CompletePreDefenseResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(CompletePreDefenseResponse)
+	err := c.cc.Invoke(ctx, AdminService_CompletePreDefense_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *adminServiceClient) ReschedulePreDefense(ctx context.Context, in *ReschedulePreDefenseRequest, opts ...grpc.CallOption) (*ReschedulePreDefenseResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(ReschedulePreDefenseResponse)
+	err := c.cc.Invoke(ctx, AdminService_ReschedulePreDefense_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *adminServiceClient) ListScheduledPreDefenses(ctx context.Context, in *ListScheduledPreDefensesRequest, opts ...grpc.CallOption) (*ListScheduledPreDefensesResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(ListScheduledPreDefensesResponse)
+	err := c.cc.Invoke(ctx, AdminService_ListScheduledPreDefenses_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *adminServiceClient) AddPreDefenseCommissionMember(ctx context.Context, in *AddPreDefenseCommissionMemberRequest, opts ...grpc.CallOption) (*AddPreDefenseCommissionMemberResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(AddPreDefenseCommissionMemberResponse)
+	err := c.cc.Invoke(ctx, AdminService_AddPreDefenseCommissionMember_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *adminServiceClient) RemovePreDefenseCommissionMember(ctx context.Context, in *RemovePreDefenseCommissionMemberRequest, opts ...grpc.CallOption) (*RemovePreDefenseCommissionMemberResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(RemovePreDefenseCommissionMemberResponse)
+	err := c.cc.Invoke(ctx, AdminService_RemovePreDefenseCommissionMember_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
 	}
@@ -326,11 +521,30 @@ type AdminServiceServer interface {
 	// ==================== Supervisors ====================
 	ListSupervisors(context.Context, *ListSupervisorsRequest) (*ListSupervisorsResponse, error)
 	AssignSupervisor(context.Context, *AssignSupervisorRequest) (*AssignSupervisorResponse, error)
+	// ==================== Supervisor Request (Запрос команды к руководителю) ====================
+	// Команда отправляет запрос супервайзеру стать руководителем
+	CreateSupervisorRequest(context.Context, *CreateSupervisorRequestReq) (*CreateSupervisorRequestResp, error)
+	ListSupervisorRequests(context.Context, *ListSupervisorRequestsReq) (*ListSupervisorRequestsResp, error)
+	GetSupervisorRequest(context.Context, *GetSupervisorRequestReq) (*GetSupervisorRequestResp, error)
+	RespondToSupervisorRequest(context.Context, *RespondToSupervisorRequestReq) (*RespondToSupervisorRequestResp, error)
+	ListMySupervisorRequests(context.Context, *ListMySupervisorRequestsReq) (*ListMySupervisorRequestsResp, error)
+	CancelSupervisorRequest(context.Context, *CancelSupervisorRequestReq) (*CancelSupervisorRequestResp, error)
 	// ==================== Topic Registration (Заявление на тему) ====================
 	SubmitTopicRegistration(context.Context, *SubmitTopicRegistrationRequest) (*SubmitTopicRegistrationResponse, error)
 	ListTopicRegistrations(context.Context, *ListTopicRegistrationsRequest) (*ListTopicRegistrationsResponse, error)
 	ReviewTopicRegistration(context.Context, *ReviewTopicRegistrationRequest) (*ReviewTopicRegistrationResponse, error)
 	GetTopicRegistration(context.Context, *GetTopicRegistrationRequest) (*GetTopicRegistrationResponse, error)
+	// ==================== Pre-Defense (Предзащита) ====================
+	SubmitPreDefense(context.Context, *SubmitPreDefenseRequest) (*SubmitPreDefenseResponse, error)
+	ListPreDefenseSubmissions(context.Context, *ListPreDefenseSubmissionsRequest) (*ListPreDefenseSubmissionsResponse, error)
+	GetPreDefenseSubmission(context.Context, *GetPreDefenseSubmissionRequest) (*GetPreDefenseSubmissionResponse, error)
+	SchedulePreDefense(context.Context, *SchedulePreDefenseRequest) (*SchedulePreDefenseResponse, error)
+	GradePreDefense(context.Context, *GradePreDefenseRequest) (*GradePreDefenseResponse, error)
+	CompletePreDefense(context.Context, *CompletePreDefenseRequest) (*CompletePreDefenseResponse, error)
+	ReschedulePreDefense(context.Context, *ReschedulePreDefenseRequest) (*ReschedulePreDefenseResponse, error)
+	ListScheduledPreDefenses(context.Context, *ListScheduledPreDefensesRequest) (*ListScheduledPreDefensesResponse, error)
+	AddPreDefenseCommissionMember(context.Context, *AddPreDefenseCommissionMemberRequest) (*AddPreDefenseCommissionMemberResponse, error)
+	RemovePreDefenseCommissionMember(context.Context, *RemovePreDefenseCommissionMemberRequest) (*RemovePreDefenseCommissionMemberResponse, error)
 	// ==================== Submissions (Отчеты/Документы) ====================
 	ListSubmissions(context.Context, *ListSubmissionsRequest) (*ListSubmissionsResponse, error)
 	GetSubmission(context.Context, *GetSubmissionRequest) (*GetSubmissionResponse, error)
@@ -382,6 +596,24 @@ func (UnimplementedAdminServiceServer) ListSupervisors(context.Context, *ListSup
 func (UnimplementedAdminServiceServer) AssignSupervisor(context.Context, *AssignSupervisorRequest) (*AssignSupervisorResponse, error) {
 	return nil, status.Error(codes.Unimplemented, "method AssignSupervisor not implemented")
 }
+func (UnimplementedAdminServiceServer) CreateSupervisorRequest(context.Context, *CreateSupervisorRequestReq) (*CreateSupervisorRequestResp, error) {
+	return nil, status.Error(codes.Unimplemented, "method CreateSupervisorRequest not implemented")
+}
+func (UnimplementedAdminServiceServer) ListSupervisorRequests(context.Context, *ListSupervisorRequestsReq) (*ListSupervisorRequestsResp, error) {
+	return nil, status.Error(codes.Unimplemented, "method ListSupervisorRequests not implemented")
+}
+func (UnimplementedAdminServiceServer) GetSupervisorRequest(context.Context, *GetSupervisorRequestReq) (*GetSupervisorRequestResp, error) {
+	return nil, status.Error(codes.Unimplemented, "method GetSupervisorRequest not implemented")
+}
+func (UnimplementedAdminServiceServer) RespondToSupervisorRequest(context.Context, *RespondToSupervisorRequestReq) (*RespondToSupervisorRequestResp, error) {
+	return nil, status.Error(codes.Unimplemented, "method RespondToSupervisorRequest not implemented")
+}
+func (UnimplementedAdminServiceServer) ListMySupervisorRequests(context.Context, *ListMySupervisorRequestsReq) (*ListMySupervisorRequestsResp, error) {
+	return nil, status.Error(codes.Unimplemented, "method ListMySupervisorRequests not implemented")
+}
+func (UnimplementedAdminServiceServer) CancelSupervisorRequest(context.Context, *CancelSupervisorRequestReq) (*CancelSupervisorRequestResp, error) {
+	return nil, status.Error(codes.Unimplemented, "method CancelSupervisorRequest not implemented")
+}
 func (UnimplementedAdminServiceServer) SubmitTopicRegistration(context.Context, *SubmitTopicRegistrationRequest) (*SubmitTopicRegistrationResponse, error) {
 	return nil, status.Error(codes.Unimplemented, "method SubmitTopicRegistration not implemented")
 }
@@ -393,6 +625,36 @@ func (UnimplementedAdminServiceServer) ReviewTopicRegistration(context.Context, 
 }
 func (UnimplementedAdminServiceServer) GetTopicRegistration(context.Context, *GetTopicRegistrationRequest) (*GetTopicRegistrationResponse, error) {
 	return nil, status.Error(codes.Unimplemented, "method GetTopicRegistration not implemented")
+}
+func (UnimplementedAdminServiceServer) SubmitPreDefense(context.Context, *SubmitPreDefenseRequest) (*SubmitPreDefenseResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method SubmitPreDefense not implemented")
+}
+func (UnimplementedAdminServiceServer) ListPreDefenseSubmissions(context.Context, *ListPreDefenseSubmissionsRequest) (*ListPreDefenseSubmissionsResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method ListPreDefenseSubmissions not implemented")
+}
+func (UnimplementedAdminServiceServer) GetPreDefenseSubmission(context.Context, *GetPreDefenseSubmissionRequest) (*GetPreDefenseSubmissionResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method GetPreDefenseSubmission not implemented")
+}
+func (UnimplementedAdminServiceServer) SchedulePreDefense(context.Context, *SchedulePreDefenseRequest) (*SchedulePreDefenseResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method SchedulePreDefense not implemented")
+}
+func (UnimplementedAdminServiceServer) GradePreDefense(context.Context, *GradePreDefenseRequest) (*GradePreDefenseResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method GradePreDefense not implemented")
+}
+func (UnimplementedAdminServiceServer) CompletePreDefense(context.Context, *CompletePreDefenseRequest) (*CompletePreDefenseResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method CompletePreDefense not implemented")
+}
+func (UnimplementedAdminServiceServer) ReschedulePreDefense(context.Context, *ReschedulePreDefenseRequest) (*ReschedulePreDefenseResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method ReschedulePreDefense not implemented")
+}
+func (UnimplementedAdminServiceServer) ListScheduledPreDefenses(context.Context, *ListScheduledPreDefensesRequest) (*ListScheduledPreDefensesResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method ListScheduledPreDefenses not implemented")
+}
+func (UnimplementedAdminServiceServer) AddPreDefenseCommissionMember(context.Context, *AddPreDefenseCommissionMemberRequest) (*AddPreDefenseCommissionMemberResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method AddPreDefenseCommissionMember not implemented")
+}
+func (UnimplementedAdminServiceServer) RemovePreDefenseCommissionMember(context.Context, *RemovePreDefenseCommissionMemberRequest) (*RemovePreDefenseCommissionMemberResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method RemovePreDefenseCommissionMember not implemented")
 }
 func (UnimplementedAdminServiceServer) ListSubmissions(context.Context, *ListSubmissionsRequest) (*ListSubmissionsResponse, error) {
 	return nil, status.Error(codes.Unimplemented, "method ListSubmissions not implemented")
@@ -619,6 +881,114 @@ func _AdminService_AssignSupervisor_Handler(srv interface{}, ctx context.Context
 	return interceptor(ctx, in, info, handler)
 }
 
+func _AdminService_CreateSupervisorRequest_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(CreateSupervisorRequestReq)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(AdminServiceServer).CreateSupervisorRequest(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: AdminService_CreateSupervisorRequest_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(AdminServiceServer).CreateSupervisorRequest(ctx, req.(*CreateSupervisorRequestReq))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _AdminService_ListSupervisorRequests_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(ListSupervisorRequestsReq)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(AdminServiceServer).ListSupervisorRequests(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: AdminService_ListSupervisorRequests_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(AdminServiceServer).ListSupervisorRequests(ctx, req.(*ListSupervisorRequestsReq))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _AdminService_GetSupervisorRequest_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetSupervisorRequestReq)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(AdminServiceServer).GetSupervisorRequest(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: AdminService_GetSupervisorRequest_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(AdminServiceServer).GetSupervisorRequest(ctx, req.(*GetSupervisorRequestReq))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _AdminService_RespondToSupervisorRequest_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(RespondToSupervisorRequestReq)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(AdminServiceServer).RespondToSupervisorRequest(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: AdminService_RespondToSupervisorRequest_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(AdminServiceServer).RespondToSupervisorRequest(ctx, req.(*RespondToSupervisorRequestReq))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _AdminService_ListMySupervisorRequests_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(ListMySupervisorRequestsReq)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(AdminServiceServer).ListMySupervisorRequests(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: AdminService_ListMySupervisorRequests_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(AdminServiceServer).ListMySupervisorRequests(ctx, req.(*ListMySupervisorRequestsReq))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _AdminService_CancelSupervisorRequest_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(CancelSupervisorRequestReq)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(AdminServiceServer).CancelSupervisorRequest(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: AdminService_CancelSupervisorRequest_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(AdminServiceServer).CancelSupervisorRequest(ctx, req.(*CancelSupervisorRequestReq))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 func _AdminService_SubmitTopicRegistration_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(SubmitTopicRegistrationRequest)
 	if err := dec(in); err != nil {
@@ -687,6 +1057,186 @@ func _AdminService_GetTopicRegistration_Handler(srv interface{}, ctx context.Con
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return srv.(AdminServiceServer).GetTopicRegistration(ctx, req.(*GetTopicRegistrationRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _AdminService_SubmitPreDefense_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(SubmitPreDefenseRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(AdminServiceServer).SubmitPreDefense(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: AdminService_SubmitPreDefense_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(AdminServiceServer).SubmitPreDefense(ctx, req.(*SubmitPreDefenseRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _AdminService_ListPreDefenseSubmissions_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(ListPreDefenseSubmissionsRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(AdminServiceServer).ListPreDefenseSubmissions(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: AdminService_ListPreDefenseSubmissions_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(AdminServiceServer).ListPreDefenseSubmissions(ctx, req.(*ListPreDefenseSubmissionsRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _AdminService_GetPreDefenseSubmission_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetPreDefenseSubmissionRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(AdminServiceServer).GetPreDefenseSubmission(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: AdminService_GetPreDefenseSubmission_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(AdminServiceServer).GetPreDefenseSubmission(ctx, req.(*GetPreDefenseSubmissionRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _AdminService_SchedulePreDefense_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(SchedulePreDefenseRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(AdminServiceServer).SchedulePreDefense(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: AdminService_SchedulePreDefense_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(AdminServiceServer).SchedulePreDefense(ctx, req.(*SchedulePreDefenseRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _AdminService_GradePreDefense_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GradePreDefenseRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(AdminServiceServer).GradePreDefense(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: AdminService_GradePreDefense_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(AdminServiceServer).GradePreDefense(ctx, req.(*GradePreDefenseRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _AdminService_CompletePreDefense_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(CompletePreDefenseRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(AdminServiceServer).CompletePreDefense(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: AdminService_CompletePreDefense_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(AdminServiceServer).CompletePreDefense(ctx, req.(*CompletePreDefenseRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _AdminService_ReschedulePreDefense_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(ReschedulePreDefenseRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(AdminServiceServer).ReschedulePreDefense(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: AdminService_ReschedulePreDefense_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(AdminServiceServer).ReschedulePreDefense(ctx, req.(*ReschedulePreDefenseRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _AdminService_ListScheduledPreDefenses_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(ListScheduledPreDefensesRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(AdminServiceServer).ListScheduledPreDefenses(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: AdminService_ListScheduledPreDefenses_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(AdminServiceServer).ListScheduledPreDefenses(ctx, req.(*ListScheduledPreDefensesRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _AdminService_AddPreDefenseCommissionMember_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(AddPreDefenseCommissionMemberRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(AdminServiceServer).AddPreDefenseCommissionMember(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: AdminService_AddPreDefenseCommissionMember_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(AdminServiceServer).AddPreDefenseCommissionMember(ctx, req.(*AddPreDefenseCommissionMemberRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _AdminService_RemovePreDefenseCommissionMember_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(RemovePreDefenseCommissionMemberRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(AdminServiceServer).RemovePreDefenseCommissionMember(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: AdminService_RemovePreDefenseCommissionMember_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(AdminServiceServer).RemovePreDefenseCommissionMember(ctx, req.(*RemovePreDefenseCommissionMemberRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -883,6 +1433,30 @@ var AdminService_ServiceDesc = grpc.ServiceDesc{
 			Handler:    _AdminService_AssignSupervisor_Handler,
 		},
 		{
+			MethodName: "CreateSupervisorRequest",
+			Handler:    _AdminService_CreateSupervisorRequest_Handler,
+		},
+		{
+			MethodName: "ListSupervisorRequests",
+			Handler:    _AdminService_ListSupervisorRequests_Handler,
+		},
+		{
+			MethodName: "GetSupervisorRequest",
+			Handler:    _AdminService_GetSupervisorRequest_Handler,
+		},
+		{
+			MethodName: "RespondToSupervisorRequest",
+			Handler:    _AdminService_RespondToSupervisorRequest_Handler,
+		},
+		{
+			MethodName: "ListMySupervisorRequests",
+			Handler:    _AdminService_ListMySupervisorRequests_Handler,
+		},
+		{
+			MethodName: "CancelSupervisorRequest",
+			Handler:    _AdminService_CancelSupervisorRequest_Handler,
+		},
+		{
 			MethodName: "SubmitTopicRegistration",
 			Handler:    _AdminService_SubmitTopicRegistration_Handler,
 		},
@@ -897,6 +1471,46 @@ var AdminService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "GetTopicRegistration",
 			Handler:    _AdminService_GetTopicRegistration_Handler,
+		},
+		{
+			MethodName: "SubmitPreDefense",
+			Handler:    _AdminService_SubmitPreDefense_Handler,
+		},
+		{
+			MethodName: "ListPreDefenseSubmissions",
+			Handler:    _AdminService_ListPreDefenseSubmissions_Handler,
+		},
+		{
+			MethodName: "GetPreDefenseSubmission",
+			Handler:    _AdminService_GetPreDefenseSubmission_Handler,
+		},
+		{
+			MethodName: "SchedulePreDefense",
+			Handler:    _AdminService_SchedulePreDefense_Handler,
+		},
+		{
+			MethodName: "GradePreDefense",
+			Handler:    _AdminService_GradePreDefense_Handler,
+		},
+		{
+			MethodName: "CompletePreDefense",
+			Handler:    _AdminService_CompletePreDefense_Handler,
+		},
+		{
+			MethodName: "ReschedulePreDefense",
+			Handler:    _AdminService_ReschedulePreDefense_Handler,
+		},
+		{
+			MethodName: "ListScheduledPreDefenses",
+			Handler:    _AdminService_ListScheduledPreDefenses_Handler,
+		},
+		{
+			MethodName: "AddPreDefenseCommissionMember",
+			Handler:    _AdminService_AddPreDefenseCommissionMember_Handler,
+		},
+		{
+			MethodName: "RemovePreDefenseCommissionMember",
+			Handler:    _AdminService_RemovePreDefenseCommissionMember_Handler,
 		},
 		{
 			MethodName: "ListSubmissions",
