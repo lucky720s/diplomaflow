@@ -348,7 +348,7 @@ INSERT INTO state_actions (state_id, name, type, trigger, config) VALUES
 
 -- Уведомление при выборе руководителя
 INSERT INTO state_actions (state_id, name, type, trigger, config) VALUES
-    (v_state_supervisor, 'Notify: Select Supervisor', 'ON_ENTER', 'SEND_NOTIFICATION',
+    (v_state_supervisor, 'Notify: Select Supervisor',  'SEND_NOTIFICATION','ON_ENTER',
      '{"title": "Выберите научного руководителя", "message": "Свяжитесь с преподавателем и согласуйте тему дипломной работы"}'::jsonb);
 
 -- Уведомление об утверждении темы

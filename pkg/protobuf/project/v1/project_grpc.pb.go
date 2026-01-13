@@ -23,6 +23,8 @@ const (
 	ProjectService_GetProject_FullMethodName         = "/project.ProjectService/GetProject"
 	ProjectService_GetStudentProjects_FullMethodName = "/project.ProjectService/GetStudentProjects"
 	ProjectService_PerformAction_FullMethodName      = "/project.ProjectService/PerformAction"
+	ProjectService_GetProjectRuntime_FullMethodName  = "/project.ProjectService/GetProjectRuntime"
+	ProjectService_CommitTransition_FullMethodName   = "/project.ProjectService/CommitTransition"
 )
 
 // ProjectServiceClient is the client API for ProjectService service.
@@ -32,7 +34,12 @@ type ProjectServiceClient interface {
 	CreateProject(ctx context.Context, in *CreateProjectRequest, opts ...grpc.CallOption) (*CreateProjectResponse, error)
 	GetProject(ctx context.Context, in *GetProjectRequest, opts ...grpc.CallOption) (*GetProjectResponse, error)
 	GetStudentProjects(ctx context.Context, in *GetStudentProjectsRequest, opts ...grpc.CallOption) (*GetStudentProjectsResponse, error)
+	// Legacy endpoint (frontend compatibility):
+	// action_name MUST equal workflow Transition.event_name
 	PerformAction(ctx context.Context, in *PerformActionRequest, opts ...grpc.CallOption) (*PerformActionResponse, error)
+	// ===== Internal runtime API for workflow ядра =====
+	GetProjectRuntime(ctx context.Context, in *GetProjectRuntimeRequest, opts ...grpc.CallOption) (*GetProjectRuntimeResponse, error)
+	CommitTransition(ctx context.Context, in *CommitTransitionRequest, opts ...grpc.CallOption) (*CommitTransitionResponse, error)
 }
 
 type projectServiceClient struct {
@@ -83,6 +90,26 @@ func (c *projectServiceClient) PerformAction(ctx context.Context, in *PerformAct
 	return out, nil
 }
 
+func (c *projectServiceClient) GetProjectRuntime(ctx context.Context, in *GetProjectRuntimeRequest, opts ...grpc.CallOption) (*GetProjectRuntimeResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(GetProjectRuntimeResponse)
+	err := c.cc.Invoke(ctx, ProjectService_GetProjectRuntime_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *projectServiceClient) CommitTransition(ctx context.Context, in *CommitTransitionRequest, opts ...grpc.CallOption) (*CommitTransitionResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(CommitTransitionResponse)
+	err := c.cc.Invoke(ctx, ProjectService_CommitTransition_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // ProjectServiceServer is the server API for ProjectService service.
 // All implementations must embed UnimplementedProjectServiceServer
 // for forward compatibility.
@@ -90,7 +117,12 @@ type ProjectServiceServer interface {
 	CreateProject(context.Context, *CreateProjectRequest) (*CreateProjectResponse, error)
 	GetProject(context.Context, *GetProjectRequest) (*GetProjectResponse, error)
 	GetStudentProjects(context.Context, *GetStudentProjectsRequest) (*GetStudentProjectsResponse, error)
+	// Legacy endpoint (frontend compatibility):
+	// action_name MUST equal workflow Transition.event_name
 	PerformAction(context.Context, *PerformActionRequest) (*PerformActionResponse, error)
+	// ===== Internal runtime API for workflow ядра =====
+	GetProjectRuntime(context.Context, *GetProjectRuntimeRequest) (*GetProjectRuntimeResponse, error)
+	CommitTransition(context.Context, *CommitTransitionRequest) (*CommitTransitionResponse, error)
 	mustEmbedUnimplementedProjectServiceServer()
 }
 
@@ -112,6 +144,12 @@ func (UnimplementedProjectServiceServer) GetStudentProjects(context.Context, *Ge
 }
 func (UnimplementedProjectServiceServer) PerformAction(context.Context, *PerformActionRequest) (*PerformActionResponse, error) {
 	return nil, status.Error(codes.Unimplemented, "method PerformAction not implemented")
+}
+func (UnimplementedProjectServiceServer) GetProjectRuntime(context.Context, *GetProjectRuntimeRequest) (*GetProjectRuntimeResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method GetProjectRuntime not implemented")
+}
+func (UnimplementedProjectServiceServer) CommitTransition(context.Context, *CommitTransitionRequest) (*CommitTransitionResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method CommitTransition not implemented")
 }
 func (UnimplementedProjectServiceServer) mustEmbedUnimplementedProjectServiceServer() {}
 func (UnimplementedProjectServiceServer) testEmbeddedByValue()                        {}
@@ -206,6 +244,42 @@ func _ProjectService_PerformAction_Handler(srv interface{}, ctx context.Context,
 	return interceptor(ctx, in, info, handler)
 }
 
+func _ProjectService_GetProjectRuntime_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetProjectRuntimeRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(ProjectServiceServer).GetProjectRuntime(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: ProjectService_GetProjectRuntime_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(ProjectServiceServer).GetProjectRuntime(ctx, req.(*GetProjectRuntimeRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _ProjectService_CommitTransition_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(CommitTransitionRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(ProjectServiceServer).CommitTransition(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: ProjectService_CommitTransition_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(ProjectServiceServer).CommitTransition(ctx, req.(*CommitTransitionRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // ProjectService_ServiceDesc is the grpc.ServiceDesc for ProjectService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -228,6 +302,14 @@ var ProjectService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "PerformAction",
 			Handler:    _ProjectService_PerformAction_Handler,
+		},
+		{
+			MethodName: "GetProjectRuntime",
+			Handler:    _ProjectService_GetProjectRuntime_Handler,
+		},
+		{
+			MethodName: "CommitTransition",
+			Handler:    _ProjectService_CommitTransition_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

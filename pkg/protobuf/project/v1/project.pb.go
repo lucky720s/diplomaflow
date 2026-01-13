@@ -10,6 +10,7 @@ import (
 	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
 	protoimpl "google.golang.org/protobuf/runtime/protoimpl"
 	structpb "google.golang.org/protobuf/types/known/structpb"
+	timestamppb "google.golang.org/protobuf/types/known/timestamppb"
 	reflect "reflect"
 	sync "sync"
 	unsafe "unsafe"
@@ -545,7 +546,7 @@ func (x *GetStudentProjectsResponse) GetProjects() []*ProjectPreview {
 type PerformActionRequest struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	ProjectId     int64                  `protobuf:"varint,1,opt,name=project_id,json=projectId,proto3" json:"project_id,omitempty"`
-	ActionName    string                 `protobuf:"bytes,2,opt,name=action_name,json=actionName,proto3" json:"action_name,omitempty"`
+	ActionName    string                 `protobuf:"bytes,2,opt,name=action_name,json=actionName,proto3" json:"action_name,omitempty"` // MUST equal Transition.event_name
 	Payload       *structpb.Struct       `protobuf:"bytes,3,opt,name=payload,proto3" json:"payload,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
@@ -654,11 +655,455 @@ func (x *PerformActionResponse) GetNewState() string {
 	return ""
 }
 
+type GetProjectRuntimeRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	ProjectId     int64                  `protobuf:"varint,1,opt,name=project_id,json=projectId,proto3" json:"project_id,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *GetProjectRuntimeRequest) Reset() {
+	*x = GetProjectRuntimeRequest{}
+	mi := &file_project_v1_project_proto_msgTypes[10]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *GetProjectRuntimeRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*GetProjectRuntimeRequest) ProtoMessage() {}
+
+func (x *GetProjectRuntimeRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_project_v1_project_proto_msgTypes[10]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use GetProjectRuntimeRequest.ProtoReflect.Descriptor instead.
+func (*GetProjectRuntimeRequest) Descriptor() ([]byte, []int) {
+	return file_project_v1_project_proto_rawDescGZIP(), []int{10}
+}
+
+func (x *GetProjectRuntimeRequest) GetProjectId() int64 {
+	if x != nil {
+		return x.ProjectId
+	}
+	return 0
+}
+
+type GetProjectRuntimeResponse struct {
+	state            protoimpl.MessageState `protogen:"open.v1"`
+	ProjectId        int64                  `protobuf:"varint,1,opt,name=project_id,json=projectId,proto3" json:"project_id,omitempty"`
+	StudentId        int64                  `protobuf:"varint,2,opt,name=student_id,json=studentId,proto3" json:"student_id,omitempty"`
+	TeamId           int64                  `protobuf:"varint,3,opt,name=team_id,json=teamId,proto3" json:"team_id,omitempty"`
+	UniversityId     int64                  `protobuf:"varint,4,opt,name=university_id,json=universityId,proto3" json:"university_id,omitempty"`
+	DepartmentId     int64                  `protobuf:"varint,5,opt,name=department_id,json=departmentId,proto3" json:"department_id,omitempty"`
+	WorkflowId       int64                  `protobuf:"varint,6,opt,name=workflow_id,json=workflowId,proto3" json:"workflow_id,omitempty"`
+	WorkflowVersion  int32                  `protobuf:"varint,7,opt,name=workflow_version,json=workflowVersion,proto3" json:"workflow_version,omitempty"`
+	WorkflowName     string                 `protobuf:"bytes,8,opt,name=workflow_name,json=workflowName,proto3" json:"workflow_name,omitempty"`
+	CurrentStateId   int64                  `protobuf:"varint,9,opt,name=current_state_id,json=currentStateId,proto3" json:"current_state_id,omitempty"`
+	CurrentStateName string                 `protobuf:"bytes,10,opt,name=current_state_name,json=currentStateName,proto3" json:"current_state_name,omitempty"`
+	Status           string                 `protobuf:"bytes,11,opt,name=status,proto3" json:"status,omitempty"`
+	Data             *structpb.Struct       `protobuf:"bytes,12,opt,name=data,proto3" json:"data,omitempty"`
+	DeadlineAt       *timestamppb.Timestamp `protobuf:"bytes,13,opt,name=deadline_at,json=deadlineAt,proto3" json:"deadline_at,omitempty"`
+	unknownFields    protoimpl.UnknownFields
+	sizeCache        protoimpl.SizeCache
+}
+
+func (x *GetProjectRuntimeResponse) Reset() {
+	*x = GetProjectRuntimeResponse{}
+	mi := &file_project_v1_project_proto_msgTypes[11]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *GetProjectRuntimeResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*GetProjectRuntimeResponse) ProtoMessage() {}
+
+func (x *GetProjectRuntimeResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_project_v1_project_proto_msgTypes[11]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use GetProjectRuntimeResponse.ProtoReflect.Descriptor instead.
+func (*GetProjectRuntimeResponse) Descriptor() ([]byte, []int) {
+	return file_project_v1_project_proto_rawDescGZIP(), []int{11}
+}
+
+func (x *GetProjectRuntimeResponse) GetProjectId() int64 {
+	if x != nil {
+		return x.ProjectId
+	}
+	return 0
+}
+
+func (x *GetProjectRuntimeResponse) GetStudentId() int64 {
+	if x != nil {
+		return x.StudentId
+	}
+	return 0
+}
+
+func (x *GetProjectRuntimeResponse) GetTeamId() int64 {
+	if x != nil {
+		return x.TeamId
+	}
+	return 0
+}
+
+func (x *GetProjectRuntimeResponse) GetUniversityId() int64 {
+	if x != nil {
+		return x.UniversityId
+	}
+	return 0
+}
+
+func (x *GetProjectRuntimeResponse) GetDepartmentId() int64 {
+	if x != nil {
+		return x.DepartmentId
+	}
+	return 0
+}
+
+func (x *GetProjectRuntimeResponse) GetWorkflowId() int64 {
+	if x != nil {
+		return x.WorkflowId
+	}
+	return 0
+}
+
+func (x *GetProjectRuntimeResponse) GetWorkflowVersion() int32 {
+	if x != nil {
+		return x.WorkflowVersion
+	}
+	return 0
+}
+
+func (x *GetProjectRuntimeResponse) GetWorkflowName() string {
+	if x != nil {
+		return x.WorkflowName
+	}
+	return ""
+}
+
+func (x *GetProjectRuntimeResponse) GetCurrentStateId() int64 {
+	if x != nil {
+		return x.CurrentStateId
+	}
+	return 0
+}
+
+func (x *GetProjectRuntimeResponse) GetCurrentStateName() string {
+	if x != nil {
+		return x.CurrentStateName
+	}
+	return ""
+}
+
+func (x *GetProjectRuntimeResponse) GetStatus() string {
+	if x != nil {
+		return x.Status
+	}
+	return ""
+}
+
+func (x *GetProjectRuntimeResponse) GetData() *structpb.Struct {
+	if x != nil {
+		return x.Data
+	}
+	return nil
+}
+
+func (x *GetProjectRuntimeResponse) GetDeadlineAt() *timestamppb.Timestamp {
+	if x != nil {
+		return x.DeadlineAt
+	}
+	return nil
+}
+
+type PostCommitActionGroup struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Trigger       string                 `protobuf:"bytes,1,opt,name=trigger,proto3" json:"trigger,omitempty"` // "ON_ENTER", "ON_EXIT", "ON_DEADLINE"
+	ActionIds     []int64                `protobuf:"varint,2,rep,packed,name=action_ids,json=actionIds,proto3" json:"action_ids,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *PostCommitActionGroup) Reset() {
+	*x = PostCommitActionGroup{}
+	mi := &file_project_v1_project_proto_msgTypes[12]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *PostCommitActionGroup) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*PostCommitActionGroup) ProtoMessage() {}
+
+func (x *PostCommitActionGroup) ProtoReflect() protoreflect.Message {
+	mi := &file_project_v1_project_proto_msgTypes[12]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use PostCommitActionGroup.ProtoReflect.Descriptor instead.
+func (*PostCommitActionGroup) Descriptor() ([]byte, []int) {
+	return file_project_v1_project_proto_rawDescGZIP(), []int{12}
+}
+
+func (x *PostCommitActionGroup) GetTrigger() string {
+	if x != nil {
+		return x.Trigger
+	}
+	return ""
+}
+
+func (x *PostCommitActionGroup) GetActionIds() []int64 {
+	if x != nil {
+		return x.ActionIds
+	}
+	return nil
+}
+
+type CommitTransitionRequest struct {
+	state               protoimpl.MessageState   `protogen:"open.v1"`
+	ProjectId           int64                    `protobuf:"varint,1,opt,name=project_id,json=projectId,proto3" json:"project_id,omitempty"`
+	ExpectedFromStateId int64                    `protobuf:"varint,2,opt,name=expected_from_state_id,json=expectedFromStateId,proto3" json:"expected_from_state_id,omitempty"`
+	TransitionId        int64                    `protobuf:"varint,3,opt,name=transition_id,json=transitionId,proto3" json:"transition_id,omitempty"`
+	EventName           string                   `protobuf:"bytes,4,opt,name=event_name,json=eventName,proto3" json:"event_name,omitempty"`
+	ToStateId           int64                    `protobuf:"varint,5,opt,name=to_state_id,json=toStateId,proto3" json:"to_state_id,omitempty"`
+	ToStateName         string                   `protobuf:"bytes,6,opt,name=to_state_name,json=toStateName,proto3" json:"to_state_name,omitempty"`
+	ChangedBy           int64                    `protobuf:"varint,7,opt,name=changed_by,json=changedBy,proto3" json:"changed_by,omitempty"`
+	Comment             string                   `protobuf:"bytes,8,opt,name=comment,proto3" json:"comment,omitempty"`
+	NewDeadlineAt       *timestamppb.Timestamp   `protobuf:"bytes,9,opt,name=new_deadline_at,json=newDeadlineAt,proto3" json:"new_deadline_at,omitempty"`
+	DataPatch           *structpb.Struct         `protobuf:"bytes,10,opt,name=data_patch,json=dataPatch,proto3" json:"data_patch,omitempty"`
+	PostActions         []*PostCommitActionGroup `protobuf:"bytes,11,rep,name=post_actions,json=postActions,proto3" json:"post_actions,omitempty"`
+	SetStatus           string                   `protobuf:"bytes,12,opt,name=set_status,json=setStatus,proto3" json:"set_status,omitempty"`
+	unknownFields       protoimpl.UnknownFields
+	sizeCache           protoimpl.SizeCache
+}
+
+func (x *CommitTransitionRequest) Reset() {
+	*x = CommitTransitionRequest{}
+	mi := &file_project_v1_project_proto_msgTypes[13]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *CommitTransitionRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*CommitTransitionRequest) ProtoMessage() {}
+
+func (x *CommitTransitionRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_project_v1_project_proto_msgTypes[13]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use CommitTransitionRequest.ProtoReflect.Descriptor instead.
+func (*CommitTransitionRequest) Descriptor() ([]byte, []int) {
+	return file_project_v1_project_proto_rawDescGZIP(), []int{13}
+}
+
+func (x *CommitTransitionRequest) GetProjectId() int64 {
+	if x != nil {
+		return x.ProjectId
+	}
+	return 0
+}
+
+func (x *CommitTransitionRequest) GetExpectedFromStateId() int64 {
+	if x != nil {
+		return x.ExpectedFromStateId
+	}
+	return 0
+}
+
+func (x *CommitTransitionRequest) GetTransitionId() int64 {
+	if x != nil {
+		return x.TransitionId
+	}
+	return 0
+}
+
+func (x *CommitTransitionRequest) GetEventName() string {
+	if x != nil {
+		return x.EventName
+	}
+	return ""
+}
+
+func (x *CommitTransitionRequest) GetToStateId() int64 {
+	if x != nil {
+		return x.ToStateId
+	}
+	return 0
+}
+
+func (x *CommitTransitionRequest) GetToStateName() string {
+	if x != nil {
+		return x.ToStateName
+	}
+	return ""
+}
+
+func (x *CommitTransitionRequest) GetChangedBy() int64 {
+	if x != nil {
+		return x.ChangedBy
+	}
+	return 0
+}
+
+func (x *CommitTransitionRequest) GetComment() string {
+	if x != nil {
+		return x.Comment
+	}
+	return ""
+}
+
+func (x *CommitTransitionRequest) GetNewDeadlineAt() *timestamppb.Timestamp {
+	if x != nil {
+		return x.NewDeadlineAt
+	}
+	return nil
+}
+
+func (x *CommitTransitionRequest) GetDataPatch() *structpb.Struct {
+	if x != nil {
+		return x.DataPatch
+	}
+	return nil
+}
+
+func (x *CommitTransitionRequest) GetPostActions() []*PostCommitActionGroup {
+	if x != nil {
+		return x.PostActions
+	}
+	return nil
+}
+
+func (x *CommitTransitionRequest) GetSetStatus() string {
+	if x != nil {
+		return x.SetStatus
+	}
+	return ""
+}
+
+type CommitTransitionResponse struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Success       bool                   `protobuf:"varint,1,opt,name=success,proto3" json:"success,omitempty"`
+	ProjectId     int64                  `protobuf:"varint,2,opt,name=project_id,json=projectId,proto3" json:"project_id,omitempty"`
+	NewStateId    int64                  `protobuf:"varint,3,opt,name=new_state_id,json=newStateId,proto3" json:"new_state_id,omitempty"`
+	NewStateName  string                 `protobuf:"bytes,4,opt,name=new_state_name,json=newStateName,proto3" json:"new_state_name,omitempty"`
+	Status        string                 `protobuf:"bytes,5,opt,name=status,proto3" json:"status,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *CommitTransitionResponse) Reset() {
+	*x = CommitTransitionResponse{}
+	mi := &file_project_v1_project_proto_msgTypes[14]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *CommitTransitionResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*CommitTransitionResponse) ProtoMessage() {}
+
+func (x *CommitTransitionResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_project_v1_project_proto_msgTypes[14]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use CommitTransitionResponse.ProtoReflect.Descriptor instead.
+func (*CommitTransitionResponse) Descriptor() ([]byte, []int) {
+	return file_project_v1_project_proto_rawDescGZIP(), []int{14}
+}
+
+func (x *CommitTransitionResponse) GetSuccess() bool {
+	if x != nil {
+		return x.Success
+	}
+	return false
+}
+
+func (x *CommitTransitionResponse) GetProjectId() int64 {
+	if x != nil {
+		return x.ProjectId
+	}
+	return 0
+}
+
+func (x *CommitTransitionResponse) GetNewStateId() int64 {
+	if x != nil {
+		return x.NewStateId
+	}
+	return 0
+}
+
+func (x *CommitTransitionResponse) GetNewStateName() string {
+	if x != nil {
+		return x.NewStateName
+	}
+	return ""
+}
+
+func (x *CommitTransitionResponse) GetStatus() string {
+	if x != nil {
+		return x.Status
+	}
+	return ""
+}
+
 var File_project_v1_project_proto protoreflect.FileDescriptor
 
 const file_project_v1_project_proto_rawDesc = "" +
 	"\n" +
-	"\x18project/v1/project.proto\x12\aproject\x1a\x1cgoogle/protobuf/struct.proto\"\xdc\x01\n" +
+	"\x18project/v1/project.proto\x12\aproject\x1a\x1cgoogle/protobuf/struct.proto\x1a\x1fgoogle/protobuf/timestamp.proto\"\xdc\x01\n" +
 	"\x14CreateProjectRequest\x12\x14\n" +
 	"\x05title\x18\x01 \x01(\tR\x05title\x12 \n" +
 	"\vdescription\x18\x02 \x01(\tR\vdescription\x12\x1d\n" +
@@ -714,13 +1159,68 @@ const file_project_v1_project_proto_rawDesc = "" +
 	"\x15PerformActionResponse\x12\x1d\n" +
 	"\n" +
 	"project_id\x18\x01 \x01(\x03R\tprojectId\x12\x1b\n" +
-	"\tnew_state\x18\x02 \x01(\tR\bnewState2\xd6\x02\n" +
+	"\tnew_state\x18\x02 \x01(\tR\bnewState\"9\n" +
+	"\x18GetProjectRuntimeRequest\x12\x1d\n" +
+	"\n" +
+	"project_id\x18\x01 \x01(\x03R\tprojectId\"\x87\x04\n" +
+	"\x19GetProjectRuntimeResponse\x12\x1d\n" +
+	"\n" +
+	"project_id\x18\x01 \x01(\x03R\tprojectId\x12\x1d\n" +
+	"\n" +
+	"student_id\x18\x02 \x01(\x03R\tstudentId\x12\x17\n" +
+	"\ateam_id\x18\x03 \x01(\x03R\x06teamId\x12#\n" +
+	"\runiversity_id\x18\x04 \x01(\x03R\funiversityId\x12#\n" +
+	"\rdepartment_id\x18\x05 \x01(\x03R\fdepartmentId\x12\x1f\n" +
+	"\vworkflow_id\x18\x06 \x01(\x03R\n" +
+	"workflowId\x12)\n" +
+	"\x10workflow_version\x18\a \x01(\x05R\x0fworkflowVersion\x12#\n" +
+	"\rworkflow_name\x18\b \x01(\tR\fworkflowName\x12(\n" +
+	"\x10current_state_id\x18\t \x01(\x03R\x0ecurrentStateId\x12,\n" +
+	"\x12current_state_name\x18\n" +
+	" \x01(\tR\x10currentStateName\x12\x16\n" +
+	"\x06status\x18\v \x01(\tR\x06status\x12+\n" +
+	"\x04data\x18\f \x01(\v2\x17.google.protobuf.StructR\x04data\x12;\n" +
+	"\vdeadline_at\x18\r \x01(\v2\x1a.google.protobuf.TimestampR\n" +
+	"deadlineAt\"P\n" +
+	"\x15PostCommitActionGroup\x12\x18\n" +
+	"\atrigger\x18\x01 \x01(\tR\atrigger\x12\x1d\n" +
+	"\n" +
+	"action_ids\x18\x02 \x03(\x03R\tactionIds\"\x8c\x04\n" +
+	"\x17CommitTransitionRequest\x12\x1d\n" +
+	"\n" +
+	"project_id\x18\x01 \x01(\x03R\tprojectId\x123\n" +
+	"\x16expected_from_state_id\x18\x02 \x01(\x03R\x13expectedFromStateId\x12#\n" +
+	"\rtransition_id\x18\x03 \x01(\x03R\ftransitionId\x12\x1d\n" +
+	"\n" +
+	"event_name\x18\x04 \x01(\tR\teventName\x12\x1e\n" +
+	"\vto_state_id\x18\x05 \x01(\x03R\ttoStateId\x12\"\n" +
+	"\rto_state_name\x18\x06 \x01(\tR\vtoStateName\x12\x1d\n" +
+	"\n" +
+	"changed_by\x18\a \x01(\x03R\tchangedBy\x12\x18\n" +
+	"\acomment\x18\b \x01(\tR\acomment\x12B\n" +
+	"\x0fnew_deadline_at\x18\t \x01(\v2\x1a.google.protobuf.TimestampR\rnewDeadlineAt\x126\n" +
+	"\n" +
+	"data_patch\x18\n" +
+	" \x01(\v2\x17.google.protobuf.StructR\tdataPatch\x12A\n" +
+	"\fpost_actions\x18\v \x03(\v2\x1e.project.PostCommitActionGroupR\vpostActions\x12\x1d\n" +
+	"\n" +
+	"set_status\x18\f \x01(\tR\tsetStatus\"\xb3\x01\n" +
+	"\x18CommitTransitionResponse\x12\x18\n" +
+	"\asuccess\x18\x01 \x01(\bR\asuccess\x12\x1d\n" +
+	"\n" +
+	"project_id\x18\x02 \x01(\x03R\tprojectId\x12 \n" +
+	"\fnew_state_id\x18\x03 \x01(\x03R\n" +
+	"newStateId\x12$\n" +
+	"\x0enew_state_name\x18\x04 \x01(\tR\fnewStateName\x12\x16\n" +
+	"\x06status\x18\x05 \x01(\tR\x06status2\x8b\x04\n" +
 	"\x0eProjectService\x12N\n" +
 	"\rCreateProject\x12\x1d.project.CreateProjectRequest\x1a\x1e.project.CreateProjectResponse\x12E\n" +
 	"\n" +
 	"GetProject\x12\x1a.project.GetProjectRequest\x1a\x1b.project.GetProjectResponse\x12]\n" +
 	"\x12GetStudentProjects\x12\".project.GetStudentProjectsRequest\x1a#.project.GetStudentProjectsResponse\x12N\n" +
-	"\rPerformAction\x12\x1d.project.PerformActionRequest\x1a\x1e.project.PerformActionResponseB:Z8github.com/lucky720s/diplomaflow/pkg/protobuf/project/v1b\x06proto3"
+	"\rPerformAction\x12\x1d.project.PerformActionRequest\x1a\x1e.project.PerformActionResponse\x12Z\n" +
+	"\x11GetProjectRuntime\x12!.project.GetProjectRuntimeRequest\x1a\".project.GetProjectRuntimeResponse\x12W\n" +
+	"\x10CommitTransition\x12 .project.CommitTransitionRequest\x1a!.project.CommitTransitionResponseB:Z8github.com/lucky720s/diplomaflow/pkg/protobuf/project/v1b\x06proto3"
 
 var (
 	file_project_v1_project_proto_rawDescOnce sync.Once
@@ -734,7 +1234,7 @@ func file_project_v1_project_proto_rawDescGZIP() []byte {
 	return file_project_v1_project_proto_rawDescData
 }
 
-var file_project_v1_project_proto_msgTypes = make([]protoimpl.MessageInfo, 10)
+var file_project_v1_project_proto_msgTypes = make([]protoimpl.MessageInfo, 15)
 var file_project_v1_project_proto_goTypes = []any{
 	(*CreateProjectRequest)(nil),       // 0: project.CreateProjectRequest
 	(*CreateProjectResponse)(nil),      // 1: project.CreateProjectResponse
@@ -746,25 +1246,40 @@ var file_project_v1_project_proto_goTypes = []any{
 	(*GetStudentProjectsResponse)(nil), // 7: project.GetStudentProjectsResponse
 	(*PerformActionRequest)(nil),       // 8: project.PerformActionRequest
 	(*PerformActionResponse)(nil),      // 9: project.PerformActionResponse
-	(*structpb.Struct)(nil),            // 10: google.protobuf.Struct
+	(*GetProjectRuntimeRequest)(nil),   // 10: project.GetProjectRuntimeRequest
+	(*GetProjectRuntimeResponse)(nil),  // 11: project.GetProjectRuntimeResponse
+	(*PostCommitActionGroup)(nil),      // 12: project.PostCommitActionGroup
+	(*CommitTransitionRequest)(nil),    // 13: project.CommitTransitionRequest
+	(*CommitTransitionResponse)(nil),   // 14: project.CommitTransitionResponse
+	(*structpb.Struct)(nil),            // 15: google.protobuf.Struct
+	(*timestamppb.Timestamp)(nil),      // 16: google.protobuf.Timestamp
 }
 var file_project_v1_project_proto_depIdxs = []int32{
 	3,  // 0: project.GetProjectResponse.history:type_name -> project.StateHistory
 	6,  // 1: project.GetStudentProjectsResponse.projects:type_name -> project.ProjectPreview
-	10, // 2: project.PerformActionRequest.payload:type_name -> google.protobuf.Struct
-	0,  // 3: project.ProjectService.CreateProject:input_type -> project.CreateProjectRequest
-	2,  // 4: project.ProjectService.GetProject:input_type -> project.GetProjectRequest
-	5,  // 5: project.ProjectService.GetStudentProjects:input_type -> project.GetStudentProjectsRequest
-	8,  // 6: project.ProjectService.PerformAction:input_type -> project.PerformActionRequest
-	1,  // 7: project.ProjectService.CreateProject:output_type -> project.CreateProjectResponse
-	4,  // 8: project.ProjectService.GetProject:output_type -> project.GetProjectResponse
-	7,  // 9: project.ProjectService.GetStudentProjects:output_type -> project.GetStudentProjectsResponse
-	9,  // 10: project.ProjectService.PerformAction:output_type -> project.PerformActionResponse
-	7,  // [7:11] is the sub-list for method output_type
-	3,  // [3:7] is the sub-list for method input_type
-	3,  // [3:3] is the sub-list for extension type_name
-	3,  // [3:3] is the sub-list for extension extendee
-	0,  // [0:3] is the sub-list for field type_name
+	15, // 2: project.PerformActionRequest.payload:type_name -> google.protobuf.Struct
+	15, // 3: project.GetProjectRuntimeResponse.data:type_name -> google.protobuf.Struct
+	16, // 4: project.GetProjectRuntimeResponse.deadline_at:type_name -> google.protobuf.Timestamp
+	16, // 5: project.CommitTransitionRequest.new_deadline_at:type_name -> google.protobuf.Timestamp
+	15, // 6: project.CommitTransitionRequest.data_patch:type_name -> google.protobuf.Struct
+	12, // 7: project.CommitTransitionRequest.post_actions:type_name -> project.PostCommitActionGroup
+	0,  // 8: project.ProjectService.CreateProject:input_type -> project.CreateProjectRequest
+	2,  // 9: project.ProjectService.GetProject:input_type -> project.GetProjectRequest
+	5,  // 10: project.ProjectService.GetStudentProjects:input_type -> project.GetStudentProjectsRequest
+	8,  // 11: project.ProjectService.PerformAction:input_type -> project.PerformActionRequest
+	10, // 12: project.ProjectService.GetProjectRuntime:input_type -> project.GetProjectRuntimeRequest
+	13, // 13: project.ProjectService.CommitTransition:input_type -> project.CommitTransitionRequest
+	1,  // 14: project.ProjectService.CreateProject:output_type -> project.CreateProjectResponse
+	4,  // 15: project.ProjectService.GetProject:output_type -> project.GetProjectResponse
+	7,  // 16: project.ProjectService.GetStudentProjects:output_type -> project.GetStudentProjectsResponse
+	9,  // 17: project.ProjectService.PerformAction:output_type -> project.PerformActionResponse
+	11, // 18: project.ProjectService.GetProjectRuntime:output_type -> project.GetProjectRuntimeResponse
+	14, // 19: project.ProjectService.CommitTransition:output_type -> project.CommitTransitionResponse
+	14, // [14:20] is the sub-list for method output_type
+	8,  // [8:14] is the sub-list for method input_type
+	8,  // [8:8] is the sub-list for extension type_name
+	8,  // [8:8] is the sub-list for extension extendee
+	0,  // [0:8] is the sub-list for field type_name
 }
 
 func init() { file_project_v1_project_proto_init() }
@@ -778,7 +1293,7 @@ func file_project_v1_project_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_project_v1_project_proto_rawDesc), len(file_project_v1_project_proto_rawDesc)),
 			NumEnums:      0,
-			NumMessages:   10,
+			NumMessages:   15,
 			NumExtensions: 0,
 			NumServices:   1,
 		},

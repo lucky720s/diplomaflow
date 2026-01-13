@@ -15,13 +15,11 @@ import (
 	"github.com/lucky720s/diplomaflow/pkg/logger"
 	projectv1 "github.com/lucky720s/diplomaflow/pkg/protobuf/project/v1"
 	workflowv1 "github.com/lucky720s/diplomaflow/pkg/protobuf/workflow/v1"
-
-	"gorm.io/driver/postgres"
-	"gorm.io/gorm"
-
 	"go.uber.org/zap"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
+	"gorm.io/driver/postgres"
+	"gorm.io/gorm"
 )
 
 func main() {
@@ -58,17 +56,15 @@ func main() {
 	}
 	defer cleanup()
 
-	repo := project.NewRepository(db)
-	outboxProcessor := project.NewOutboxProcessor(repo, kafkaProducer, log.Logger)
-
 	ctx, cancel := context.WithCancel(context.Background())
-	go outboxProcessor.Start(ctx)
+	go app.OutboxProcessor.Start(ctx)
 	go app.DeadlineScheduler.Start(ctx)
 
 	lis, err := net.Listen("tcp", ":"+cfg.GRPCPort)
 	if err != nil {
 		log.Fatal("listen error", zap.Error(err))
 	}
+
 	grpcServer := grpc.NewServer()
 	projectv1.RegisterProjectServiceServer(grpcServer, app.Handler)
 
@@ -84,14 +80,10 @@ func main() {
 	<-quit
 
 	log.Info("Shutting down...")
-
 	cancel()
-	outboxProcessor.Stop()
+	app.OutboxProcessor.Stop()
 	app.DeadlineScheduler.Stop()
-
 	time.Sleep(500 * time.Millisecond)
-
 	grpcServer.GracefulStop()
-
 	log.Info("Project Service exited")
 }

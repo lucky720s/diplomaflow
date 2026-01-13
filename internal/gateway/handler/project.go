@@ -29,10 +29,12 @@ func (h *Handler) CreateProject(c *gin.Context) {
 	req.StudentId = studentID
 	req.UniversityId = universityID
 	req.DepartmentId = departmentID
+
 	ctx := metadata.AppendToOutgoingContext(c.Request.Context(),
 		"x-university-id", strconv.FormatInt(universityID, 10),
 		"x-department-id", strconv.FormatInt(departmentID, 10),
 	)
+
 	res, err := h.projectClient.CreateProject(ctx, &req)
 	if err != nil {
 		MapGRPCError(c, err)
@@ -44,7 +46,6 @@ func (h *Handler) CreateProject(c *gin.Context) {
 func (h *Handler) GetProject(c *gin.Context) {
 	idStr := c.Param("id")
 	id, _ := strconv.ParseInt(idStr, 10, 64)
-
 	res, err := h.projectClient.GetProject(c.Request.Context(), &projectv1.GetProjectRequest{ProjectId: id})
 	if err != nil {
 		MapGRPCError(c, err)
@@ -55,7 +56,6 @@ func (h *Handler) GetProject(c *gin.Context) {
 
 func (h *Handler) GetStudentProjects(c *gin.Context) {
 	studentID, _ := strconv.ParseInt(c.Param("student_id"), 10, 64)
-
 	res, err := h.projectClient.GetStudentProjects(c.Request.Context(), &projectv1.GetStudentProjectsRequest{StudentId: studentID})
 	if err != nil {
 		MapGRPCError(c, err)
@@ -101,12 +101,12 @@ func (h *Handler) GetProjectDetails(c *gin.Context) {
 		"viewer":  currentUserInfo,
 	})
 }
+
 func (h *Handler) ListProjects(c *gin.Context) {
 	studentID := c.GetInt64("userId")
 	role := c.GetString("role")
 
 	var req projectv1.GetStudentProjectsRequest
-
 	if role == "student" {
 		req.StudentId = studentID
 	}
@@ -116,7 +116,6 @@ func (h *Handler) ListProjects(c *gin.Context) {
 		MapGRPCError(c, err)
 		return
 	}
-
 	c.JSON(http.StatusOK, res)
 }
 
@@ -127,7 +126,6 @@ func (h *Handler) PerformProjectAction(c *gin.Context) {
 		ActionName string                 `json:"action_name" binding:"required"`
 		Payload    map[string]interface{} `json:"payload"`
 	}
-
 	if err := c.ShouldBindJSON(&req); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
@@ -135,12 +133,22 @@ func (h *Handler) PerformProjectAction(c *gin.Context) {
 
 	payloadStruct, _ := structpb.NewStruct(req.Payload)
 
-	res, err := h.projectClient.PerformAction(c.Request.Context(), &projectv1.PerformActionRequest{
+	// IMPORTANT: пробрасываем identity/role до project_service.PerformAction,
+	// потому что project_service читает metadata x-user-id/x-user-role [[1]].
+	userID := c.GetInt64("userId")
+	userRole := c.GetString("role")
+
+	ctx := metadata.AppendToOutgoingContext(
+		c.Request.Context(),
+		"x-user-id", strconv.FormatInt(userID, 10),
+		"x-user-role", userRole,
+	)
+
+	res, err := h.projectClient.PerformAction(ctx, &projectv1.PerformActionRequest{
 		ProjectId:  projectID,
 		ActionName: req.ActionName,
 		Payload:    payloadStruct,
 	})
-
 	if err != nil {
 		MapGRPCError(c, err)
 		return

@@ -17,62 +17,46 @@ type OutboxProcessor struct {
 }
 
 func NewOutboxProcessor(repo Repository, producer *broker.Producer, logger *zap.Logger) *OutboxProcessor {
-	return &OutboxProcessor{
-		repo:     repo,
-		producer: producer,
-		logger:   logger,
-		stopCh:   make(chan struct{}),
-	}
+	return &OutboxProcessor{repo: repo, producer: producer, logger: logger, stopCh: make(chan struct{})}
 }
 
 func (p *OutboxProcessor) Start(ctx context.Context) {
 	ticker := time.NewTicker(500 * time.Millisecond)
 	defer ticker.Stop()
 
-	p.logger.Info("Outbox processor started")
-
 	for {
 		select {
 		case <-ctx.Done():
-			p.logger.Info("Stopping outbox processor via context")
 			return
 		case <-p.stopCh:
-			p.logger.Info("Stopping outbox processor via channel")
 			return
 		case <-ticker.C:
-			p.processEvents(ctx)
+			p.process(ctx)
 		}
 	}
 }
 
-func (p *OutboxProcessor) processEvents(ctx context.Context) {
+func (p *OutboxProcessor) process(ctx context.Context) {
 	events, err := p.repo.GetPendingEvents(ctx, 10)
 	if err != nil {
-		p.logger.Error("Failed to fetch pending events", zap.Error(err))
+		p.logger.Error("fetch pending events failed", zap.Error(err))
 		return
 	}
 
-	if len(events) == 0 {
-		return
-	}
+	for _, ev := range events {
+		// ev.Payload уже JSON
+		raw := json.RawMessage(ev.Payload)
 
-	for _, event := range events {
-		payload := json.RawMessage(event.Payload)
-
-		err := p.producer.Publish(event.Topic, event.EventType, payload)
-		if err != nil {
-			p.logger.Error("Failed to publish event to kafka",
-				zap.Uint("event_id", event.ID),
-				zap.Error(err))
+		// Совет: если у вас есть aggregate_id — публикуйте с key для order per aggregate.
+		if err := p.producer.Publish(ev.Topic, ev.EventType, raw); err != nil {
+			p.logger.Error("publish failed", zap.Int64("event_id", ev.ID), zap.Error(err))
 			continue
 		}
 
-		if err := p.repo.MarkEventProcessed(ctx, event.ID); err != nil { // ✅
-			p.logger.Error("Failed to mark event as processed")
+		if err := p.repo.MarkEventProcessed(ctx, ev.ID); err != nil {
+			p.logger.Error("mark processed failed", zap.Int64("event_id", ev.ID), zap.Error(err))
 		}
 	}
 }
 
-func (p *OutboxProcessor) Stop() {
-	close(p.stopCh)
-}
+func (p *OutboxProcessor) Stop() { close(p.stopCh) }
