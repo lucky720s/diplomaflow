@@ -1,6 +1,13 @@
 env: "local"
 grpc_port: 8085
+
 database:
   dsn: ""
+
 services:
   notification_addr: "notification_service:8087"
+  project_addr: "project_service:8083"
+
+kafka:
+  brokers: "kafka:29092"
+  group_id: "diplomaflow-group"
