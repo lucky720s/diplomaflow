@@ -57,6 +57,7 @@ jobs:
             KAFKA_BROKERS=kafka:29092
             KAFKA_GROUP_ID=diplomaflow-group
             KAFKA_KRAFT_CLUSTER_ID=MkU3OEVBNTcwNTJENDM2Qk
+            GIN_MODE=release
             PORT_GATEWAY=8080
             PORT_UNIVERSITY=8081
             PORT_AUTH=8082

@@ -64,11 +64,11 @@ services:
       KAFKA_HEAP_OPTS: "-Xmx256M -Xms256M"
 
     healthcheck:
-      test: [ "CMD-SHELL", "cub kafka-ready -b localhost:9092 1 30" ]
-      interval: 10s
-      timeout: 5s
-      retries: 10
-      start_period: 30s
+        test: ["CMD-SHELL", "cub kafka-ready -b kafka:29092 1 60"]
+        interval: 10s
+        timeout: 10s
+        retries: 30
+        start_period: 60s
     networks:
       - app_network
 
@@ -269,6 +269,7 @@ services:
       timeout: 5s
       retries: 5
       start_period: 15s
+    restart: unless-stopped
     depends_on:
       main_postgres:
         condition: service_healthy
@@ -277,7 +278,7 @@ services:
       auth_service:
         condition: service_started
       kafka:
-        condition: service_healthy
+        condition: service_started
     networks:
       - app_network
 
@@ -306,6 +307,7 @@ services:
       timeout: 5s
       retries: 5
       start_period: 15s
+    restart: unless-stopped
     depends_on:
       main_postgres:
         condition: service_healthy
@@ -316,7 +318,7 @@ services:
       team_service:
         condition: service_started
       kafka:
-        condition: service_healthy
+        condition: service_started
     networks:
       - app_network
 
