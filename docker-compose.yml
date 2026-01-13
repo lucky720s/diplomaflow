@@ -64,10 +64,11 @@ services:
       KAFKA_HEAP_OPTS: "-Xmx256M -Xms256M"
 
     healthcheck:
-      test: nc -z localhost 9092 || exit 1
+      test: [ "CMD-SHELL", "cub kafka-ready -b localhost:9092 1 30" ]
       interval: 10s
-      retries: 5
-      start_period: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 30s
     networks:
       - app_network
 
