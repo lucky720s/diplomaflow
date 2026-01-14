@@ -1,24 +1,18 @@
-FROM golang:1.25-alpine AS builder
-WORKDIR /app
+FROM golang:1.25-alpine AS build
+WORKDIR /src
 
-ENV GOWORK=off
-
+RUN apk --no-cache add git ca-certificates
 COPY go.mod go.sum ./
 RUN go mod download
 
 COPY . .
-
-RUN CGO_ENABLED=0 GOOS=linux go build -o /bin/gateway ./cmd/api_gateway
+RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -o /out/api_gateway ./cmd/api_gateway
 
 FROM alpine:3.22.2
+RUN apk --no-cache add ca-certificates tzdata wget
+
 WORKDIR /app
-COPY --from=builder /app/cmd/api_gateway/config.yaml /app/config.yaml
+COPY --from=build /out/api_gateway /usr/local/bin/api_gateway
 
-RUN apk --no-cache add ca-certificates tzdata
-
-RUN addgroup -S appgroup && adduser -S appuser -G appgroup
-COPY --from=builder /bin/gateway /app/gateway
-RUN chown -R appuser:appgroup /app
-
-USER appuser
-ENTRYPOINT ["/app/gateway"]
+EXPOSE 8080
+ENTRYPOINT ["/usr/local/bin/api_gateway"]

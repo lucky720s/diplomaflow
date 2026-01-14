@@ -15,6 +15,8 @@ import (
 	notificationv1 "github.com/lucky720s/diplomaflow/pkg/protobuf/notification/v1"
 	"go.uber.org/zap"
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/health"
+	"google.golang.org/grpc/health/grpc_health_v1"
 	"google.golang.org/grpc/reflection"
 )
 
@@ -40,6 +42,13 @@ func main() {
 
 	grpcServer := grpc.NewServer()
 	notificationv1.RegisterNotificationServiceServer(grpcServer, h)
+
+	// gRPC health
+	healthServer := health.NewServer()
+	grpc_health_v1.RegisterHealthServer(grpcServer, healthServer)
+	healthServer.SetServingStatus("", grpc_health_v1.HealthCheckResponse_SERVING)
+	healthServer.SetServingStatus("notification.NotificationService", grpc_health_v1.HealthCheckResponse_SERVING)
+
 	reflection.Register(grpcServer)
 
 	go func() {
@@ -54,8 +63,12 @@ func main() {
 	<-quit
 
 	log.Info("Shutting down Notification Service...")
-	_, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
+	_ = ctx
+
+	healthServer.SetServingStatus("", grpc_health_v1.HealthCheckResponse_NOT_SERVING)
+	healthServer.SetServingStatus("notification.NotificationService", grpc_health_v1.HealthCheckResponse_NOT_SERVING)
 
 	grpcServer.GracefulStop()
 	log.Info("Notification Service exited")

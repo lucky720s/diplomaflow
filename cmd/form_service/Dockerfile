@@ -1,23 +1,21 @@
-FROM golang:1.25-alpine AS builder
-WORKDIR /app
-ENV GOWORK=off
+FROM golang:1.25-alpine AS build
+WORKDIR /src
 
-
+RUN apk --no-cache add git ca-certificates
 COPY go.mod go.sum ./
 RUN go mod download
-COPY . .
 
-RUN CGO_ENABLED=0 GOOS=linux go build -o /bin/service ./cmd/form_service
+COPY . .
+RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -o /out/form_service ./cmd/form_service
 
 FROM alpine:3.22.2
+RUN apk --no-cache add ca-certificates tzdata wget \
+ && wget -qO /usr/local/bin/grpc_health_probe \
+    https://github.com/grpc-ecosystem/grpc-health-probe/releases/download/v0.4.26/grpc_health_probe-linux-amd64 \
+ && chmod +x /usr/local/bin/grpc_health_probe
+
 WORKDIR /app
+COPY --from=build /out/form_service /usr/local/bin/form_service
 
-COPY --from=builder /app/cmd/form_service/config.yaml /app/config.yaml
-COPY --from=builder /bin/service /app/service
-
-RUN apk --no-cache add ca-certificates tzdata
-RUN addgroup -S appgroup && adduser -S appuser -G appgroup
-RUN chown -R appuser:appgroup /app
-
-USER appuser
-ENTRYPOINT ["/app/service"]
+EXPOSE 8089
+ENTRYPOINT ["/usr/local/bin/form_service"]
