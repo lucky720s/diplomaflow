@@ -8,7 +8,7 @@ RUN go mod download
 COPY . .
 RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -o /out/notification_service ./cmd/notification_service
 
-FROM alpine:3.25
+FROM alpine:3.22.2
 RUN apk --no-cache add ca-certificates tzdata wget \
  && wget -qO /usr/local/bin/grpc_health_probe \
     https://github.com/grpc-ecosystem/grpc-health-probe/releases/download/v0.4.26/grpc_health_probe-linux-amd64 \
