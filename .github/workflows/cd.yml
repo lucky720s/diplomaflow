@@ -43,7 +43,6 @@ jobs:
             echo "Current directory contents:"
             ls -la
             
-            # Создаём .env если не существует
             if [ ! -f ".env" ]; then
               echo "Creating .env file..."
               cat > .env << 'ENVEOF'
