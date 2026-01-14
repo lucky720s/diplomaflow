@@ -52,7 +52,7 @@ jobs:
             POSTGRES_PASSWORD=diplomaflow_prod_pass
             POSTGRES_DB=diplomaflow
             POSTGRES_PORT=5433
-            DATABASE_DSN=host=main_postgres user=diplomaflow password=diplomaflow_prod_pass dbname=diplomaflow port=5432 sslmode=disable TimeZone=UTC
+            DATABASE_DSN=host=main_postgres user=diplomaflow password=diplomaflow_prod_pass dbname=diplomaflow port=5433 sslmode=disable TimeZone=UTC
             KAFKA_BROKERS=kafka:29092
             KAFKA_GROUP_ID=diplomaflow-group
             KAFKA_KRAFT_CLUSTER_ID=MkU3OEVBNTcwNTJENDM2Qk
