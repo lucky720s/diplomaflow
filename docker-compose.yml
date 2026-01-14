@@ -11,11 +11,10 @@ services:
     volumes:
       - diplomaflow_data:/var/lib/postgresql/data
     healthcheck:
-      test: [ "CMD-SHELL", "pg_isready -U diplomaflow -d diplomaflow" ]
+      test: [ "CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}" ]
       interval: 5s
       timeout: 5s
-      retries: 10
-      start_period: 30s
+      retries: 5
     networks:
       - app_network
 
@@ -64,11 +63,11 @@ services:
       KAFKA_HEAP_OPTS: "-Xmx256M -Xms256M"
 
     healthcheck:
-        test: ["CMD-SHELL", "cub kafka-ready -b kafka:29092 1 60"]
-        interval: 10s
-        timeout: 10s
-        retries: 30
-        start_period: 60s
+      test: ["CMD", "kafka-topics", "--bootstrap-server", "localhost:9092", "--list"]
+      interval: 10s
+      timeout: 10s
+      retries: 10
+      start_period: 30s
     networks:
       - app_network
 
@@ -269,7 +268,7 @@ services:
       timeout: 5s
       retries: 5
       start_period: 15s
-    restart: unless-stopped
+    restart: on-failure
     depends_on:
       main_postgres:
         condition: service_healthy
@@ -278,7 +277,7 @@ services:
       auth_service:
         condition: service_started
       kafka:
-        condition: service_started
+        condition: service_healthy
     networks:
       - app_network
 
@@ -307,7 +306,7 @@ services:
       timeout: 5s
       retries: 5
       start_period: 15s
-    restart: unless-stopped
+    restart: on-failure
     depends_on:
       main_postgres:
         condition: service_healthy
@@ -318,7 +317,7 @@ services:
       team_service:
         condition: service_started
       kafka:
-        condition: service_started
+        condition: service_healthy
     networks:
       - app_network
 
