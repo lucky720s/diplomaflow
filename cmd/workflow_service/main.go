@@ -38,7 +38,7 @@ func main() {
 	}
 
 	log := logger.New(cfg.Env)
-	defer log.Sync()
+	defer func() { _ = log.Sync() }()
 
 	db, err := gorm.Open(postgres.Open(cfg.Database.DSN), &gorm.Config{})
 	if err != nil {
@@ -65,7 +65,7 @@ func main() {
 	log.Info("Builtin plugins registered", zap.Strings("plugins", builtin.RegisteredPlugins()))
 
 	// workflow core
-	repo := workflow.NewRepository(db) // дальше лучше выключить AutoMigrate в repo (P1) [[1]]
+	repo := workflow.NewRepository(db)
 	svc := workflow.NewService(repo, log.Logger)
 	base := workflow.NewHandler(svc, log.Logger)
 	eng := engine.NewWorkflowEngine(repo, log.Logger)
@@ -102,12 +102,17 @@ func main() {
 	grpcServer := grpc.NewServer()
 	workflowv1.RegisterWorkflowServiceServer(grpcServer, h)
 
+	// gRPC health
 	healthServer := health.NewServer()
 	grpc_health_v1.RegisterHealthServer(grpcServer, healthServer)
+
+	// ВАЖНО: выставляем и общий статус "", и статус конкретного сервиса
+	healthServer.SetServingStatus("", grpc_health_v1.HealthCheckResponse_SERVING)
 	healthServer.SetServingStatus("workflow.v1.WorkflowService", grpc_health_v1.HealthCheckResponse_SERVING)
 
 	reflection.Register(grpcServer)
 
+	// Start serving
 	go func() {
 		log.Info("Workflow Service starting", zap.String("port", cfg.GRPCPort))
 		if err := grpcServer.Serve(lis); err != nil {
@@ -115,16 +120,23 @@ func main() {
 		}
 	}()
 
-	quit := make(chan os.Signal, 1)
-	signal.Notify(quit, syscall.SIGINT, syscall.SIGTERM)
-	<-quit
+	// Graceful shutdown
+	stop := make(chan os.Signal, 1)
+	signal.Notify(stop, syscall.SIGINT, syscall.SIGTERM)
+	<-stop
 
-	log.Info("Shutting down Workflow Service...")
+	log.Info("Shutdown signal received")
+
+	// Mark NOT_SERVING before stopping (so orchestrator stops routing)
+	healthServer.SetServingStatus("", grpc_health_v1.HealthCheckResponse_NOT_SERVING)
 	healthServer.SetServingStatus("workflow.v1.WorkflowService", grpc_health_v1.HealthCheckResponse_NOT_SERVING)
 
+	// Stop background workers
 	cancel()
-	grpcServer.GracefulStop()
-	time.Sleep(150 * time.Millisecond)
 
-	log.Info("Workflow Service exited")
+	// Give some time for background goroutines to finish
+	time.Sleep(300 * time.Millisecond)
+
+	grpcServer.GracefulStop()
+	log.Info("Workflow Service stopped")
 }

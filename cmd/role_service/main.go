@@ -15,6 +15,8 @@ import (
 	rolev1 "github.com/lucky720s/diplomaflow/pkg/protobuf/role/v1"
 	"go.uber.org/zap"
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/health"
+	"google.golang.org/grpc/health/grpc_health_v1"
 	"google.golang.org/grpc/reflection"
 )
 
@@ -40,6 +42,13 @@ func main() {
 
 	grpcServer := grpc.NewServer()
 	rolev1.RegisterRoleServiceServer(grpcServer, h)
+
+	// gRPC health
+	healthServer := health.NewServer()
+	grpc_health_v1.RegisterHealthServer(grpcServer, healthServer)
+	healthServer.SetServingStatus("", grpc_health_v1.HealthCheckResponse_SERVING)
+	healthServer.SetServingStatus("role.v1.RoleService", grpc_health_v1.HealthCheckResponse_SERVING)
+
 	reflection.Register(grpcServer)
 
 	go func() {
@@ -54,8 +63,12 @@ func main() {
 	<-quit
 
 	log.Info("Shutting down Role Service...")
-	_, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
+	_ = ctx
+
+	healthServer.SetServingStatus("", grpc_health_v1.HealthCheckResponse_NOT_SERVING)
+	healthServer.SetServingStatus("role.v1.RoleService", grpc_health_v1.HealthCheckResponse_NOT_SERVING)
 
 	grpcServer.GracefulStop()
 	log.Info("Role Service exited")

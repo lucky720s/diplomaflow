@@ -19,6 +19,8 @@ import (
 	"go.uber.org/zap"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
+	"google.golang.org/grpc/health"
+	"google.golang.org/grpc/health/grpc_health_v1"
 	"google.golang.org/grpc/reflection"
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
@@ -68,13 +70,9 @@ func main() {
 
 	ctx, cancel := context.WithCancel(context.Background())
 
-	handler := func(ctx context.Context, event broker.Event) error {
-		// если в топике несколько типов — фильтруй тут
-		// if event.Type != "ProjectCreated" { return broker.ErrSkip }
-
+	handlerFn := func(ctx context.Context, event broker.Event) error {
 		var payload team.ProjectCreatedEvent
 		if unmarshalErr := json.Unmarshal(event.Payload, &payload); unmarshalErr != nil {
-			// битое событие — ack+skip, иначе будет вечный retry
 			return broker.Permanent(unmarshalErr)
 		}
 		return eventHandler.HandleProjectCreated(ctx, payload)
@@ -82,7 +80,7 @@ func main() {
 
 	go func() {
 		log.Info("Starting Kafka consumer", zap.Strings("topics", []string{"project-events"}), zap.String("group_id", groupID))
-		kafkaConsumer.Start(ctx, []string{"project-events"}, handler)
+		kafkaConsumer.Start(ctx, []string{"project-events"}, handlerFn)
 	}()
 
 	lis, err := net.Listen("tcp", ":"+cfg.GRPCPort)
@@ -92,6 +90,13 @@ func main() {
 
 	grpcServer := grpc.NewServer()
 	teamv1.RegisterTeamServiceServer(grpcServer, h)
+
+	// gRPC health
+	healthServer := health.NewServer()
+	grpc_health_v1.RegisterHealthServer(grpcServer, healthServer)
+	healthServer.SetServingStatus("", grpc_health_v1.HealthCheckResponse_SERVING)
+	healthServer.SetServingStatus("team.TeamService", grpc_health_v1.HealthCheckResponse_SERVING)
+
 	reflection.Register(grpcServer)
 
 	go func() {
@@ -108,6 +113,10 @@ func main() {
 	<-quit
 
 	log.Info("Shutting down...")
+
+	healthServer.SetServingStatus("", grpc_health_v1.HealthCheckResponse_NOT_SERVING)
+	healthServer.SetServingStatus("team.TeamService", grpc_health_v1.HealthCheckResponse_NOT_SERVING)
+
 	cancel()
 	grpcServer.GracefulStop()
 	time.Sleep(300 * time.Millisecond)

@@ -1,456 +1,358 @@
+version: "3.9"
+
 services:
-  main_postgres:
+  postgres:
     image: postgres:16-alpine
-    container_name: main_postgres
+    container_name: postgres
     environment:
-      POSTGRES_USER: ${POSTGRES_USER}
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
-      POSTGRES_DB: ${POSTGRES_DB}
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: diplomaflow
     ports:
-      - "5433:5432"
-    volumes:
-      - diplomaflow_data:/var/lib/postgresql/data
+      - "5432:5432"
     healthcheck:
-      test: [ "CMD-SHELL", "pg_isready -U diplomaflow -d diplomaflow" ]
-      interval: 5s
-      timeout: 5s
-      retries: 10
-      start_period: 30s
-    networks:
-      - app_network
+      test: ["CMD-SHELL", "pg_isready -U postgres -d diplomaflow"]
+      interval: 10s
+      timeout: 3s
+      retries: 15
 
-  migrations:
-    build:
-      context: .
-      dockerfile: cmd/migrate/Dockerfile
-    container_name: migrations
-    env_file:
-      - .env
-    environment:
-      - DATABASE_URL=postgres://${POSTGRES_USER}:${POSTGRES_PASSWORD}@main_postgres:5432/${POSTGRES_DB}?sslmode=disable
-    depends_on:
-      main_postgres:
-        condition: service_healthy
-    volumes:
-      - ./db/migrations:/app/migrations:ro
-    command: [ "-cmd", "up", "-path", "file:///app/migrations" ]
-    networks:
-      - app_network
-
-  kafka:
-    image: confluentinc/cp-kafka:7.6.0
-    container_name: kafka
-    ports:
-      - "9092:9092"
-    environment:
-      KAFKA_NODE_ID: 1
-      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: 'CONTROLLER:PLAINTEXT,PLAINTEXT:PLAINTEXT,PLAINTEXT_HOST:PLAINTEXT'
-      KAFKA_ADVERTISED_LISTENERS: 'PLAINTEXT://kafka:29092,PLAINTEXT_HOST://localhost:9092'
-      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
-      KAFKA_GROUP_INITIAL_REBALANCE_DELAY_MS: 0
-      KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 1
-      KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 1
-      KAFKA_JMX_PORT: 9101
-      KAFKA_JMX_HOSTNAME: localhost
-      KAFKA_PROCESS_ROLES: 'broker,controller'
-      KAFKA_CONTROLLER_QUORUM_VOTERS: '1@kafka:29093'
-      KAFKA_LISTENERS: 'PLAINTEXT://kafka:29092,CONTROLLER://kafka:29093,PLAINTEXT_HOST://0.0.0.0:9092'
-      KAFKA_INTER_BROKER_LISTENER_NAME: 'PLAINTEXT'
-      KAFKA_CONTROLLER_LISTENER_NAMES: 'CONTROLLER'
-      KAFKA_LOG_DIRS: '/tmp/kraft-combined-logs'
-      KAFKA_LOG4J_LOGGERS: "kafka.controller=WARN,kafka.log.LogCleaner=WARN,state.change.logger=WARN,kafka.coordinator.group=WARN"
-      KAFKA_CLUSTER_ID: 'MkU3OEVBNTcwNTJENDM2Qk'
-      CLUSTER_ID: 'MkU3OEVBNTcwNTJENDM2Qk'
-      KAFKA_HEAP_OPTS: "-Xmx256M -Xms256M"
-
-    healthcheck:
-        test: ["CMD-SHELL", "cub kafka-ready -b kafka:29092 1 60"]
-        interval: 10s
-        timeout: 10s
-        retries: 30
-        start_period: 60s
-    networks:
-      - app_network
-
-
-
-  university_service:
-    build:
-      context: .
-      dockerfile: cmd/university_service/Dockerfile
-    container_name: university_service
-    env_file:
-      - .env
-    environment:
-      - GRPC_PORT=${PORT_UNIVERSITY}
-      - GOMEMLIMIT=64MiB
-    deploy:
-      resources:
-        limits:
-          memory: 128M
-    ports:
-      - "${PORT_UNIVERSITY}:${PORT_UNIVERSITY}"
-    depends_on:
-      main_postgres:
-        condition: service_healthy
-      migrations:
-        condition: service_completed_successfully
-
-    networks:
-      - app_network
-
-#Admin service(ADDED BY SULA)
-  admin_service:
-    build:
-      context: .
-      dockerfile: cmd/admin_service/Dockerfile
-    container_name: admin_service
-    env_file:
-      - .env
-    environment:
-      - GRPC_PORT=${PORT_ADMIN}
-      - GOMEMLIMIT=64MiB
-    deploy:
-      resources:
-        limits:
-          memory: 128M
-    ports:
-      - "${PORT_ADMIN}:${PORT_ADMIN}"
-    depends_on:
-      main_postgres:
-        condition: service_healthy
-      migrations:
-        condition: service_completed_successfully
-      auth_service:
-        condition: service_healthy
-      project_service:
-        condition: service_healthy
-      team_service:
-        condition: service_healthy
-      workflow_service:
-        condition: service_healthy
-    networks:
-      - app_network
-
-  role_service:
-    build:
-      context: .
-      dockerfile: cmd/role_service/Dockerfile
-    container_name: role_service
-    env_file:
-      - .env
-    environment:
-      - GRPC_PORT=${PORT_ROLE}
-      - GOMEMLIMIT=64MiB
-    deploy:
-      resources:
-        limits:
-          memory: 128M
-    ports:
-      - "${PORT_ROLE}:${PORT_ROLE}"
-    depends_on:
-      main_postgres:
-        condition: service_healthy
-      migrations:
-        condition: service_completed_successfully
-    networks:
-      - app_network
   redis:
-    image: redis:7.2-alpine
+    image: redis:7-alpine
     container_name: redis
     ports:
       - "6379:6379"
-    command: redis-server --save 20 1 --loglevel warning
-    volumes:
-      - diplomaflow_redis:/data
-    networks:
-      - app_network
-    deploy:
-      resources:
-        limits:
-          memory: 128M
     healthcheck:
-      test: [ "CMD", "redis-cli", "ping" ]
-      interval: 5s
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
       timeout: 3s
-      retries: 5
-  auth_service:
-    build:
-      context: .
-      dockerfile: cmd/auth_service/Dockerfile
-    container_name: auth_service
-    env_file:
-      - .env
-    environment:
-      - GRPC_PORT=${PORT_AUTH}
-      - JWT_SECRET=${JWT_SECRET}
-      - DATABASE_DSN=${DATABASE_DSN}
-      - JWT_ACCESS_TOKEN_TTL=15m
-      - JWT_REFRESH_TOKEN_TTL=720h
-      - GOMEMLIMIT=64MiB
-      - REDIS_ADDR=redis:6379
-    deploy:
-      resources:
-        limits:
-          memory: 128M
-    ports:
-      - "${PORT_AUTH}:${PORT_AUTH}"
-    healthcheck:
-      test: [ "CMD", "nc", "-z", "localhost", "8082" ]
-      interval: 10s
-      timeout: 5s
-      retries: 5
-      start_period: 15s
-    depends_on:
-      main_postgres:
-        condition: service_healthy
-      migrations:
-        condition: service_completed_successfully
-      university_service:
-        condition: service_started
-      role_service:
-        condition: service_started
-      redis:
-        condition: service_healthy
-    networks:
-      - app_network
+      retries: 15
 
-  workflow_service:
-    build:
-      context: .
-      dockerfile: cmd/workflow_service/Dockerfile
-    container_name: workflow_service
-    env_file:
-      - .env
+  zookeeper:
+    image: confluentinc/cp-zookeeper:7.6.1
+    container_name: zookeeper
     environment:
-      - GRPC_PORT=${PORT_WORKFLOW}
-      - GOMEMLIMIT=64MiB
-    deploy:
-      resources:
-        limits:
-          memory: 128M
+      ZOOKEEPER_CLIENT_PORT: 2181
+      ZOOKEEPER_TICK_TIME: 2000
     ports:
-      - "${PORT_WORKFLOW}:${PORT_WORKFLOW}"
-    healthcheck:
-      test: [ "CMD", "nc", "-z", "localhost", "8085" ]
-      interval: 10s
-      timeout: 5s
-      retries: 5
-      start_period: 15s
-    depends_on:
-      main_postgres:
-        condition: service_healthy
-      migrations:
-        condition: service_completed_successfully
-    networks:
-      - app_network
+      - "2181:2181"
 
-  team_service:
-    build:
-      context: .
-      dockerfile: cmd/team_service/Dockerfile
-    container_name: team_service
-    env_file:
-      - .env
-    environment:
-      - GRPC_PORT=${PORT_TEAM}
-      - KAFKA_BROKERS=kafka:29092
-      - SERVICES_WORKFLOW_ADDR=workflow_service:${PORT_WORKFLOW}
-      - GOMEMLIMIT=64MiB
-    deploy:
-      resources:
-        limits:
-          memory: 128M
-    ports:
-      - "${PORT_TEAM}:${PORT_TEAM}"
-    healthcheck:
-      test: [ "CMD", "nc", "-z", "localhost", "8084" ]
-      interval: 10s
-      timeout: 5s
-      retries: 5
-      start_period: 15s
-    restart: unless-stopped
+  kafka:
+    image: confluentinc/cp-kafka:7.6.1
+    container_name: kafka
     depends_on:
-      main_postgres:
-        condition: service_healthy
-      migrations:
-        condition: service_completed_successfully
-      auth_service:
-        condition: service_started
-      kafka:
-        condition: service_started
-    networks:
-      - app_network
-
-  project_service:
-    build:
-      context: .
-      dockerfile: cmd/project_service/Dockerfile
-    container_name: project_service
-    env_file:
-      - .env
-    environment:
-      - GRPC_PORT=${PORT_PROJECT}
-      - KAFKA_BROKERS=kafka:29092
-      - SERVICES_WORKFLOW_ADDR=workflow_service:${PORT_WORKFLOW}
-      - SERVICES_NOTIFICATION_ADDR=notification_service:${PORT_NOTIFICATION}
-      - GOMEMLIMIT=64MiB
-    deploy:
-      resources:
-        limits:
-          memory: 128M
+      - zookeeper
     ports:
-      - "${PORT_PROJECT}:${PORT_PROJECT}"
-    healthcheck:
-      test: [ "CMD", "nc", "-z", "localhost", "8083" ]
-      interval: 10s
-      timeout: 5s
-      retries: 5
-      start_period: 15s
-    restart: unless-stopped
-    depends_on:
-      main_postgres:
-        condition: service_healthy
-      migrations:
-        condition: service_completed_successfully
-      workflow_service:
-        condition: service_started
-      team_service:
-        condition: service_started
-      kafka:
-        condition: service_started
-    networks:
-      - app_network
-
-  notification_service:
-    build:
-      context: .
-      dockerfile: cmd/notification_service/Dockerfile
-    container_name: notification_service
-    env_file:
-      - .env
+      - "9092:9092"
     environment:
-      - GRPC_PORT=${PORT_NOTIFICATION}
-      - GOMEMLIMIT=64MiB
-    deploy:
-      resources:
-        limits:
-          memory: 128M
-    ports:
-      - "${PORT_NOTIFICATION}:${PORT_NOTIFICATION}"
-    depends_on:
-      main_postgres:
-        condition: service_healthy
-      migrations:
-        condition: service_completed_successfully
-    networks:
-      - app_network
-
-  file_service:
-    build:
-      context: .
-      dockerfile: cmd/file_service/Dockerfile
-    container_name: file_service
-    env_file:
-      - .env
-    environment:
-      - GRPC_PORT=${PORT_FILE}
-      - GOMEMLIMIT=64MiB
-      - DATABASE_DSN=${DATABASE_DSN}
-    depends_on:
-      main_postgres:
-        condition: service_healthy
-      migrations:
-        condition: service_completed_successfully
-    deploy:
-      resources:
-        limits:
-          memory: 128M
-    ports:
-      - "${PORT_FILE}:${PORT_FILE}"
-    volumes:
-      - diplomaflow_uploads:/app/uploads
-    networks:
-      - app_network
-
-  form_service:
-    build:
-      context: .
-      dockerfile: cmd/form_service/Dockerfile
-    container_name: form_service
-    env_file:
-      - .env
-    environment:
-      - GRPC_PORT=${PORT_FORM}
-      - POSTGRES_USER=${POSTGRES_USER}
-      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
-      - POSTGRES_DB=${POSTGRES_DB}
-      - DATABASE_DSN=host=main_postgres user=${POSTGRES_USER} password=${POSTGRES_PASSWORD} dbname=${POSTGRES_DB} port=5432 sslmode=disable
-      - GOMEMLIMIT=64MiB
-    deploy:
-      resources:
-        limits:
-          memory: 128M
-    ports:
-      - "${PORT_FORM}:${PORT_FORM}"
-    depends_on:
-      main_postgres:
-        condition: service_healthy
-      migrations:
-        condition: service_completed_successfully
-    networks:
-      - app_network
+      KAFKA_BROKER_ID: 1
+      KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,PLAINTEXT_HOST:PLAINTEXT
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:29092,PLAINTEXT_HOST://localhost:9092
+      KAFKA_LISTENERS: PLAINTEXT://0.0.0.0:29092,PLAINTEXT_HOST://0.0.0.0:9092
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
 
   api_gateway:
+    container_name: api_gateway
     build:
       context: .
       dockerfile: cmd/api_gateway/Dockerfile
-    container_name: api_gateway
-    env_file:
-      - .env
-    environment:
-      - PORT=${PORT_GATEWAY}
-      - SERVICES_FILE_ADDR=file_service:${PORT_FILE}
-      - SERVICES_FORM_ADDR=form_service:${PORT_FORM}
-      - REDIS_ADDR=redis:6379
-      - GOMEMLIMIT=64MiB
-    deploy:
-      resources:
-        limits:
-          memory: 128M
     ports:
-      - "${PORT_GATEWAY}:${PORT_GATEWAY}"
+      - "8080:8080"
+    environment:
+      PORT: "8080"
+      REDIS_ADDR: "redis:6379"
+      AUTH_SERVICE_ADDR: "auth_service:8082"
+      UNIVERSITY_SERVICE_ADDR: "university_service:8081"
+      PROJECT_SERVICE_ADDR: "project_service:8083"
+      TEAM_SERVICE_ADDR: "team_service:8084"
+      WORKFLOW_SERVICE_ADDR: "workflow_service:8085"
+      ROLE_SERVICE_ADDR: "role_service:8086"
+      NOTIFICATION_SERVICE_ADDR: "notification_service:8087"
+      FILE_SERVICE_ADDR: "file_service:8088"
+      FORM_SERVICE_ADDR: "form_service:8089"
+      ADMIN_SERVICE_ADDR: "admin_service:8090"
     depends_on:
-      auth_service:
-        condition: service_started
-      project_service:
-        condition: service_started
-      team_service:
-        condition: service_started
-      workflow_service:
-        condition: service_started
-      university_service:
-        condition: service_started
-      role_service:
-        condition: service_started
-      file_service:
-        condition: service_started
-      form_service:
-        condition: service_started
       redis:
         condition: service_healthy
+      auth_service:
+        condition: service_healthy
+      university_service:
+        condition: service_healthy
+      project_service:
+        condition: service_healthy
+      team_service:
+        condition: service_healthy
+      workflow_service:
+        condition: service_healthy
+      role_service:
+        condition: service_healthy
+      notification_service:
+        condition: service_healthy
+      file_service:
+        condition: service_healthy
+      form_service:
+        condition: service_healthy
+      admin_service:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://localhost:8080/healthz >/dev/null 2>&1"]
+      interval: 10s
+      timeout: 3s
+      retries: 15
+      start_period: 10s
+
+  university_service:
+    container_name: university_service
+    build:
+      context: .
+      dockerfile: cmd/university_service/Dockerfile
+    ports:
+      - "8081:8081"
+    environment:
+      GRPC_PORT: "8081"
+      ENV: "dev"
+      DATABASE_DSN: "host=postgres user=postgres password=postgres dbname=diplomaflow port=5432 sslmode=disable TimeZone=UTC"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "grpc_health_probe", "-addr=localhost:8081", "-service=university.v1.UniversityService"]
+      interval: 10s
+      timeout: 3s
+      retries: 15
+      start_period: 15s
+
+  auth_service:
+    container_name: auth_service
+    build:
+      context: .
+      dockerfile: cmd/auth_service/Dockerfile
+    ports:
+      - "8082:8082"
+    environment:
+      GRPC_PORT: "8082"
+      ENV: "dev"
+      DATABASE_DSN: "host=postgres user=postgres password=postgres dbname=diplomaflow port=5432 sslmode=disable TimeZone=UTC"
+      REDIS_ADDR: "redis:6379"
+      JWT_SECRET: "dev_secret"
+      ACCESS_TOKEN_TTL: "15m"
+      REFRESH_TOKEN_TTL: "720h"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "grpc_health_probe", "-addr=localhost:8082", "-service=auth.AuthService"]
+      interval: 10s
+      timeout: 3s
+      retries: 15
+      start_period: 15s
+
+  project_service:
+    container_name: project_service
+    build:
+      context: .
+      dockerfile: cmd/project_service/Dockerfile
+    ports:
+      - "8083:8083"
+    environment:
+      GRPC_PORT: "8083"
+      ENV: "dev"
+      DATABASE_DSN: "host=postgres user=postgres password=postgres dbname=diplomaflow port=5432 sslmode=disable TimeZone=UTC"
+      KAFKA_BROKERS: "kafka:29092"
+      WORKFLOW_SERVICE_ADDR: "workflow_service:8085"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      kafka:
+        condition: service_started
+    healthcheck:
+      test: ["CMD", "grpc_health_probe", "-addr=localhost:8083", "-service=project.ProjectService"]
+      interval: 10s
+      timeout: 3s
+      retries: 15
+      start_period: 15s
+
+  team_service:
+    container_name: team_service
+    build:
+      context: .
+      dockerfile: cmd/team_service/Dockerfile
+    ports:
+      - "8084:8084"
+    environment:
+      GRPC_PORT: "8084"
+      ENV: "dev"
+      DATABASE_DSN: "host=postgres user=postgres password=postgres dbname=diplomaflow port=5432 sslmode=disable TimeZone=UTC"
+      KAFKA_BROKERS: "kafka:29092"
+      AUTH_SERVICE_ADDR: "auth_service:8082"
+      NOTIFICATION_SERVICE_ADDR: "notification_service:8087"
+      WORKFLOW_SERVICE_ADDR: "workflow_service:8085"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      kafka:
+        condition: service_started
+      auth_service:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "grpc_health_probe", "-addr=localhost:8084", "-service=team.TeamService"]
+      interval: 10s
+      timeout: 3s
+      retries: 15
+      start_period: 15s
+
+  workflow_service:
+    container_name: workflow_service
+    build:
+      context: .
+      dockerfile: cmd/workflow_service/Dockerfile
+    ports:
+      - "8085:8085"
+    environment:
+      GRPC_PORT: "8085"
+      ENV: "dev"
+      DATABASE_DSN: "host=postgres user=postgres password=postgres dbname=diplomaflow port=5432 sslmode=disable TimeZone=UTC"
+      KAFKA_BROKERS: "kafka:29092"
+      KAFKA_GROUP_ID: "workflow-service-group"
+      SERVICES_NOTIFICATION_ADDR: "notification_service:8087"
+      SERVICES_PROJECT_ADDR: "project_service:8083"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      kafka:
+        condition: service_started
+      project_service:
+        condition: service_healthy
+      notification_service:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "grpc_health_probe", "-addr=localhost:8085", "-service=workflow.v1.WorkflowService"]
+      interval: 10s
+      timeout: 3s
+      retries: 15
+      start_period: 15s
+
+  role_service:
+    container_name: role_service
+    build:
+      context: .
+      dockerfile: cmd/role_service/Dockerfile
+    ports:
+      - "8086:8086"
+    environment:
+      GRPC_PORT: "8086"
+      ENV: "dev"
+      DATABASE_DSN: "host=postgres user=postgres password=postgres dbname=diplomaflow port=5432 sslmode=disable TimeZone=UTC"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "grpc_health_probe", "-addr=localhost:8086", "-service=role.v1.RoleService"]
+      interval: 10s
+      timeout: 3s
+      retries: 15
+      start_period: 15s
+
+  notification_service:
+    container_name: notification_service
+    build:
+      context: .
+      dockerfile: cmd/notification_service/Dockerfile
+    ports:
+      - "8087:8087"
+    environment:
+      GRPC_PORT: "8087"
+      ENV: "dev"
+      DATABASE_DSN: "host=postgres user=postgres password=postgres dbname=diplomaflow port=5432 sslmode=disable TimeZone=UTC"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "grpc_health_probe", "-addr=localhost:8087", "-service=notification.NotificationService"]
+      interval: 10s
+      timeout: 3s
+      retries: 15
+      start_period: 15s
+
+  file_service:
+    container_name: file_service
+    build:
+      context: .
+      dockerfile: cmd/file_service/Dockerfile
+    ports:
+      - "8088:8088"
+    environment:
+      GRPC_PORT: "8088"
+      ENV: "dev"
+      DATABASE_DSN: "host=postgres user=postgres password=postgres dbname=diplomaflow port=5432 sslmode=disable TimeZone=UTC"
+      STORAGE_PATH: "/uploads"
     volumes:
-      - diplomaflow_uploads:/app/uploads
-    networks:
-      - app_network
+      - file_uploads:/uploads
+    depends_on:
+      postgres:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "grpc_health_probe", "-addr=localhost:8088", "-service=file.FileService"]
+      interval: 10s
+      timeout: 3s
+      retries: 15
+      start_period: 15s
+
+  form_service:
+    container_name: form_service
+    build:
+      context: .
+      dockerfile: cmd/form_service/Dockerfile
+    ports:
+      - "8089:8089"
+    environment:
+      GRPC_PORT: "8089"
+      ENV: "dev"
+      DATABASE_DSN: "host=postgres user=postgres password=postgres dbname=diplomaflow port=5432 sslmode=disable TimeZone=UTC"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "grpc_health_probe", "-addr=localhost:8089", "-service=form.FormService"]
+      interval: 10s
+      timeout: 3s
+      retries: 15
+      start_period: 15s
+
+  admin_service:
+    container_name: admin_service
+    build:
+      context: .
+      dockerfile: cmd/admin_service/Dockerfile
+    ports:
+      - "8090:8090"
+    environment:
+      GRPC_PORT: "8090"
+      ENV: "dev"
+      DATABASE_DSN: "host=postgres user=postgres password=postgres dbname=diplomaflow port=5432 sslmode=disable TimeZone=UTC"
+      AUTH_SERVICE_ADDR: "auth_service:8082"
+      PROJECT_SERVICE_ADDR: "project_service:8083"
+      TEAM_SERVICE_ADDR: "team_service:8084"
+      WORKFLOW_SERVICE_ADDR: "workflow_service:8085"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      auth_service:
+        condition: service_healthy
+      project_service:
+        condition: service_healthy
+      team_service:
+        condition: service_healthy
+      workflow_service:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "grpc_health_probe", "-addr=localhost:8090", "-service=admin.v1.AdminService"]
+      interval: 10s
+      timeout: 3s
+      retries: 15
+      start_period: 15s
 
 volumes:
-  diplomaflow_data:
-  diplomaflow_uploads:
-  diplomaflow_redis:
-
-networks:
-  app_network:
-    driver: bridge
-
-
+  file_uploads:

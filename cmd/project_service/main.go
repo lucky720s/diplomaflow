@@ -18,6 +18,8 @@ import (
 	"go.uber.org/zap"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
+	"google.golang.org/grpc/health"
+	"google.golang.org/grpc/health/grpc_health_v1"
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
 )
@@ -68,6 +70,12 @@ func main() {
 	grpcServer := grpc.NewServer()
 	projectv1.RegisterProjectServiceServer(grpcServer, app.Handler)
 
+	// gRPC health
+	healthServer := health.NewServer()
+	grpc_health_v1.RegisterHealthServer(grpcServer, healthServer)
+	healthServer.SetServingStatus("", grpc_health_v1.HealthCheckResponse_SERVING)
+	healthServer.SetServingStatus("project.ProjectService", grpc_health_v1.HealthCheckResponse_SERVING)
+
 	go func() {
 		log.Info("Project Service starting", zap.String("port", cfg.GRPCPort))
 		if err := grpcServer.Serve(lis); err != nil {
@@ -80,10 +88,15 @@ func main() {
 	<-quit
 
 	log.Info("Shutting down...")
+
+	healthServer.SetServingStatus("", grpc_health_v1.HealthCheckResponse_NOT_SERVING)
+	healthServer.SetServingStatus("project.ProjectService", grpc_health_v1.HealthCheckResponse_NOT_SERVING)
+
 	cancel()
 	app.OutboxProcessor.Stop()
 	app.DeadlineScheduler.Stop()
 	time.Sleep(500 * time.Millisecond)
+
 	grpcServer.GracefulStop()
 	log.Info("Project Service exited")
 }
