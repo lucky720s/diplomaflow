@@ -33,7 +33,6 @@ jobs:
               git clean -fd
             else
               echo "No git repo, cleaning and cloning..."
-              # Очищаем директорию
               rm -rf /opt/diplomaflow/*
               rm -rf /opt/diplomaflow/.[!.]*
               git clone -b dev https://${{ secrets.PAT_TOKEN }}@github.com/${{ github.repository }}.git .
@@ -87,22 +86,52 @@ jobs:
               exit 1
             fi
             
-            echo "Stopping old containers..."
+            # ============================================
+            # ПОЛНАЯ ОСТАНОВКА И ОЧИСТКА
+            # ============================================
+            echo "🛑 Stopping and removing old containers..."
             docker compose down --remove-orphans || true
+            docker compose kill || true
+            docker compose rm -f || true
             
-            echo "Building images..."
+            echo "🧹 Cleaning up Docker resources..."
+            echo "Disk usage before cleanup:"
+            df -h / | tail -1
+            
+            # Удалить остановленные контейнеры
+            docker container prune -f || true
+            
+            # Удалить неиспользуемые образы
+            docker image prune -af || true
+            
+            # Удалить неиспользуемые сети
+            docker network prune -f || true
+            
+            # Очистить кэш сборки Docker
+            docker builder prune -af || true
+            
+            # НЕ удаляем тома - там данные PostgreSQL!
+            # docker volume prune -f || true
+            
+            echo "Disk usage after cleanup:"
+            df -h / | tail -1
+            echo "Docker disk usage:"
+            docker system df
+            # ============================================
+            
+            echo "🔨 Building images..."
             docker compose build --no-cache
             
-            echo "Starting services..."
-            docker compose up -d
+            echo "🚀 Starting services..."
+            docker compose up -d --force-recreate
             
-            echo "Waiting for services to start..."
+            echo "⏳ Waiting for services to start..."
             sleep 90
             
-            echo "Health check..."
+            echo "🏥 Health check..."
             curl -f http://localhost:8080/health || echo "Health check failed but continuing..."
             
-            echo "Service status:"
+            echo "📋 Service status:"
             docker compose ps
 
       - name: Deployment complete
