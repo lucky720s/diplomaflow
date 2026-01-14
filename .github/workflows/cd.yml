@@ -36,7 +36,6 @@ jobs:
               # Очищаем директорию
               rm -rf /opt/diplomaflow/*
               rm -rf /opt/diplomaflow/.[!.]*
-              # Клонируем
               git clone -b dev https://${{ secrets.PAT_TOKEN }}@github.com/${{ github.repository }}.git .
             fi
             
