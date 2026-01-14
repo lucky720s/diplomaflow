@@ -8,6 +8,7 @@ on:
 jobs:
   deploy:
     runs-on: ubuntu-latest
+
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -18,48 +19,44 @@ jobs:
           host: ${{ secrets.SERVER_HOST }}
           username: ${{ secrets.SERVER_USER }}
           key: ${{ secrets.SSH_PRIVATE_KEY }}
-          port: ${{ secrets.SSH_PORT || 22 }}
-          script_stop: true
           script: |
-            set -euo pipefail
-
-            APP_DIR="/opt/diplomaflow"
-
-            echo "Ensuring app dir exists: $APP_DIR"
-            mkdir -p "$APP_DIR" 2>/dev/null || sudo mkdir -p "$APP_DIR"
-            cd "$APP_DIR" || { echo "ERROR: cannot cd into $APP_DIR"; exit 1; }
-
-            echo "Sync repo..."
+            set -e
+            
+            cd /opt/diplomaflow
+            
+            # Если .git существует - обновляем, иначе очищаем и клонируем
             if [ -d ".git" ]; then
               echo "Git repo exists, updating..."
-              git remote set-url origin "https://${{ secrets.PAT_TOKEN }}@github.com/${{ github.repository }}.git"
+              git remote set-url origin https://${{ secrets.PAT_TOKEN }}@github.com/${{ github.repository }}.git
               git fetch origin dev
               git reset --hard origin/dev
               git clean -fd
             else
-              echo "No git repo, cloning..."
-              rm -rf "$APP_DIR"
-              mkdir -p "$APP_DIR" 2>/dev/null || sudo mkdir -p "$APP_DIR"
-              cd "$APP_DIR"
-              git clone -b dev "https://${{ secrets.PAT_TOKEN }}@github.com/${{ github.repository }}.git" .
+              echo "No git repo, cleaning and cloning..."
+              # Очищаем директорию
+              rm -rf /opt/diplomaflow/*
+              rm -rf /opt/diplomaflow/.[!.]*
+              # Клонируем
+              git clone -b dev https://${{ secrets.PAT_TOKEN }}@github.com/${{ github.repository }}.git .
             fi
-
+            
             echo "Current directory contents:"
             ls -la
-
+            
+            # Создаём .env если не существует
             if [ ! -f ".env" ]; then
               echo "Creating .env file..."
-              cat > .env <<'ENVEOF'
+              cat > .env << 'ENVEOF'
             ENV=production
-            JWT_SECRET=${{ secrets.JWT_SECRET }}
-            POSTGRES_USER=${{ secrets.POSTGRES_USER }}
-            POSTGRES_PASSWORD=${{ secrets.POSTGRES_PASSWORD }}
-            POSTGRES_DB=${{ secrets.POSTGRES_DB }}
+            JWT_SECRET=super_secret_jwt_key_change_me_in_prod_12345
+            POSTGRES_USER=diplomaflow
+            POSTGRES_PASSWORD=diplomaflow_prod_pass
+            POSTGRES_DB=diplomaflow
             POSTGRES_PORT=5432
-            DATABASE_DSN=${{ secrets.DATABASE_DSN }}
-            KAFKA_BROKERS=${{ secrets.KAFKA_BROKERS }}
-            KAFKA_GROUP_ID=${{ secrets.KAFKA_GROUP_ID }}
-            KAFKA_KRAFT_CLUSTER_ID=${{ secrets.KAFKA_KRAFT_CLUSTER_ID }}
+            DATABASE_DSN=host=main_postgres user=diplomaflow password=diplomaflow_prod_pass dbname=diplomaflow port=5432 sslmode=disable TimeZone=UTC
+            KAFKA_BROKERS=kafka:29092
+            KAFKA_GROUP_ID=diplomaflow-group
+            KAFKA_KRAFT_CLUSTER_ID=MkU3OEVBNTcwNTJENDM2Qk
             GIN_MODE=release
             PORT_GATEWAY=8080
             PORT_UNIVERSITY=8081
@@ -84,31 +81,31 @@ jobs:
             SERVICES_ADMIN_ADDR=admin_service:8090
             ENVEOF
             fi
-
+            
             echo "Checking docker-compose.yml..."
             if [ ! -f "docker-compose.yml" ]; then
               echo "ERROR: docker-compose.yml not found!"
               ls -la
               exit 1
             fi
-
+            
             echo "Stopping old containers..."
             docker compose down --remove-orphans || true
-
+            
             echo "Building images..."
             docker compose build --no-cache
-
+            
             echo "Starting services..."
             docker compose up -d
-
+            
             echo "Waiting for services to start..."
             sleep 90
-
+            
             echo "Health check..."
-            curl -fsS http://localhost:8080/health || echo "Health check failed but continuing..."
-
+            curl -f http://localhost:8080/health || echo "Health check failed but continuing..."
+            
             echo "Service status:"
             docker compose ps
 
       - name: Deployment complete
-        run: echo "Deployment completed!"
+        run: echo "✅ Deployment completed!"
