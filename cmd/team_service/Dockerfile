@@ -15,6 +15,7 @@ RUN apk --no-cache add ca-certificates tzdata wget \
  && chmod +x /usr/local/bin/grpc_health_probe
 
 WORKDIR /app
+COPY cmd/team_service/config.yaml /app/config.yaml
 COPY --from=build /out/team_service /usr/local/bin/team_service
 
 EXPOSE 8084

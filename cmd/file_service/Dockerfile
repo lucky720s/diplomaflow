@@ -16,6 +16,7 @@ RUN apk --no-cache add ca-certificates tzdata wget \
 
 WORKDIR /app
 RUN mkdir -p /uploads
+COPY cmd/file_service/config.yaml /app/config.yaml
 COPY --from=build /out/file_service /usr/local/bin/file_service
 
 EXPOSE 8088

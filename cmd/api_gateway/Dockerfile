@@ -12,6 +12,7 @@ FROM alpine:3.22.2
 RUN apk --no-cache add ca-certificates tzdata wget
 
 WORKDIR /app
+COPY cmd/api_gateway/config.yaml /app/config.yaml
 COPY --from=build /out/api_gateway /usr/local/bin/api_gateway
 
 EXPOSE 8080
