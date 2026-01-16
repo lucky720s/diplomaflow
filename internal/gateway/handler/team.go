@@ -7,6 +7,7 @@ import (
 	"github.com/gin-gonic/gin"
 	teamv1 "github.com/lucky720s/diplomaflow/pkg/protobuf/team/v1"
 	"google.golang.org/genproto/protobuf/field_mask"
+	"google.golang.org/grpc/metadata"
 )
 
 func (h *Handler) CreateTeam(c *gin.Context) {
@@ -15,15 +16,26 @@ func (h *Handler) CreateTeam(c *gin.Context) {
 		ProjectID int64   `json:"project_id"`
 		MemberIDs []int64 `json:"member_ids"`
 	}
+
 	if err := c.ShouldBindJSON(&reqBody); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid json: " + err.Error()})
 		return
 	}
+
 	leaderID := c.GetInt64("userId")
 	if leaderID == 0 {
 		c.JSON(http.StatusUnauthorized, gin.H{"error": "unauthorized"})
 		return
 	}
+
+	// Важно: TeamService ожидает department_id в metadata (x-department-id) [[1]]
+	departmentID := c.GetInt64("departmentId")
+	ctx := metadata.AppendToOutgoingContext(
+		c.Request.Context(),
+		"x-department-id", strconv.FormatInt(departmentID, 10),
+		"x-user-id", strconv.FormatInt(leaderID, 10),
+	)
+
 	uniqueMembers := make(map[int64]bool)
 	var cleanMemberIDs []int64
 	for _, id := range reqBody.MemberIDs {
@@ -35,13 +47,15 @@ func (h *Handler) CreateTeam(c *gin.Context) {
 			cleanMemberIDs = append(cleanMemberIDs, id)
 		}
 	}
+
 	req := &teamv1.CreateTeamRequest{
 		Name:      reqBody.Name,
 		ProjectId: reqBody.ProjectID,
 		MemberIds: cleanMemberIDs,
 		LeaderId:  leaderID,
 	}
-	res, err := h.teamClient.CreateTeam(c.Request.Context(), req)
+
+	res, err := h.teamClient.CreateTeam(ctx, req)
 	if err != nil {
 		MapGRPCError(c, err)
 		return
@@ -63,14 +77,17 @@ func (h *Handler) GetTeam(c *gin.Context) {
 func (h *Handler) GetAvailableStudents(c *gin.Context) {
 	uniID := c.GetInt64("universityId")
 	userID := c.GetInt64("userId")
-
-	res, err := h.teamClient.GetAvailableStudents(c.Request.Context(), &teamv1.GetAvailableStudentsRequest{UniversityId: uniID, ExcludeUserId: userID})
+	res, err := h.teamClient.GetAvailableStudents(c.Request.Context(), &teamv1.GetAvailableStudentsRequest{
+		UniversityId:  uniID,
+		ExcludeUserId: userID,
+	})
 	if err != nil {
 		MapGRPCError(c, err)
 		return
 	}
 	c.JSON(http.StatusOK, res)
 }
+
 func (h *Handler) AssignProjectToTeam(c *gin.Context) {
 	teamIDStr := c.Param("id")
 	teamID, err := strconv.ParseInt(teamIDStr, 10, 64)
@@ -97,6 +114,7 @@ func (h *Handler) AssignProjectToTeam(c *gin.Context) {
 	}
 	c.JSON(http.StatusOK, gin.H{"success": true})
 }
+
 func (h *Handler) GetMyInvites(c *gin.Context) {
 	userID := c.GetInt64("userId")
 	res, err := h.teamClient.GetMyInvites(c.Request.Context(), &teamv1.GetMyInvitesRequest{UserId: userID})
@@ -130,6 +148,7 @@ func (h *Handler) RespondToInvite(c *gin.Context) {
 	}
 	c.JSON(http.StatusOK, gin.H{"success": true})
 }
+
 func (h *Handler) GetMyTeam(c *gin.Context) {
 	userID := c.GetInt64("userId")
 	if userID == 0 {
@@ -144,12 +163,11 @@ func (h *Handler) GetMyTeam(c *gin.Context) {
 		MapGRPCError(c, err)
 		return
 	}
-
 	c.JSON(http.StatusOK, res)
 }
+
 func (h *Handler) ListTeams(c *gin.Context) {
 	departmentID := c.GetInt64("departmentId")
-
 	var projectID int64
 	if pid := c.Query("project_id"); pid != "" {
 		projectID, _ = strconv.ParseInt(pid, 10, 64)
@@ -178,7 +196,6 @@ func (h *Handler) ListTeams(c *gin.Context) {
 		MapGRPCError(c, err)
 		return
 	}
-
 	c.JSON(http.StatusOK, res)
 }
 
@@ -210,7 +227,6 @@ func (h *Handler) UpdateTeam(c *gin.Context) {
 		MapGRPCError(c, err)
 		return
 	}
-
 	c.JSON(http.StatusOK, res)
 }
 
@@ -228,7 +244,6 @@ func (h *Handler) DeleteTeam(c *gin.Context) {
 		MapGRPCError(c, err)
 		return
 	}
-
 	c.JSON(http.StatusNoContent, nil)
 }
 
@@ -257,7 +272,6 @@ func (h *Handler) AddMember(c *gin.Context) {
 		MapGRPCError(c, err)
 		return
 	}
-
 	c.JSON(http.StatusOK, res)
 }
 
@@ -284,6 +298,5 @@ func (h *Handler) RemoveMember(c *gin.Context) {
 		MapGRPCError(c, err)
 		return
 	}
-
 	c.JSON(http.StatusNoContent, nil)
 }

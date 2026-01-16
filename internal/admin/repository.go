@@ -135,17 +135,6 @@ type repository struct {
 }
 
 func NewRepository(db *gorm.DB) Repository {
-	// Auto-migrate admin tables
-	_ = db.AutoMigrate(
-		&Grade{},
-		&GradeHistory{},
-		&TopicRegistration{},
-		&TopicRegistrationReview{},
-		&Submission{},
-		&SubmissionReview{},
-		&SupervisorAssignment{},
-		&AdminActivity{},
-	)
 	return &repository{db: db}
 }
 

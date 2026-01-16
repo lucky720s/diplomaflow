@@ -62,7 +62,7 @@ func main() {
 		groupID = "team-service-group"
 	}
 
-	kafkaConsumer, err := broker.NewConsumer(brokers, groupID, log.Logger)
+	kafkaConsumer, err := broker.NewConsumerWithRetry(brokers, groupID, log.Logger, broker.DefaultRetryConfig())
 	if err != nil {
 		log.Fatal("Failed to create kafka consumer", zap.Error(err))
 	}
@@ -91,12 +91,10 @@ func main() {
 	grpcServer := grpc.NewServer()
 	teamv1.RegisterTeamServiceServer(grpcServer, h)
 
-	// gRPC health
 	healthServer := health.NewServer()
 	grpc_health_v1.RegisterHealthServer(grpcServer, healthServer)
 	healthServer.SetServingStatus("", grpc_health_v1.HealthCheckResponse_SERVING)
 	healthServer.SetServingStatus("team.TeamService", grpc_health_v1.HealthCheckResponse_SERVING)
-
 	reflection.Register(grpcServer)
 
 	go func() {
@@ -113,7 +111,6 @@ func main() {
 	<-quit
 
 	log.Info("Shutting down...")
-
 	healthServer.SetServingStatus("", grpc_health_v1.HealthCheckResponse_NOT_SERVING)
 	healthServer.SetServingStatus("team.TeamService", grpc_health_v1.HealthCheckResponse_NOT_SERVING)
 

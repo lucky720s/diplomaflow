@@ -219,6 +219,12 @@ func (m *FileInfo) validate(all bool) error {
 
 	// no validation rules for FileType
 
+	// no validation rules for FileName
+
+	// no validation rules for UserId
+
+	// no validation rules for ProjectId
+
 	if len(errors) > 0 {
 		return FileInfoMultiError(errors)
 	}
@@ -534,6 +540,10 @@ func (m *GetFileInfoResponse) validate(all bool) error {
 
 	// no validation rules for DownloadUrl
 
+	// no validation rules for Size
+
+	// no validation rules for FileType
+
 	if len(errors) > 0 {
 		return GetFileInfoResponseMultiError(errors)
 	}
@@ -613,3 +623,211 @@ var _ interface {
 	Cause() error
 	ErrorName() string
 } = GetFileInfoResponseValidationError{}
+
+// Validate checks the field values on DownloadFileRequest with the rules
+// defined in the proto definition for this message. If any rules are
+// violated, the first error encountered is returned, or nil if there are no violations.
+func (m *DownloadFileRequest) Validate() error {
+	return m.validate(false)
+}
+
+// ValidateAll checks the field values on DownloadFileRequest with the rules
+// defined in the proto definition for this message. If any rules are
+// violated, the result is a list of violation errors wrapped in
+// DownloadFileRequestMultiError, or nil if none found.
+func (m *DownloadFileRequest) ValidateAll() error {
+	return m.validate(true)
+}
+
+func (m *DownloadFileRequest) validate(all bool) error {
+	if m == nil {
+		return nil
+	}
+
+	var errors []error
+
+	// no validation rules for Id
+
+	if len(errors) > 0 {
+		return DownloadFileRequestMultiError(errors)
+	}
+
+	return nil
+}
+
+// DownloadFileRequestMultiError is an error wrapping multiple validation
+// errors returned by DownloadFileRequest.ValidateAll() if the designated
+// constraints aren't met.
+type DownloadFileRequestMultiError []error
+
+// Error returns a concatenation of all the error messages it wraps.
+func (m DownloadFileRequestMultiError) Error() string {
+	msgs := make([]string, 0, len(m))
+	for _, err := range m {
+		msgs = append(msgs, err.Error())
+	}
+	return strings.Join(msgs, "; ")
+}
+
+// AllErrors returns a list of validation violation errors.
+func (m DownloadFileRequestMultiError) AllErrors() []error { return m }
+
+// DownloadFileRequestValidationError is the validation error returned by
+// DownloadFileRequest.Validate if the designated constraints aren't met.
+type DownloadFileRequestValidationError struct {
+	field  string
+	reason string
+	cause  error
+	key    bool
+}
+
+// Field function returns field value.
+func (e DownloadFileRequestValidationError) Field() string { return e.field }
+
+// Reason function returns reason value.
+func (e DownloadFileRequestValidationError) Reason() string { return e.reason }
+
+// Cause function returns cause value.
+func (e DownloadFileRequestValidationError) Cause() error { return e.cause }
+
+// Key function returns key value.
+func (e DownloadFileRequestValidationError) Key() bool { return e.key }
+
+// ErrorName returns error name.
+func (e DownloadFileRequestValidationError) ErrorName() string {
+	return "DownloadFileRequestValidationError"
+}
+
+// Error satisfies the builtin error interface
+func (e DownloadFileRequestValidationError) Error() string {
+	cause := ""
+	if e.cause != nil {
+		cause = fmt.Sprintf(" | caused by: %v", e.cause)
+	}
+
+	key := ""
+	if e.key {
+		key = "key for "
+	}
+
+	return fmt.Sprintf(
+		"invalid %sDownloadFileRequest.%s: %s%s",
+		key,
+		e.field,
+		e.reason,
+		cause)
+}
+
+var _ error = DownloadFileRequestValidationError{}
+
+var _ interface {
+	Field() string
+	Reason() string
+	Key() bool
+	Cause() error
+	ErrorName() string
+} = DownloadFileRequestValidationError{}
+
+// Validate checks the field values on DownloadFileResponse with the rules
+// defined in the proto definition for this message. If any rules are
+// violated, the first error encountered is returned, or nil if there are no violations.
+func (m *DownloadFileResponse) Validate() error {
+	return m.validate(false)
+}
+
+// ValidateAll checks the field values on DownloadFileResponse with the rules
+// defined in the proto definition for this message. If any rules are
+// violated, the result is a list of violation errors wrapped in
+// DownloadFileResponseMultiError, or nil if none found.
+func (m *DownloadFileResponse) ValidateAll() error {
+	return m.validate(true)
+}
+
+func (m *DownloadFileResponse) validate(all bool) error {
+	if m == nil {
+		return nil
+	}
+
+	var errors []error
+
+	// no validation rules for Chunk
+
+	if len(errors) > 0 {
+		return DownloadFileResponseMultiError(errors)
+	}
+
+	return nil
+}
+
+// DownloadFileResponseMultiError is an error wrapping multiple validation
+// errors returned by DownloadFileResponse.ValidateAll() if the designated
+// constraints aren't met.
+type DownloadFileResponseMultiError []error
+
+// Error returns a concatenation of all the error messages it wraps.
+func (m DownloadFileResponseMultiError) Error() string {
+	msgs := make([]string, 0, len(m))
+	for _, err := range m {
+		msgs = append(msgs, err.Error())
+	}
+	return strings.Join(msgs, "; ")
+}
+
+// AllErrors returns a list of validation violation errors.
+func (m DownloadFileResponseMultiError) AllErrors() []error { return m }
+
+// DownloadFileResponseValidationError is the validation error returned by
+// DownloadFileResponse.Validate if the designated constraints aren't met.
+type DownloadFileResponseValidationError struct {
+	field  string
+	reason string
+	cause  error
+	key    bool
+}
+
+// Field function returns field value.
+func (e DownloadFileResponseValidationError) Field() string { return e.field }
+
+// Reason function returns reason value.
+func (e DownloadFileResponseValidationError) Reason() string { return e.reason }
+
+// Cause function returns cause value.
+func (e DownloadFileResponseValidationError) Cause() error { return e.cause }
+
+// Key function returns key value.
+func (e DownloadFileResponseValidationError) Key() bool { return e.key }
+
+// ErrorName returns error name.
+func (e DownloadFileResponseValidationError) ErrorName() string {
+	return "DownloadFileResponseValidationError"
+}
+
+// Error satisfies the builtin error interface
+func (e DownloadFileResponseValidationError) Error() string {
+	cause := ""
+	if e.cause != nil {
+		cause = fmt.Sprintf(" | caused by: %v", e.cause)
+	}
+
+	key := ""
+	if e.key {
+		key = "key for "
+	}
+
+	return fmt.Sprintf(
+		"invalid %sDownloadFileResponse.%s: %s%s",
+		key,
+		e.field,
+		e.reason,
+		cause)
+}
+
+var _ error = DownloadFileResponseValidationError{}
+
+var _ interface {
+	Field() string
+	Reason() string
+	Key() bool
+	Cause() error
+	ErrorName() string
+} = DownloadFileResponseValidationError{}

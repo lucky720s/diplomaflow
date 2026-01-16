@@ -7,6 +7,9 @@ option go_package = "github.com/lucky720s/diplomaflow/pkg/protobuf/file/v1";
 service FileService {
   rpc UploadFile(stream UploadFileRequest) returns (UploadFileResponse);
   rpc GetFileInfo(GetFileInfoRequest) returns (GetFileInfoResponse);
+
+  // Download file contents as stream of chunks
+  rpc DownloadFile(DownloadFileRequest) returns (stream DownloadFileResponse);
 }
 
 message UploadFileRequest {
@@ -17,20 +20,41 @@ message UploadFileRequest {
 }
 
 message FileInfo {
+  // Example: ".pdf" (extension) or logical file type if you use it that way
   string file_type = 1;
+
+  // Original client filename (used to preserve extension & show name in UI)
+  string file_name = 2;
+
+  // Who uploads (from gateway token)
+  int64 user_id = 3;
+
+  // Optional: project attachment
+  int64 project_id = 4;
 }
 
 message UploadFileResponse {
+  // Stable ID (uuid) WITHOUT extension
   string id = 1;
   uint32 size = 2;
 }
 
 message GetFileInfoRequest {
-  string id = 1;
+  string id = 1; // stable id (uuid) or legacy stored filename
 }
 
 message GetFileInfoResponse {
-  string id = 1;
-  string name = 2;
-  string download_url = 3;
+  string id = 1;           // stable id
+  string name = 2;         // original file name (if known)
+  string download_url = 3; // usually gateway URL
+  int64 size = 4;
+  string file_type = 5;
+}
+
+message DownloadFileRequest {
+  string id = 1; // stable id (uuid) or legacy stored filename
+}
+
+message DownloadFileResponse {
+  bytes chunk = 1;
 }

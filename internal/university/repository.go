@@ -12,6 +12,7 @@ type Repository interface {
 	ListUniversities(ctx context.Context) ([]*University, error)
 	UpdateUniversity(ctx context.Context, uni *University) error
 	DeleteUniversity(ctx context.Context, id int64) error
+
 	CreateDepartment(ctx context.Context, dep *Department) error
 	GetDepartment(ctx context.Context, id int64) (*Department, error)
 	ListDepartments(ctx context.Context, uniID int64) ([]*Department, error)
@@ -24,7 +25,6 @@ type repository struct {
 }
 
 func NewRepository(db *gorm.DB) Repository {
-	_ = db.AutoMigrate(&University{}, &Department{})
 	return &repository{db: db}
 }
 
@@ -48,17 +48,6 @@ func (r *repository) ListUniversities(ctx context.Context) ([]*University, error
 	return unis, nil
 }
 
-func (r *repository) CreateDepartment(ctx context.Context, dep *Department) error {
-	return r.db.WithContext(ctx).Create(dep).Error
-}
-
-func (r *repository) ListDepartments(ctx context.Context, uniID int64) ([]*Department, error) {
-	var deps []*Department
-	if err := r.db.WithContext(ctx).Where("university_id = ?", uniID).Find(&deps).Error; err != nil {
-		return nil, err
-	}
-	return deps, nil
-}
 func (r *repository) UpdateUniversity(ctx context.Context, uni *University) error {
 	return r.db.WithContext(ctx).Save(uni).Error
 }
@@ -67,12 +56,24 @@ func (r *repository) DeleteUniversity(ctx context.Context, id int64) error {
 	return r.db.WithContext(ctx).Delete(&University{}, id).Error
 }
 
+func (r *repository) CreateDepartment(ctx context.Context, dep *Department) error {
+	return r.db.WithContext(ctx).Create(dep).Error
+}
+
 func (r *repository) GetDepartment(ctx context.Context, id int64) (*Department, error) {
 	var dep Department
 	if err := r.db.WithContext(ctx).First(&dep, id).Error; err != nil {
 		return nil, err
 	}
 	return &dep, nil
+}
+
+func (r *repository) ListDepartments(ctx context.Context, uniID int64) ([]*Department, error) {
+	var deps []*Department
+	if err := r.db.WithContext(ctx).Where("university_id = ?", uniID).Find(&deps).Error; err != nil {
+		return nil, err
+	}
+	return deps, nil
 }
 
 func (r *repository) UpdateDepartment(ctx context.Context, dep *Department) error {
