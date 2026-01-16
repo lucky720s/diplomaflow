@@ -39,7 +39,7 @@ func main() {
 	}
 
 	brokers := strings.Split(cfg.Kafka.Brokers, ",")
-	kafkaProducer, err := broker.NewProducer(brokers)
+	kafkaProducer, err := broker.NewProducerWithRetry(brokers, log.Logger, broker.DefaultRetryConfig())
 	if err != nil {
 		log.Fatal("Failed to create kafka producer", zap.Error(err))
 	}
@@ -70,7 +70,6 @@ func main() {
 	grpcServer := grpc.NewServer()
 	projectv1.RegisterProjectServiceServer(grpcServer, app.Handler)
 
-	// gRPC health
 	healthServer := health.NewServer()
 	grpc_health_v1.RegisterHealthServer(grpcServer, healthServer)
 	healthServer.SetServingStatus("", grpc_health_v1.HealthCheckResponse_SERVING)
@@ -88,15 +87,14 @@ func main() {
 	<-quit
 
 	log.Info("Shutting down...")
-
 	healthServer.SetServingStatus("", grpc_health_v1.HealthCheckResponse_NOT_SERVING)
 	healthServer.SetServingStatus("project.ProjectService", grpc_health_v1.HealthCheckResponse_NOT_SERVING)
 
 	cancel()
 	app.OutboxProcessor.Stop()
 	app.DeadlineScheduler.Stop()
-	time.Sleep(500 * time.Millisecond)
 
+	time.Sleep(500 * time.Millisecond)
 	grpcServer.GracefulStop()
 	log.Info("Project Service exited")
 }

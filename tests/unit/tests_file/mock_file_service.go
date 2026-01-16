@@ -3,7 +3,7 @@ package tests_file
 import (
 	"context"
 
-	"github.com/lucky720s/diplomaflow/internal/file"
+	file "github.com/lucky720s/diplomaflow/internal/file"
 	"github.com/stretchr/testify/mock"
 )
 

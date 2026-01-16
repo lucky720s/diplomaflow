@@ -18,9 +18,15 @@ func main() {
 	if err := config.Load("config.yaml", &cfg); err != nil {
 		panic(err)
 	}
-	//test
+
 	log := logger.New(cfg.Env)
 	defer log.Sync()
+
+	// FAIL-FAST: JWT secret must be set via env in real deployments
+	// В config.yaml он может быть пустым, но в ENV он должен прийти обязательно.
+	if cfg.JWTSecret == "" {
+		log.Fatal("JWT_SECRET is required (gateway validates JWT locally)")
+	}
 
 	handler, cleanup, err := gateway.InitializeApp(&cfg, log)
 	if err != nil {
@@ -47,18 +53,21 @@ func main() {
 			auth.POST("/refresh", handler.RefreshToken)
 			auth.POST("/logout", handler.Logout)
 		}
+
 		authProtected := v1.Group("/auth")
 		authProtected.Use(middleware.AuthMiddleware(cfg.JWTSecret))
 		{
 			authProtected.GET("/sessions", handler.ListSessions)
 			authProtected.DELETE("/sessions/:id", handler.RevokeSession)
 		}
+
 		users := v1.Group("/users")
 		users.Use(middleware.AuthMiddleware(cfg.JWTSecret))
 		{
 			users.GET("/me", handler.GetMe)
 			users.GET("", handler.ListUsers)
 		}
+
 		universities := v1.Group("/universities")
 		{
 			universities.GET("", handler.ListUniversities)
@@ -143,6 +152,7 @@ func main() {
 			teams.POST("/:id/supervisor-request", handler.CreateSupervisorRequest)
 			teams.DELETE("/supervisor-requests/:id", handler.CancelSupervisorRequest)
 		}
+
 		invites := v1.Group("/invites")
 		invites.Use(middleware.AuthMiddleware(cfg.JWTSecret))
 		{

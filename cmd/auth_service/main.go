@@ -26,6 +26,17 @@ func main() {
 		panic(fmt.Sprintf("failed to load config: %v", err))
 	}
 
+	// HARD GUARANTEE: jwt secret must exist.
+	// config.yaml может быть пустым, но env должен прийти.
+	if cfg.JWT.Secret == "" {
+		if v := os.Getenv("JWT_SECRET"); v != "" {
+			cfg.JWT.Secret = v
+		}
+	}
+	if cfg.JWT.Secret == "" {
+		panic("JWT_SECRET is required for auth_service (cfg.jwt.secret is empty and env JWT_SECRET not set)")
+	}
+
 	log := logger.New(cfg.Env)
 	defer log.Sync()
 
@@ -43,7 +54,6 @@ func main() {
 	grpcServer := grpc.NewServer()
 	authv1.RegisterAuthServiceServer(grpcServer, h)
 
-	// gRPC health
 	healthServer := health.NewServer()
 	grpc_health_v1.RegisterHealthServer(grpcServer, healthServer)
 	healthServer.SetServingStatus("", grpc_health_v1.HealthCheckResponse_SERVING)

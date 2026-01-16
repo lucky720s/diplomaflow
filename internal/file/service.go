@@ -2,9 +2,11 @@ package file
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"os"
 	"path/filepath"
+	"strings"
 	"time"
 
 	"github.com/google/uuid"
@@ -31,71 +33,82 @@ func NewService(cfg *Config, repo Repository, log *logger.Logger) *Service {
 	}
 }
 
-func (s *Service) CreateFile(ext string) (*os.File, string, error) {
-	id := uuid.New().String()
-	fileName := id
-	if ext != "" {
-		fileName = fmt.Sprintf("%s%s", id, ext)
-	}
+// GetFileURL returns gateway URL (public).
+func (s *Service) GetFileURL(id string) string {
+	return fmt.Sprintf("%s/files/%s", strings.TrimRight(s.baseURL, "/"), id)
+}
 
-	fullPath := filepath.Join(s.storagePath, fileName)
-	file, err := os.Create(fullPath)
+// StartUpload creates temp file for upload and returns stable id + temp file handle.
+// fileName used for extension extraction.
+func (s *Service) StartUpload(fileName string) (id string, tempPath string, finalPath string, f *os.File, err error) {
+	id = uuid.New().String()
+	ext := filepath.Ext(fileName) // includes dot
+	// If no extension, keep ext empty
+	finalName := id + ext
+	tempName := finalName + ".tmp"
+
+	tempPath = filepath.Join(s.storagePath, tempName)
+	finalPath = filepath.Join(s.storagePath, finalName)
+
+	f, err = os.Create(tempPath)
 	if err != nil {
-		return nil, "", err
+		return "", "", "", nil, err
 	}
-	return file, fileName, nil
+	return id, tempPath, finalPath, f, nil
 }
 
-func (s *Service) GetFileURL(fileID string) string {
-	return fmt.Sprintf("%s/files/%s", s.baseURL, fileID)
-}
-
-func (s *Service) FileExists(fileID string) bool {
-	fullPath := filepath.Join(s.storagePath, fileID)
-	_, err := os.Stat(fullPath)
-	return !os.IsNotExist(err)
-}
-func (s *Service) SaveFile(ctx context.Context, userID, projectID int64, fileName, fileType string, size int64) (string, *os.File, error) {
-	id := uuid.New().String()
-	ext := filepath.Ext(fileName)
-	fullName := id + ext
-
-	fullPath := filepath.Join(s.storagePath, fullName)
-	file, err := os.Create(fullPath)
-	if err != nil {
-		return "", nil, err
+func (s *Service) CommitUpload(ctx context.Context, id, tempPath, finalPath string, userID, projectID int64, originalName, fileType string, size int64) error {
+	// rename temp -> final (atomic on same filesystem)
+	if err := os.Rename(tempPath, finalPath); err != nil {
+		_ = os.Remove(tempPath)
+		return fmt.Errorf("rename temp to final: %w", err)
 	}
 
 	meta := &FileMetadata{
 		ID:        id,
 		UserID:    userID,
 		ProjectID: projectID,
-		FileName:  fileName,
+		FileName:  originalName,
 		FileType:  fileType,
 		Size:      size,
-		CreatedAt: time.Now(),
+		CreatedAt: time.Now().UTC(),
 	}
+
 	if err := s.repo.SaveMetadata(ctx, meta); err != nil {
-		file.Close()
-		os.Remove(fullPath)
+		// rollback file if metadata failed
+		_ = os.Remove(finalPath)
+		return fmt.Errorf("save metadata: %w", err)
+	}
+	return nil
+}
+
+// ResolveFilePath supports:
+// 1) stable id (uuid) -> metadata -> id+ext
+// 2) legacy: id contains dot => treat as stored filename
+func (s *Service) ResolveFilePath(ctx context.Context, id string) (path string, meta *FileMetadata, err error) {
+	id = strings.TrimSpace(id)
+	if id == "" {
+		return "", nil, errors.New("id is required")
+	}
+
+	// Legacy: looks like "uuid.ext"
+	if strings.Contains(id, ".") {
+		p := filepath.Join(s.storagePath, filepath.Base(id))
+		if _, statErr := os.Stat(p); statErr != nil {
+			return "", nil, statErr
+		}
+		return p, nil, nil
+	}
+
+	// Stable id: resolve by metadata
+	m, err := s.repo.GetMetadata(ctx, id)
+	if err != nil {
 		return "", nil, err
 	}
-
-	return fullName, file, nil
-}
-func (s *Service) GetMetadata(ctx context.Context, id string) (*FileMetadata, error) {
-	return s.repo.GetMetadata(ctx, id)
-}
-
-func NewTestService(
-	storagePath string,
-	repo Repository,
-	log *logger.Logger,
-) *Service {
-	return &Service{
-		storagePath: storagePath,
-		baseURL:     "http://test",
-		repo:        repo,
-		logger:      log,
+	ext := filepath.Ext(m.FileName)
+	p := filepath.Join(s.storagePath, m.ID+ext)
+	if _, statErr := os.Stat(p); statErr != nil {
+		return "", nil, statErr
 	}
+	return p, m, nil
 }

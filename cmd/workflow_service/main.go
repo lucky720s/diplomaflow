@@ -71,14 +71,14 @@ func main() {
 	eng := engine.NewWorkflowEngine(repo, log.Logger)
 	h := runtimegrpc.New(base, eng, projectClient, log.Logger)
 
-	// Kafka consumer: workflow-actions (POST actions + deadlines)
+	// Kafka consumer: workflow-actions
 	brokers := strings.Split(cfg.Kafka.Brokers, ",")
 	groupID := cfg.Kafka.GroupID
 	if groupID == "" {
 		groupID = "workflow-service-group"
 	}
 
-	consumer, err := broker.NewConsumer(brokers, groupID, log.Logger)
+	consumer, err := broker.NewConsumerWithRetry(brokers, groupID, log.Logger, broker.DefaultRetryConfig())
 	if err != nil {
 		log.Fatal("failed to create kafka consumer", zap.Error(err))
 	}
@@ -90,6 +90,7 @@ func main() {
 	defer cancel()
 
 	go func() {
+		log.Info("Starting Kafka consumer", zap.Strings("topics", []string{"workflow-actions"}), zap.String("group_id", groupID))
 		consumer.Start(ctx, []string{"workflow-actions"}, worker.HandleEvent)
 	}()
 
@@ -102,17 +103,13 @@ func main() {
 	grpcServer := grpc.NewServer()
 	workflowv1.RegisterWorkflowServiceServer(grpcServer, h)
 
-	// gRPC health
 	healthServer := health.NewServer()
 	grpc_health_v1.RegisterHealthServer(grpcServer, healthServer)
-
-	// ВАЖНО: выставляем и общий статус "", и статус конкретного сервиса
 	healthServer.SetServingStatus("", grpc_health_v1.HealthCheckResponse_SERVING)
 	healthServer.SetServingStatus("workflow.v1.WorkflowService", grpc_health_v1.HealthCheckResponse_SERVING)
 
 	reflection.Register(grpcServer)
 
-	// Start serving
 	go func() {
 		log.Info("Workflow Service starting", zap.String("port", cfg.GRPCPort))
 		if err := grpcServer.Serve(lis); err != nil {
@@ -120,23 +117,16 @@ func main() {
 		}
 	}()
 
-	// Graceful shutdown
 	stop := make(chan os.Signal, 1)
 	signal.Notify(stop, syscall.SIGINT, syscall.SIGTERM)
 	<-stop
 
 	log.Info("Shutdown signal received")
-
-	// Mark NOT_SERVING before stopping (so orchestrator stops routing)
 	healthServer.SetServingStatus("", grpc_health_v1.HealthCheckResponse_NOT_SERVING)
 	healthServer.SetServingStatus("workflow.v1.WorkflowService", grpc_health_v1.HealthCheckResponse_NOT_SERVING)
 
-	// Stop background workers
 	cancel()
-
-	// Give some time for background goroutines to finish
 	time.Sleep(300 * time.Millisecond)
-
 	grpcServer.GracefulStop()
 	log.Info("Workflow Service stopped")
 }

@@ -27,7 +27,6 @@ services:
       retries: 15
     restart: unless-stopped
 
-  # Kafka без ZooKeeper (KRaft)
   kafka:
     image: confluentinc/cp-kafka:7.6.1
     container_name: kafka
@@ -44,12 +43,31 @@ services:
       KAFKA_LISTENERS: "PLAINTEXT://0.0.0.0:29092,PLAINTEXT_HOST://0.0.0.0:9092,CONTROLLER://0.0.0.0:29093"
       KAFKA_ADVERTISED_LISTENERS: "PLAINTEXT://kafka:29092,PLAINTEXT_HOST://localhost:9092"
       KAFKA_INTER_BROKER_LISTENER_NAME: "PLAINTEXT"
-
       KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
       KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 1
       KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 1
       KAFKA_GROUP_INITIAL_REBALANCE_DELAY_MS: 0
+    healthcheck:
+      # cub есть в cp-kafka. Проверяет, что брокер реально готов принимать запросы.
+      test: ["CMD-SHELL", "cub kafka-ready -b localhost:29092 1 30"]
+      interval: 5s
+      timeout: 5s
+      retries: 30
+      start_period: 10s
     restart: unless-stopped
+
+  migrate:
+    container_name: migrate
+    build:
+      context: .
+      dockerfile: cmd/migrate/Dockerfile
+    depends_on:
+      main_postgres:
+        condition: service_healthy
+    environment:
+      DATABASE_URL: "postgres://${POSTGRES_USER:-diplomaflow}:${POSTGRES_PASSWORD:-diplomaflow_prod_pass}@main_postgres:5432/${POSTGRES_DB:-diplomaflow}?sslmode=disable"
+    command: [ "-cmd=up", "-path=file:///app/db/migrations" ]
+    restart: "no"
 
   api_gateway:
     container_name: api_gateway
@@ -59,19 +77,20 @@ services:
     ports:
       - "${PORT_GATEWAY:-8080}:8080"
     environment:
+      ENV: ${ENV:-production}
       PORT: "8080"
       REDIS_ADDR: "redis:6379"
-
-      AUTH_SERVICE_ADDR: "auth_service:8082"
-      UNIVERSITY_SERVICE_ADDR: "university_service:8081"
-      PROJECT_SERVICE_ADDR: "project_service:8083"
-      TEAM_SERVICE_ADDR: "team_service:8084"
-      WORKFLOW_SERVICE_ADDR: "workflow_service:8085"
-      ROLE_SERVICE_ADDR: "role_service:8086"
-      NOTIFICATION_SERVICE_ADDR: "notification_service:8087"
-      FILE_SERVICE_ADDR: "file_service:8088"
-      FORM_SERVICE_ADDR: "form_service:8089"
-      ADMIN_SERVICE_ADDR: "admin_service:8090"
+      JWT_SECRET: ${JWT_SECRET:?JWT_SECRET is required}
+      SERVICES_AUTH_ADDR: ${SERVICES_AUTH_ADDR:-auth_service:8082}
+      SERVICES_UNIVERSITY_ADDR: ${SERVICES_UNIVERSITY_ADDR:-university_service:8081}
+      SERVICES_PROJECT_ADDR: ${SERVICES_PROJECT_ADDR:-project_service:8083}
+      SERVICES_TEAM_ADDR: ${SERVICES_TEAM_ADDR:-team_service:8084}
+      SERVICES_WORKFLOW_ADDR: ${SERVICES_WORKFLOW_ADDR:-workflow_service:8085}
+      SERVICES_ROLE_ADDR: ${SERVICES_ROLE_ADDR:-role_service:8086}
+      SERVICES_NOTIFICATION_ADDR: ${SERVICES_NOTIFICATION_ADDR:-notification_service:8087}
+      SERVICES_FILE_ADDR: ${SERVICES_FILE_ADDR:-file_service:8088}
+      SERVICES_FORM_ADDR: ${SERVICES_FORM_ADDR:-form_service:8089}
+      SERVICES_ADMIN_ADDR: ${SERVICES_ADMIN_ADDR:-admin_service:8090}
     depends_on:
       redis:
         condition: service_healthy
@@ -115,8 +134,8 @@ services:
       ENV: ${ENV:-production}
       DATABASE_DSN: "host=main_postgres user=${POSTGRES_USER:-diplomaflow} password=${POSTGRES_PASSWORD:-diplomaflow_prod_pass} dbname=${POSTGRES_DB:-diplomaflow} port=5432 sslmode=disable TimeZone=UTC"
     depends_on:
-      main_postgres:
-        condition: service_healthy
+      migrate:
+        condition: service_completed_successfully
     healthcheck:
       test: ["CMD", "grpc_health_probe", "-addr=localhost:8081", "-service=university.v1.UniversityService"]
       interval: 10s
@@ -137,12 +156,12 @@ services:
       ENV: ${ENV:-production}
       DATABASE_DSN: "host=main_postgres user=${POSTGRES_USER:-diplomaflow} password=${POSTGRES_PASSWORD:-diplomaflow_prod_pass} dbname=${POSTGRES_DB:-diplomaflow} port=5432 sslmode=disable TimeZone=UTC"
       REDIS_ADDR: "redis:6379"
-      JWT_SECRET: ${JWT_SECRET:-dev_secret}
+      JWT_SECRET: ${JWT_SECRET:?JWT_SECRET is required}
       ACCESS_TOKEN_TTL: ${ACCESS_TOKEN_TTL:-15m}
       REFRESH_TOKEN_TTL: ${REFRESH_TOKEN_TTL:-720h}
     depends_on:
-      main_postgres:
-        condition: service_healthy
+      migrate:
+        condition: service_completed_successfully
       redis:
         condition: service_healthy
     healthcheck:
@@ -165,12 +184,11 @@ services:
       ENV: ${ENV:-production}
       DATABASE_DSN: "host=main_postgres user=${POSTGRES_USER:-diplomaflow} password=${POSTGRES_PASSWORD:-diplomaflow_prod_pass} dbname=${POSTGRES_DB:-diplomaflow} port=5432 sslmode=disable TimeZone=UTC"
       KAFKA_BROKERS: ${KAFKA_BROKERS:-kafka:29092}
-      WORKFLOW_SERVICE_ADDR: "workflow_service:8085"
     depends_on:
-      main_postgres:
-        condition: service_healthy
+      migrate:
+        condition: service_completed_successfully
       kafka:
-        condition: service_started
+        condition: service_healthy
     healthcheck:
       test: ["CMD", "grpc_health_probe", "-addr=localhost:8083", "-service=project.ProjectService"]
       interval: 10s
@@ -191,14 +209,11 @@ services:
       ENV: ${ENV:-production}
       DATABASE_DSN: "host=main_postgres user=${POSTGRES_USER:-diplomaflow} password=${POSTGRES_PASSWORD:-diplomaflow_prod_pass} dbname=${POSTGRES_DB:-diplomaflow} port=5432 sslmode=disable TimeZone=UTC"
       KAFKA_BROKERS: ${KAFKA_BROKERS:-kafka:29092}
-      AUTH_SERVICE_ADDR: "auth_service:8082"
-      NOTIFICATION_SERVICE_ADDR: "notification_service:8087"
-      WORKFLOW_SERVICE_ADDR: "workflow_service:8085"
     depends_on:
-      main_postgres:
-        condition: service_healthy
+      migrate:
+        condition: service_completed_successfully
       kafka:
-        condition: service_started
+        condition: service_healthy
       auth_service:
         condition: service_healthy
     healthcheck:
@@ -225,10 +240,10 @@ services:
       SERVICES_NOTIFICATION_ADDR: "notification_service:8087"
       SERVICES_PROJECT_ADDR: "project_service:8083"
     depends_on:
-      main_postgres:
-        condition: service_healthy
+      migrate:
+        condition: service_completed_successfully
       kafka:
-        condition: service_started
+        condition: service_healthy
       project_service:
         condition: service_healthy
       notification_service:
@@ -253,8 +268,8 @@ services:
       ENV: ${ENV:-production}
       DATABASE_DSN: "host=main_postgres user=${POSTGRES_USER:-diplomaflow} password=${POSTGRES_PASSWORD:-diplomaflow_prod_pass} dbname=${POSTGRES_DB:-diplomaflow} port=5432 sslmode=disable TimeZone=UTC"
     depends_on:
-      main_postgres:
-        condition: service_healthy
+      migrate:
+        condition: service_completed_successfully
     healthcheck:
       test: ["CMD", "grpc_health_probe", "-addr=localhost:8086", "-service=role.v1.RoleService"]
       interval: 10s
@@ -275,8 +290,8 @@ services:
       ENV: ${ENV:-production}
       DATABASE_DSN: "host=main_postgres user=${POSTGRES_USER:-diplomaflow} password=${POSTGRES_PASSWORD:-diplomaflow_prod_pass} dbname=${POSTGRES_DB:-diplomaflow} port=5432 sslmode=disable TimeZone=UTC"
     depends_on:
-      main_postgres:
-        condition: service_healthy
+      migrate:
+        condition: service_completed_successfully
     healthcheck:
       test: ["CMD", "grpc_health_probe", "-addr=localhost:8087", "-service=notification.NotificationService"]
       interval: 10s
@@ -300,8 +315,8 @@ services:
     volumes:
       - file_uploads:/uploads
     depends_on:
-      main_postgres:
-        condition: service_healthy
+      migrate:
+        condition: service_completed_successfully
     healthcheck:
       test: ["CMD", "grpc_health_probe", "-addr=localhost:8088", "-service=file.FileService"]
       interval: 10s
@@ -322,8 +337,8 @@ services:
       ENV: ${ENV:-production}
       DATABASE_DSN: "host=main_postgres user=${POSTGRES_USER:-diplomaflow} password=${POSTGRES_PASSWORD:-diplomaflow_prod_pass} dbname=${POSTGRES_DB:-diplomaflow} port=5432 sslmode=disable TimeZone=UTC"
     depends_on:
-      main_postgres:
-        condition: service_healthy
+      migrate:
+        condition: service_completed_successfully
     healthcheck:
       test: ["CMD", "grpc_health_probe", "-addr=localhost:8089", "-service=form.FormService"]
       interval: 10s
@@ -343,13 +358,9 @@ services:
       GRPC_PORT: "8090"
       ENV: ${ENV:-production}
       DATABASE_DSN: "host=main_postgres user=${POSTGRES_USER:-diplomaflow} password=${POSTGRES_PASSWORD:-diplomaflow_prod_pass} dbname=${POSTGRES_DB:-diplomaflow} port=5432 sslmode=disable TimeZone=UTC"
-      AUTH_SERVICE_ADDR: "auth_service:8082"
-      PROJECT_SERVICE_ADDR: "project_service:8083"
-      TEAM_SERVICE_ADDR: "team_service:8084"
-      WORKFLOW_SERVICE_ADDR: "workflow_service:8085"
     depends_on:
-      main_postgres:
-        condition: service_healthy
+      migrate:
+        condition: service_completed_successfully
       auth_service:
         condition: service_healthy
       project_service:
