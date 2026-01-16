@@ -32,8 +32,11 @@ func main() {
 		Addr: cfg.RedisAddr,
 	})
 
-	router := gin.Default()
+	router := gin.New()
+	router.Use(gin.Recovery())
 	router.Use(middleware.CorsMiddleware(cfg.AllowedOrigins))
+	router.Use(middleware.TraceIDMiddleware())
+	router.Use(middleware.RequestTimingMiddleware(log.Logger))
 
 	v1 := router.Group("/api/v1")
 	{
