@@ -67,7 +67,7 @@ services:
       main_postgres:
         condition: service_healthy
     environment:
-      DATABASE_URL: "host=main_postgres user=${POSTGRES_USER:-diplomaflow} password=${POSTGRES_PASSWORD:-diplomaflow_prod_pass} dbname=${POSTGRES_DB:-diplomaflow} port=5432 sslmode=disable"
+      DATABASE_URL: ${DATABASE_URL}
     command: ["-cmd=up", "-path=file:///app/db/migrations"]
     restart: "no"
 
