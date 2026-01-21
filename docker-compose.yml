@@ -70,7 +70,7 @@ services:
       main_postgres:
         condition: service_healthy
     environment:
-      # ВАЖНО: migrate у тебя требует URL со scheme (postgres://)
+      # ВАЖНО: migrate требует URL со scheme (postgres://)
       DATABASE_URL: ${DATABASE_URL:?DATABASE_URL is required}
     command: ["-cmd=up", "-path=file:///app/db/migrations"]
     restart: "no"
