@@ -1,37 +1,41 @@
+name: diplomaflow
+
+x-common-env: &common_env
+  ENV: ${ENV:-production}
+  DATABASE_DSN: ${DATABASE_DSN:?DATABASE_DSN is required}
+
 services:
   main_postgres:
     image: postgres:16-alpine
-    container_name: main_postgres
     environment:
       POSTGRES_USER: ${POSTGRES_USER:-diplomaflow}
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-diplomaflow_prod_pass}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?POSTGRES_PASSWORD is required}
       POSTGRES_DB: ${POSTGRES_DB:-diplomaflow}
     ports:
-      - "127.0.0.1:5433:5432"
+      - "127.0.0.1:${POSTGRES_HOST_PORT:-5433}:5432"
     volumes:
       - pg_data:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U $$POSTGRES_USER -d $$POSTGRES_DB"]
-      interval: 10s
+      # без -d, чтобы не ловить ложный "db does not exist" в момент первого init
+      test: ["CMD-SHELL", "pg_isready -U $$POSTGRES_USER"]
+      interval: 5s
       timeout: 3s
-      retries: 15
+      retries: 30
     restart: unless-stopped
 
   redis:
     image: redis:7-alpine
-    container_name: redis
     ports:
       - "127.0.0.1:6379:6379"
     healthcheck:
       test: ["CMD", "redis-cli", "ping"]
-      interval: 10s
+      interval: 5s
       timeout: 3s
-      retries: 15
+      retries: 30
     restart: unless-stopped
 
   kafka:
     image: confluentinc/cp-kafka:7.6.1
-    container_name: kafka
     ports:
       - "127.0.0.1:9092:9092"
     environment:
@@ -43,6 +47,7 @@ services:
       CLUSTER_ID: ${KAFKA_KRAFT_CLUSTER_ID:-MkU3OEVBNTcwNTJENDM2Qk}
       KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: "PLAINTEXT:PLAINTEXT,PLAINTEXT_HOST:PLAINTEXT,CONTROLLER:PLAINTEXT"
       KAFKA_LISTENERS: "PLAINTEXT://0.0.0.0:29092,PLAINTEXT_HOST://0.0.0.0:9092,CONTROLLER://0.0.0.0:29093"
+      # внутри сети контейнеры ходят на kafka:29092, с хоста — localhost:9092
       KAFKA_ADVERTISED_LISTENERS: "PLAINTEXT://kafka:29092,PLAINTEXT_HOST://localhost:9092"
       KAFKA_INTER_BROKER_LISTENER_NAME: "PLAINTEXT"
       KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
@@ -50,7 +55,6 @@ services:
       KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 1
       KAFKA_GROUP_INITIAL_REBALANCE_DELAY_MS: 0
     healthcheck:
-      # cub есть в cp-kafka. Проверяет, что брокер реально готов принимать запросы.
       test: ["CMD-SHELL", "cub kafka-ready -b localhost:29092 1 30"]
       interval: 5s
       timeout: 5s
@@ -59,7 +63,6 @@ services:
     restart: unless-stopped
 
   migrate:
-    container_name: migrate
     build:
       context: .
       dockerfile: cmd/migrate/Dockerfile
@@ -67,22 +70,23 @@ services:
       main_postgres:
         condition: service_healthy
     environment:
-      DATABASE_URL: ${DATABASE_URL}
+      # ВАЖНО: migrate у тебя требует URL со scheme (postgres://)
+      DATABASE_URL: ${DATABASE_URL:?DATABASE_URL is required}
     command: ["-cmd=up", "-path=file:///app/db/migrations"]
     restart: "no"
 
   api_gateway:
-    container_name: api_gateway
     build:
       context: .
       dockerfile: cmd/api_gateway/Dockerfile
     ports:
-      - "${PORT_GATEWAY:-8080}:8080"
+      - "${GATEWAY_BIND_ADDR:-0.0.0.0}:${PORT_GATEWAY:-8080}:8080"
     environment:
       ENV: ${ENV:-production}
       PORT: "8080"
-      REDIS_ADDR: "redis:6379"
+      REDIS_ADDR: ${REDIS_ADDR:-redis:6379}
       JWT_SECRET: ${JWT_SECRET:?JWT_SECRET is required}
+
       SERVICES_AUTH_ADDR: ${SERVICES_AUTH_ADDR:-auth_service:8082}
       SERVICES_UNIVERSITY_ADDR: ${SERVICES_UNIVERSITY_ADDR:-university_service:8081}
       SERVICES_PROJECT_ADDR: ${SERVICES_PROJECT_ADDR:-project_service:8083}
@@ -96,26 +100,6 @@ services:
     depends_on:
       redis:
         condition: service_healthy
-      auth_service:
-        condition: service_healthy
-      university_service:
-        condition: service_healthy
-      project_service:
-        condition: service_healthy
-      team_service:
-        condition: service_healthy
-      workflow_service:
-        condition: service_healthy
-      role_service:
-        condition: service_healthy
-      notification_service:
-        condition: service_healthy
-      file_service:
-        condition: service_healthy
-      form_service:
-        condition: service_healthy
-      admin_service:
-        condition: service_healthy
     healthcheck:
       test: ["CMD-SHELL", "wget -qO- http://localhost:8080/healthz >/dev/null 2>&1"]
       interval: 10s
@@ -125,16 +109,14 @@ services:
     restart: unless-stopped
 
   university_service:
-    container_name: university_service
     build:
       context: .
       dockerfile: cmd/university_service/Dockerfile
     ports:
-      - "${PORT_UNIVERSITY:-8081}:8081"
+      - "127.0.0.1:${PORT_UNIVERSITY:-8081}:8081"
     environment:
+      <<: *common_env
       GRPC_PORT: "8081"
-      ENV: ${ENV:-production}
-      DATABASE_DSN: "host=main_postgres user=${POSTGRES_USER:-diplomaflow} password=${POSTGRES_PASSWORD:-diplomaflow_prod_pass} dbname=${POSTGRES_DB:-diplomaflow} port=5432 sslmode=disable TimeZone=UTC"
     depends_on:
       migrate:
         condition: service_completed_successfully
@@ -143,21 +125,19 @@ services:
       interval: 10s
       timeout: 3s
       retries: 15
-      start_period: 15s
+      start_period: 20s
     restart: unless-stopped
 
   auth_service:
-    container_name: auth_service
     build:
       context: .
       dockerfile: cmd/auth_service/Dockerfile
     ports:
-      - "${PORT_AUTH:-8082}:8082"
+      - "127.0.0.1:${PORT_AUTH:-8082}:8082"
     environment:
+      <<: *common_env
       GRPC_PORT: "8082"
-      ENV: ${ENV:-production}
-      DATABASE_DSN: "host=main_postgres user=${POSTGRES_USER:-diplomaflow} password=${POSTGRES_PASSWORD:-diplomaflow_prod_pass} dbname=${POSTGRES_DB:-diplomaflow} port=5432 sslmode=disable TimeZone=UTC"
-      REDIS_ADDR: "redis:6379"
+      REDIS_ADDR: ${REDIS_ADDR:-redis:6379}
       JWT_SECRET: ${JWT_SECRET:?JWT_SECRET is required}
       ACCESS_TOKEN_TTL: ${ACCESS_TOKEN_TTL:-15m}
       REFRESH_TOKEN_TTL: ${REFRESH_TOKEN_TTL:-720h}
@@ -173,20 +153,18 @@ services:
       interval: 10s
       timeout: 3s
       retries: 15
-      start_period: 15s
+      start_period: 20s
     restart: unless-stopped
 
   project_service:
-    container_name: project_service
     build:
       context: .
       dockerfile: cmd/project_service/Dockerfile
     ports:
-      - "${PORT_PROJECT:-8083}:8083"
+      - "127.0.0.1:${PORT_PROJECT:-8083}:8083"
     environment:
+      <<: *common_env
       GRPC_PORT: "8083"
-      ENV: ${ENV:-production}
-      DATABASE_DSN: "host=main_postgres user=${POSTGRES_USER:-diplomaflow} password=${POSTGRES_PASSWORD:-diplomaflow_prod_pass} dbname=${POSTGRES_DB:-diplomaflow} port=5432 sslmode=disable TimeZone=UTC"
       KAFKA_BROKERS: ${KAFKA_BROKERS:-kafka:29092}
     depends_on:
       migrate:
@@ -198,79 +176,67 @@ services:
       interval: 10s
       timeout: 3s
       retries: 15
-      start_period: 15s
+      start_period: 20s
     restart: unless-stopped
 
   team_service:
-    container_name: team_service
     build:
       context: .
       dockerfile: cmd/team_service/Dockerfile
     ports:
-      - "${PORT_TEAM:-8084}:8084"
+      - "127.0.0.1:${PORT_TEAM:-8084}:8084"
     environment:
+      <<: *common_env
       GRPC_PORT: "8084"
-      ENV: ${ENV:-production}
-      DATABASE_DSN: "host=main_postgres user=${POSTGRES_USER:-diplomaflow} password=${POSTGRES_PASSWORD:-diplomaflow_prod_pass} dbname=${POSTGRES_DB:-diplomaflow} port=5432 sslmode=disable TimeZone=UTC"
       KAFKA_BROKERS: ${KAFKA_BROKERS:-kafka:29092}
     depends_on:
       migrate:
         condition: service_completed_successfully
       kafka:
-        condition: service_healthy
-      auth_service:
         condition: service_healthy
     healthcheck:
       test: ["CMD", "grpc_health_probe", "-addr=localhost:8084", "-service=team.TeamService"]
       interval: 10s
       timeout: 3s
       retries: 15
-      start_period: 15s
+      start_period: 20s
     restart: unless-stopped
 
   workflow_service:
-    container_name: workflow_service
     build:
       context: .
       dockerfile: cmd/workflow_service/Dockerfile
     ports:
-      - "${PORT_WORKFLOW:-8085}:8085"
+      - "127.0.0.1:${PORT_WORKFLOW:-8085}:8085"
     environment:
+      <<: *common_env
       GRPC_PORT: "8085"
-      ENV: ${ENV:-production}
-      DATABASE_DSN: "host=main_postgres user=${POSTGRES_USER:-diplomaflow} password=${POSTGRES_PASSWORD:-diplomaflow_prod_pass} dbname=${POSTGRES_DB:-diplomaflow} port=5432 sslmode=disable TimeZone=UTC"
       KAFKA_BROKERS: ${KAFKA_BROKERS:-kafka:29092}
       KAFKA_GROUP_ID: ${KAFKA_GROUP_ID:-workflow-service-group}
-      SERVICES_NOTIFICATION_ADDR: "notification_service:8087"
-      SERVICES_PROJECT_ADDR: "project_service:8083"
+      SERVICES_NOTIFICATION_ADDR: ${SERVICES_NOTIFICATION_ADDR:-notification_service:8087}
+      SERVICES_PROJECT_ADDR: ${SERVICES_PROJECT_ADDR:-project_service:8083}
     depends_on:
       migrate:
         condition: service_completed_successfully
       kafka:
-        condition: service_healthy
-      project_service:
-        condition: service_healthy
-      notification_service:
         condition: service_healthy
     healthcheck:
       test: ["CMD", "grpc_health_probe", "-addr=localhost:8085", "-service=workflow.v1.WorkflowService"]
       interval: 10s
       timeout: 3s
       retries: 15
-      start_period: 15s
+      start_period: 20s
     restart: unless-stopped
 
   role_service:
-    container_name: role_service
     build:
       context: .
       dockerfile: cmd/role_service/Dockerfile
     ports:
-      - "${PORT_ROLE:-8086}:8086"
+      - "127.0.0.1:${PORT_ROLE:-8086}:8086"
     environment:
+      <<: *common_env
       GRPC_PORT: "8086"
-      ENV: ${ENV:-production}
-      DATABASE_DSN: "host=main_postgres user=${POSTGRES_USER:-diplomaflow} password=${POSTGRES_PASSWORD:-diplomaflow_prod_pass} dbname=${POSTGRES_DB:-diplomaflow} port=5432 sslmode=disable TimeZone=UTC"
     depends_on:
       migrate:
         condition: service_completed_successfully
@@ -279,20 +245,18 @@ services:
       interval: 10s
       timeout: 3s
       retries: 15
-      start_period: 15s
+      start_period: 20s
     restart: unless-stopped
 
   notification_service:
-    container_name: notification_service
     build:
       context: .
       dockerfile: cmd/notification_service/Dockerfile
     ports:
-      - "${PORT_NOTIFICATION:-8087}:8087"
+      - "127.0.0.1:${PORT_NOTIFICATION:-8087}:8087"
     environment:
+      <<: *common_env
       GRPC_PORT: "8087"
-      ENV: ${ENV:-production}
-      DATABASE_DSN: "host=main_postgres user=${POSTGRES_USER:-diplomaflow} password=${POSTGRES_PASSWORD:-diplomaflow_prod_pass} dbname=${POSTGRES_DB:-diplomaflow} port=5432 sslmode=disable TimeZone=UTC"
     depends_on:
       migrate:
         condition: service_completed_successfully
@@ -301,20 +265,18 @@ services:
       interval: 10s
       timeout: 3s
       retries: 15
-      start_period: 15s
+      start_period: 20s
     restart: unless-stopped
 
   file_service:
-    container_name: file_service
     build:
       context: .
       dockerfile: cmd/file_service/Dockerfile
     ports:
-      - "${PORT_FILE:-8088}:8088"
+      - "127.0.0.1:${PORT_FILE:-8088}:8088"
     environment:
+      <<: *common_env
       GRPC_PORT: "8088"
-      ENV: ${ENV:-production}
-      DATABASE_DSN: "host=main_postgres user=${POSTGRES_USER:-diplomaflow} password=${POSTGRES_PASSWORD:-diplomaflow_prod_pass} dbname=${POSTGRES_DB:-diplomaflow} port=5432 sslmode=disable TimeZone=UTC"
       STORAGE_PATH: "/uploads"
     volumes:
       - file_uploads:/uploads
@@ -326,20 +288,18 @@ services:
       interval: 10s
       timeout: 3s
       retries: 15
-      start_period: 15s
+      start_period: 20s
     restart: unless-stopped
 
   form_service:
-    container_name: form_service
     build:
       context: .
       dockerfile: cmd/form_service/Dockerfile
     ports:
-      - "${PORT_FORM:-8089}:8089"
+      - "127.0.0.1:${PORT_FORM:-8089}:8089"
     environment:
+      <<: *common_env
       GRPC_PORT: "8089"
-      ENV: ${ENV:-production}
-      DATABASE_DSN: "host=main_postgres user=${POSTGRES_USER:-diplomaflow} password=${POSTGRES_PASSWORD:-diplomaflow_prod_pass} dbname=${POSTGRES_DB:-diplomaflow} port=5432 sslmode=disable TimeZone=UTC"
     depends_on:
       migrate:
         condition: service_completed_successfully
@@ -348,37 +308,27 @@ services:
       interval: 10s
       timeout: 3s
       retries: 15
-      start_period: 15s
+      start_period: 20s
     restart: unless-stopped
 
   admin_service:
-    container_name: admin_service
     build:
       context: .
       dockerfile: cmd/admin_service/Dockerfile
     ports:
-      - "${PORT_ADMIN:-8090}:8090"
+      - "127.0.0.1:${PORT_ADMIN:-8090}:8090"
     environment:
+      <<: *common_env
       GRPC_PORT: "8090"
-      ENV: ${ENV:-production}
-      DATABASE_DSN: "host=main_postgres user=${POSTGRES_USER:-diplomaflow} password=${POSTGRES_PASSWORD:-diplomaflow_prod_pass} dbname=${POSTGRES_DB:-diplomaflow} port=5432 sslmode=disable TimeZone=UTC"
     depends_on:
       migrate:
         condition: service_completed_successfully
-      auth_service:
-        condition: service_healthy
-      project_service:
-        condition: service_healthy
-      team_service:
-        condition: service_healthy
-      workflow_service:
-        condition: service_healthy
     healthcheck:
       test: ["CMD", "grpc_health_probe", "-addr=localhost:8090", "-service=admin.v1.AdminService"]
       interval: 10s
       timeout: 3s
       retries: 15
-      start_period: 15s
+      start_period: 20s
     restart: unless-stopped
 
 volumes:
