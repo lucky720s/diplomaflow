@@ -10,51 +10,77 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      - name: Deploy to server
+      - name: Deploy to server (ssh)
         uses: appleboy/ssh-action@v1.0.3
+        env:
+          JWT_SECRET: ${{ secrets.JWT_SECRET_DEV }}
+          POSTGRES_PASSWORD: ${{ secrets.POSTGRES_PASSWORD_DEV }}
+          PAT_TOKEN: ${{ secrets.PAT_TOKEN }}
         with:
           host: ${{ secrets.SERVER_HOST }}
           username: ${{ secrets.SERVER_USER }}
           key: ${{ secrets.SSH_PRIVATE_KEY }}
+
+          # чтобы не падало на долгой сборке
+          command_timeout: 45m
+
+          # пробрасываем env из шага на удалённый хост
+          envs: JWT_SECRET,POSTGRES_PASSWORD,PAT_TOKEN
+
           script: |
-            set -e
-            
-            cd /opt/diplomaflow
-            
-            # Если .git существует - обновляем, иначе очищаем и клонируем
+            set -euo pipefail
+            umask 077
+
+            APP_DIR="/opt/diplomaflow"
+            REPO="${{ github.repository }}"
+            BRANCH="dev"
+
+            echo "==> Ensure app dir"
+            sudo mkdir -p "$APP_DIR"
+            sudo chown -R "$USER":"$USER" "$APP_DIR"
+            cd "$APP_DIR"
+
+            echo "==> Sync repository"
             if [ -d ".git" ]; then
-              echo "Git repo exists, updating..."
-              git remote set-url origin https://${{ secrets.PAT_TOKEN }}@github.com/${{ github.repository }}.git
-              git fetch origin dev
-              git reset --hard origin/dev
+              git remote set-url origin "https://${PAT_TOKEN}@github.com/${REPO}.git"
+              git fetch origin "$BRANCH"
+              git reset --hard "origin/${BRANCH}"
               git clean -fd
             else
-              echo "No git repo, cleaning and cloning..."
-              rm -rf /opt/diplomaflow/*
-              rm -rf /opt/diplomaflow/.[!.]*
-              git clone -b dev https://${{ secrets.PAT_TOKEN }}@github.com/${{ github.repository }}.git .
+              rm -rf "$APP_DIR"
+              mkdir -p "$APP_DIR"
+              cd "$APP_DIR"
+              git clone -b "$BRANCH" "https://${PAT_TOKEN}@github.com/${REPO}.git" .
             fi
-            
-            echo "Current directory contents:"
-            ls -la
-            
-            if [ ! -f ".env" ]; then
-              echo "Creating .env file..."
-              cat > .env << 'ENVEOF'
-            ENV=production
-            JWT_SECRET=super_secret_jwt_key_change_me_in_prod_12345
+
+            echo "==> Validate required secrets"
+            : "${JWT_SECRET:?Missing JWT_SECRET (set GitHub Secret JWT_SECRET_DEV)}"
+            : "${POSTGRES_PASSWORD:?Missing POSTGRES_PASSWORD (set GitHub Secret POSTGRES_PASSWORD_DEV)}"
+
+            echo "==> Render desired .env (managed)"
+            cat > .env.desired <<EOF
+            # managed-by-cd: true
+            ENV_FILE_VERSION=1
+
+            ENV=dev
+            GIN_MODE=release
+
+            JWT_SECRET=${JWT_SECRET}
             POSTGRES_USER=diplomaflow
-            POSTGRES_PASSWORD=diplomaflow_prod_pass
+            POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
             POSTGRES_DB=diplomaflow
-            POSTGRES_PORT=5433
-            DATABASE_DSN=host=main_postgres user=diplomaflow password=diplomaflow_prod_pass dbname=diplomaflow port=5433 sslmode=disable TimeZone=UTC
+            POSTGRES_PORT=5432
+            POSTGRES_HOST_PORT=5433
+
+            DATABASE_DSN=host=main_postgres user=diplomaflow password=${POSTGRES_PASSWORD} dbname=diplomaflow port=5432 sslmode=disable TimeZone=UTC
+            DATABASE_URL=postgres://diplomaflow:${POSTGRES_PASSWORD}@main_postgres:5432/diplomaflow?sslmode=disable
+
+            REDIS_ADDR=redis:6379
+
             KAFKA_BROKERS=kafka:29092
             KAFKA_GROUP_ID=diplomaflow-group
             KAFKA_KRAFT_CLUSTER_ID=MkU3OEVBNTcwNTJENDM2Qk
-            GIN_MODE=release
+
             PORT_GATEWAY=8080
             PORT_UNIVERSITY=8081
             PORT_AUTH=8082
@@ -66,73 +92,62 @@ jobs:
             PORT_FILE=8088
             PORT_FORM=8089
             PORT_ADMIN=8090
+
             SERVICES_AUTH_ADDR=auth_service:8082
+            SERVICES_UNIVERSITY_ADDR=university_service:8081
             SERVICES_PROJECT_ADDR=project_service:8083
             SERVICES_TEAM_ADDR=team_service:8084
-            SERVICES_UNIVERSITY_ADDR=university_service:8081
-            SERVICES_ROLE_ADDR=role_service:8086
             SERVICES_WORKFLOW_ADDR=workflow_service:8085
+            SERVICES_ROLE_ADDR=role_service:8086
             SERVICES_NOTIFICATION_ADDR=notification_service:8087
             SERVICES_FILE_ADDR=file_service:8088
             SERVICES_FORM_ADDR=form_service:8089
             SERVICES_ADMIN_ADDR=admin_service:8090
-            ENVEOF
-            fi
-            
-            echo "Checking docker-compose.yml..."
-            if [ ! -f "docker-compose.yml" ]; then
-              echo "ERROR: docker-compose.yml not found!"
-              ls -la
-              exit 1
-            fi
-            
-            # ============================================
-            # ПОЛНАЯ ОСТАНОВКА И ОЧИСТКА
-            # ============================================
-            echo "🛑 Stopping and removing old containers..."
-            docker compose down --remove-orphans || true
-            docker compose kill || true
-            docker compose rm -f || true
-            
-            echo "🧹 Cleaning up Docker resources..."
-            echo "Disk usage before cleanup:"
-            df -h / | tail -1
-            
-            # Удалить остановленные контейнеры
-            docker container prune -f || true
-            
-            # Удалить неиспользуемые образы
-            docker image prune -af || true
-            
-            # Удалить неиспользуемые сети
-            docker network prune -f || true
-            
-            # Очистить кэш сборки Docker
-            docker builder prune -af || true
-            
-            # НЕ удаляем тома - там данные PostgreSQL!
-            # docker volume prune -f || true
-            
-            echo "Disk usage after cleanup:"
-            df -h / | tail -1
-            echo "Docker disk usage:"
-            docker system df
-            # ============================================
-            
-            echo "🔨 Building images..."
-            docker compose build --no-cache
-            
-            echo "🚀 Starting services..."
-            docker compose up -d --force-recreate
-            
-            echo "⏳ Waiting for services to start..."
-            sleep 90
-            
-            echo "🏥 Health check..."
-            curl -f http://localhost:8080/health || echo "Health check failed but continuing..."
-            
-            echo "📋 Service status:"
-            docker compose ps
 
-      - name: Deployment complete
-        run: echo "✅ Deployment completed!"
+            ACCESS_TOKEN_TTL=15m
+            REFRESH_TOKEN_TTL=720h
+            EOF
+            chmod 600 .env.desired
+
+            echo "==> Check current .env and update if needed"
+            need_update=0
+            if [ ! -f ".env" ]; then
+              need_update=1
+            else
+              # минимальная валидация "не устарел/не сломан"
+              grep -q '^ENV_FILE_VERSION=1$' .env || need_update=1
+              grep -q '^POSTGRES_PORT=5432$' .env || need_update=1
+              grep -q 'port=5432' .env || need_update=1
+              grep -q '^POSTGRES_HOST_PORT=5433$' .env || need_update=1
+              grep -q '^JWT_SECRET=' .env || need_update=1
+            fi
+
+            if [ "$need_update" -eq 1 ]; then
+              echo "==> Updating .env (backup old)"
+              if [ -f ".env" ]; then
+                cp .env ".env.bak.$(date +%Y%m%d_%H%M%S)"
+              fi
+              mv .env.desired .env
+            else
+              rm -f .env.desired
+              echo "==> .env looks OK, keeping as is"
+            fi
+
+            echo "==> Validate compose config"
+            docker compose --env-file .env config >/dev/null
+
+            echo "==> Build & start infra first"
+            docker compose --env-file .env up -d --build main_postgres redis kafka
+
+            echo "==> Run migrations (once)"
+            docker compose --env-file .env run --rm migrate
+
+            echo "==> Start application services"
+            docker compose --env-file .env up -d --build --remove-orphans
+
+            echo "==> Wait a bit and healthcheck gateway"
+            sleep 20
+            curl -fsS "http://localhost:8080/healthz" >/dev/null
+
+            echo "==> Status"
+            docker compose --env-file .env ps

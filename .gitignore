@@ -16,3 +16,4 @@ go.work
 go.work.sum
 1.txt
 1.txt.pub
+.env

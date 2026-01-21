@@ -6,6 +6,8 @@ services:
       POSTGRES_USER: ${POSTGRES_USER:-diplomaflow}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-diplomaflow_prod_pass}
       POSTGRES_DB: ${POSTGRES_DB:-diplomaflow}
+    ports:
+      - "127.0.0.1:5433:5432"
     volumes:
       - pg_data:/var/lib/postgresql/data
     healthcheck:
