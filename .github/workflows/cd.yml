@@ -50,8 +50,14 @@ jobs:
             : "${JWT_SECRET:?Missing JWT_SECRET_DEV}"
             : "${POSTGRES_PASSWORD:?Missing POSTGRES_PASSWORD_DEV}"
 
-            echo "==> URL-encode Postgres password for DATABASE_URL"
-            PG_PASS_URLENC="$(python3 -c 'import os,urllib.parse; print(urllib.parse.quote(os.environ["POSTGRES_PASSWORD"], safe=""))')"
+            echo "==> Ensure POSTGRES_PASSWORD is URL-safe (no python3 on server)"
+            if echo "$POSTGRES_PASSWORD" | grep -Eq '^[A-Za-z0-9_.~-]+$'; then
+              PG_PASS_URLENC="$POSTGRES_PASSWORD"
+            else
+              echo "ERROR: POSTGRES_PASSWORD_DEV has special chars. Use only A-Za-z0-9_.~- for dev."
+              echo "Otherwise install python3/jq on server and re-enable URL-encoding."
+              exit 1
+            fi
 
             echo "==> Render desired .env"
             cat > .env.desired <<EOF
@@ -115,10 +121,18 @@ jobs:
             docker compose --env-file .env build --parallel
 
             echo "==> Run migrations"
-            docker compose --env-file .env run --rm migrate
+            docker compose --env-file .env run --rm migrate || {
+              echo "Migrations failed. Last logs:"
+              docker compose --env-file .env logs --tail=200 migrate main_postgres || true
+              exit 1
+            }
 
             echo "==> Start app services"
-            docker compose --env-file .env up -d --remove-orphans --no-build
+            docker compose --env-file .env up -d --remove-orphans --no-build || {
+              docker compose --env-file .env ps || true
+              docker compose --env-file .env logs --tail=200 || true
+              exit 1
+            }
 
             echo "==> Healthcheck gateway"
             sleep 15
