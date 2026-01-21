@@ -16,7 +16,7 @@ services:
     volumes:
       - pg_data:/var/lib/postgresql/data
     healthcheck:
-      # без -d, чтобы не ловить ложные "db does not exist" на первом init
+      # без -d, чтобы не ловить ложный "db does not exist" в момент первого init
       test: ["CMD-SHELL", "pg_isready -U $$POSTGRES_USER"]
       interval: 5s
       timeout: 3s
@@ -47,6 +47,7 @@ services:
       CLUSTER_ID: ${KAFKA_KRAFT_CLUSTER_ID:-MkU3OEVBNTcwNTJENDM2Qk}
       KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: "PLAINTEXT:PLAINTEXT,PLAINTEXT_HOST:PLAINTEXT,CONTROLLER:PLAINTEXT"
       KAFKA_LISTENERS: "PLAINTEXT://0.0.0.0:29092,PLAINTEXT_HOST://0.0.0.0:9092,CONTROLLER://0.0.0.0:29093"
+      # внутри сети контейнеры ходят на kafka:29092, с хоста — localhost:9092
       KAFKA_ADVERTISED_LISTENERS: "PLAINTEXT://kafka:29092,PLAINTEXT_HOST://localhost:9092"
       KAFKA_INTER_BROKER_LISTENER_NAME: "PLAINTEXT"
       KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
@@ -69,6 +70,7 @@ services:
       main_postgres:
         condition: service_healthy
     environment:
+      # ВАЖНО: migrate у тебя требует URL со scheme (postgres://)
       DATABASE_URL: ${DATABASE_URL:?DATABASE_URL is required}
     command: ["-cmd=up", "-path=file:///app/db/migrations"]
     restart: "no"
@@ -106,11 +108,12 @@ services:
       start_period: 10s
     restart: unless-stopped
 
-  # ---- gRPC services (по умолчанию НЕ публикуем порты наружу) ----
   university_service:
     build:
       context: .
       dockerfile: cmd/university_service/Dockerfile
+    ports:
+      - "127.0.0.1:${PORT_UNIVERSITY:-8081}:8081"
     environment:
       <<: *common_env
       GRPC_PORT: "8081"
@@ -124,16 +127,13 @@ services:
       retries: 15
       start_period: 20s
     restart: unless-stopped
-    profiles: ["default", "debug"]
-    ports:
-      - "127.0.0.1:8081:8081"
-    # Чтобы порты включались только в debug-профиле — убери profiles выше и сделай отдельный override файл.
-    # Compose профили не умеют включать/выключать отдельные ключи, только сервисы.
 
   auth_service:
     build:
       context: .
       dockerfile: cmd/auth_service/Dockerfile
+    ports:
+      - "127.0.0.1:${PORT_AUTH:-8082}:8082"
     environment:
       <<: *common_env
       GRPC_PORT: "8082"
@@ -160,6 +160,8 @@ services:
     build:
       context: .
       dockerfile: cmd/project_service/Dockerfile
+    ports:
+      - "127.0.0.1:${PORT_PROJECT:-8083}:8083"
     environment:
       <<: *common_env
       GRPC_PORT: "8083"
@@ -181,6 +183,8 @@ services:
     build:
       context: .
       dockerfile: cmd/team_service/Dockerfile
+    ports:
+      - "127.0.0.1:${PORT_TEAM:-8084}:8084"
     environment:
       <<: *common_env
       GRPC_PORT: "8084"
@@ -202,6 +206,8 @@ services:
     build:
       context: .
       dockerfile: cmd/workflow_service/Dockerfile
+    ports:
+      - "127.0.0.1:${PORT_WORKFLOW:-8085}:8085"
     environment:
       <<: *common_env
       GRPC_PORT: "8085"
@@ -226,6 +232,8 @@ services:
     build:
       context: .
       dockerfile: cmd/role_service/Dockerfile
+    ports:
+      - "127.0.0.1:${PORT_ROLE:-8086}:8086"
     environment:
       <<: *common_env
       GRPC_PORT: "8086"
@@ -244,6 +252,8 @@ services:
     build:
       context: .
       dockerfile: cmd/notification_service/Dockerfile
+    ports:
+      - "127.0.0.1:${PORT_NOTIFICATION:-8087}:8087"
     environment:
       <<: *common_env
       GRPC_PORT: "8087"
@@ -262,6 +272,8 @@ services:
     build:
       context: .
       dockerfile: cmd/file_service/Dockerfile
+    ports:
+      - "127.0.0.1:${PORT_FILE:-8088}:8088"
     environment:
       <<: *common_env
       GRPC_PORT: "8088"
@@ -283,6 +295,8 @@ services:
     build:
       context: .
       dockerfile: cmd/form_service/Dockerfile
+    ports:
+      - "127.0.0.1:${PORT_FORM:-8089}:8089"
     environment:
       <<: *common_env
       GRPC_PORT: "8089"
@@ -301,6 +315,8 @@ services:
     build:
       context: .
       dockerfile: cmd/admin_service/Dockerfile
+    ports:
+      - "127.0.0.1:${PORT_ADMIN:-8090}:8090"
     environment:
       <<: *common_env
       GRPC_PORT: "8090"
