@@ -29,6 +29,11 @@ jobs:
             APP_DIR="/opt/diplomaflow"
             REPO="${{ github.repository }}"
             BRANCH="dev"
+            PROJECT_NAME="diplomaflow"
+            PG_VOLUME="${PROJECT_NAME}_pg_data"
+
+            export DOCKER_BUILDKIT=1
+            export COMPOSE_DOCKER_CLI_BUILD=1
 
             echo "==> Ensure app dir"
             sudo mkdir -p "$APP_DIR"
@@ -55,8 +60,13 @@ jobs:
               PG_PASS_URLENC="$POSTGRES_PASSWORD"
             else
               echo "ERROR: POSTGRES_PASSWORD_DEV has special chars. Use only A-Za-z0-9_.~- for dev."
-              echo "Otherwise install python3/jq on server and re-enable URL-encoding."
               exit 1
+            fi
+
+            # capture old password from existing .env (if any) BEFORE rewriting it
+            OLD_PASS=""
+            if [ -f ".env" ]; then
+              OLD_PASS="$(grep '^POSTGRES_PASSWORD=' .env | cut -d= -f2- || true)"
             fi
 
             echo "==> Render desired .env"
@@ -99,33 +109,59 @@ jobs:
             fi
 
             echo "==> Validate compose config"
-            export DOCKER_BUILDKIT=1
-            export COMPOSE_DOCKER_CLI_BUILD=1
             docker compose --env-file .env config >/dev/null
+
+            reset_postgres() {
+              echo "==> Reset Postgres volume (dev): ${PG_VOLUME}"
+              docker compose --env-file .env down --remove-orphans || true
+              docker volume rm -f "${PG_VOLUME}" || true
+            }
+
+            wait_postgres_healthy() {
+              echo "==> Wait for Postgres healthy"
+              for i in $(seq 1 90); do
+                cid="$(docker compose --env-file .env ps -q main_postgres || true)"
+                [ -n "$cid" ] || { sleep 1; continue; }
+                st="$(docker inspect -f '{{.State.Health.Status}}' "$cid" 2>/dev/null || true)"
+                [ "$st" = "healthy" ] && return 0
+                sleep 1
+              done
+              cid="$(docker compose --env-file .env ps -q main_postgres || true)"
+              echo "Postgres not healthy"
+              [ -n "$cid" ] && docker logs --tail=200 "$cid" || true
+              return 1
+            }
+
+            # Auto-fix #1: if password rotated -> reset pg volume to avoid auth-failed
+            if [ -n "$OLD_PASS" ] && [ "$OLD_PASS" != "$POSTGRES_PASSWORD" ]; then
+              echo "==> Detected POSTGRES_PASSWORD change. Will reset Postgres volume (dev)."
+              reset_postgres
+            fi
 
             echo "==> Start infra"
             docker compose --env-file .env up -d main_postgres redis kafka
-
-            echo "==> Wait for Postgres healthy"
-            for i in $(seq 1 60); do
-              cid="$(docker compose --env-file .env ps -q main_postgres)"
-              st="$(docker inspect -f '{{.State.Health.Status}}' "$cid" 2>/dev/null || true)"
-              [ "$st" = "healthy" ] && break
-              sleep 1
-            done
-            cid="$(docker compose --env-file .env ps -q main_postgres)"
-            st="$(docker inspect -f '{{.State.Health.Status}}' "$cid" 2>/dev/null || true)"
-            [ "$st" = "healthy" ] || { echo "Postgres not healthy"; docker logs --tail=200 "$cid"; exit 1; }
+            wait_postgres_healthy
 
             echo "==> Build services (parallel)"
             docker compose --env-file .env build --parallel
 
-            echo "==> Run migrations"
-            docker compose --env-file .env run --rm migrate || {
-              echo "Migrations failed. Last logs:"
-              docker compose --env-file .env logs --tail=200 migrate main_postgres || true
-              exit 1
-            }
+            echo "==> Run migrations (with one auto-retry after reset on failure)"
+            set +e
+            mig_out="$(docker compose --env-file .env run --rm migrate 2>&1)"
+            mig_rc=$?
+            set -e
+
+            if [ "$mig_rc" -ne 0 ]; then
+              echo "$mig_out"
+              echo "==> Migrations failed. Last logs:"
+              docker compose --env-file .env logs --tail=200 main_postgres || true
+
+              echo "==> Auto-fix (dev): reset Postgres volume and retry migrations once"
+              reset_postgres
+              docker compose --env-file .env up -d main_postgres redis kafka
+              wait_postgres_healthy
+              docker compose --env-file .env run --rm migrate
+            fi
 
             echo "==> Start app services"
             docker compose --env-file .env up -d --remove-orphans --no-build || {
