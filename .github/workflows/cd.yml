@@ -74,9 +74,10 @@ jobs:
             # Save old password (before overwriting .env), to detect password rotation
             OLD_PASS=""
             if [ -f ".env" ]; then
-              OLD_PASS="$(grep '^POSTGRES_PASSWORD=' .env | cut -d= -f2- || true)"
+              OLD_PASS="$(grep '^POSTGRES_PASSWORD=' .env | cut -d= -f2- | tr -d '\r' || true)"
             fi
-
+            
+  
             echo "==> Render desired .env"
             cat > .env.desired <<EOF
             # managed-by-cd: true
@@ -121,7 +122,13 @@ jobs:
 
             reset_postgres() {
               echo "==> Reset Postgres volume (dev): ${PG_VOLUME}"
-              dc down --remove-orphans || true
+            echo "==> Password compare debug (no secrets):"
+            echo "OLD_PASS_LEN=$(printf %s "$OLD_PASS" | wc -c | tr -d ' ')"
+            echo "NEW_PASS_LEN=$(printf %s "$POSTGRES_PASSWORD" | wc -c | tr -d ' ')"
+            echo "OLD_PASS_SHA=$(printf %s "$OLD_PASS" | sha256sum | awk '{print $1}' | cut -c1-12)"
+            echo "NEW_PASS_SHA=$(printf %s "$POSTGRES_PASSWORD" | sha256sum | awk '{print $1}' | cut -c1-12)"
+            
+            dc down --remove-orphans || true
               docker volume rm -f "${PG_VOLUME}" || true
             }
 
