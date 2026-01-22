@@ -16,3 +16,10 @@ go.work
 go.work.sum
 1.txt
 1.txt.pub
+# deploy state
+.last_deploy_sha
+
+# env files on server
+.env
+.env.desired
+.env.bak.*
