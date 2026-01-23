@@ -1,0 +1,15 @@
+env: "local"
+grpc_port: 8091
+
+database:
+  dsn: ""
+
+kafka:
+  brokers: "kafka:29092"
+  group_id: "task-service-group"
+
+services:
+  auth_addr: "auth_service:8082"
+  team_addr: "team_service:8084"
+  notification_addr: "notification_service:8087"
+  file_addr: "file_service:8088"
