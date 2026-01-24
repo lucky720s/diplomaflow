@@ -112,9 +112,11 @@ wire:
 	$(WIRE) gen ./internal/notification
 	$(WIRE) gen ./internal/project
 	$(WIRE) gen ./internal/role
+	$(WIRE) gen ./internal/task
 	$(WIRE) gen ./internal/team
 	$(WIRE) gen ./internal/university
 	$(WIRE) gen ./internal/workflow
+
 
 generate: proto wire
 
@@ -160,9 +162,11 @@ build:
 	set CGO_ENABLED=0&& go build $(LDFLAGS) -o bin/notification_service.exe ./cmd/notification_service
 	set CGO_ENABLED=0&& go build $(LDFLAGS) -o bin/project_service.exe ./cmd/project_service
 	set CGO_ENABLED=0&& go build $(LDFLAGS) -o bin/role_service.exe ./cmd/role_service
+	set CGO_ENABLED=0&& go build $(LDFLAGS) -o bin/task_service.exe ./cmd/task_service
 	set CGO_ENABLED=0&& go build $(LDFLAGS) -o bin/team_service.exe ./cmd/team_service
 	set CGO_ENABLED=0&& go build $(LDFLAGS) -o bin/university_service.exe ./cmd/university_service
 	set CGO_ENABLED=0&& go build $(LDFLAGS) -o bin/workflow_service.exe ./cmd/workflow_service
+
 
 build-linux:
 	@if not exist "bin\linux" mkdir "bin\linux"

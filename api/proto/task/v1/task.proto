@@ -1,0 +1,563 @@
+syntax = "proto3";
+package task.v1;
+
+import "validate/validate.proto";
+import "google/protobuf/timestamp.proto";
+import "google/protobuf/empty.proto";
+import "google/protobuf/field_mask.proto";
+
+option go_package = "github.com/lucky720s/diplomaflow/pkg/protobuf/task/v1";
+
+// ==================== SERVICE ====================
+service TaskService {
+  // ==================== Board ====================
+  rpc GetBoard(GetBoardRequest) returns (GetBoardResponse);
+  rpc GetBoardByTeam(GetBoardByTeamRequest) returns (GetBoardResponse);
+  rpc CreateBoard(CreateBoardRequest) returns (Board);
+  rpc UpdateBoard(UpdateBoardRequest) returns (Board);
+
+  // ==================== Columns ====================
+  rpc ListColumns(ListColumnsRequest) returns (ListColumnsResponse);
+  rpc CreateColumn(CreateColumnRequest) returns (Column);
+  rpc UpdateColumn(UpdateColumnRequest) returns (Column);
+  rpc DeleteColumn(DeleteColumnRequest) returns (google.protobuf.Empty);
+  rpc ReorderColumns(ReorderColumnsRequest) returns (ListColumnsResponse);
+
+  // ==================== Tasks ====================
+  rpc CreateTask(CreateTaskRequest) returns (Task);
+  rpc GetTask(GetTaskRequest) returns (GetTaskResponse);
+  rpc UpdateTask(UpdateTaskRequest) returns (Task);
+  rpc DeleteTask(DeleteTaskRequest) returns (google.protobuf.Empty);
+  rpc ListTasks(ListTasksRequest) returns (ListTasksResponse);
+
+  // Kanban операции
+  rpc MoveTask(MoveTaskRequest) returns (Task);
+  rpc ReorderTasks(ReorderTasksRequest) returns (google.protobuf.Empty);
+
+  // Bulk операции
+  rpc BulkUpdateTasks(BulkUpdateTasksRequest) returns (BulkUpdateTasksResponse);
+  rpc BulkDeleteTasks(BulkDeleteTasksRequest) returns (google.protobuf.Empty);
+
+  // ==================== Assignment ====================
+  rpc AssignTask(AssignTaskRequest) returns (Task);
+  rpc UnassignTask(UnassignTaskRequest) returns (Task);
+
+  // ==================== Comments ====================
+  rpc CreateComment(CreateCommentRequest) returns (Comment);
+  rpc UpdateComment(UpdateCommentRequest) returns (Comment);
+  rpc DeleteComment(DeleteCommentRequest) returns (google.protobuf.Empty);
+  rpc ListComments(ListCommentsRequest) returns (ListCommentsResponse);
+
+  // ==================== Attachments ====================
+  rpc AddAttachment(AddAttachmentRequest) returns (Attachment);
+  rpc RemoveAttachment(RemoveAttachmentRequest) returns (google.protobuf.Empty);
+  rpc ListAttachments(ListAttachmentsRequest) returns (ListAttachmentsResponse);
+
+  // ==================== Activity ====================
+  rpc GetTaskActivity(GetTaskActivityRequest) returns (GetTaskActivityResponse);
+
+  // ==================== Watchers ====================
+  rpc AddWatcher(AddWatcherRequest) returns (google.protobuf.Empty);
+  rpc RemoveWatcher(RemoveWatcherRequest) returns (google.protobuf.Empty);
+  rpc ListWatchers(ListWatchersRequest) returns (ListWatchersResponse);
+
+  // ==================== Dashboard & Stats ====================
+  rpc GetBoardStats(GetBoardStatsRequest) returns (GetBoardStatsResponse);
+  rpc GetMyTasks(GetMyTasksRequest) returns (ListTasksResponse);
+  rpc GetOverdueTasks(GetOverdueTasksRequest) returns (ListTasksResponse);
+  rpc GetUpcomingDeadlines(GetUpcomingDeadlinesRequest) returns (ListTasksResponse);
+}
+
+// ==================== ENUMS ====================
+enum TaskStatus {
+  TASK_STATUS_UNSPECIFIED = 0;
+  TASK_STATUS_TODO = 1;
+  TASK_STATUS_IN_PROGRESS = 2;
+  TASK_STATUS_REVIEW = 3;
+  TASK_STATUS_DONE = 4;
+}
+
+enum TaskPriority {
+  TASK_PRIORITY_UNSPECIFIED = 0;
+  TASK_PRIORITY_LOW = 1;
+  TASK_PRIORITY_MEDIUM = 2;
+  TASK_PRIORITY_HIGH = 3;
+  TASK_PRIORITY_URGENT = 4;
+}
+
+// ==================== CORE MESSAGES ====================
+
+// Board - Kanban доска команды
+message Board {
+  int64 id = 1;
+  int64 team_id = 2;
+  int64 project_id = 3;
+  string name = 4;
+  string description = 5;
+  BoardSettings settings = 6;
+  int64 created_by = 7;
+  google.protobuf.Timestamp created_at = 8;
+  google.protobuf.Timestamp updated_at = 9;
+
+  // Вложенные данные (опционально, заполняются при include_*)
+  repeated Column columns = 10;
+  BoardStats stats = 11;
+}
+
+message BoardSettings {
+  string default_column = 1;       // slug колонки по умолчанию
+  bool allow_custom_columns = 2;
+  bool show_completed = 3;
+  repeated string labels = 4;      // доступные метки ["backend", "frontend", "docs"]
+}
+
+message BoardStats {
+  int32 total_tasks = 1;
+  int32 completed_tasks = 2;
+  int32 overdue_tasks = 3;
+  int32 tasks_without_assignee = 4;
+  map<string, int32> tasks_by_status = 5;    // "todo": 5, "in_progress": 3
+  map<string, int32> tasks_by_priority = 6;  // "high": 2, "medium": 5
+}
+
+// Column - Колонка на доске
+message Column {
+  int64 id = 1;
+  int64 board_id = 2;
+  string name = 3;
+  string slug = 4;                 // todo, in_progress, review, done
+  string description = 5;
+  string color = 6;                // HEX цвет #3B82F6
+  string icon = 7;                 // иконка (опционально)
+  int32 order_index = 8;           // порядок отображения
+  int32 wip_limit = 9;             // 0 = без лимита
+  bool is_default = 10;            // колонка по умолчанию для новых задач
+  bool is_done_column = 11;        // отметка "завершено"
+  int32 task_count = 12;           // количество задач в колонке
+  google.protobuf.Timestamp created_at = 13;
+  google.protobuf.Timestamp updated_at = 14;
+}
+
+// Task - Задача
+message Task {
+  int64 id = 1;
+  int64 board_id = 2;
+  int64 column_id = 3;
+
+  string title = 4;
+  string description = 5;
+
+  TaskStatus status = 6;
+  TaskPriority priority = 7;
+
+  // Люди
+  UserPreview assignee = 8;
+  UserPreview created_by = 9;
+
+  // Сроки
+  google.protobuf.Timestamp due_date = 10;
+  google.protobuf.Timestamp started_at = 11;
+  google.protobuf.Timestamp completed_at = 12;
+
+  // Время
+  int32 estimated_minutes = 13;
+  int32 actual_minutes = 14;
+
+  int32 position = 15;             // позиция в колонке для drag-and-drop
+  int64 workflow_step_id = 16;     // связь с этапом workflow (опционально)
+
+  repeated string labels = 17;
+
+  // Счётчики (для списков, чтобы не грузить всё)
+  int32 comments_count = 18;
+  int32 attachments_count = 19;
+  int32 watchers_count = 20;
+
+  bool is_overdue = 21;
+
+  google.protobuf.Timestamp created_at = 22;
+  google.protobuf.Timestamp updated_at = 23;
+}
+
+// UserPreview - краткая информация о пользователе
+message UserPreview {
+  int64 id = 1;
+  string full_name = 2;
+  string email = 3;
+  string avatar_url = 4;
+}
+
+// Comment - Комментарий к задаче
+message Comment {
+  int64 id = 1;
+  int64 task_id = 2;
+  UserPreview author = 3;
+  string content = 4;
+  repeated UserMention mentions = 5;
+  google.protobuf.Timestamp edited_at = 6;
+  google.protobuf.Timestamp created_at = 7;
+  google.protobuf.Timestamp updated_at = 8;
+}
+
+message UserMention {
+  int64 user_id = 1;
+  string username = 2;
+  int32 position = 3;              // позиция в тексте
+}
+
+// Attachment - Вложение
+message Attachment {
+  int64 id = 1;
+  int64 task_id = 2;
+  string file_id = 3;
+  string file_name = 4;
+  string file_type = 5;
+  int64 file_size = 6;
+  string download_url = 7;
+  UserPreview uploaded_by = 8;
+  google.protobuf.Timestamp created_at = 9;
+}
+
+// ActivityLogEntry - Запись в логе активности
+message ActivityLogEntry {
+  int64 id = 1;
+  int64 task_id = 2;
+  UserPreview actor = 3;
+  string action = 4;               // created, updated, moved, assigned, commented
+  string field_name = 5;           // какое поле изменилось
+  string old_value = 6;
+  string new_value = 7;
+  google.protobuf.Timestamp created_at = 8;
+}
+
+// ==================== REQUESTS/RESPONSES ====================
+
+// === Board ===
+message GetBoardRequest {
+  int64 board_id = 1 [(validate.rules).int64.gt = 0];
+  bool include_columns = 2;
+  bool include_stats = 3;
+  bool include_tasks = 4;          // включить задачи в колонки
+}
+
+message GetBoardByTeamRequest {
+  int64 team_id = 1 [(validate.rules).int64.gt = 0];
+  bool include_columns = 2;
+  bool include_stats = 3;
+  bool include_tasks = 4;
+}
+
+message GetBoardResponse {
+  Board board = 1;
+}
+
+message CreateBoardRequest {
+  int64 team_id = 1 [(validate.rules).int64.gt = 0];
+  int64 project_id = 2;
+  string name = 3 [(validate.rules).string.min_len = 1];
+  string description = 4;
+  int64 created_by = 5 [(validate.rules).int64.gt = 0];
+  bool create_default_columns = 6; // создать стандартные колонки
+}
+
+message UpdateBoardRequest {
+  int64 board_id = 1 [(validate.rules).int64.gt = 0];
+  string name = 2;
+  string description = 3;
+  BoardSettings settings = 4;
+  google.protobuf.FieldMask update_mask = 5;
+}
+
+// === Columns ===
+message ListColumnsRequest {
+  int64 board_id = 1 [(validate.rules).int64.gt = 0];
+  bool include_task_count = 2;
+}
+
+message ListColumnsResponse {
+  repeated Column columns = 1;
+}
+
+message CreateColumnRequest {
+  int64 board_id = 1 [(validate.rules).int64.gt = 0];
+  string name = 2 [(validate.rules).string.min_len = 1];
+  string slug = 3 [(validate.rules).string.min_len = 1];
+  string description = 4;
+  string color = 5;
+  string icon = 6;
+  int32 wip_limit = 7;
+  bool is_done_column = 8;
+}
+
+message UpdateColumnRequest {
+  int64 column_id = 1 [(validate.rules).int64.gt = 0];
+  string name = 2;
+  string description = 3;
+  string color = 4;
+  string icon = 5;
+  int32 wip_limit = 6;
+  google.protobuf.FieldMask update_mask = 7;
+}
+
+message DeleteColumnRequest {
+  int64 column_id = 1 [(validate.rules).int64.gt = 0];
+  int64 move_tasks_to_column_id = 2;  // куда перенести задачи (обязательно если есть задачи)
+}
+
+message ReorderColumnsRequest {
+  int64 board_id = 1 [(validate.rules).int64.gt = 0];
+  repeated int64 column_ids = 2;      // новый порядок
+}
+
+// === Tasks ===
+message CreateTaskRequest {
+  int64 board_id = 1 [(validate.rules).int64.gt = 0];
+  string title = 2 [(validate.rules).string = {min_len: 1, max_len: 500}];
+  string description = 3;
+  TaskPriority priority = 4;
+  int64 assignee_id = 5;
+  google.protobuf.Timestamp due_date = 6;
+  int32 estimated_minutes = 7;
+  repeated string labels = 8;
+  int64 column_id = 9;                // если не указано - default column
+  int64 created_by = 10 [(validate.rules).int64.gt = 0];
+  int64 workflow_step_id = 11;        // связь с workflow (опционально)
+}
+
+message GetTaskRequest {
+  int64 task_id = 1 [(validate.rules).int64.gt = 0];
+}
+
+message GetTaskResponse {
+  Task task = 1;
+  repeated Comment recent_comments = 2;      // последние 5 комментариев
+  repeated Attachment attachments = 3;
+  repeated ActivityLogEntry recent_activity = 4;
+  repeated UserPreview watchers = 5;
+}
+
+message UpdateTaskRequest {
+  int64 task_id = 1 [(validate.rules).int64.gt = 0];
+  string title = 2;
+  string description = 3;
+  TaskPriority priority = 4;
+  google.protobuf.Timestamp due_date = 5;
+  int32 estimated_minutes = 6;
+  int32 actual_minutes = 7;
+  repeated string labels = 8;
+  int64 workflow_step_id = 9;
+  google.protobuf.FieldMask update_mask = 10;
+  int64 updated_by = 11 [(validate.rules).int64.gt = 0];
+}
+
+message DeleteTaskRequest {
+  int64 task_id = 1 [(validate.rules).int64.gt = 0];
+  int64 deleted_by = 2;
+}
+
+message ListTasksRequest {
+  int64 board_id = 1;
+  int64 column_id = 2;
+  int64 assignee_id = 3;
+  TaskStatus status = 4;
+  TaskPriority priority = 5;
+  string search = 6;                   // поиск по title/description
+  repeated string labels = 7;
+  bool only_overdue = 8;
+  bool only_unassigned = 9;
+
+  // Сортировка
+  string sort_by = 10;                 // created_at, due_date, priority, position
+  string sort_order = 11;              // asc, desc
+
+  int32 page = 12;
+  int32 page_size = 13;
+}
+
+message ListTasksResponse {
+  repeated Task tasks = 1;
+  int64 total_count = 2;
+}
+
+// === Kanban операции ===
+message MoveTaskRequest {
+  int64 task_id = 1 [(validate.rules).int64.gt = 0];
+  int64 to_column_id = 2 [(validate.rules).int64.gt = 0];
+  int32 position = 3;                  // позиция в новой колонке
+  int64 moved_by = 4 [(validate.rules).int64.gt = 0];
+}
+
+message ReorderTasksRequest {
+  int64 column_id = 1 [(validate.rules).int64.gt = 0];
+  repeated int64 task_ids = 2;         // новый порядок задач в колонке
+}
+
+// === Bulk операции ===
+message BulkUpdateTasksRequest {
+  repeated int64 task_ids = 1 [(validate.rules).repeated.min_items = 1];
+  int64 assignee_id = 2;               // 0 = не менять, -1 = убрать assignee
+  TaskPriority priority = 3;
+  repeated string add_labels = 4;
+  repeated string remove_labels = 5;
+  int64 move_to_column_id = 6;
+  int64 updated_by = 7;
+}
+
+message BulkUpdateTasksResponse {
+  int32 updated_count = 1;
+  repeated Task updated_tasks = 2;
+}
+
+message BulkDeleteTasksRequest {
+  repeated int64 task_ids = 1 [(validate.rules).repeated.min_items = 1];
+  int64 deleted_by = 2;
+}
+
+// === Assignment ===
+message AssignTaskRequest {
+  int64 task_id = 1 [(validate.rules).int64.gt = 0];
+  int64 assignee_id = 2 [(validate.rules).int64.gt = 0];
+  int64 assigned_by = 3 [(validate.rules).int64.gt = 0];
+}
+
+message UnassignTaskRequest {
+  int64 task_id = 1 [(validate.rules).int64.gt = 0];
+  int64 unassigned_by = 2 [(validate.rules).int64.gt = 0];
+}
+
+// === Comments ===
+message CreateCommentRequest {
+  int64 task_id = 1 [(validate.rules).int64.gt = 0];
+  int64 author_id = 2 [(validate.rules).int64.gt = 0];
+  string content = 3 [(validate.rules).string.min_len = 1];
+  repeated int64 mention_user_ids = 4;
+}
+
+message UpdateCommentRequest {
+  int64 comment_id = 1 [(validate.rules).int64.gt = 0];
+  string content = 2 [(validate.rules).string.min_len = 1];
+  int64 updated_by = 3;
+}
+
+message DeleteCommentRequest {
+  int64 comment_id = 1 [(validate.rules).int64.gt = 0];
+  int64 deleted_by = 2;
+}
+
+message ListCommentsRequest {
+  int64 task_id = 1 [(validate.rules).int64.gt = 0];
+  int32 page = 2;
+  int32 page_size = 3;
+}
+
+message ListCommentsResponse {
+  repeated Comment comments = 1;
+  int64 total_count = 2;
+}
+
+// === Attachments ===
+message AddAttachmentRequest {
+  int64 task_id = 1 [(validate.rules).int64.gt = 0];
+  string file_id = 2 [(validate.rules).string.min_len = 1];
+  string file_name = 3;
+  string file_type = 4;
+  int64 file_size = 5;
+  int64 uploaded_by = 6 [(validate.rules).int64.gt = 0];
+}
+
+message RemoveAttachmentRequest {
+  int64 attachment_id = 1 [(validate.rules).int64.gt = 0];
+  int64 removed_by = 2;
+}
+
+message ListAttachmentsRequest {
+  int64 task_id = 1 [(validate.rules).int64.gt = 0];
+}
+
+message ListAttachmentsResponse {
+  repeated Attachment attachments = 1;
+}
+
+// === Activity ===
+message GetTaskActivityRequest {
+  int64 task_id = 1 [(validate.rules).int64.gt = 0];
+  int32 page = 2;
+  int32 page_size = 3;
+}
+
+message GetTaskActivityResponse {
+  repeated ActivityLogEntry activities = 1;
+  int64 total_count = 2;
+}
+
+// === Watchers ===
+message AddWatcherRequest {
+  int64 task_id = 1 [(validate.rules).int64.gt = 0];
+  int64 user_id = 2 [(validate.rules).int64.gt = 0];
+}
+
+message RemoveWatcherRequest {
+  int64 task_id = 1 [(validate.rules).int64.gt = 0];
+  int64 user_id = 2 [(validate.rules).int64.gt = 0];
+}
+
+message ListWatchersRequest {
+  int64 task_id = 1 [(validate.rules).int64.gt = 0];
+}
+
+message ListWatchersResponse {
+  repeated UserPreview watchers = 1;
+}
+
+// === Dashboard & Stats ===
+message GetBoardStatsRequest {
+  int64 board_id = 1 [(validate.rules).int64.gt = 0];
+  bool include_member_stats = 2;
+  bool include_daily_stats = 3;
+}
+
+message GetBoardStatsResponse {
+  BoardStats stats = 1;
+  repeated MemberStats member_stats = 2;
+  repeated DailyStats daily_stats = 3;    // за последние 14 дней
+}
+
+message MemberStats {
+  UserPreview user = 1;
+  int32 assigned_tasks = 2;
+  int32 completed_tasks = 3;
+  int32 overdue_tasks = 4;
+  int32 in_progress_tasks = 5;
+}
+
+message DailyStats {
+  string date = 1;                        // YYYY-MM-DD
+  int32 created = 2;
+  int32 completed = 3;
+  int32 moved = 4;
+}
+
+message GetMyTasksRequest {
+  int64 user_id = 1 [(validate.rules).int64.gt = 0];
+  bool only_assigned = 2;                 // только назначенные мне
+  bool only_created = 3;                  // только созданные мной
+  bool only_watching = 4;                 // только те, что я наблюдаю
+  bool include_completed = 5;
+  int32 page = 6;
+  int32 page_size = 7;
+}
+
+message GetOverdueTasksRequest {
+  int64 board_id = 1;
+  int64 assignee_id = 2;
+  int32 page = 3;
+  int32 page_size = 4;
+}
+
+message GetUpcomingDeadlinesRequest {
+  int64 board_id = 1;
+  int64 user_id = 2;                      // опционально, фильтр по assignee
+  int32 days_ahead = 3;                   // сколько дней вперёд смотреть (default 7)
+  int32 page = 4;
+  int32 page_size = 5;
+}
