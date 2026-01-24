@@ -219,7 +219,7 @@ vet:
 	go vet ./...
 
 # ==================== PRE-PUSH / CI ====================
-pre-push: fmt vet lint test build
+pre-push: proto fmt vet lint test build
 	@echo.
 	@echo ========================================
 	@echo   All checks passed! Ready to push.
