@@ -22,6 +22,7 @@ type Config struct {
 	FormServiceAddr         string   `mapstructure:"services_form_addr"`
 	AdminServiceAddr        string   `mapstructure:"services_admin_addr"`
 	RedisAddr               string   `mapstructure:"redis_addr"`
+	TaskServiceAddr         string   `mapstructure:"services_task_addr"`
 	AllowedOrigins          []string `mapstructure:"allowed_origins"`
 }
 
@@ -48,6 +49,7 @@ func Load(path string, cfg interface{}) error {
 	_ = v.BindEnv("services_auth_addr", "SERVICES_AUTH_ADDR")
 	_ = v.BindEnv("services_project_addr", "SERVICES_PROJECT_ADDR")
 	_ = v.BindEnv("services_team_addr", "SERVICES_TEAM_ADDR")
+	_ = v.BindEnv("services_task_addr", "SERVICES_TASK_ADDR")
 	_ = v.BindEnv("services_university_addr", "SERVICES_UNIVERSITY_ADDR")
 	_ = v.BindEnv("services_role_addr", "SERVICES_ROLE_ADDR")
 	_ = v.BindEnv("services_workflow_addr", "SERVICES_WORKFLOW_ADDR")
