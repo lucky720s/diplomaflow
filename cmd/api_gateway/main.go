@@ -215,7 +215,7 @@ func main() {
 	targets := []gatewayhealth.ServiceTarget{
 		{Name: "auth", Addr: cfg.AuthServiceAddr, ServiceName: "auth.AuthService"},
 		{Name: "project", Addr: cfg.ProjectServiceAddr, ServiceName: "project.ProjectService"},
-		{Name: "task", Addr: cfg.TaskServiceAddr, ServiceName: "team.TaskService"},
+		{Name: "task", Addr: cfg.TaskServiceAddr, ServiceName: "task.TaskService"},
 		{Name: "team", Addr: cfg.TeamServiceAddr, ServiceName: "team.TeamService"},
 		{Name: "university", Addr: cfg.UniversityServiceAddr, ServiceName: "university.v1.UniversityService"},
 		{Name: "role", Addr: cfg.RoleServiceAddr, ServiceName: "role.v1.RoleService"},
