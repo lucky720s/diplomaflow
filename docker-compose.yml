@@ -121,7 +121,7 @@ services:
       migrate:
         condition: service_completed_successfully
     healthcheck:
-      test: ["CMD", "grpc_health_probe", "-addr=localhost:8081", "-service=university.v1.UniversityService"]
+      test: ["CMD", "grpc_health_probe", "-addr=localhost:8081", "-service=university.UniversityService"]
       interval: 10s
       timeout: 3s
       retries: 15
@@ -221,7 +221,7 @@ services:
       kafka:
         condition: service_healthy
     healthcheck:
-      test: ["CMD", "grpc_health_probe", "-addr=localhost:8085", "-service=workflow.v1.WorkflowService"]
+      test: ["CMD", "grpc_health_probe", "-addr=localhost:8085", "-service=workflow.WorkflowService"]
       interval: 10s
       timeout: 3s
       retries: 15
@@ -241,7 +241,7 @@ services:
       migrate:
         condition: service_completed_successfully
     healthcheck:
-      test: ["CMD", "grpc_health_probe", "-addr=localhost:8086", "-service=role.v1.RoleService"]
+      test: ["CMD", "grpc_health_probe", "-addr=localhost:8086", "-service=role.RoleService"]
       interval: 10s
       timeout: 3s
       retries: 15
@@ -324,7 +324,7 @@ services:
       migrate:
         condition: service_completed_successfully
     healthcheck:
-      test: ["CMD", "grpc_health_probe", "-addr=localhost:8090", "-service=admin.v1.AdminService"]
+      test: ["CMD", "grpc_health_probe", "-addr=localhost:8090", "-service=admin.AdminService"]
       interval: 10s
       timeout: 3s
       retries: 15
@@ -344,7 +344,7 @@ services:
       migrate:
         condition: service_completed_successfully
     healthcheck:
-      test: [ "CMD", "grpc_health_probe", "-addr=localhost:8091", "-service=task.v1.TaskService" ]
+      test: [ "CMD", "grpc_health_probe", "-addr=localhost:8091", "-service=task.TaskService" ]
       interval: 10s
       timeout: 3s
       retries: 15
