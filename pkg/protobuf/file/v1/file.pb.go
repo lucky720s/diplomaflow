@@ -440,9 +440,9 @@ var File_file_v1_file_proto protoreflect.FileDescriptor
 
 const file_file_v1_file_proto_rawDesc = "" +
 	"\n" +
-	"\x12file/v1/file.proto\x12\x04file\"Y\n" +
-	"\x11UploadFileRequest\x12$\n" +
-	"\x04info\x18\x01 \x01(\v2\x0e.file.FileInfoH\x00R\x04info\x12\x16\n" +
+	"\x12file/v1/file.proto\x12\afile.v1\"\\\n" +
+	"\x11UploadFileRequest\x12'\n" +
+	"\x04info\x18\x01 \x01(\v2\x11.file.v1.FileInfoH\x00R\x04info\x12\x16\n" +
 	"\x05chunk\x18\x02 \x01(\fH\x00R\x05chunkB\x06\n" +
 	"\x04data\"|\n" +
 	"\bFileInfo\x12\x1b\n" +
@@ -465,12 +465,12 @@ const file_file_v1_file_proto_rawDesc = "" +
 	"\x13DownloadFileRequest\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\tR\x02id\",\n" +
 	"\x14DownloadFileResponse\x12\x14\n" +
-	"\x05chunk\x18\x01 \x01(\fR\x05chunk2\xdd\x01\n" +
-	"\vFileService\x12A\n" +
+	"\x05chunk\x18\x01 \x01(\fR\x05chunk2\xef\x01\n" +
+	"\vFileService\x12G\n" +
 	"\n" +
-	"UploadFile\x12\x17.file.UploadFileRequest\x1a\x18.file.UploadFileResponse(\x01\x12B\n" +
-	"\vGetFileInfo\x12\x18.file.GetFileInfoRequest\x1a\x19.file.GetFileInfoResponse\x12G\n" +
-	"\fDownloadFile\x12\x19.file.DownloadFileRequest\x1a\x1a.file.DownloadFileResponse0\x01B7Z5github.com/lucky720s/diplomaflow/pkg/protobuf/file/v1b\x06proto3"
+	"UploadFile\x12\x1a.file.v1.UploadFileRequest\x1a\x1b.file.v1.UploadFileResponse(\x01\x12H\n" +
+	"\vGetFileInfo\x12\x1b.file.v1.GetFileInfoRequest\x1a\x1c.file.v1.GetFileInfoResponse\x12M\n" +
+	"\fDownloadFile\x12\x1c.file.v1.DownloadFileRequest\x1a\x1d.file.v1.DownloadFileResponse0\x01B7Z5github.com/lucky720s/diplomaflow/pkg/protobuf/file/v1b\x06proto3"
 
 var (
 	file_file_v1_file_proto_rawDescOnce sync.Once
@@ -486,22 +486,22 @@ func file_file_v1_file_proto_rawDescGZIP() []byte {
 
 var file_file_v1_file_proto_msgTypes = make([]protoimpl.MessageInfo, 7)
 var file_file_v1_file_proto_goTypes = []any{
-	(*UploadFileRequest)(nil),    // 0: file.UploadFileRequest
-	(*FileInfo)(nil),             // 1: file.FileInfo
-	(*UploadFileResponse)(nil),   // 2: file.UploadFileResponse
-	(*GetFileInfoRequest)(nil),   // 3: file.GetFileInfoRequest
-	(*GetFileInfoResponse)(nil),  // 4: file.GetFileInfoResponse
-	(*DownloadFileRequest)(nil),  // 5: file.DownloadFileRequest
-	(*DownloadFileResponse)(nil), // 6: file.DownloadFileResponse
+	(*UploadFileRequest)(nil),    // 0: file.v1.UploadFileRequest
+	(*FileInfo)(nil),             // 1: file.v1.FileInfo
+	(*UploadFileResponse)(nil),   // 2: file.v1.UploadFileResponse
+	(*GetFileInfoRequest)(nil),   // 3: file.v1.GetFileInfoRequest
+	(*GetFileInfoResponse)(nil),  // 4: file.v1.GetFileInfoResponse
+	(*DownloadFileRequest)(nil),  // 5: file.v1.DownloadFileRequest
+	(*DownloadFileResponse)(nil), // 6: file.v1.DownloadFileResponse
 }
 var file_file_v1_file_proto_depIdxs = []int32{
-	1, // 0: file.UploadFileRequest.info:type_name -> file.FileInfo
-	0, // 1: file.FileService.UploadFile:input_type -> file.UploadFileRequest
-	3, // 2: file.FileService.GetFileInfo:input_type -> file.GetFileInfoRequest
-	5, // 3: file.FileService.DownloadFile:input_type -> file.DownloadFileRequest
-	2, // 4: file.FileService.UploadFile:output_type -> file.UploadFileResponse
-	4, // 5: file.FileService.GetFileInfo:output_type -> file.GetFileInfoResponse
-	6, // 6: file.FileService.DownloadFile:output_type -> file.DownloadFileResponse
+	1, // 0: file.v1.UploadFileRequest.info:type_name -> file.v1.FileInfo
+	0, // 1: file.v1.FileService.UploadFile:input_type -> file.v1.UploadFileRequest
+	3, // 2: file.v1.FileService.GetFileInfo:input_type -> file.v1.GetFileInfoRequest
+	5, // 3: file.v1.FileService.DownloadFile:input_type -> file.v1.DownloadFileRequest
+	2, // 4: file.v1.FileService.UploadFile:output_type -> file.v1.UploadFileResponse
+	4, // 5: file.v1.FileService.GetFileInfo:output_type -> file.v1.GetFileInfoResponse
+	6, // 6: file.v1.FileService.DownloadFile:output_type -> file.v1.DownloadFileResponse
 	4, // [4:7] is the sub-list for method output_type
 	1, // [1:4] is the sub-list for method input_type
 	1, // [1:1] is the sub-list for extension type_name

@@ -19,9 +19,9 @@ import (
 const _ = grpc.SupportPackageIsVersion9
 
 const (
-	FormService_SubmitForm_FullMethodName        = "/form.FormService/SubmitForm"
-	FormService_GetFormSubmission_FullMethodName = "/form.FormService/GetFormSubmission"
-	FormService_ListProjectForms_FullMethodName  = "/form.FormService/ListProjectForms"
+	FormService_SubmitForm_FullMethodName        = "/form.v1.FormService/SubmitForm"
+	FormService_GetFormSubmission_FullMethodName = "/form.v1.FormService/GetFormSubmission"
+	FormService_ListProjectForms_FullMethodName  = "/form.v1.FormService/ListProjectForms"
 )
 
 // FormServiceClient is the client API for FormService service.
@@ -176,7 +176,7 @@ func _FormService_ListProjectForms_Handler(srv interface{}, ctx context.Context,
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
 var FormService_ServiceDesc = grpc.ServiceDesc{
-	ServiceName: "form.FormService",
+	ServiceName: "form.v1.FormService",
 	HandlerType: (*FormServiceServer)(nil),
 	Methods: []grpc.MethodDesc{
 		{

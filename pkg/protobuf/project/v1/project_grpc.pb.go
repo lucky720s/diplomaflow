@@ -19,12 +19,12 @@ import (
 const _ = grpc.SupportPackageIsVersion9
 
 const (
-	ProjectService_CreateProject_FullMethodName      = "/project.ProjectService/CreateProject"
-	ProjectService_GetProject_FullMethodName         = "/project.ProjectService/GetProject"
-	ProjectService_GetStudentProjects_FullMethodName = "/project.ProjectService/GetStudentProjects"
-	ProjectService_PerformAction_FullMethodName      = "/project.ProjectService/PerformAction"
-	ProjectService_GetProjectRuntime_FullMethodName  = "/project.ProjectService/GetProjectRuntime"
-	ProjectService_CommitTransition_FullMethodName   = "/project.ProjectService/CommitTransition"
+	ProjectService_CreateProject_FullMethodName      = "/project.v1.ProjectService/CreateProject"
+	ProjectService_GetProject_FullMethodName         = "/project.v1.ProjectService/GetProject"
+	ProjectService_GetStudentProjects_FullMethodName = "/project.v1.ProjectService/GetStudentProjects"
+	ProjectService_PerformAction_FullMethodName      = "/project.v1.ProjectService/PerformAction"
+	ProjectService_GetProjectRuntime_FullMethodName  = "/project.v1.ProjectService/GetProjectRuntime"
+	ProjectService_CommitTransition_FullMethodName   = "/project.v1.ProjectService/CommitTransition"
 )
 
 // ProjectServiceClient is the client API for ProjectService service.
@@ -284,7 +284,7 @@ func _ProjectService_CommitTransition_Handler(srv interface{}, ctx context.Conte
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
 var ProjectService_ServiceDesc = grpc.ServiceDesc{
-	ServiceName: "project.ProjectService",
+	ServiceName: "project.v1.ProjectService",
 	HandlerType: (*ProjectServiceServer)(nil),
 	Methods: []grpc.MethodDesc{
 		{

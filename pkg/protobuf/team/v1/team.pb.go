@@ -1535,7 +1535,7 @@ var File_team_v1_team_proto protoreflect.FileDescriptor
 
 const file_team_v1_team_proto_rawDesc = "" +
 	"\n" +
-	"\x12team/v1/team.proto\x12\x04team\x1a\x1bgoogle/protobuf/empty.proto\x1a google/protobuf/field_mask.proto\"\x82\x01\n" +
+	"\x12team/v1/team.proto\x12\ateam.v1\x1a\x1bgoogle/protobuf/empty.proto\x1a google/protobuf/field_mask.proto\"\x82\x01\n" +
 	"\x11CreateTeamRequest\x12\x12\n" +
 	"\x04name\x18\x01 \x01(\tR\x04name\x12\x1d\n" +
 	"\n" +
@@ -1550,13 +1550,13 @@ const file_team_v1_team_proto_rawDesc = "" +
 	"\n" +
 	"TeamMember\x12\x17\n" +
 	"\auser_id\x18\x01 \x01(\x03R\x06userId\x12\x12\n" +
-	"\x04role\x18\x02 \x01(\tR\x04role\"\x89\x01\n" +
+	"\x04role\x18\x02 \x01(\tR\x04role\"\x8c\x01\n" +
 	"\x0fGetTeamResponse\x12\x17\n" +
 	"\ateam_id\x18\x01 \x01(\x03R\x06teamId\x12\x12\n" +
 	"\x04name\x18\x02 \x01(\tR\x04name\x12\x1d\n" +
 	"\n" +
-	"project_id\x18\x03 \x01(\x03R\tprojectId\x12*\n" +
-	"\amembers\x18\x04 \x03(\v2\x10.team.TeamMemberR\amembers\"\x9b\x01\n" +
+	"project_id\x18\x03 \x01(\x03R\tprojectId\x12-\n" +
+	"\amembers\x18\x04 \x03(\v2\x13.team.v1.TeamMemberR\amembers\"\x9b\x01\n" +
 	"\x1bGetAvailableStudentsRequest\x12#\n" +
 	"\runiversity_id\x18\x01 \x01(\x03R\funiversityId\x12&\n" +
 	"\x0fexclude_user_id\x18\x02 \x01(\x03R\rexcludeUserId\x12\x12\n" +
@@ -1565,9 +1565,9 @@ const file_team_v1_team_proto_rawDesc = "" +
 	"\x0eStudentPreview\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\x03R\x02id\x12\x1b\n" +
 	"\tfull_name\x18\x02 \x01(\tR\bfullName\x12\x14\n" +
-	"\x05email\x18\x03 \x01(\tR\x05email\"P\n" +
-	"\x1cGetAvailableStudentsResponse\x120\n" +
-	"\bstudents\x18\x01 \x03(\v2\x14.team.StudentPreviewR\bstudents\"N\n" +
+	"\x05email\x18\x03 \x01(\tR\x05email\"S\n" +
+	"\x1cGetAvailableStudentsResponse\x123\n" +
+	"\bstudents\x18\x01 \x03(\v2\x17.team.v1.StudentPreviewR\bstudents\"N\n" +
 	"\x14AssignProjectRequest\x12\x17\n" +
 	"\ateam_id\x18\x01 \x01(\x03R\x06teamId\x12\x1d\n" +
 	"\n" +
@@ -1582,9 +1582,9 @@ const file_team_v1_team_proto_rawDesc = "" +
 	"inviter_id\x18\x04 \x01(\x03R\tinviterId\x12\x16\n" +
 	"\x06status\x18\x05 \x01(\tR\x06status\".\n" +
 	"\x13GetMyInvitesRequest\x12\x17\n" +
-	"\auser_id\x18\x01 \x01(\x03R\x06userId\">\n" +
-	"\x14GetMyInvitesResponse\x12&\n" +
-	"\ainvites\x18\x01 \x03(\v2\f.team.InviteR\ainvites\"f\n" +
+	"\auser_id\x18\x01 \x01(\x03R\x06userId\"A\n" +
+	"\x14GetMyInvitesResponse\x12)\n" +
+	"\ainvites\x18\x01 \x03(\v2\x0f.team.v1.InviteR\ainvites\"f\n" +
 	"\x16RespondToInviteRequest\x12\x1b\n" +
 	"\tinvite_id\x18\x01 \x01(\x03R\binviteId\x12\x17\n" +
 	"\auser_id\x18\x02 \x01(\x03R\x06userId\x12\x16\n" +
@@ -1593,27 +1593,25 @@ const file_team_v1_team_proto_rawDesc = "" +
 	"\asuccess\x18\x01 \x01(\bR\asuccess\x12\x18\n" +
 	"\amessage\x18\x02 \x01(\tR\amessage\"+\n" +
 	"\x10GetMyTeamRequest\x12\x17\n" +
-	"\auser_id\x18\x01 \x01(\x03R\x06userId\"R\n" +
+	"\auser_id\x18\x01 \x01(\x03R\x06userId\"U\n" +
 	"\x11GetMyTeamResponse\x12\x19\n" +
-	"\bhas_team\x18\x01 \x01(\bR\ahasTeam\x12\"\n" +
-	"\x04team\x18\x02 \x01(\v2\x0e.team.TeamInfoR\x04team\"\xed\x01\n" +
+	"\bhas_team\x18\x01 \x01(\bR\ahasTeam\x12%\n" +
+	"\x04team\x18\x02 \x01(\v2\x11.team.v1.TeamInfoR\x04team\"\xf0\x01\n" +
 	"\bTeamInfo\x12\x17\n" +
 	"\ateam_id\x18\x01 \x01(\x03R\x06teamId\x12\x12\n" +
 	"\x04name\x18\x02 \x01(\tR\x04name\x12\x1d\n" +
 	"\n" +
 	"project_id\x18\x03 \x01(\x03R\tprojectId\x12\x12\n" +
-	"\x04role\x18\x04 \x01(\tR\x04role\x12*\n" +
-	"\amembers\x18\x05 \x03(\v2\x10.team.TeamMemberR\amembers\x12!\n" +
+	"\x04role\x18\x04 \x01(\tR\x04role\x12-\n" +
+	"\amembers\x18\x05 \x03(\v2\x13.team.v1.TeamMemberR\amembers\x12!\n" +
 	"\fmember_count\x18\x06 \x01(\x05R\vmemberCount\x122\n" +
-	"\x15pending_invites_count\x18\a \x01(\x05R\x13pendingInvitesCount\"p\n" +
-	"\x11UpdateTeamRequest\x12\x1e\n" +
-	"\x04team\x18\x01 \x01(\v2\n" +
-	".team.TeamR\x04team\x12;\n" +
+	"\x15pending_invites_count\x18\a \x01(\x05R\x13pendingInvitesCount\"s\n" +
+	"\x11UpdateTeamRequest\x12!\n" +
+	"\x04team\x18\x01 \x01(\v2\r.team.v1.TeamR\x04team\x12;\n" +
 	"\vupdate_mask\x18\x02 \x01(\v2\x1a.google.protobuf.FieldMaskR\n" +
-	"updateMask\"4\n" +
-	"\x12UpdateTeamResponse\x12\x1e\n" +
-	"\x04team\x18\x01 \x01(\v2\n" +
-	".team.TeamR\x04team\",\n" +
+	"updateMask\"7\n" +
+	"\x12UpdateTeamResponse\x12!\n" +
+	"\x04team\x18\x01 \x01(\v2\r.team.v1.TeamR\x04team\",\n" +
 	"\x11DeleteTeamRequest\x12\x17\n" +
 	"\ateam_id\x18\x01 \x01(\x03R\x06teamId\"X\n" +
 	"\x10AddMemberRequest\x12\x17\n" +
@@ -1625,13 +1623,13 @@ const file_team_v1_team_proto_rawDesc = "" +
 	"\amessage\x18\x02 \x01(\tR\amessage\"G\n" +
 	"\x13RemoveMemberRequest\x12\x17\n" +
 	"\ateam_id\x18\x01 \x01(\x03R\x06teamId\x12\x17\n" +
-	"\auser_id\x18\x02 \x01(\x03R\x06userId\"\x94\x01\n" +
+	"\auser_id\x18\x02 \x01(\x03R\x06userId\"\x97\x01\n" +
 	"\x04Team\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\x03R\x02id\x12\x12\n" +
 	"\x04name\x18\x02 \x01(\tR\x04name\x12\x1d\n" +
 	"\n" +
-	"project_id\x18\x03 \x01(\x03R\tprojectId\x12*\n" +
-	"\amembers\x18\x04 \x03(\v2\x10.team.TeamMemberR\amembers\x12\x1d\n" +
+	"project_id\x18\x03 \x01(\x03R\tprojectId\x12-\n" +
+	"\amembers\x18\x04 \x03(\v2\x13.team.v1.TeamMemberR\amembers\x12\x1d\n" +
 	"\n" +
 	"created_at\x18\x05 \x01(\tR\tcreatedAt\"\x87\x01\n" +
 	"\x10ListTeamsRequest\x12#\n" +
@@ -1639,28 +1637,27 @@ const file_team_v1_team_proto_rawDesc = "" +
 	"\n" +
 	"project_id\x18\x02 \x01(\x03R\tprojectId\x12\x12\n" +
 	"\x04page\x18\x03 \x01(\x05R\x04page\x12\x1b\n" +
-	"\tpage_size\x18\x04 \x01(\x05R\bpageSize\"V\n" +
-	"\x11ListTeamsResponse\x12 \n" +
-	"\x05teams\x18\x01 \x03(\v2\n" +
-	".team.TeamR\x05teams\x12\x1f\n" +
+	"\tpage_size\x18\x04 \x01(\x05R\bpageSize\"Y\n" +
+	"\x11ListTeamsResponse\x12#\n" +
+	"\x05teams\x18\x01 \x03(\v2\r.team.v1.TeamR\x05teams\x12\x1f\n" +
 	"\vtotal_count\x18\x02 \x01(\x03R\n" +
-	"totalCount2\xc3\x06\n" +
-	"\vTeamService\x12?\n" +
+	"totalCount2\x85\a\n" +
+	"\vTeamService\x12E\n" +
 	"\n" +
-	"CreateTeam\x12\x17.team.CreateTeamRequest\x1a\x18.team.CreateTeamResponse\x126\n" +
-	"\aGetTeam\x12\x14.team.GetTeamRequest\x1a\x15.team.GetTeamResponse\x12]\n" +
-	"\x14GetAvailableStudents\x12!.team.GetAvailableStudentsRequest\x1a\".team.GetAvailableStudentsResponse\x12H\n" +
-	"\rAssignProject\x12\x1a.team.AssignProjectRequest\x1a\x1b.team.AssignProjectResponse\x12E\n" +
-	"\fGetMyInvites\x12\x19.team.GetMyInvitesRequest\x1a\x1a.team.GetMyInvitesResponse\x12N\n" +
-	"\x0fRespondToInvite\x12\x1c.team.RespondToInviteRequest\x1a\x1d.team.RespondToInviteResponse\x12<\n" +
-	"\tGetMyTeam\x12\x16.team.GetMyTeamRequest\x1a\x17.team.GetMyTeamResponse\x12<\n" +
-	"\tListTeams\x12\x16.team.ListTeamsRequest\x1a\x17.team.ListTeamsResponse\x12?\n" +
+	"CreateTeam\x12\x1a.team.v1.CreateTeamRequest\x1a\x1b.team.v1.CreateTeamResponse\x12<\n" +
+	"\aGetTeam\x12\x17.team.v1.GetTeamRequest\x1a\x18.team.v1.GetTeamResponse\x12c\n" +
+	"\x14GetAvailableStudents\x12$.team.v1.GetAvailableStudentsRequest\x1a%.team.v1.GetAvailableStudentsResponse\x12N\n" +
+	"\rAssignProject\x12\x1d.team.v1.AssignProjectRequest\x1a\x1e.team.v1.AssignProjectResponse\x12K\n" +
+	"\fGetMyInvites\x12\x1c.team.v1.GetMyInvitesRequest\x1a\x1d.team.v1.GetMyInvitesResponse\x12T\n" +
+	"\x0fRespondToInvite\x12\x1f.team.v1.RespondToInviteRequest\x1a .team.v1.RespondToInviteResponse\x12B\n" +
+	"\tGetMyTeam\x12\x19.team.v1.GetMyTeamRequest\x1a\x1a.team.v1.GetMyTeamResponse\x12B\n" +
+	"\tListTeams\x12\x19.team.v1.ListTeamsRequest\x1a\x1a.team.v1.ListTeamsResponse\x12E\n" +
 	"\n" +
-	"UpdateTeam\x12\x17.team.UpdateTeamRequest\x1a\x18.team.UpdateTeamResponse\x12=\n" +
+	"UpdateTeam\x12\x1a.team.v1.UpdateTeamRequest\x1a\x1b.team.v1.UpdateTeamResponse\x12@\n" +
 	"\n" +
-	"DeleteTeam\x12\x17.team.DeleteTeamRequest\x1a\x16.google.protobuf.Empty\x12<\n" +
-	"\tAddMember\x12\x16.team.AddMemberRequest\x1a\x17.team.AddMemberResponse\x12A\n" +
-	"\fRemoveMember\x12\x19.team.RemoveMemberRequest\x1a\x16.google.protobuf.EmptyB7Z5github.com/lucky720s/diplomaflow/pkg/protobuf/team/v1b\x06proto3"
+	"DeleteTeam\x12\x1a.team.v1.DeleteTeamRequest\x1a\x16.google.protobuf.Empty\x12B\n" +
+	"\tAddMember\x12\x19.team.v1.AddMemberRequest\x1a\x1a.team.v1.AddMemberResponse\x12D\n" +
+	"\fRemoveMember\x12\x1c.team.v1.RemoveMemberRequest\x1a\x16.google.protobuf.EmptyB7Z5github.com/lucky720s/diplomaflow/pkg/protobuf/team/v1b\x06proto3"
 
 var (
 	file_team_v1_team_proto_rawDescOnce sync.Once
@@ -1676,71 +1673,71 @@ func file_team_v1_team_proto_rawDescGZIP() []byte {
 
 var file_team_v1_team_proto_msgTypes = make([]protoimpl.MessageInfo, 27)
 var file_team_v1_team_proto_goTypes = []any{
-	(*CreateTeamRequest)(nil),            // 0: team.CreateTeamRequest
-	(*CreateTeamResponse)(nil),           // 1: team.CreateTeamResponse
-	(*GetTeamRequest)(nil),               // 2: team.GetTeamRequest
-	(*TeamMember)(nil),                   // 3: team.TeamMember
-	(*GetTeamResponse)(nil),              // 4: team.GetTeamResponse
-	(*GetAvailableStudentsRequest)(nil),  // 5: team.GetAvailableStudentsRequest
-	(*StudentPreview)(nil),               // 6: team.StudentPreview
-	(*GetAvailableStudentsResponse)(nil), // 7: team.GetAvailableStudentsResponse
-	(*AssignProjectRequest)(nil),         // 8: team.AssignProjectRequest
-	(*AssignProjectResponse)(nil),        // 9: team.AssignProjectResponse
-	(*Invite)(nil),                       // 10: team.Invite
-	(*GetMyInvitesRequest)(nil),          // 11: team.GetMyInvitesRequest
-	(*GetMyInvitesResponse)(nil),         // 12: team.GetMyInvitesResponse
-	(*RespondToInviteRequest)(nil),       // 13: team.RespondToInviteRequest
-	(*RespondToInviteResponse)(nil),      // 14: team.RespondToInviteResponse
-	(*GetMyTeamRequest)(nil),             // 15: team.GetMyTeamRequest
-	(*GetMyTeamResponse)(nil),            // 16: team.GetMyTeamResponse
-	(*TeamInfo)(nil),                     // 17: team.TeamInfo
-	(*UpdateTeamRequest)(nil),            // 18: team.UpdateTeamRequest
-	(*UpdateTeamResponse)(nil),           // 19: team.UpdateTeamResponse
-	(*DeleteTeamRequest)(nil),            // 20: team.DeleteTeamRequest
-	(*AddMemberRequest)(nil),             // 21: team.AddMemberRequest
-	(*AddMemberResponse)(nil),            // 22: team.AddMemberResponse
-	(*RemoveMemberRequest)(nil),          // 23: team.RemoveMemberRequest
-	(*Team)(nil),                         // 24: team.Team
-	(*ListTeamsRequest)(nil),             // 25: team.ListTeamsRequest
-	(*ListTeamsResponse)(nil),            // 26: team.ListTeamsResponse
+	(*CreateTeamRequest)(nil),            // 0: team.v1.CreateTeamRequest
+	(*CreateTeamResponse)(nil),           // 1: team.v1.CreateTeamResponse
+	(*GetTeamRequest)(nil),               // 2: team.v1.GetTeamRequest
+	(*TeamMember)(nil),                   // 3: team.v1.TeamMember
+	(*GetTeamResponse)(nil),              // 4: team.v1.GetTeamResponse
+	(*GetAvailableStudentsRequest)(nil),  // 5: team.v1.GetAvailableStudentsRequest
+	(*StudentPreview)(nil),               // 6: team.v1.StudentPreview
+	(*GetAvailableStudentsResponse)(nil), // 7: team.v1.GetAvailableStudentsResponse
+	(*AssignProjectRequest)(nil),         // 8: team.v1.AssignProjectRequest
+	(*AssignProjectResponse)(nil),        // 9: team.v1.AssignProjectResponse
+	(*Invite)(nil),                       // 10: team.v1.Invite
+	(*GetMyInvitesRequest)(nil),          // 11: team.v1.GetMyInvitesRequest
+	(*GetMyInvitesResponse)(nil),         // 12: team.v1.GetMyInvitesResponse
+	(*RespondToInviteRequest)(nil),       // 13: team.v1.RespondToInviteRequest
+	(*RespondToInviteResponse)(nil),      // 14: team.v1.RespondToInviteResponse
+	(*GetMyTeamRequest)(nil),             // 15: team.v1.GetMyTeamRequest
+	(*GetMyTeamResponse)(nil),            // 16: team.v1.GetMyTeamResponse
+	(*TeamInfo)(nil),                     // 17: team.v1.TeamInfo
+	(*UpdateTeamRequest)(nil),            // 18: team.v1.UpdateTeamRequest
+	(*UpdateTeamResponse)(nil),           // 19: team.v1.UpdateTeamResponse
+	(*DeleteTeamRequest)(nil),            // 20: team.v1.DeleteTeamRequest
+	(*AddMemberRequest)(nil),             // 21: team.v1.AddMemberRequest
+	(*AddMemberResponse)(nil),            // 22: team.v1.AddMemberResponse
+	(*RemoveMemberRequest)(nil),          // 23: team.v1.RemoveMemberRequest
+	(*Team)(nil),                         // 24: team.v1.Team
+	(*ListTeamsRequest)(nil),             // 25: team.v1.ListTeamsRequest
+	(*ListTeamsResponse)(nil),            // 26: team.v1.ListTeamsResponse
 	(*fieldmaskpb.FieldMask)(nil),        // 27: google.protobuf.FieldMask
 	(*emptypb.Empty)(nil),                // 28: google.protobuf.Empty
 }
 var file_team_v1_team_proto_depIdxs = []int32{
-	3,  // 0: team.GetTeamResponse.members:type_name -> team.TeamMember
-	6,  // 1: team.GetAvailableStudentsResponse.students:type_name -> team.StudentPreview
-	10, // 2: team.GetMyInvitesResponse.invites:type_name -> team.Invite
-	17, // 3: team.GetMyTeamResponse.team:type_name -> team.TeamInfo
-	3,  // 4: team.TeamInfo.members:type_name -> team.TeamMember
-	24, // 5: team.UpdateTeamRequest.team:type_name -> team.Team
-	27, // 6: team.UpdateTeamRequest.update_mask:type_name -> google.protobuf.FieldMask
-	24, // 7: team.UpdateTeamResponse.team:type_name -> team.Team
-	3,  // 8: team.Team.members:type_name -> team.TeamMember
-	24, // 9: team.ListTeamsResponse.teams:type_name -> team.Team
-	0,  // 10: team.TeamService.CreateTeam:input_type -> team.CreateTeamRequest
-	2,  // 11: team.TeamService.GetTeam:input_type -> team.GetTeamRequest
-	5,  // 12: team.TeamService.GetAvailableStudents:input_type -> team.GetAvailableStudentsRequest
-	8,  // 13: team.TeamService.AssignProject:input_type -> team.AssignProjectRequest
-	11, // 14: team.TeamService.GetMyInvites:input_type -> team.GetMyInvitesRequest
-	13, // 15: team.TeamService.RespondToInvite:input_type -> team.RespondToInviteRequest
-	15, // 16: team.TeamService.GetMyTeam:input_type -> team.GetMyTeamRequest
-	25, // 17: team.TeamService.ListTeams:input_type -> team.ListTeamsRequest
-	18, // 18: team.TeamService.UpdateTeam:input_type -> team.UpdateTeamRequest
-	20, // 19: team.TeamService.DeleteTeam:input_type -> team.DeleteTeamRequest
-	21, // 20: team.TeamService.AddMember:input_type -> team.AddMemberRequest
-	23, // 21: team.TeamService.RemoveMember:input_type -> team.RemoveMemberRequest
-	1,  // 22: team.TeamService.CreateTeam:output_type -> team.CreateTeamResponse
-	4,  // 23: team.TeamService.GetTeam:output_type -> team.GetTeamResponse
-	7,  // 24: team.TeamService.GetAvailableStudents:output_type -> team.GetAvailableStudentsResponse
-	9,  // 25: team.TeamService.AssignProject:output_type -> team.AssignProjectResponse
-	12, // 26: team.TeamService.GetMyInvites:output_type -> team.GetMyInvitesResponse
-	14, // 27: team.TeamService.RespondToInvite:output_type -> team.RespondToInviteResponse
-	16, // 28: team.TeamService.GetMyTeam:output_type -> team.GetMyTeamResponse
-	26, // 29: team.TeamService.ListTeams:output_type -> team.ListTeamsResponse
-	19, // 30: team.TeamService.UpdateTeam:output_type -> team.UpdateTeamResponse
-	28, // 31: team.TeamService.DeleteTeam:output_type -> google.protobuf.Empty
-	22, // 32: team.TeamService.AddMember:output_type -> team.AddMemberResponse
-	28, // 33: team.TeamService.RemoveMember:output_type -> google.protobuf.Empty
+	3,  // 0: team.v1.GetTeamResponse.members:type_name -> team.v1.TeamMember
+	6,  // 1: team.v1.GetAvailableStudentsResponse.students:type_name -> team.v1.StudentPreview
+	10, // 2: team.v1.GetMyInvitesResponse.invites:type_name -> team.v1.Invite
+	17, // 3: team.v1.GetMyTeamResponse.team:type_name -> team.v1.TeamInfo
+	3,  // 4: team.v1.TeamInfo.members:type_name -> team.v1.TeamMember
+	24, // 5: team.v1.UpdateTeamRequest.team:type_name -> team.v1.Team
+	27, // 6: team.v1.UpdateTeamRequest.update_mask:type_name -> google.protobuf.FieldMask
+	24, // 7: team.v1.UpdateTeamResponse.team:type_name -> team.v1.Team
+	3,  // 8: team.v1.Team.members:type_name -> team.v1.TeamMember
+	24, // 9: team.v1.ListTeamsResponse.teams:type_name -> team.v1.Team
+	0,  // 10: team.v1.TeamService.CreateTeam:input_type -> team.v1.CreateTeamRequest
+	2,  // 11: team.v1.TeamService.GetTeam:input_type -> team.v1.GetTeamRequest
+	5,  // 12: team.v1.TeamService.GetAvailableStudents:input_type -> team.v1.GetAvailableStudentsRequest
+	8,  // 13: team.v1.TeamService.AssignProject:input_type -> team.v1.AssignProjectRequest
+	11, // 14: team.v1.TeamService.GetMyInvites:input_type -> team.v1.GetMyInvitesRequest
+	13, // 15: team.v1.TeamService.RespondToInvite:input_type -> team.v1.RespondToInviteRequest
+	15, // 16: team.v1.TeamService.GetMyTeam:input_type -> team.v1.GetMyTeamRequest
+	25, // 17: team.v1.TeamService.ListTeams:input_type -> team.v1.ListTeamsRequest
+	18, // 18: team.v1.TeamService.UpdateTeam:input_type -> team.v1.UpdateTeamRequest
+	20, // 19: team.v1.TeamService.DeleteTeam:input_type -> team.v1.DeleteTeamRequest
+	21, // 20: team.v1.TeamService.AddMember:input_type -> team.v1.AddMemberRequest
+	23, // 21: team.v1.TeamService.RemoveMember:input_type -> team.v1.RemoveMemberRequest
+	1,  // 22: team.v1.TeamService.CreateTeam:output_type -> team.v1.CreateTeamResponse
+	4,  // 23: team.v1.TeamService.GetTeam:output_type -> team.v1.GetTeamResponse
+	7,  // 24: team.v1.TeamService.GetAvailableStudents:output_type -> team.v1.GetAvailableStudentsResponse
+	9,  // 25: team.v1.TeamService.AssignProject:output_type -> team.v1.AssignProjectResponse
+	12, // 26: team.v1.TeamService.GetMyInvites:output_type -> team.v1.GetMyInvitesResponse
+	14, // 27: team.v1.TeamService.RespondToInvite:output_type -> team.v1.RespondToInviteResponse
+	16, // 28: team.v1.TeamService.GetMyTeam:output_type -> team.v1.GetMyTeamResponse
+	26, // 29: team.v1.TeamService.ListTeams:output_type -> team.v1.ListTeamsResponse
+	19, // 30: team.v1.TeamService.UpdateTeam:output_type -> team.v1.UpdateTeamResponse
+	28, // 31: team.v1.TeamService.DeleteTeam:output_type -> google.protobuf.Empty
+	22, // 32: team.v1.TeamService.AddMember:output_type -> team.v1.AddMemberResponse
+	28, // 33: team.v1.TeamService.RemoveMember:output_type -> google.protobuf.Empty
 	22, // [22:34] is the sub-list for method output_type
 	10, // [10:22] is the sub-list for method input_type
 	10, // [10:10] is the sub-list for extension type_name

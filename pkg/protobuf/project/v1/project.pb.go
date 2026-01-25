@@ -1103,7 +1103,8 @@ var File_project_v1_project_proto protoreflect.FileDescriptor
 
 const file_project_v1_project_proto_rawDesc = "" +
 	"\n" +
-	"\x18project/v1/project.proto\x12\aproject\x1a\x1cgoogle/protobuf/struct.proto\x1a\x1fgoogle/protobuf/timestamp.proto\"\xdc\x01\n" +
+	"\x18project/v1/project.proto\x12\n" +
+	"project.v1\x1a\x1cgoogle/protobuf/struct.proto\x1a\x1fgoogle/protobuf/timestamp.proto\"\xdc\x01\n" +
 	"\x14CreateProjectRequest\x12\x14\n" +
 	"\x05title\x18\x01 \x01(\tR\x05title\x12 \n" +
 	"\vdescription\x18\x02 \x01(\tR\vdescription\x12\x1d\n" +
@@ -1126,7 +1127,7 @@ const file_project_v1_project_proto_rawDesc = "" +
 	"\n" +
 	"changed_by\x18\x03 \x01(\x03R\tchangedBy\x12\x18\n" +
 	"\acomment\x18\x04 \x01(\tR\acomment\x12\x1c\n" +
-	"\ttimestamp\x18\x05 \x01(\tR\ttimestamp\"\xb6\x02\n" +
+	"\ttimestamp\x18\x05 \x01(\tR\ttimestamp\"\xb9\x02\n" +
 	"\x12GetProjectResponse\x12\x1d\n" +
 	"\n" +
 	"project_id\x18\x01 \x01(\x03R\tprojectId\x12\x14\n" +
@@ -1137,8 +1138,8 @@ const file_project_v1_project_proto_rawDesc = "" +
 	"\ateam_id\x18\x05 \x01(\x03R\x06teamId\x12#\n" +
 	"\rworkflow_name\x18\x06 \x01(\tR\fworkflowName\x12#\n" +
 	"\rcurrent_state\x18\a \x01(\tR\fcurrentState\x12\x16\n" +
-	"\x06status\x18\b \x01(\tR\x06status\x12/\n" +
-	"\ahistory\x18\t \x03(\v2\x15.project.StateHistoryR\ahistory\":\n" +
+	"\x06status\x18\b \x01(\tR\x06status\x122\n" +
+	"\ahistory\x18\t \x03(\v2\x18.project.v1.StateHistoryR\ahistory\":\n" +
 	"\x19GetStudentProjectsRequest\x12\x1d\n" +
 	"\n" +
 	"student_id\x18\x01 \x01(\x03R\tstudentId\"\x82\x01\n" +
@@ -1147,9 +1148,9 @@ const file_project_v1_project_proto_rawDesc = "" +
 	"project_id\x18\x01 \x01(\x03R\tprojectId\x12\x14\n" +
 	"\x05title\x18\x02 \x01(\tR\x05title\x12\x16\n" +
 	"\x06status\x18\x03 \x01(\tR\x06status\x12#\n" +
-	"\rcurrent_state\x18\x04 \x01(\tR\fcurrentState\"Q\n" +
-	"\x1aGetStudentProjectsResponse\x123\n" +
-	"\bprojects\x18\x01 \x03(\v2\x17.project.ProjectPreviewR\bprojects\"\x89\x01\n" +
+	"\rcurrent_state\x18\x04 \x01(\tR\fcurrentState\"T\n" +
+	"\x1aGetStudentProjectsResponse\x126\n" +
+	"\bprojects\x18\x01 \x03(\v2\x1a.project.v1.ProjectPreviewR\bprojects\"\x89\x01\n" +
 	"\x14PerformActionRequest\x12\x1d\n" +
 	"\n" +
 	"project_id\x18\x01 \x01(\x03R\tprojectId\x12\x1f\n" +
@@ -1185,7 +1186,7 @@ const file_project_v1_project_proto_rawDesc = "" +
 	"\x15PostCommitActionGroup\x12\x18\n" +
 	"\atrigger\x18\x01 \x01(\tR\atrigger\x12\x1d\n" +
 	"\n" +
-	"action_ids\x18\x02 \x03(\x03R\tactionIds\"\x8c\x04\n" +
+	"action_ids\x18\x02 \x03(\x03R\tactionIds\"\x8f\x04\n" +
 	"\x17CommitTransitionRequest\x12\x1d\n" +
 	"\n" +
 	"project_id\x18\x01 \x01(\x03R\tprojectId\x123\n" +
@@ -1201,8 +1202,8 @@ const file_project_v1_project_proto_rawDesc = "" +
 	"\x0fnew_deadline_at\x18\t \x01(\v2\x1a.google.protobuf.TimestampR\rnewDeadlineAt\x126\n" +
 	"\n" +
 	"data_patch\x18\n" +
-	" \x01(\v2\x17.google.protobuf.StructR\tdataPatch\x12A\n" +
-	"\fpost_actions\x18\v \x03(\v2\x1e.project.PostCommitActionGroupR\vpostActions\x12\x1d\n" +
+	" \x01(\v2\x17.google.protobuf.StructR\tdataPatch\x12D\n" +
+	"\fpost_actions\x18\v \x03(\v2!.project.v1.PostCommitActionGroupR\vpostActions\x12\x1d\n" +
 	"\n" +
 	"set_status\x18\f \x01(\tR\tsetStatus\"\xb3\x01\n" +
 	"\x18CommitTransitionResponse\x12\x18\n" +
@@ -1212,15 +1213,15 @@ const file_project_v1_project_proto_rawDesc = "" +
 	"\fnew_state_id\x18\x03 \x01(\x03R\n" +
 	"newStateId\x12$\n" +
 	"\x0enew_state_name\x18\x04 \x01(\tR\fnewStateName\x12\x16\n" +
-	"\x06status\x18\x05 \x01(\tR\x06status2\x8b\x04\n" +
-	"\x0eProjectService\x12N\n" +
-	"\rCreateProject\x12\x1d.project.CreateProjectRequest\x1a\x1e.project.CreateProjectResponse\x12E\n" +
+	"\x06status\x18\x05 \x01(\tR\x06status2\xaf\x04\n" +
+	"\x0eProjectService\x12T\n" +
+	"\rCreateProject\x12 .project.v1.CreateProjectRequest\x1a!.project.v1.CreateProjectResponse\x12K\n" +
 	"\n" +
-	"GetProject\x12\x1a.project.GetProjectRequest\x1a\x1b.project.GetProjectResponse\x12]\n" +
-	"\x12GetStudentProjects\x12\".project.GetStudentProjectsRequest\x1a#.project.GetStudentProjectsResponse\x12N\n" +
-	"\rPerformAction\x12\x1d.project.PerformActionRequest\x1a\x1e.project.PerformActionResponse\x12Z\n" +
-	"\x11GetProjectRuntime\x12!.project.GetProjectRuntimeRequest\x1a\".project.GetProjectRuntimeResponse\x12W\n" +
-	"\x10CommitTransition\x12 .project.CommitTransitionRequest\x1a!.project.CommitTransitionResponseB:Z8github.com/lucky720s/diplomaflow/pkg/protobuf/project/v1b\x06proto3"
+	"GetProject\x12\x1d.project.v1.GetProjectRequest\x1a\x1e.project.v1.GetProjectResponse\x12c\n" +
+	"\x12GetStudentProjects\x12%.project.v1.GetStudentProjectsRequest\x1a&.project.v1.GetStudentProjectsResponse\x12T\n" +
+	"\rPerformAction\x12 .project.v1.PerformActionRequest\x1a!.project.v1.PerformActionResponse\x12`\n" +
+	"\x11GetProjectRuntime\x12$.project.v1.GetProjectRuntimeRequest\x1a%.project.v1.GetProjectRuntimeResponse\x12]\n" +
+	"\x10CommitTransition\x12#.project.v1.CommitTransitionRequest\x1a$.project.v1.CommitTransitionResponseB:Z8github.com/lucky720s/diplomaflow/pkg/protobuf/project/v1b\x06proto3"
 
 var (
 	file_project_v1_project_proto_rawDescOnce sync.Once
@@ -1236,45 +1237,45 @@ func file_project_v1_project_proto_rawDescGZIP() []byte {
 
 var file_project_v1_project_proto_msgTypes = make([]protoimpl.MessageInfo, 15)
 var file_project_v1_project_proto_goTypes = []any{
-	(*CreateProjectRequest)(nil),       // 0: project.CreateProjectRequest
-	(*CreateProjectResponse)(nil),      // 1: project.CreateProjectResponse
-	(*GetProjectRequest)(nil),          // 2: project.GetProjectRequest
-	(*StateHistory)(nil),               // 3: project.StateHistory
-	(*GetProjectResponse)(nil),         // 4: project.GetProjectResponse
-	(*GetStudentProjectsRequest)(nil),  // 5: project.GetStudentProjectsRequest
-	(*ProjectPreview)(nil),             // 6: project.ProjectPreview
-	(*GetStudentProjectsResponse)(nil), // 7: project.GetStudentProjectsResponse
-	(*PerformActionRequest)(nil),       // 8: project.PerformActionRequest
-	(*PerformActionResponse)(nil),      // 9: project.PerformActionResponse
-	(*GetProjectRuntimeRequest)(nil),   // 10: project.GetProjectRuntimeRequest
-	(*GetProjectRuntimeResponse)(nil),  // 11: project.GetProjectRuntimeResponse
-	(*PostCommitActionGroup)(nil),      // 12: project.PostCommitActionGroup
-	(*CommitTransitionRequest)(nil),    // 13: project.CommitTransitionRequest
-	(*CommitTransitionResponse)(nil),   // 14: project.CommitTransitionResponse
+	(*CreateProjectRequest)(nil),       // 0: project.v1.CreateProjectRequest
+	(*CreateProjectResponse)(nil),      // 1: project.v1.CreateProjectResponse
+	(*GetProjectRequest)(nil),          // 2: project.v1.GetProjectRequest
+	(*StateHistory)(nil),               // 3: project.v1.StateHistory
+	(*GetProjectResponse)(nil),         // 4: project.v1.GetProjectResponse
+	(*GetStudentProjectsRequest)(nil),  // 5: project.v1.GetStudentProjectsRequest
+	(*ProjectPreview)(nil),             // 6: project.v1.ProjectPreview
+	(*GetStudentProjectsResponse)(nil), // 7: project.v1.GetStudentProjectsResponse
+	(*PerformActionRequest)(nil),       // 8: project.v1.PerformActionRequest
+	(*PerformActionResponse)(nil),      // 9: project.v1.PerformActionResponse
+	(*GetProjectRuntimeRequest)(nil),   // 10: project.v1.GetProjectRuntimeRequest
+	(*GetProjectRuntimeResponse)(nil),  // 11: project.v1.GetProjectRuntimeResponse
+	(*PostCommitActionGroup)(nil),      // 12: project.v1.PostCommitActionGroup
+	(*CommitTransitionRequest)(nil),    // 13: project.v1.CommitTransitionRequest
+	(*CommitTransitionResponse)(nil),   // 14: project.v1.CommitTransitionResponse
 	(*structpb.Struct)(nil),            // 15: google.protobuf.Struct
 	(*timestamppb.Timestamp)(nil),      // 16: google.protobuf.Timestamp
 }
 var file_project_v1_project_proto_depIdxs = []int32{
-	3,  // 0: project.GetProjectResponse.history:type_name -> project.StateHistory
-	6,  // 1: project.GetStudentProjectsResponse.projects:type_name -> project.ProjectPreview
-	15, // 2: project.PerformActionRequest.payload:type_name -> google.protobuf.Struct
-	15, // 3: project.GetProjectRuntimeResponse.data:type_name -> google.protobuf.Struct
-	16, // 4: project.GetProjectRuntimeResponse.deadline_at:type_name -> google.protobuf.Timestamp
-	16, // 5: project.CommitTransitionRequest.new_deadline_at:type_name -> google.protobuf.Timestamp
-	15, // 6: project.CommitTransitionRequest.data_patch:type_name -> google.protobuf.Struct
-	12, // 7: project.CommitTransitionRequest.post_actions:type_name -> project.PostCommitActionGroup
-	0,  // 8: project.ProjectService.CreateProject:input_type -> project.CreateProjectRequest
-	2,  // 9: project.ProjectService.GetProject:input_type -> project.GetProjectRequest
-	5,  // 10: project.ProjectService.GetStudentProjects:input_type -> project.GetStudentProjectsRequest
-	8,  // 11: project.ProjectService.PerformAction:input_type -> project.PerformActionRequest
-	10, // 12: project.ProjectService.GetProjectRuntime:input_type -> project.GetProjectRuntimeRequest
-	13, // 13: project.ProjectService.CommitTransition:input_type -> project.CommitTransitionRequest
-	1,  // 14: project.ProjectService.CreateProject:output_type -> project.CreateProjectResponse
-	4,  // 15: project.ProjectService.GetProject:output_type -> project.GetProjectResponse
-	7,  // 16: project.ProjectService.GetStudentProjects:output_type -> project.GetStudentProjectsResponse
-	9,  // 17: project.ProjectService.PerformAction:output_type -> project.PerformActionResponse
-	11, // 18: project.ProjectService.GetProjectRuntime:output_type -> project.GetProjectRuntimeResponse
-	14, // 19: project.ProjectService.CommitTransition:output_type -> project.CommitTransitionResponse
+	3,  // 0: project.v1.GetProjectResponse.history:type_name -> project.v1.StateHistory
+	6,  // 1: project.v1.GetStudentProjectsResponse.projects:type_name -> project.v1.ProjectPreview
+	15, // 2: project.v1.PerformActionRequest.payload:type_name -> google.protobuf.Struct
+	15, // 3: project.v1.GetProjectRuntimeResponse.data:type_name -> google.protobuf.Struct
+	16, // 4: project.v1.GetProjectRuntimeResponse.deadline_at:type_name -> google.protobuf.Timestamp
+	16, // 5: project.v1.CommitTransitionRequest.new_deadline_at:type_name -> google.protobuf.Timestamp
+	15, // 6: project.v1.CommitTransitionRequest.data_patch:type_name -> google.protobuf.Struct
+	12, // 7: project.v1.CommitTransitionRequest.post_actions:type_name -> project.v1.PostCommitActionGroup
+	0,  // 8: project.v1.ProjectService.CreateProject:input_type -> project.v1.CreateProjectRequest
+	2,  // 9: project.v1.ProjectService.GetProject:input_type -> project.v1.GetProjectRequest
+	5,  // 10: project.v1.ProjectService.GetStudentProjects:input_type -> project.v1.GetStudentProjectsRequest
+	8,  // 11: project.v1.ProjectService.PerformAction:input_type -> project.v1.PerformActionRequest
+	10, // 12: project.v1.ProjectService.GetProjectRuntime:input_type -> project.v1.GetProjectRuntimeRequest
+	13, // 13: project.v1.ProjectService.CommitTransition:input_type -> project.v1.CommitTransitionRequest
+	1,  // 14: project.v1.ProjectService.CreateProject:output_type -> project.v1.CreateProjectResponse
+	4,  // 15: project.v1.ProjectService.GetProject:output_type -> project.v1.GetProjectResponse
+	7,  // 16: project.v1.ProjectService.GetStudentProjects:output_type -> project.v1.GetStudentProjectsResponse
+	9,  // 17: project.v1.ProjectService.PerformAction:output_type -> project.v1.PerformActionResponse
+	11, // 18: project.v1.ProjectService.GetProjectRuntime:output_type -> project.v1.GetProjectRuntimeResponse
+	14, // 19: project.v1.ProjectService.CommitTransition:output_type -> project.v1.CommitTransitionResponse
 	14, // [14:20] is the sub-list for method output_type
 	8,  // [8:14] is the sub-list for method input_type
 	8,  // [8:8] is the sub-list for extension type_name
