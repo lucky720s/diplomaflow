@@ -18,6 +18,7 @@ import (
 	v1_7 "github.com/lucky720s/diplomaflow/pkg/protobuf/notification/v1"
 	v1_2 "github.com/lucky720s/diplomaflow/pkg/protobuf/project/v1"
 	v1_5 "github.com/lucky720s/diplomaflow/pkg/protobuf/role/v1"
+	v1_11 "github.com/lucky720s/diplomaflow/pkg/protobuf/task/v1"
 	v1_3 "github.com/lucky720s/diplomaflow/pkg/protobuf/team/v1"
 	v1_4 "github.com/lucky720s/diplomaflow/pkg/protobuf/university/v1"
 	v1_6 "github.com/lucky720s/diplomaflow/pkg/protobuf/workflow/v1"
@@ -114,8 +115,23 @@ func InitializeApp(cfg *config.Config, log *logger.Logger) (*handler.Handler, fu
 		cleanup()
 		return nil, nil, err
 	}
-	handlerHandler := handler.NewHandler(authServiceClient, projectServiceClient, teamServiceClient, universityServiceClient, roleServiceClient, workflowServiceClient, notificationServiceClient, fileServiceClient, formServiceClient, adminServiceClient)
+	taskServiceClient, cleanup11, err := ProvideTaskClient(cfg)
+	if err != nil {
+		cleanup10()
+		cleanup9()
+		cleanup8()
+		cleanup7()
+		cleanup6()
+		cleanup5()
+		cleanup4()
+		cleanup3()
+		cleanup2()
+		cleanup()
+		return nil, nil, err
+	}
+	handlerHandler := handler.NewHandler(authServiceClient, projectServiceClient, teamServiceClient, universityServiceClient, roleServiceClient, workflowServiceClient, notificationServiceClient, fileServiceClient, formServiceClient, adminServiceClient, taskServiceClient)
 	return handlerHandler, func() {
+		cleanup11()
 		cleanup10()
 		cleanup9()
 		cleanup8()
@@ -219,4 +235,12 @@ func ProvideAdminClient(cfg *config.Config) (v1_10.AdminServiceClient, func(), e
 		return nil, nil, err
 	}
 	return v1_10.NewAdminServiceClient(conn), cleanup, nil
+}
+
+func ProvideTaskClient(cfg *config.Config) (v1_11.TaskServiceClient, func(), error) {
+	conn, cleanup, err := provideConn(cfg.TaskServiceAddr)
+	if err != nil {
+		return nil, nil, err
+	}
+	return v1_11.NewTaskServiceClient(conn), cleanup, nil
 }

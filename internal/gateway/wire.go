@@ -19,6 +19,7 @@ import (
 	notificationv1 "github.com/lucky720s/diplomaflow/pkg/protobuf/notification/v1"
 	projectv1 "github.com/lucky720s/diplomaflow/pkg/protobuf/project/v1"
 	rolev1 "github.com/lucky720s/diplomaflow/pkg/protobuf/role/v1"
+	taskv1 "github.com/lucky720s/diplomaflow/pkg/protobuf/task/v1"
 	teamv1 "github.com/lucky720s/diplomaflow/pkg/protobuf/team/v1"
 	universityv1 "github.com/lucky720s/diplomaflow/pkg/protobuf/university/v1"
 	workflowv1 "github.com/lucky720s/diplomaflow/pkg/protobuf/workflow/v1"
@@ -120,6 +121,14 @@ func ProvideAdminClient(cfg *config.Config) (adminv1.AdminServiceClient, func(),
 	return adminv1.NewAdminServiceClient(conn), cleanup, nil
 }
 
+func ProvideTaskClient(cfg *config.Config) (taskv1.TaskServiceClient, func(), error) {
+	conn, cleanup, err := provideConn(cfg.TaskServiceAddr)
+	if err != nil {
+		return nil, nil, err
+	}
+	return taskv1.NewTaskServiceClient(conn), cleanup, nil
+}
+
 func InitializeApp(cfg *config.Config, log *logger.Logger) (*handler.Handler, func(), error) {
 	wire.Build(
 		ProvideAuthClient,
@@ -132,6 +141,7 @@ func InitializeApp(cfg *config.Config, log *logger.Logger) (*handler.Handler, fu
 		ProvideFileClient,
 		ProvideFormClient,
 		handler.NewHandler,
+		ProvideTaskClient,
 		ProvideAdminClient,
 	)
 	return &handler.Handler{}, nil, nil

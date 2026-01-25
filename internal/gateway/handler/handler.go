@@ -8,6 +8,7 @@ import (
 	notificationv1 "github.com/lucky720s/diplomaflow/pkg/protobuf/notification/v1"
 	projectv1 "github.com/lucky720s/diplomaflow/pkg/protobuf/project/v1"
 	rolev1 "github.com/lucky720s/diplomaflow/pkg/protobuf/role/v1"
+	taskv1 "github.com/lucky720s/diplomaflow/pkg/protobuf/task/v1"
 	teamv1 "github.com/lucky720s/diplomaflow/pkg/protobuf/team/v1"
 	universityv1 "github.com/lucky720s/diplomaflow/pkg/protobuf/university/v1"
 	workflowv1 "github.com/lucky720s/diplomaflow/pkg/protobuf/workflow/v1"
@@ -24,6 +25,7 @@ type Handler struct {
 	fileClient         filev1.FileServiceClient
 	formClient         formv1.FormServiceClient
 	adminClient        adminv1.AdminServiceClient
+	taskClient         taskv1.TaskServiceClient
 }
 
 func NewHandler(
@@ -37,6 +39,7 @@ func NewHandler(
 	fileClient filev1.FileServiceClient,
 	formClient formv1.FormServiceClient,
 	adminClient adminv1.AdminServiceClient,
+	taskClient taskv1.TaskServiceClient,
 ) *Handler {
 	return &Handler{
 		authClient:         authClient,
@@ -49,5 +52,6 @@ func NewHandler(
 		fileClient:         fileClient,
 		formClient:         formClient,
 		adminClient:        adminClient,
+		taskClient:         taskClient,
 	}
 }

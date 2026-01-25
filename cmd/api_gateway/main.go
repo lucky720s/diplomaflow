@@ -186,6 +186,58 @@ func main() {
 			notifications.POST("/:id/read", handler.MarkNotificationRead)
 		}
 
+		tasks := v1.Group("/tasks")
+		tasks.Use(middleware.AuthMiddleware(cfg.JWTSecret))
+		{
+			// My tasks
+			tasks.GET("/my", handler.GetMyTasks)
+			tasks.GET("/overdue", handler.GetOverdueTasks)
+			tasks.GET("/upcoming", handler.GetUpcomingDeadlines)
+
+			// Task CRUD
+			tasks.POST("", handler.CreateTask)
+			tasks.GET("", handler.ListTasks)
+			tasks.GET("/:id", handler.GetTask)
+			tasks.PATCH("/:id", handler.UpdateTask)
+			tasks.DELETE("/:id", handler.DeleteTask)
+
+			// Task operations
+			tasks.POST("/:id/move", handler.MoveTask)
+			tasks.POST("/:id/assign", handler.AssignTask)
+			tasks.DELETE("/:id/assign", handler.UnassignTask)
+
+			// Comments
+			tasks.POST("/:id/comments", handler.CreateTaskComment)
+			tasks.GET("/:id/comments", handler.ListTaskComments)
+			tasks.DELETE("/:id/comments/:comment_id", handler.DeleteTaskComment)
+
+			// Activity
+			tasks.GET("/:id/activity", handler.GetTaskActivity)
+
+			// Watchers
+			tasks.POST("/:id/watchers", handler.AddTaskWatcher)
+			tasks.DELETE("/:id/watchers", handler.RemoveTaskWatcher)
+			tasks.GET("/:id/watchers", handler.ListTaskWatchers)
+		}
+
+		boards := v1.Group("/boards")
+		boards.Use(middleware.AuthMiddleware(cfg.JWTSecret))
+		{
+			boards.POST("", handler.CreateBoard)
+			boards.GET("/:id", handler.GetBoard)
+			boards.PATCH("/:id", handler.UpdateBoard)
+			boards.GET("/:id/stats", handler.GetBoardStats)
+			boards.GET("/team/:team_id", handler.GetBoardByTeam)
+
+			// Columns
+			boards.GET("/:board_id/columns", handler.ListColumns)
+			boards.POST("/:board_id/columns", handler.CreateColumn)
+			boards.POST("/:board_id/columns/reorder", handler.ReorderColumns)
+			boards.PATCH("/:board_id/columns/:column_id", handler.UpdateColumn)
+			boards.DELETE("/:board_id/columns/:column_id", handler.DeleteColumn)
+			boards.POST("/:board_id/columns/:column_id/reorder-tasks", handler.ReorderTasks)
+		}
+
 		files := v1.Group("/files")
 		files.Use(middleware.AuthMiddleware(cfg.JWTSecret))
 		files.Use(middleware.RateLimitMiddleware(rdb, 10, time.Minute))
@@ -224,6 +276,7 @@ func main() {
 		{Name: "file", Addr: cfg.FileServiceAddr, ServiceName: "file.v1.FileService"},
 		{Name: "form", Addr: cfg.FormServiceAddr, ServiceName: "form.v1.FormService"},
 		{Name: "admin", Addr: cfg.AdminServiceAddr, ServiceName: "admin.v1.AdminService"},
+		{Name: "task", Addr: cfg.TaskServiceAddr, ServiceName: "task.v1.TaskService"},
 	}
 
 	router.GET("/healthz", func(c *gin.Context) {
