@@ -1114,7 +1114,7 @@ var File_auth_v1_auth_proto protoreflect.FileDescriptor
 
 const file_auth_v1_auth_proto_rawDesc = "" +
 	"\n" +
-	"\x12auth/v1/auth.proto\x12\x04auth\x1a\x17validate/validate.proto\"\xef\x01\n" +
+	"\x12auth/v1/auth.proto\x12\aauth.v1\x1a\x17validate/validate.proto\"\xef\x01\n" +
 	"\x0fRegisterRequest\x12\x1d\n" +
 	"\x05email\x18\x01 \x01(\tB\a\xfaB\x04r\x02`\x01R\x05email\x12#\n" +
 	"\bpassword\x18\x02 \x01(\tB\a\xfaB\x04r\x02\x10\bR\bpassword\x12\x1d\n" +
@@ -1159,9 +1159,9 @@ const file_auth_v1_auth_proto_rawDesc = "" +
 	"\tlast_name\x18\x04 \x01(\tR\blastName\x12\x12\n" +
 	"\x04role\x18\x05 \x01(\tR\x04role\x12#\n" +
 	"\runiversity_id\x18\x06 \x01(\x03R\funiversityId\x12#\n" +
-	"\rdepartment_id\x18\a \x01(\x03R\fdepartmentId\"]\n" +
-	"\x11ListUsersResponse\x12'\n" +
-	"\x05users\x18\x01 \x03(\v2\x11.auth.UserPreviewR\x05users\x12\x1f\n" +
+	"\rdepartment_id\x18\a \x01(\x03R\fdepartmentId\"`\n" +
+	"\x11ListUsersResponse\x12*\n" +
+	"\x05users\x18\x01 \x03(\v2\x14.auth.v1.UserPreviewR\x05users\x12\x1f\n" +
 	"\vtotal_count\x18\x02 \x01(\x03R\n" +
 	"totalCount\"x\n" +
 	"\x13RefreshTokenRequest\x12#\n" +
@@ -1186,9 +1186,9 @@ const file_auth_v1_auth_proto_rawDesc = "" +
 	"\n" +
 	"expires_at\x18\x05 \x01(\tR\texpiresAt\x12\x1d\n" +
 	"\n" +
-	"is_current\x18\x06 \x01(\bR\tisCurrent\"A\n" +
-	"\x14ListSessionsResponse\x12)\n" +
-	"\bsessions\x18\x01 \x03(\v2\r.auth.SessionR\bsessions\"N\n" +
+	"is_current\x18\x06 \x01(\bR\tisCurrent\"D\n" +
+	"\x14ListSessionsResponse\x12,\n" +
+	"\bsessions\x18\x01 \x03(\v2\x10.auth.v1.SessionR\bsessions\"N\n" +
 	"\x14RevokeSessionRequest\x12\x17\n" +
 	"\auser_id\x18\x01 \x01(\x03R\x06userId\x12\x1d\n" +
 	"\n" +
@@ -1200,17 +1200,17 @@ const file_auth_v1_auth_proto_rawDesc = "" +
 	"\x04role\x18\x02 \x01(\tR\x04role\"H\n" +
 	"\x12AssignRoleResponse\x12\x18\n" +
 	"\asuccess\x18\x01 \x01(\bR\asuccess\x12\x18\n" +
-	"\amessage\x18\x02 \x01(\tR\amessage2\x9b\x04\n" +
-	"\vAuthService\x129\n" +
-	"\bRegister\x12\x15.auth.RegisterRequest\x1a\x16.auth.RegisterResponse\x120\n" +
-	"\x05Login\x12\x12.auth.LoginRequest\x1a\x13.auth.LoginResponse\x12H\n" +
-	"\rValidateToken\x12\x1a.auth.ValidateTokenRequest\x1a\x1b.auth.ValidateTokenResponse\x12<\n" +
-	"\tListUsers\x12\x16.auth.ListUsersRequest\x1a\x17.auth.ListUsersResponse\x12E\n" +
-	"\fRefreshToken\x12\x19.auth.RefreshTokenRequest\x1a\x1a.auth.RefreshTokenResponse\x12E\n" +
-	"\fListSessions\x12\x19.auth.ListSessionsRequest\x1a\x1a.auth.ListSessionsResponse\x12H\n" +
-	"\rRevokeSession\x12\x1a.auth.RevokeSessionRequest\x1a\x1b.auth.RevokeSessionResponse\x12?\n" +
+	"\amessage\x18\x02 \x01(\tR\amessage2\xcb\x04\n" +
+	"\vAuthService\x12?\n" +
+	"\bRegister\x12\x18.auth.v1.RegisterRequest\x1a\x19.auth.v1.RegisterResponse\x126\n" +
+	"\x05Login\x12\x15.auth.v1.LoginRequest\x1a\x16.auth.v1.LoginResponse\x12N\n" +
+	"\rValidateToken\x12\x1d.auth.v1.ValidateTokenRequest\x1a\x1e.auth.v1.ValidateTokenResponse\x12B\n" +
+	"\tListUsers\x12\x19.auth.v1.ListUsersRequest\x1a\x1a.auth.v1.ListUsersResponse\x12K\n" +
+	"\fRefreshToken\x12\x1c.auth.v1.RefreshTokenRequest\x1a\x1d.auth.v1.RefreshTokenResponse\x12K\n" +
+	"\fListSessions\x12\x1c.auth.v1.ListSessionsRequest\x1a\x1d.auth.v1.ListSessionsResponse\x12N\n" +
+	"\rRevokeSession\x12\x1d.auth.v1.RevokeSessionRequest\x1a\x1e.auth.v1.RevokeSessionResponse\x12E\n" +
 	"\n" +
-	"AssignRole\x12\x17.auth.AssignRoleRequest\x1a\x18.auth.AssignRoleResponseB7Z5github.com/lucky720s/diplomaflow/pkg/protobuf/auth/v1b\x06proto3"
+	"AssignRole\x12\x1a.auth.v1.AssignRoleRequest\x1a\x1b.auth.v1.AssignRoleResponseB7Z5github.com/lucky720s/diplomaflow/pkg/protobuf/auth/v1b\x06proto3"
 
 var (
 	file_auth_v1_auth_proto_rawDescOnce sync.Once
@@ -1226,44 +1226,44 @@ func file_auth_v1_auth_proto_rawDescGZIP() []byte {
 
 var file_auth_v1_auth_proto_msgTypes = make([]protoimpl.MessageInfo, 18)
 var file_auth_v1_auth_proto_goTypes = []any{
-	(*RegisterRequest)(nil),       // 0: auth.RegisterRequest
-	(*RegisterResponse)(nil),      // 1: auth.RegisterResponse
-	(*LoginRequest)(nil),          // 2: auth.LoginRequest
-	(*LoginResponse)(nil),         // 3: auth.LoginResponse
-	(*ValidateTokenRequest)(nil),  // 4: auth.ValidateTokenRequest
-	(*ValidateTokenResponse)(nil), // 5: auth.ValidateTokenResponse
-	(*ListUsersRequest)(nil),      // 6: auth.ListUsersRequest
-	(*UserPreview)(nil),           // 7: auth.UserPreview
-	(*ListUsersResponse)(nil),     // 8: auth.ListUsersResponse
-	(*RefreshTokenRequest)(nil),   // 9: auth.RefreshTokenRequest
-	(*RefreshTokenResponse)(nil),  // 10: auth.RefreshTokenResponse
-	(*ListSessionsRequest)(nil),   // 11: auth.ListSessionsRequest
-	(*Session)(nil),               // 12: auth.Session
-	(*ListSessionsResponse)(nil),  // 13: auth.ListSessionsResponse
-	(*RevokeSessionRequest)(nil),  // 14: auth.RevokeSessionRequest
-	(*RevokeSessionResponse)(nil), // 15: auth.RevokeSessionResponse
-	(*AssignRoleRequest)(nil),     // 16: auth.AssignRoleRequest
-	(*AssignRoleResponse)(nil),    // 17: auth.AssignRoleResponse
+	(*RegisterRequest)(nil),       // 0: auth.v1.RegisterRequest
+	(*RegisterResponse)(nil),      // 1: auth.v1.RegisterResponse
+	(*LoginRequest)(nil),          // 2: auth.v1.LoginRequest
+	(*LoginResponse)(nil),         // 3: auth.v1.LoginResponse
+	(*ValidateTokenRequest)(nil),  // 4: auth.v1.ValidateTokenRequest
+	(*ValidateTokenResponse)(nil), // 5: auth.v1.ValidateTokenResponse
+	(*ListUsersRequest)(nil),      // 6: auth.v1.ListUsersRequest
+	(*UserPreview)(nil),           // 7: auth.v1.UserPreview
+	(*ListUsersResponse)(nil),     // 8: auth.v1.ListUsersResponse
+	(*RefreshTokenRequest)(nil),   // 9: auth.v1.RefreshTokenRequest
+	(*RefreshTokenResponse)(nil),  // 10: auth.v1.RefreshTokenResponse
+	(*ListSessionsRequest)(nil),   // 11: auth.v1.ListSessionsRequest
+	(*Session)(nil),               // 12: auth.v1.Session
+	(*ListSessionsResponse)(nil),  // 13: auth.v1.ListSessionsResponse
+	(*RevokeSessionRequest)(nil),  // 14: auth.v1.RevokeSessionRequest
+	(*RevokeSessionResponse)(nil), // 15: auth.v1.RevokeSessionResponse
+	(*AssignRoleRequest)(nil),     // 16: auth.v1.AssignRoleRequest
+	(*AssignRoleResponse)(nil),    // 17: auth.v1.AssignRoleResponse
 }
 var file_auth_v1_auth_proto_depIdxs = []int32{
-	7,  // 0: auth.ListUsersResponse.users:type_name -> auth.UserPreview
-	12, // 1: auth.ListSessionsResponse.sessions:type_name -> auth.Session
-	0,  // 2: auth.AuthService.Register:input_type -> auth.RegisterRequest
-	2,  // 3: auth.AuthService.Login:input_type -> auth.LoginRequest
-	4,  // 4: auth.AuthService.ValidateToken:input_type -> auth.ValidateTokenRequest
-	6,  // 5: auth.AuthService.ListUsers:input_type -> auth.ListUsersRequest
-	9,  // 6: auth.AuthService.RefreshToken:input_type -> auth.RefreshTokenRequest
-	11, // 7: auth.AuthService.ListSessions:input_type -> auth.ListSessionsRequest
-	14, // 8: auth.AuthService.RevokeSession:input_type -> auth.RevokeSessionRequest
-	16, // 9: auth.AuthService.AssignRole:input_type -> auth.AssignRoleRequest
-	1,  // 10: auth.AuthService.Register:output_type -> auth.RegisterResponse
-	3,  // 11: auth.AuthService.Login:output_type -> auth.LoginResponse
-	5,  // 12: auth.AuthService.ValidateToken:output_type -> auth.ValidateTokenResponse
-	8,  // 13: auth.AuthService.ListUsers:output_type -> auth.ListUsersResponse
-	10, // 14: auth.AuthService.RefreshToken:output_type -> auth.RefreshTokenResponse
-	13, // 15: auth.AuthService.ListSessions:output_type -> auth.ListSessionsResponse
-	15, // 16: auth.AuthService.RevokeSession:output_type -> auth.RevokeSessionResponse
-	17, // 17: auth.AuthService.AssignRole:output_type -> auth.AssignRoleResponse
+	7,  // 0: auth.v1.ListUsersResponse.users:type_name -> auth.v1.UserPreview
+	12, // 1: auth.v1.ListSessionsResponse.sessions:type_name -> auth.v1.Session
+	0,  // 2: auth.v1.AuthService.Register:input_type -> auth.v1.RegisterRequest
+	2,  // 3: auth.v1.AuthService.Login:input_type -> auth.v1.LoginRequest
+	4,  // 4: auth.v1.AuthService.ValidateToken:input_type -> auth.v1.ValidateTokenRequest
+	6,  // 5: auth.v1.AuthService.ListUsers:input_type -> auth.v1.ListUsersRequest
+	9,  // 6: auth.v1.AuthService.RefreshToken:input_type -> auth.v1.RefreshTokenRequest
+	11, // 7: auth.v1.AuthService.ListSessions:input_type -> auth.v1.ListSessionsRequest
+	14, // 8: auth.v1.AuthService.RevokeSession:input_type -> auth.v1.RevokeSessionRequest
+	16, // 9: auth.v1.AuthService.AssignRole:input_type -> auth.v1.AssignRoleRequest
+	1,  // 10: auth.v1.AuthService.Register:output_type -> auth.v1.RegisterResponse
+	3,  // 11: auth.v1.AuthService.Login:output_type -> auth.v1.LoginResponse
+	5,  // 12: auth.v1.AuthService.ValidateToken:output_type -> auth.v1.ValidateTokenResponse
+	8,  // 13: auth.v1.AuthService.ListUsers:output_type -> auth.v1.ListUsersResponse
+	10, // 14: auth.v1.AuthService.RefreshToken:output_type -> auth.v1.RefreshTokenResponse
+	13, // 15: auth.v1.AuthService.ListSessions:output_type -> auth.v1.ListSessionsResponse
+	15, // 16: auth.v1.AuthService.RevokeSession:output_type -> auth.v1.RevokeSessionResponse
+	17, // 17: auth.v1.AuthService.AssignRole:output_type -> auth.v1.AssignRoleResponse
 	10, // [10:18] is the sub-list for method output_type
 	2,  // [2:10] is the sub-list for method input_type
 	2,  // [2:2] is the sub-list for extension type_name
