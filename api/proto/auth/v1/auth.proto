@@ -1,6 +1,6 @@
 syntax = "proto3";
 
-package auth;
+package auth.v1;
 import "validate/validate.proto";
 option go_package = "github.com/lucky720s/diplomaflow/pkg/protobuf/auth/v1";
 

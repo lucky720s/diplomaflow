@@ -1,6 +1,6 @@
 syntax = "proto3";
 
-package file;
+package file.v1;
 
 option go_package = "github.com/lucky720s/diplomaflow/pkg/protobuf/file/v1";
 

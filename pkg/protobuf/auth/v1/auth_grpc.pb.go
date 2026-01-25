@@ -19,14 +19,14 @@ import (
 const _ = grpc.SupportPackageIsVersion9
 
 const (
-	AuthService_Register_FullMethodName      = "/auth.AuthService/Register"
-	AuthService_Login_FullMethodName         = "/auth.AuthService/Login"
-	AuthService_ValidateToken_FullMethodName = "/auth.AuthService/ValidateToken"
-	AuthService_ListUsers_FullMethodName     = "/auth.AuthService/ListUsers"
-	AuthService_RefreshToken_FullMethodName  = "/auth.AuthService/RefreshToken"
-	AuthService_ListSessions_FullMethodName  = "/auth.AuthService/ListSessions"
-	AuthService_RevokeSession_FullMethodName = "/auth.AuthService/RevokeSession"
-	AuthService_AssignRole_FullMethodName    = "/auth.AuthService/AssignRole"
+	AuthService_Register_FullMethodName      = "/auth.v1.AuthService/Register"
+	AuthService_Login_FullMethodName         = "/auth.v1.AuthService/Login"
+	AuthService_ValidateToken_FullMethodName = "/auth.v1.AuthService/ValidateToken"
+	AuthService_ListUsers_FullMethodName     = "/auth.v1.AuthService/ListUsers"
+	AuthService_RefreshToken_FullMethodName  = "/auth.v1.AuthService/RefreshToken"
+	AuthService_ListSessions_FullMethodName  = "/auth.v1.AuthService/ListSessions"
+	AuthService_RevokeSession_FullMethodName = "/auth.v1.AuthService/RevokeSession"
+	AuthService_AssignRole_FullMethodName    = "/auth.v1.AuthService/AssignRole"
 )
 
 // AuthServiceClient is the client API for AuthService service.
@@ -346,7 +346,7 @@ func _AuthService_AssignRole_Handler(srv interface{}, ctx context.Context, dec f
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
 var AuthService_ServiceDesc = grpc.ServiceDesc{
-	ServiceName: "auth.AuthService",
+	ServiceName: "auth.v1.AuthService",
 	HandlerType: (*AuthServiceServer)(nil),
 	Methods: []grpc.MethodDesc{
 		{

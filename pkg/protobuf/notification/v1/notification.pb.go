@@ -411,7 +411,7 @@ var File_notification_v1_notification_proto protoreflect.FileDescriptor
 
 const file_notification_v1_notification_proto_rawDesc = "" +
 	"\n" +
-	"\"notification/v1/notification.proto\x12\fnotification\x1a\x1bgoogle/protobuf/empty.proto\x1a\x1fgoogle/protobuf/timestamp.proto\"\x8a\x01\n" +
+	"\"notification/v1/notification.proto\x12\x0fnotification.v1\x1a\x1bgoogle/protobuf/empty.proto\x1a\x1fgoogle/protobuf/timestamp.proto\"\x8a\x01\n" +
 	"\x17SendNotificationRequest\x12\x17\n" +
 	"\auser_id\x18\x01 \x01(\x03R\x06userId\x12\x14\n" +
 	"\x05title\x18\x02 \x01(\tR\x05title\x12\x18\n" +
@@ -434,19 +434,19 @@ const file_notification_v1_notification_proto_rawDesc = "" +
 	"\x04type\x18\x05 \x01(\tR\x04type\x12\x17\n" +
 	"\ais_read\x18\x06 \x01(\bR\x06isRead\x129\n" +
 	"\n" +
-	"created_at\x18\a \x01(\v2\x1a.google.protobuf.TimestampR\tcreatedAt\"~\n" +
-	"\x19ListNotificationsResponse\x12@\n" +
-	"\rnotifications\x18\x01 \x03(\v2\x1a.notification.NotificationR\rnotifications\x12\x1f\n" +
+	"created_at\x18\a \x01(\v2\x1a.google.protobuf.TimestampR\tcreatedAt\"\x81\x01\n" +
+	"\x19ListNotificationsResponse\x12C\n" +
+	"\rnotifications\x18\x01 \x03(\v2\x1d.notification.v1.NotificationR\rnotifications\x12\x1f\n" +
 	"\vtotal_count\x18\x02 \x01(\x03R\n" +
 	"totalCount\"U\n" +
 	"\x11MarkAsReadRequest\x12'\n" +
 	"\x0fnotification_id\x18\x01 \x01(\x03R\x0enotificationId\x12\x17\n" +
-	"\auser_id\x18\x02 \x01(\x03R\x06userId2\xa5\x02\n" +
-	"\x13NotificationService\x12a\n" +
-	"\x10SendNotification\x12%.notification.SendNotificationRequest\x1a&.notification.SendNotificationResponse\x12d\n" +
-	"\x11ListNotifications\x12&.notification.ListNotificationsRequest\x1a'.notification.ListNotificationsResponse\x12E\n" +
+	"\auser_id\x18\x02 \x01(\x03R\x06userId2\xb4\x02\n" +
+	"\x13NotificationService\x12g\n" +
+	"\x10SendNotification\x12(.notification.v1.SendNotificationRequest\x1a).notification.v1.SendNotificationResponse\x12j\n" +
+	"\x11ListNotifications\x12).notification.v1.ListNotificationsRequest\x1a*.notification.v1.ListNotificationsResponse\x12H\n" +
 	"\n" +
-	"MarkAsRead\x12\x1f.notification.MarkAsReadRequest\x1a\x16.google.protobuf.EmptyB?Z=github.com/lucky720s/diplomaflow/pkg/protobuf/notification/v1b\x06proto3"
+	"MarkAsRead\x12\".notification.v1.MarkAsReadRequest\x1a\x16.google.protobuf.EmptyB?Z=github.com/lucky720s/diplomaflow/pkg/protobuf/notification/v1b\x06proto3"
 
 var (
 	file_notification_v1_notification_proto_rawDescOnce sync.Once
@@ -462,24 +462,24 @@ func file_notification_v1_notification_proto_rawDescGZIP() []byte {
 
 var file_notification_v1_notification_proto_msgTypes = make([]protoimpl.MessageInfo, 6)
 var file_notification_v1_notification_proto_goTypes = []any{
-	(*SendNotificationRequest)(nil),   // 0: notification.SendNotificationRequest
-	(*SendNotificationResponse)(nil),  // 1: notification.SendNotificationResponse
-	(*ListNotificationsRequest)(nil),  // 2: notification.ListNotificationsRequest
-	(*Notification)(nil),              // 3: notification.Notification
-	(*ListNotificationsResponse)(nil), // 4: notification.ListNotificationsResponse
-	(*MarkAsReadRequest)(nil),         // 5: notification.MarkAsReadRequest
+	(*SendNotificationRequest)(nil),   // 0: notification.v1.SendNotificationRequest
+	(*SendNotificationResponse)(nil),  // 1: notification.v1.SendNotificationResponse
+	(*ListNotificationsRequest)(nil),  // 2: notification.v1.ListNotificationsRequest
+	(*Notification)(nil),              // 3: notification.v1.Notification
+	(*ListNotificationsResponse)(nil), // 4: notification.v1.ListNotificationsResponse
+	(*MarkAsReadRequest)(nil),         // 5: notification.v1.MarkAsReadRequest
 	(*timestamppb.Timestamp)(nil),     // 6: google.protobuf.Timestamp
 	(*emptypb.Empty)(nil),             // 7: google.protobuf.Empty
 }
 var file_notification_v1_notification_proto_depIdxs = []int32{
-	6, // 0: notification.Notification.created_at:type_name -> google.protobuf.Timestamp
-	3, // 1: notification.ListNotificationsResponse.notifications:type_name -> notification.Notification
-	0, // 2: notification.NotificationService.SendNotification:input_type -> notification.SendNotificationRequest
-	2, // 3: notification.NotificationService.ListNotifications:input_type -> notification.ListNotificationsRequest
-	5, // 4: notification.NotificationService.MarkAsRead:input_type -> notification.MarkAsReadRequest
-	1, // 5: notification.NotificationService.SendNotification:output_type -> notification.SendNotificationResponse
-	4, // 6: notification.NotificationService.ListNotifications:output_type -> notification.ListNotificationsResponse
-	7, // 7: notification.NotificationService.MarkAsRead:output_type -> google.protobuf.Empty
+	6, // 0: notification.v1.Notification.created_at:type_name -> google.protobuf.Timestamp
+	3, // 1: notification.v1.ListNotificationsResponse.notifications:type_name -> notification.v1.Notification
+	0, // 2: notification.v1.NotificationService.SendNotification:input_type -> notification.v1.SendNotificationRequest
+	2, // 3: notification.v1.NotificationService.ListNotifications:input_type -> notification.v1.ListNotificationsRequest
+	5, // 4: notification.v1.NotificationService.MarkAsRead:input_type -> notification.v1.MarkAsReadRequest
+	1, // 5: notification.v1.NotificationService.SendNotification:output_type -> notification.v1.SendNotificationResponse
+	4, // 6: notification.v1.NotificationService.ListNotifications:output_type -> notification.v1.ListNotificationsResponse
+	7, // 7: notification.v1.NotificationService.MarkAsRead:output_type -> google.protobuf.Empty
 	5, // [5:8] is the sub-list for method output_type
 	2, // [2:5] is the sub-list for method input_type
 	2, // [2:2] is the sub-list for extension type_name

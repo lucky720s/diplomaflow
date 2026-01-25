@@ -265,15 +265,16 @@ func main() {
 	defer checker.Close()
 
 	targets := []gatewayhealth.ServiceTarget{
-		{Name: "auth", Addr: cfg.AuthServiceAddr, ServiceName: "auth.AuthService"},
-		{Name: "project", Addr: cfg.ProjectServiceAddr, ServiceName: "project.ProjectService"},
-		{Name: "team", Addr: cfg.TeamServiceAddr, ServiceName: "team.TeamService"},
+		{Name: "auth", Addr: cfg.AuthServiceAddr, ServiceName: "auth.v1.AuthService"},
+		{Name: "project", Addr: cfg.ProjectServiceAddr, ServiceName: "project.v1.ProjectService"},
+		{Name: "task", Addr: cfg.TaskServiceAddr, ServiceName: "task.v1.TaskService"},
+		{Name: "team", Addr: cfg.TeamServiceAddr, ServiceName: "team.v1.TeamService"},
 		{Name: "university", Addr: cfg.UniversityServiceAddr, ServiceName: "university.v1.UniversityService"},
 		{Name: "role", Addr: cfg.RoleServiceAddr, ServiceName: "role.v1.RoleService"},
 		{Name: "workflow", Addr: cfg.WorkflowServiceAddr, ServiceName: "workflow.v1.WorkflowService"},
-		{Name: "notification", Addr: cfg.NotificationServiceAddr, ServiceName: "notification.NotificationService"},
-		{Name: "file", Addr: cfg.FileServiceAddr, ServiceName: "file.FileService"},
-		{Name: "form", Addr: cfg.FormServiceAddr, ServiceName: "form.FormService"},
+		{Name: "notification", Addr: cfg.NotificationServiceAddr, ServiceName: "notification.v1.NotificationService"},
+		{Name: "file", Addr: cfg.FileServiceAddr, ServiceName: "file.v1.FileService"},
+		{Name: "form", Addr: cfg.FormServiceAddr, ServiceName: "form.v1.FormService"},
 		{Name: "admin", Addr: cfg.AdminServiceAddr, ServiceName: "admin.v1.AdminService"},
 		{Name: "task", Addr: cfg.TaskServiceAddr, ServiceName: "task.v1.TaskService"},
 	}

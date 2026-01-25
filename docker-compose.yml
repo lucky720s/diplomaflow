@@ -149,7 +149,7 @@ services:
       redis:
         condition: service_healthy
     healthcheck:
-      test: ["CMD", "grpc_health_probe", "-addr=localhost:8082", "-service=auth.AuthService"]
+      test: ["CMD", "grpc_health_probe", "-addr=localhost:8082", "-service=auth.v1.AuthService"]
       interval: 10s
       timeout: 3s
       retries: 15
@@ -172,7 +172,7 @@ services:
       kafka:
         condition: service_healthy
     healthcheck:
-      test: ["CMD", "grpc_health_probe", "-addr=localhost:8083", "-service=project.ProjectService"]
+      test: ["CMD", "grpc_health_probe", "-addr=localhost:8083", "-service=project.v1.ProjectService"]
       interval: 10s
       timeout: 3s
       retries: 15
@@ -195,7 +195,7 @@ services:
       kafka:
         condition: service_healthy
     healthcheck:
-      test: ["CMD", "grpc_health_probe", "-addr=localhost:8084", "-service=team.TeamService"]
+      test: ["CMD", "grpc_health_probe", "-addr=localhost:8084", "-service=team.v1.TeamService"]
       interval: 10s
       timeout: 3s
       retries: 15
@@ -261,7 +261,7 @@ services:
       migrate:
         condition: service_completed_successfully
     healthcheck:
-      test: ["CMD", "grpc_health_probe", "-addr=localhost:8087", "-service=notification.NotificationService"]
+      test: ["CMD", "grpc_health_probe", "-addr=localhost:8087", "-service=notification.v1.NotificationService"]
       interval: 10s
       timeout: 3s
       retries: 15
@@ -284,7 +284,7 @@ services:
       migrate:
         condition: service_completed_successfully
     healthcheck:
-      test: ["CMD", "grpc_health_probe", "-addr=localhost:8088", "-service=file.FileService"]
+      test: ["CMD", "grpc_health_probe", "-addr=localhost:8088", "-service=file.v1.FileService"]
       interval: 10s
       timeout: 3s
       retries: 15
@@ -304,7 +304,7 @@ services:
       migrate:
         condition: service_completed_successfully
     healthcheck:
-      test: ["CMD", "grpc_health_probe", "-addr=localhost:8089", "-service=form.FormService"]
+      test: ["CMD", "grpc_health_probe", "-addr=localhost:8089", "-service=form.v1.FormService"]
       interval: 10s
       timeout: 3s
       retries: 15

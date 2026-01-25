@@ -73,7 +73,7 @@ func main() {
 	healthServer := health.NewServer()
 	grpc_health_v1.RegisterHealthServer(grpcServer, healthServer)
 	healthServer.SetServingStatus("", grpc_health_v1.HealthCheckResponse_SERVING)
-	healthServer.SetServingStatus("project.ProjectService", grpc_health_v1.HealthCheckResponse_SERVING)
+	healthServer.SetServingStatus("project.v1.ProjectService", grpc_health_v1.HealthCheckResponse_SERVING)
 
 	go func() {
 		log.Info("Project Service starting", zap.String("port", cfg.GRPCPort))
@@ -88,7 +88,7 @@ func main() {
 
 	log.Info("Shutting down...")
 	healthServer.SetServingStatus("", grpc_health_v1.HealthCheckResponse_NOT_SERVING)
-	healthServer.SetServingStatus("project.ProjectService", grpc_health_v1.HealthCheckResponse_NOT_SERVING)
+	healthServer.SetServingStatus("project.v1.ProjectService", grpc_health_v1.HealthCheckResponse_NOT_SERVING)
 
 	cancel()
 	app.OutboxProcessor.Stop()

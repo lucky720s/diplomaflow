@@ -47,7 +47,7 @@ func main() {
 	healthServer := health.NewServer()
 	grpc_health_v1.RegisterHealthServer(grpcServer, healthServer)
 	healthServer.SetServingStatus("", grpc_health_v1.HealthCheckResponse_SERVING)
-	healthServer.SetServingStatus("notification.NotificationService", grpc_health_v1.HealthCheckResponse_SERVING)
+	healthServer.SetServingStatus("notification.v1.NotificationService", grpc_health_v1.HealthCheckResponse_SERVING)
 
 	reflection.Register(grpcServer)
 
@@ -68,7 +68,7 @@ func main() {
 	_ = ctx
 
 	healthServer.SetServingStatus("", grpc_health_v1.HealthCheckResponse_NOT_SERVING)
-	healthServer.SetServingStatus("notification.NotificationService", grpc_health_v1.HealthCheckResponse_NOT_SERVING)
+	healthServer.SetServingStatus("notification.v1.NotificationService", grpc_health_v1.HealthCheckResponse_NOT_SERVING)
 
 	grpcServer.GracefulStop()
 	log.Info("Notification Service exited")

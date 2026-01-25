@@ -20,18 +20,18 @@ import (
 const _ = grpc.SupportPackageIsVersion9
 
 const (
-	TeamService_CreateTeam_FullMethodName           = "/team.TeamService/CreateTeam"
-	TeamService_GetTeam_FullMethodName              = "/team.TeamService/GetTeam"
-	TeamService_GetAvailableStudents_FullMethodName = "/team.TeamService/GetAvailableStudents"
-	TeamService_AssignProject_FullMethodName        = "/team.TeamService/AssignProject"
-	TeamService_GetMyInvites_FullMethodName         = "/team.TeamService/GetMyInvites"
-	TeamService_RespondToInvite_FullMethodName      = "/team.TeamService/RespondToInvite"
-	TeamService_GetMyTeam_FullMethodName            = "/team.TeamService/GetMyTeam"
-	TeamService_ListTeams_FullMethodName            = "/team.TeamService/ListTeams"
-	TeamService_UpdateTeam_FullMethodName           = "/team.TeamService/UpdateTeam"
-	TeamService_DeleteTeam_FullMethodName           = "/team.TeamService/DeleteTeam"
-	TeamService_AddMember_FullMethodName            = "/team.TeamService/AddMember"
-	TeamService_RemoveMember_FullMethodName         = "/team.TeamService/RemoveMember"
+	TeamService_CreateTeam_FullMethodName           = "/team.v1.TeamService/CreateTeam"
+	TeamService_GetTeam_FullMethodName              = "/team.v1.TeamService/GetTeam"
+	TeamService_GetAvailableStudents_FullMethodName = "/team.v1.TeamService/GetAvailableStudents"
+	TeamService_AssignProject_FullMethodName        = "/team.v1.TeamService/AssignProject"
+	TeamService_GetMyInvites_FullMethodName         = "/team.v1.TeamService/GetMyInvites"
+	TeamService_RespondToInvite_FullMethodName      = "/team.v1.TeamService/RespondToInvite"
+	TeamService_GetMyTeam_FullMethodName            = "/team.v1.TeamService/GetMyTeam"
+	TeamService_ListTeams_FullMethodName            = "/team.v1.TeamService/ListTeams"
+	TeamService_UpdateTeam_FullMethodName           = "/team.v1.TeamService/UpdateTeam"
+	TeamService_DeleteTeam_FullMethodName           = "/team.v1.TeamService/DeleteTeam"
+	TeamService_AddMember_FullMethodName            = "/team.v1.TeamService/AddMember"
+	TeamService_RemoveMember_FullMethodName         = "/team.v1.TeamService/RemoveMember"
 )
 
 // TeamServiceClient is the client API for TeamService service.
@@ -483,7 +483,7 @@ func _TeamService_RemoveMember_Handler(srv interface{}, ctx context.Context, dec
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
 var TeamService_ServiceDesc = grpc.ServiceDesc{
-	ServiceName: "team.TeamService",
+	ServiceName: "team.v1.TeamService",
 	HandlerType: (*TeamServiceServer)(nil),
 	Methods: []grpc.MethodDesc{
 		{
