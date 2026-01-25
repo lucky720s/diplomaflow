@@ -123,7 +123,7 @@ func main() {
 
 	log.Info("Shutdown signal received")
 	healthServer.SetServingStatus("", grpc_health_v1.HealthCheckResponse_NOT_SERVING)
-	healthServer.SetServingStatus("workflow.v1.WorkflowService", grpc_health_v1.HealthCheckResponse_NOT_SERVING)
+	healthServer.SetServingStatus("workflow.WorkflowService", grpc_health_v1.HealthCheckResponse_NOT_SERVING)
 
 	cancel()
 	time.Sleep(300 * time.Millisecond)
