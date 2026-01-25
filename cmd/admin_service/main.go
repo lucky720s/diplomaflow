@@ -47,7 +47,7 @@ func main() {
 	healthServer := health.NewServer()
 	grpc_health_v1.RegisterHealthServer(grpcServer, healthServer)
 	healthServer.SetServingStatus("", grpc_health_v1.HealthCheckResponse_SERVING)
-	healthServer.SetServingStatus("admin.AdminService", grpc_health_v1.HealthCheckResponse_SERVING)
+	healthServer.SetServingStatus("admin.v1.AdminService", grpc_health_v1.HealthCheckResponse_SERVING)
 
 	reflection.Register(grpcServer)
 
