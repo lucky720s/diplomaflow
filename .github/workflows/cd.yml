@@ -41,6 +41,8 @@ jobs:
 
             export DOCKER_BUILDKIT=1
             export COMPOSE_DOCKER_CLI_BUILD=1
+            export DOCKER_CLIENT_TIMEOUT=600
+            export COMPOSE_HTTP_TIMEOUT=600
 
             dc() {
               docker compose -p "$PROJECT_NAME" --env-file "$ENV_FILE" "$@"
@@ -183,7 +185,7 @@ jobs:
 
             echo "==> Build images (smart)"
             if [ "$need_build" -eq 1 ]; then
-              dc build --parallel
+              dc build
             else
               echo "==> Skip build (no build-related changes)"
               # если migrate нужен отдельно (изменились миграции), соберём только его
