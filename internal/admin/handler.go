@@ -3,11 +3,13 @@ package admin
 import (
 	"context"
 	"encoding/json"
+	"strconv"
 	"time"
 
 	adminv1 "github.com/lucky720s/diplomaflow/pkg/protobuf/admin/v1"
 	"go.uber.org/zap"
 	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/metadata"
 	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/types/known/emptypb"
 	"google.golang.org/protobuf/types/known/structpb"
@@ -306,13 +308,25 @@ func (h *Handler) GetTeamDetails(ctx context.Context, req *adminv1.GetTeamDetail
 	return pbResp, nil
 }
 
+func getActorIDFromContext(ctx context.Context) int64 {
+	md, ok := metadata.FromIncomingContext(ctx)
+	if !ok {
+		return 0
+	}
+	if vals := md.Get("x-user-id"); len(vals) > 0 {
+		id, _ := strconv.ParseInt(vals[0], 10, 64)
+		return id
+	}
+	return 0
+}
+
 func (h *Handler) UpdateTeamAdmin(ctx context.Context, req *adminv1.UpdateTeamAdminRequest) (*adminv1.UpdateTeamAdminResponse, error) {
 	if req.TeamId == 0 {
 		return nil, status.Error(codes.InvalidArgument, "team_id is required")
 	}
 
 	// TODO: Получить actor_id из контекста аутентификации
-	actorID := int64(1)
+	actorID := getActorIDFromContext(ctx)
 
 	team, err := h.service.UpdateTeamByAdmin(ctx, &UpdateTeamByAdminRequest{
 		TeamID:       req.TeamId,
@@ -359,7 +373,7 @@ func (h *Handler) DeleteTeamAdmin(ctx context.Context, req *adminv1.DeleteTeamAd
 	}
 
 	// TODO: Получить actor_id из контекста аутентификации
-	actorID := int64(1)
+	actorID := getActorIDFromContext(ctx)
 
 	reason := req.Reason
 	if reason == "" {
