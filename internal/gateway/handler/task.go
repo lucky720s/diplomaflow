@@ -14,7 +14,7 @@ import (
 // ==================== Board ====================
 
 func (h *Handler) GetBoard(c *gin.Context) {
-	boardID, err := strconv.ParseInt(c.Param("id"), 10, 64)
+	boardID, err := strconv.ParseInt(c.Param("board_id"), 10, 64)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid board id"})
 		return
@@ -92,7 +92,7 @@ func (h *Handler) CreateBoard(c *gin.Context) {
 }
 
 func (h *Handler) UpdateBoard(c *gin.Context) {
-	boardID, err := strconv.ParseInt(c.Param("id"), 10, 64)
+	boardID, err := strconv.ParseInt(c.Param("board_id"), 10, 64)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid board id"})
 		return

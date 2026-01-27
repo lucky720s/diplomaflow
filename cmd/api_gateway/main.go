@@ -224,12 +224,12 @@ func main() {
 		boards.Use(middleware.AuthMiddleware(cfg.JWTSecret))
 		{
 			boards.POST("", handler.CreateBoard)
-			boards.GET("/:id", handler.GetBoard)
-			boards.PATCH("/:id", handler.UpdateBoard)
-			boards.GET("/:id/stats", handler.GetBoardStats)
-			boards.GET("/team/:team_id", handler.GetBoardByTeam)
 
-			// Columns
+			boards.GET("/:board_id", handler.GetBoard)
+			boards.PATCH("/:board_id", handler.UpdateBoard)
+			boards.GET("/:board_id/stats", handler.GetBoardStats)
+
+			boards.GET("/team/:team_id", handler.GetBoardByTeam)
 			boards.GET("/:board_id/columns", handler.ListColumns)
 			boards.POST("/:board_id/columns", handler.CreateColumn)
 			boards.POST("/:board_id/columns/reorder", handler.ReorderColumns)
