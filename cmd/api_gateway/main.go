@@ -276,7 +276,6 @@ func main() {
 		{Name: "file", Addr: cfg.FileServiceAddr, ServiceName: "file.v1.FileService"},
 		{Name: "form", Addr: cfg.FormServiceAddr, ServiceName: "form.v1.FormService"},
 		{Name: "admin", Addr: cfg.AdminServiceAddr, ServiceName: "admin.v1.AdminService"},
-		{Name: "task", Addr: cfg.TaskServiceAddr, ServiceName: "task.v1.TaskService"},
 	}
 
 	router.GET("/healthz", func(c *gin.Context) {
