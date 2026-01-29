@@ -23,11 +23,14 @@ jobs:
           command_timeout: 60m
           envs: PAT_TOKEN,JWT_SECRET,POSTGRES_PASSWORD
           script: |
-            set -euo pipefail
+            set -eu
+            set -o pipefail 2>/dev/null || true
             umask 077
 
             APP_DIR="/opt/diplomaflow"
-            STATE_DIR="${APP_DIR}/.state"
+            # ВАЖНО: state НЕ внутри репозитория, иначе git clone в "." упадёт [[1]]
+            STATE_DIR="/opt/diplomaflow_state"
+
             REPO="${{ github.repository }}"
             BRANCH="dev"
 
@@ -48,11 +51,8 @@ jobs:
               docker compose -p "$PROJECT_NAME" --env-file "$ENV_FILE" "$@"
             }
 
-            echo "==> Ensure app dir"
+            echo "==> Ensure dirs"
             mkdir -p "$APP_DIR" "$STATE_DIR"
-            chmod 700 "$STATE_DIR"
-            cd "$APP_DIR"
-  
             chmod 700 "$STATE_DIR"
             cd "$APP_DIR"
 
@@ -63,7 +63,8 @@ jobs:
               git reset --hard "origin/${BRANCH}"
               git clean -fd
             else
-              find "$APP_DIR" -mindepth 1 -maxdepth 1 -not -name ".state" -exec rm -rf {} +
+              # APP_DIR теперь можно чистить полностью: state в другом месте
+              rm -rf "$APP_DIR"/*
               git clone -b "$BRANCH" "https://${PAT_TOKEN}@github.com/${REPO}.git" .
             fi
 
@@ -96,16 +97,45 @@ jobs:
             POSTGRES_PORT=5432
             POSTGRES_HOST_PORT=5433
 
+            # docker-compose.yml требует DATABASE_DSN и DATABASE_URL [[1]]
             DATABASE_DSN=host=main_postgres user=diplomaflow password=${POSTGRES_PASSWORD} dbname=diplomaflow port=5432 sslmode=disable TimeZone=UTC
             DATABASE_URL=postgres://diplomaflow:${PG_PASS_URLENC}@main_postgres:5432/diplomaflow?sslmode=disable
 
             REDIS_ADDR=redis:6379
+
             KAFKA_BROKERS=kafka:29092
             KAFKA_GROUP_ID=diplomaflow-group
             KAFKA_KRAFT_CLUSTER_ID=MkU3OEVBNTcwNTJENDM2Qk
 
             PORT_GATEWAY=8080
+            PORT_UNIVERSITY=8081
+            PORT_AUTH=8082
+            PORT_PROJECT=8083
+            PORT_TEAM=8084
+            PORT_WORKFLOW=8085
+            PORT_ROLE=8086
+            PORT_NOTIFICATION=8087
+            PORT_FILE=8088
+            PORT_FORM=8089
+            PORT_ADMIN=8090
+            PORT_TASK=8091
+
             GATEWAY_BIND_ADDR=0.0.0.0
+
+            SERVICES_AUTH_ADDR=auth_service:8082
+            SERVICES_UNIVERSITY_ADDR=university_service:8081
+            SERVICES_PROJECT_ADDR=project_service:8083
+            SERVICES_TEAM_ADDR=team_service:8084
+            SERVICES_WORKFLOW_ADDR=workflow_service:8085
+            SERVICES_ROLE_ADDR=role_service:8086
+            SERVICES_NOTIFICATION_ADDR=notification_service:8087
+            SERVICES_FILE_ADDR=file_service:8088
+            SERVICES_FORM_ADDR=form_service:8089
+            SERVICES_ADMIN_ADDR=admin_service:8090
+            SERVICES_TASK_ADDR=task_service:8091
+
+            ACCESS_TOKEN_TTL=15m
+            REFRESH_TOKEN_TTL=720h
             EOF
             chmod 600 "$ENV_DESIRED"
 
@@ -166,15 +196,12 @@ jobs:
               echo "==> Changed files since last deploy:"
               echo "$changed" | sed '/^$/d' || true
 
-              # build-critical changes
               if echo "$changed" | grep -Eq '^(go\.mod|go\.sum|docker-compose\.yml|cmd/|internal/|pkg/|api/|proto/|\.dockerignore|Dockerfile)'; then
                 need_build=1
               fi
               if echo "$changed" | grep -Eq '^cmd/.*/config\.yaml$'; then
                 need_build=1
               fi
-
-              # migrate image must be rebuilt if migrations changed (it copies db/migrations into the image)
               if echo "$changed" | grep -Eq '^(db/migrations/|cmd/migrate/|cmd/migrate/Dockerfile)$'; then
                 need_build_migrate=1
               fi
@@ -189,45 +216,17 @@ jobs:
               dc build
             else
               echo "==> Skip build (no build-related changes)"
-              # если migrate нужен отдельно (изменились миграции), соберём только его
               if [ "$need_build_migrate" -eq 1 ]; then
                 echo "==> Rebuild migrate image (migrations changed)"
                 dc build migrate
               fi
             fi
 
-            echo "==> Run migrations (auto-fix dev: retry once with pg reset on known errors)"
-            set +e
-            mig_out="$(dc run --rm migrate 2>&1)"
-            mig_rc=$?
-            set -e
-
-            if [ "$mig_rc" -ne 0 ]; then
-              echo "$mig_out"
-              echo "==> Migrations failed. main_postgres logs:"
-              dc logs --tail=200 main_postgres || true
-
-              # dev auto-fix only for common “state” issues
-              if echo "$mig_out" | grep -Eq 'password authentication failed|Dirty database|dirty database'; then
-                echo "==> Auto-fix (dev): reset Postgres volume and retry migrations once"
-                reset_postgres
-                dc up -d main_postgres redis kafka
-                wait_postgres_healthy
-                dc build migrate
-                dc run --rm migrate
-              else
-                echo "==> Migrations failed for an unknown reason. Not auto-resetting."
-                exit 1
-              fi
-            fi
+            echo "==> Run migrations"
+            dc run --rm migrate
 
             echo "==> Start app services (no-build)"
-            dc up -d --remove-orphans --no-build || {
-              echo "==> docker compose up failed. Showing status/logs."
-              dc ps || true
-              dc logs --tail=200 || true
-              exit 1
-            }
+            dc up -d --remove-orphans --no-build
 
             echo "==> Healthcheck gateway"
             sleep 15
