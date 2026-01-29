@@ -98,6 +98,7 @@ services:
       SERVICES_FILE_ADDR: ${SERVICES_FILE_ADDR:-file_service:8088}
       SERVICES_FORM_ADDR: ${SERVICES_FORM_ADDR:-form_service:8089}
       SERVICES_ADMIN_ADDR: ${SERVICES_ADMIN_ADDR:-admin_service:8090}
+      SERVICES_TASK_ADDR: ${SERVICES_TASK_ADDR:-task_service:8091}
     depends_on:
       redis:
         condition: service_healthy
