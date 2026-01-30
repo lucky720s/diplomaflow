@@ -7,18 +7,17 @@ x-common-env: &common_env
 services:
   main_postgres:
     image: postgres:16-alpine
+    network_mode: host
     environment:
-
       POSTGRES_USER: ${POSTGRES_USER:-diplomaflow}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?POSTGRES_PASSWORD is required}
       POSTGRES_DB: ${POSTGRES_DB:-diplomaflow}
-    ports:
-      - "127.0.0.1:${POSTGRES_HOST_PORT:-5433}:5432"
+      PGPORT: "5433"    # <-- ИЗМЕНЕНО
+    command: -p 5433     # <-- ДОБАВЛЕНО
     volumes:
       - pg_data:/var/lib/postgresql/data
     healthcheck:
-      # без -d, чтобы не ловить ложный "db does not exist" в момент первого init
-      test: ["CMD-SHELL", "pg_isready -U $$POSTGRES_USER"]
+      test: ["CMD-SHELL", "pg_isready -U $$POSTGRES_USER -h 127.0.0.1 -p 5433"]
       interval: 5s
       timeout: 3s
       retries: 30
@@ -26,10 +25,10 @@ services:
 
   redis:
     image: redis:7-alpine
-    ports:
-      - "127.0.0.1:6379:6379"
+    network_mode: host
+    command: redis-server --port 6380    # <-- Тоже на другой порт (6379 может быть занят)
     healthcheck:
-      test: ["CMD", "redis-cli", "ping"]
+      test: ["CMD", "redis-cli", "-h", "127.0.0.1", "-p", "6380", "ping"]
       interval: 5s
       timeout: 3s
       retries: 30
@@ -37,42 +36,40 @@ services:
 
   kafka:
     image: confluentinc/cp-kafka:7.6.1
-    ports:
-      - "127.0.0.1:9092:9092"
+    network_mode: host
     environment:
       KAFKA_KRAFT_CLUSTER_ID: ${KAFKA_KRAFT_CLUSTER_ID:-MkU3OEVBNTcwNTJENDM2Qk}
       KAFKA_NODE_ID: 1
       KAFKA_PROCESS_ROLES: "broker,controller"
-      KAFKA_CONTROLLER_QUORUM_VOTERS: "1@kafka:29093"
+      KAFKA_CONTROLLER_QUORUM_VOTERS: "1@127.0.0.1:29093"
       KAFKA_CONTROLLER_LISTENER_NAMES: "CONTROLLER"
       CLUSTER_ID: ${KAFKA_KRAFT_CLUSTER_ID:-MkU3OEVBNTcwNTJENDM2Qk}
-      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: "PLAINTEXT:PLAINTEXT,PLAINTEXT_HOST:PLAINTEXT,CONTROLLER:PLAINTEXT"
-      KAFKA_LISTENERS: "PLAINTEXT://0.0.0.0:29092,PLAINTEXT_HOST://0.0.0.0:9092,CONTROLLER://0.0.0.0:29093"
-      # внутри сети контейнеры ходят на kafka:29092, с хоста — localhost:9092
-      KAFKA_ADVERTISED_LISTENERS: "PLAINTEXT://kafka:29092,PLAINTEXT_HOST://localhost:9092"
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: "PLAINTEXT:PLAINTEXT,CONTROLLER:PLAINTEXT"
+      KAFKA_LISTENERS: "PLAINTEXT://0.0.0.0:29092,CONTROLLER://0.0.0.0:29093"
+      KAFKA_ADVERTISED_LISTENERS: "PLAINTEXT://127.0.0.1:29092"
       KAFKA_INTER_BROKER_LISTENER_NAME: "PLAINTEXT"
       KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
       KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 1
       KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 1
       KAFKA_GROUP_INITIAL_REBALANCE_DELAY_MS: 0
     healthcheck:
-      test: ["CMD-SHELL", "cub kafka-ready -b localhost:29092 1 30"]
-      interval: 5s
-      timeout: 5s
+      test: ["CMD-SHELL", "kafka-broker-api-versions --bootstrap-server 127.0.0.1:29092 || exit 1"]
+      interval: 10s
+      timeout: 10s
       retries: 30
-      start_period: 10s
+      start_period: 30s
     restart: unless-stopped
 
   migrate:
     build:
       context: .
       dockerfile: cmd/migrate/Dockerfile
+    network_mode: host
     depends_on:
       main_postgres:
         condition: service_healthy
     environment:
-      # ВАЖНО: migrate требует URL со scheme (postgres://)
-      DATABASE_URL: ${DATABASE_URL:?DATABASE_URL is required}
+      DATABASE_URL: postgres://${POSTGRES_USER:-diplomaflow}:${POSTGRES_PASSWORD}@127.0.0.1:5433/${POSTGRES_DB:-diplomaflow}?sslmode=disable
     command: ["-cmd=up", "-path=file:///app/db/migrations"]
     restart: "no"
 
@@ -80,29 +77,28 @@ services:
     build:
       context: .
       dockerfile: cmd/api_gateway/Dockerfile
-    ports:
-      - "${GATEWAY_BIND_ADDR:-0.0.0.0}:${PORT_GATEWAY:-8080}:8080"
+    network_mode: host
     environment:
       ENV: ${ENV:-production}
       PORT: "8080"
-      REDIS_ADDR: ${REDIS_ADDR:-redis:6379}
+      REDIS_ADDR: 127.0.0.1:6380
       JWT_SECRET: ${JWT_SECRET:?JWT_SECRET is required}
-
-      SERVICES_AUTH_ADDR: ${SERVICES_AUTH_ADDR:-auth_service:8082}
-      SERVICES_UNIVERSITY_ADDR: ${SERVICES_UNIVERSITY_ADDR:-university_service:8081}
-      SERVICES_PROJECT_ADDR: ${SERVICES_PROJECT_ADDR:-project_service:8083}
-      SERVICES_TEAM_ADDR: ${SERVICES_TEAM_ADDR:-team_service:8084}
-      SERVICES_WORKFLOW_ADDR: ${SERVICES_WORKFLOW_ADDR:-workflow_service:8085}
-      SERVICES_ROLE_ADDR: ${SERVICES_ROLE_ADDR:-role_service:8086}
-      SERVICES_NOTIFICATION_ADDR: ${SERVICES_NOTIFICATION_ADDR:-notification_service:8087}
-      SERVICES_FILE_ADDR: ${SERVICES_FILE_ADDR:-file_service:8088}
-      SERVICES_FORM_ADDR: ${SERVICES_FORM_ADDR:-form_service:8089}
-      SERVICES_ADMIN_ADDR: ${SERVICES_ADMIN_ADDR:-admin_service:8090}
+      SERVICES_AUTH_ADDR: 127.0.0.1:8082
+      SERVICES_UNIVERSITY_ADDR: 127.0.0.1:8081
+      SERVICES_PROJECT_ADDR: 127.0.0.1:8083
+      SERVICES_TEAM_ADDR: 127.0.0.1:8084
+      SERVICES_WORKFLOW_ADDR: 127.0.0.1:8085
+      SERVICES_ROLE_ADDR: 127.0.0.1:8086
+      SERVICES_NOTIFICATION_ADDR: 127.0.0.1:8087
+      SERVICES_FILE_ADDR: 127.0.0.1:8088
+      SERVICES_FORM_ADDR: 127.0.0.1:8089
+      SERVICES_ADMIN_ADDR: 127.0.0.1:8090
+      SERVICES_TASK_ADDR: 127.0.0.1:8091
     depends_on:
       redis:
         condition: service_healthy
     healthcheck:
-      test: ["CMD-SHELL", "wget -qO- http://localhost:8080/healthz >/dev/null 2>&1"]
+      test: ["CMD-SHELL", "wget -qO- http://127.0.0.1:8080/healthz >/dev/null 2>&1"]
       interval: 10s
       timeout: 3s
       retries: 15
@@ -113,8 +109,7 @@ services:
     build:
       context: .
       dockerfile: cmd/university_service/Dockerfile
-    ports:
-      - "127.0.0.1:${PORT_UNIVERSITY:-8081}:8081"
+    network_mode: host
     environment:
       <<: *common_env
       GRPC_PORT: "8081"
@@ -122,7 +117,7 @@ services:
       migrate:
         condition: service_completed_successfully
     healthcheck:
-      test: ["CMD", "grpc_health_probe", "-addr=localhost:8081", "-service=university.v1.UniversityService"]
+      test: ["CMD", "grpc_health_probe", "-addr=127.0.0.1:8081", "-service=university.v1.UniversityService"]
       interval: 10s
       timeout: 3s
       retries: 15
@@ -133,24 +128,23 @@ services:
     build:
       context: .
       dockerfile: cmd/auth_service/Dockerfile
-    ports:
-      - "127.0.0.1:${PORT_AUTH:-8082}:8082"
+    network_mode: host
     environment:
       <<: *common_env
       GRPC_PORT: "8082"
-      REDIS_ADDR: ${REDIS_ADDR:-redis:6379}
+      REDIS_ADDR: 127.0.0.1:6380
       JWT_SECRET: ${JWT_SECRET:?JWT_SECRET is required}
       ACCESS_TOKEN_TTL: ${ACCESS_TOKEN_TTL:-15m}
       REFRESH_TOKEN_TTL: ${REFRESH_TOKEN_TTL:-720h}
-      SERVICES_UNIVERSITY_ADDR: ${SERVICES_UNIVERSITY_ADDR:-university_service:8081}
-      SERVICES_ROLE_ADDR: ${SERVICES_ROLE_ADDR:-role_service:8086}
+      SERVICES_UNIVERSITY_ADDR: 127.0.0.1:8081
+      SERVICES_ROLE_ADDR: 127.0.0.1:8086
     depends_on:
       migrate:
         condition: service_completed_successfully
       redis:
         condition: service_healthy
     healthcheck:
-      test: ["CMD", "grpc_health_probe", "-addr=localhost:8082", "-service=auth.v1.AuthService"]
+      test: ["CMD", "grpc_health_probe", "-addr=127.0.0.1:8082", "-service=auth.v1.AuthService"]
       interval: 10s
       timeout: 3s
       retries: 15
@@ -161,19 +155,18 @@ services:
     build:
       context: .
       dockerfile: cmd/project_service/Dockerfile
-    ports:
-      - "127.0.0.1:${PORT_PROJECT:-8083}:8083"
+    network_mode: host
     environment:
       <<: *common_env
       GRPC_PORT: "8083"
-      KAFKA_BROKERS: ${KAFKA_BROKERS:-kafka:29092}
+      KAFKA_BROKERS: 127.0.0.1:29092
     depends_on:
       migrate:
         condition: service_completed_successfully
       kafka:
         condition: service_healthy
     healthcheck:
-      test: ["CMD", "grpc_health_probe", "-addr=localhost:8083", "-service=project.v1.ProjectService"]
+      test: ["CMD", "grpc_health_probe", "-addr=127.0.0.1:8083", "-service=project.v1.ProjectService"]
       interval: 10s
       timeout: 3s
       retries: 15
@@ -184,19 +177,18 @@ services:
     build:
       context: .
       dockerfile: cmd/team_service/Dockerfile
-    ports:
-      - "127.0.0.1:${PORT_TEAM:-8084}:8084"
+    network_mode: host
     environment:
       <<: *common_env
       GRPC_PORT: "8084"
-      KAFKA_BROKERS: ${KAFKA_BROKERS:-kafka:29092}
+      KAFKA_BROKERS: 127.0.0.1:29092
     depends_on:
       migrate:
         condition: service_completed_successfully
       kafka:
         condition: service_healthy
     healthcheck:
-      test: ["CMD", "grpc_health_probe", "-addr=localhost:8084", "-service=team.v1.TeamService"]
+      test: ["CMD", "grpc_health_probe", "-addr=127.0.0.1:8084", "-service=team.v1.TeamService"]
       interval: 10s
       timeout: 3s
       retries: 15
@@ -207,22 +199,21 @@ services:
     build:
       context: .
       dockerfile: cmd/workflow_service/Dockerfile
-    ports:
-      - "127.0.0.1:${PORT_WORKFLOW:-8085}:8085"
+    network_mode: host
     environment:
       <<: *common_env
       GRPC_PORT: "8085"
-      KAFKA_BROKERS: ${KAFKA_BROKERS:-kafka:29092}
+      KAFKA_BROKERS: 127.0.0.1:29092
       KAFKA_GROUP_ID: ${KAFKA_GROUP_ID:-workflow-service-group}
-      SERVICES_NOTIFICATION_ADDR: ${SERVICES_NOTIFICATION_ADDR:-notification_service:8087}
-      SERVICES_PROJECT_ADDR: ${SERVICES_PROJECT_ADDR:-project_service:8083}
+      SERVICES_NOTIFICATION_ADDR: 127.0.0.1:8087
+      SERVICES_PROJECT_ADDR: 127.0.0.1:8083
     depends_on:
       migrate:
         condition: service_completed_successfully
       kafka:
         condition: service_healthy
     healthcheck:
-      test: ["CMD", "grpc_health_probe", "-addr=localhost:8085", "-service=workflow.v1.WorkflowService"]
+      test: ["CMD", "grpc_health_probe", "-addr=127.0.0.1:8085", "-service=workflow.v1.WorkflowService"]
       interval: 10s
       timeout: 3s
       retries: 15
@@ -233,8 +224,7 @@ services:
     build:
       context: .
       dockerfile: cmd/role_service/Dockerfile
-    ports:
-      - "127.0.0.1:${PORT_ROLE:-8086}:8086"
+    network_mode: host
     environment:
       <<: *common_env
       GRPC_PORT: "8086"
@@ -242,7 +232,7 @@ services:
       migrate:
         condition: service_completed_successfully
     healthcheck:
-      test: ["CMD", "grpc_health_probe", "-addr=localhost:8086", "-service=role.v1.RoleService"]
+      test: ["CMD", "grpc_health_probe", "-addr=127.0.0.1:8086", "-service=role.v1.RoleService"]
       interval: 10s
       timeout: 3s
       retries: 15
@@ -253,8 +243,7 @@ services:
     build:
       context: .
       dockerfile: cmd/notification_service/Dockerfile
-    ports:
-      - "127.0.0.1:${PORT_NOTIFICATION:-8087}:8087"
+    network_mode: host
     environment:
       <<: *common_env
       GRPC_PORT: "8087"
@@ -262,7 +251,7 @@ services:
       migrate:
         condition: service_completed_successfully
     healthcheck:
-      test: ["CMD", "grpc_health_probe", "-addr=localhost:8087", "-service=notification.v1.NotificationService"]
+      test: ["CMD", "grpc_health_probe", "-addr=127.0.0.1:8087", "-service=notification.v1.NotificationService"]
       interval: 10s
       timeout: 3s
       retries: 15
@@ -273,8 +262,7 @@ services:
     build:
       context: .
       dockerfile: cmd/file_service/Dockerfile
-    ports:
-      - "127.0.0.1:${PORT_FILE:-8088}:8088"
+    network_mode: host
     environment:
       <<: *common_env
       GRPC_PORT: "8088"
@@ -285,7 +273,7 @@ services:
       migrate:
         condition: service_completed_successfully
     healthcheck:
-      test: ["CMD", "grpc_health_probe", "-addr=localhost:8088", "-service=file.v1.FileService"]
+      test: ["CMD", "grpc_health_probe", "-addr=127.0.0.1:8088", "-service=file.v1.FileService"]
       interval: 10s
       timeout: 3s
       retries: 15
@@ -296,8 +284,7 @@ services:
     build:
       context: .
       dockerfile: cmd/form_service/Dockerfile
-    ports:
-      - "127.0.0.1:${PORT_FORM:-8089}:8089"
+    network_mode: host
     environment:
       <<: *common_env
       GRPC_PORT: "8089"
@@ -305,7 +292,7 @@ services:
       migrate:
         condition: service_completed_successfully
     healthcheck:
-      test: ["CMD", "grpc_health_probe", "-addr=localhost:8089", "-service=form.v1.FormService"]
+      test: ["CMD", "grpc_health_probe", "-addr=127.0.0.1:8089", "-service=form.v1.FormService"]
       interval: 10s
       timeout: 3s
       retries: 15
@@ -316,8 +303,7 @@ services:
     build:
       context: .
       dockerfile: cmd/admin_service/Dockerfile
-    ports:
-      - "127.0.0.1:${PORT_ADMIN:-8090}:8090"
+    network_mode: host
     environment:
       <<: *common_env
       GRPC_PORT: "8090"
@@ -325,7 +311,7 @@ services:
       migrate:
         condition: service_completed_successfully
     healthcheck:
-      test: ["CMD", "grpc_health_probe", "-addr=localhost:8090", "-service=admin.v1.AdminService"]
+      test: ["CMD", "grpc_health_probe", "-addr=127.0.0.1:8090", "-service=admin.v1.AdminService"]
       interval: 10s
       timeout: 3s
       retries: 15
@@ -336,8 +322,7 @@ services:
     build:
       context: .
       dockerfile: cmd/task_service/Dockerfile
-    ports:
-      - "127.0.0.1:${PORT_TASK:-8091}:8091"
+    network_mode: host
     environment:
       <<: *common_env
       GRPC_PORT: "8091"
@@ -345,13 +330,12 @@ services:
       migrate:
         condition: service_completed_successfully
     healthcheck:
-      test: [ "CMD", "grpc_health_probe", "-addr=localhost:8091", "-service=task.v1.TaskService" ]
+      test: ["CMD", "grpc_health_probe", "-addr=127.0.0.1:8091", "-service=task.v1.TaskService"]
       interval: 10s
       timeout: 3s
       retries: 15
       start_period: 20s
     restart: unless-stopped
-
 
 volumes:
   pg_data:
