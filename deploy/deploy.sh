@@ -47,9 +47,9 @@ JWT_SECRET=${JWT_SECRET}
 POSTGRES_USER=diplomaflow
 POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
 POSTGRES_DB=diplomaflow
-DATABASE_DSN=host=127.0.0.1 user=diplomaflow password=${POSTGRES_PASSWORD} dbname=diplomaflow port=5432 sslmode=disable TimeZone=UTC
-DATABASE_URL=postgres://diplomaflow:${POSTGRES_PASSWORD}@127.0.0.1:5432/diplomaflow?sslmode=disable
-REDIS_ADDR=127.0.0.1:6379
+DATABASE_DSN=host=127.0.0.1 user=diplomaflow password=${POSTGRES_PASSWORD} dbname=diplomaflow port=5433 sslmode=disable TimeZone=UTC
+DATABASE_URL=postgres://diplomaflow:${POSTGRES_PASSWORD}@127.0.0.1:5433/diplomaflow?sslmode=disable
+REDIS_ADDR=127.0.0.1:6380
 KAFKA_BROKERS=127.0.0.1:29092
 KAFKA_GROUP_ID=diplomaflow-group
 KAFKA_KRAFT_CLUSTER_ID=MkU3OEVBNTcwNTJENDM2Qk
@@ -64,29 +64,43 @@ dc config > /dev/null
 echo "==> Stop old containers"
 dc down --remove-orphans || true
 
+echo "==> Build images"
+dc build
+
 echo "==> Start infra"
 dc up -d main_postgres redis kafka
 
-echo "==> Wait for postgres"
+echo "==> Wait for postgres on port 5433"
 for i in $(seq 1 60); do
-  if pg_isready -h 127.0.0.1 -U diplomaflow 2>/dev/null; then
-    echo "Postgres ready"
+  if pg_isready -h 127.0.0.1 -p 5433 -U diplomaflow 2>/dev/null; then
+    echo "Postgres ready on port 5433"
     break
   fi
+  echo "Waiting for postgres... ($i/60)"
   sleep 2
 done
 
-echo "==> Wait for kafka"
-sleep 20
+echo "==> Wait for redis on port 6380"
+for i in $(seq 1 30); do
+  if redis-cli -h 127.0.0.1 -p 6380 ping 2>/dev/null | grep -q PONG; then
+    echo "Redis ready on port 6380"
+    break
+  fi
+  sleep 1
+done
 
-echo "==> Build and deploy"
-dc build
+echo "==> Wait for kafka"
+sleep 30
+
+echo "==> Run migrations"
 dc run --rm migrate
-dc up -d --remove-orphans --no-build
+
+echo "==> Start all services"
+dc up -d --no-build
 
 echo "==> Wait for gateway"
 sleep 30
-curl -fsS "http://127.0.0.1:8080/healthz" > /dev/null && echo "Gateway OK" || echo "Gateway not ready"
+curl -fsS "http://127.0.0.1:8080/healthz" > /dev/null && echo "Gateway OK" || echo "Gateway not ready yet"
 
 echo "==> Status"
 dc ps
