@@ -64,79 +64,80 @@ dc config > /dev/null
 echo "==> Stop old containers"
 dc down --remove-orphans || true
 
-echo "==> Remove old postgres volume (port changed from 5432 to 5433)"
-docker volume rm diplomaflow_pg_data 2>/dev/null || true
+# ============================================
+# ОЧИСТКА DOCKER ПЕРЕД СБОРКОЙ
+# ============================================
+echo "🧹 Cleaning Docker (images, build cache)..."
+echo "📊 Disk before cleanup:"
+df -h / | tail -1
+
+# Удалить неиспользуемые образы
+docker image prune -af || true
+
+# Очистить кэш сборки
+docker builder prune -af || true
+
+# Удалить остановленные контейнеры
+docker container prune -f || true
+
+# Удалить неиспользуемые сети
+docker network prune -f || true
+
+# ⚠️ НЕ удаляем volumes - там данные PostgreSQL!
+# docker volume prune -f  # ЗАПРЕЩЕНО
+
+echo "📊 Disk after cleanup:"
+df -h / | tail -1
+echo "🐳 Docker usage:"
+docker system df
+# ============================================
 
 echo "==> Build images"
 dc build
 
-echo "==> Start postgres"
-dc up -d main_postgres
+echo "==> Start infra"
+dc up -d main_postgres redis kafka
 
-echo "==> Wait for postgres on port 5433 (via docker exec)"
+echo "==> Wait for postgres (via docker exec)"
 for i in $(seq 1 60); do
   if docker exec diplomaflow-main_postgres-1 pg_isready -h 127.0.0.1 -p 5433 -U diplomaflow 2>/dev/null; then
-    echo "Postgres ready on port 5433!"
+    echo "Postgres ready!"
     break
   fi
   echo "Waiting for postgres... ($i/60)"
-  if [ $i -eq 30 ]; then
-    echo "==> Postgres logs so far:"
-    dc logs main_postgres --tail=20
-  fi
   sleep 2
 done
 
-# Финальная проверка
-if ! docker exec diplomaflow-main_postgres-1 pg_isready -h 127.0.0.1 -p 5433 -U diplomaflow 2>/dev/null; then
-  echo "ERROR: Postgres failed to start!"
-  dc logs main_postgres
-  exit 1
-fi
-
-echo "==> Start redis"
-dc up -d redis
-
-echo "==> Wait for redis on port 6380 (via docker exec)"
+echo "==> Wait for redis (via docker exec)"
 for i in $(seq 1 30); do
   if docker exec diplomaflow-redis-1 redis-cli -h 127.0.0.1 -p 6380 ping 2>/dev/null | grep -q PONG; then
-    echo "Redis ready on port 6380!"
+    echo "Redis ready!"
     break
   fi
-  echo "Waiting for redis... ($i/30)"
   sleep 1
 done
 
-echo "==> Start kafka"
-dc up -d kafka
-
-echo "==> Wait for kafka (60s)"
-sleep 60
+echo "==> Wait for kafka"
+sleep 30
 
 echo "==> Run migrations"
-dc run --rm migrate || {
-  echo "Migration failed!"
-  dc logs migrate
-  exit 1
-}
+dc run --rm migrate
 
 echo "==> Start all services"
 dc up -d --no-build
 
-echo "==> Wait for services to start"
+echo "==> Wait for gateway"
 sleep 30
+curl -fsS "http://127.0.0.1:8080/healthz" > /dev/null && echo "Gateway OK" || echo "Gateway not ready yet"
 
-echo "==> Check gateway health"
-for i in $(seq 1 30); do
-  if curl -fsS "http://127.0.0.1:8080/healthz" > /dev/null 2>&1; then
-    echo "Gateway OK!"
-    break
-  fi
-  echo "Waiting for gateway... ($i/30)"
-  sleep 2
-done
+echo "==> Final cleanup (dangling images after build)"
+docker image prune -f || true
 
-echo "==> Final status"
-dc ps -a
+echo "==> Status"
+dc ps
+
+echo "📊 Final disk usage:"
+df -h / | tail -1
+docker system df
 
 echo "✅ Deployment completed!"
