@@ -18,7 +18,6 @@ jobs:
           host: ${{ secrets.SERVER_HOST }}
           username: ${{ secrets.SERVER_USER }}
           key: ${{ secrets.SSH_PRIVATE_KEY }}
-          port: 22
           command_timeout: 60m
           script: |
             set -e
@@ -35,6 +34,9 @@ jobs:
             export DOCKER_CLIENT_TIMEOUT=600
             export COMPOSE_HTTP_TIMEOUT=600
             
+            # ===== FIX: Add safe.directory =====
+            git config --global --add safe.directory "$APP_DIR"
+            
             echo "==> Ensure dirs"
             mkdir -p "$APP_DIR" "$STATE_DIR"
             chmod 700 "$STATE_DIR"
@@ -47,12 +49,12 @@ jobs:
               git reset --hard "origin/${BRANCH}"
               git clean -fd
             else
-              rm -rf "$APP_DIR"/*
+              rm -rf "$APP_DIR"/* "$APP_DIR"/.[!.]* 2>/dev/null || true
               git clone -b "$BRANCH" "https://${{ secrets.PAT_TOKEN }}@github.com/${REPO}.git" .
             fi
             
             echo "==> Create .env"
-            cat > "$ENV_FILE" << 'ENVEOF'
+            cat > "$ENV_FILE" <<'ENVEOF'
             ENV_FILE_VERSION=2
             ENV=dev
             GIN_MODE=release
