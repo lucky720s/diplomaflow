@@ -12,6 +12,16 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      - name: Copy deploy script
+        uses: appleboy/scp-action@v0.1.7
+        with:
+          host: ${{ secrets.SERVER_HOST }}
+          username: ${{ secrets.SERVER_USER }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          source: "deploy/deploy.sh"
+          target: "/opt/diplomaflow_scripts"
+          overwrite: true
+
       - name: Deploy via SSH
         uses: appleboy/ssh-action@v1.0.3
         with:
@@ -20,114 +30,5 @@ jobs:
           key: ${{ secrets.SSH_PRIVATE_KEY }}
           command_timeout: 60m
           script: |
-            set -e
-            
-            APP_DIR="/opt/diplomaflow"
-            STATE_DIR="/opt/diplomaflow_state"
-            REPO="${{ github.repository }}"
-            BRANCH="dev"
-            PROJECT_NAME="diplomaflow"
-            ENV_FILE="${STATE_DIR}/.env"
-            
-            export DOCKER_BUILDKIT=1
-            export COMPOSE_DOCKER_CLI_BUILD=1
-            export DOCKER_CLIENT_TIMEOUT=600
-            export COMPOSE_HTTP_TIMEOUT=600
-            
-            # ===== FIX: Add safe.directory =====
-            git config --global --add safe.directory "$APP_DIR"
-            
-            echo "==> Ensure dirs"
-            mkdir -p "$APP_DIR" "$STATE_DIR"
-            chmod 700 "$STATE_DIR"
-            cd "$APP_DIR"
-            
-            echo "==> Sync repository"
-            if [ -d ".git" ]; then
-              git remote set-url origin "https://${{ secrets.PAT_TOKEN }}@github.com/${REPO}.git"
-              git fetch origin "$BRANCH"
-              git reset --hard "origin/${BRANCH}"
-              git clean -fd
-            else
-              rm -rf "$APP_DIR"/* "$APP_DIR"/.[!.]* 2>/dev/null || true
-              git clone -b "$BRANCH" "https://${{ secrets.PAT_TOKEN }}@github.com/${REPO}.git" .
-            fi
-            
-            echo "==> Create .env"
-            cat > "$ENV_FILE" <<'ENVEOF'
-            ENV_FILE_VERSION=2
-            ENV=dev
-            GIN_MODE=release
-            JWT_SECRET=${{ secrets.JWT_SECRET_DEV }}
-            POSTGRES_USER=diplomaflow
-            POSTGRES_PASSWORD=${{ secrets.POSTGRES_PASSWORD_DEV }}
-            POSTGRES_DB=diplomaflow
-            POSTGRES_PORT=5432
-            POSTGRES_HOST_PORT=5433
-            DATABASE_DSN=host=main_postgres user=diplomaflow password=${{ secrets.POSTGRES_PASSWORD_DEV }} dbname=diplomaflow port=5432 sslmode=disable TimeZone=UTC
-            DATABASE_URL=postgres://diplomaflow:${{ secrets.POSTGRES_PASSWORD_DEV }}@main_postgres:5432/diplomaflow?sslmode=disable
-            REDIS_ADDR=redis:6379
-            KAFKA_BROKERS=kafka:29092
-            KAFKA_GROUP_ID=diplomaflow-group
-            KAFKA_KRAFT_CLUSTER_ID=MkU3OEVBNTcwNTJENDM2Qk
-            PORT_GATEWAY=8080
-            PORT_UNIVERSITY=8081
-            PORT_AUTH=8082
-            PORT_PROJECT=8083
-            PORT_TEAM=8084
-            PORT_WORKFLOW=8085
-            PORT_ROLE=8086
-            PORT_NOTIFICATION=8087
-            PORT_FILE=8088
-            PORT_FORM=8089
-            PORT_ADMIN=8090
-            PORT_TASK=8091
-            GATEWAY_BIND_ADDR=0.0.0.0
-            SERVICES_AUTH_ADDR=auth_service:8082
-            SERVICES_UNIVERSITY_ADDR=university_service:8081
-            SERVICES_PROJECT_ADDR=project_service:8083
-            SERVICES_TEAM_ADDR=team_service:8084
-            SERVICES_WORKFLOW_ADDR=workflow_service:8085
-            SERVICES_ROLE_ADDR=role_service:8086
-            SERVICES_NOTIFICATION_ADDR=notification_service:8087
-            SERVICES_FILE_ADDR=file_service:8088
-            SERVICES_FORM_ADDR=form_service:8089
-            SERVICES_ADMIN_ADDR=admin_service:8090
-            SERVICES_TASK_ADDR=task_service:8091
-            ACCESS_TOKEN_TTL=15m
-            REFRESH_TOKEN_TTL=720h
-            ENVEOF
-            chmod 600 "$ENV_FILE"
-            
-            dc() {
-              docker compose -p "$PROJECT_NAME" --env-file "$ENV_FILE" "$@"
-            }
-            
-            echo "==> Validate compose"
-            dc config > /dev/null
-            
-            echo "==> Start infra"
-            dc up -d main_postgres redis kafka
-            
-            echo "==> Wait for postgres"
-            for i in $(seq 1 60); do
-              if dc exec -T main_postgres pg_isready -U diplomaflow > /dev/null 2>&1; then
-                echo "Postgres ready"
-                break
-              fi
-              sleep 1
-            done
-            
-            echo "==> Build and deploy"
-            dc build
-            dc run --rm migrate
-            dc up -d --remove-orphans
-            
-            echo "==> Wait for gateway"
-            sleep 20
-            curl -fsS "http://localhost:8080/healthz" > /dev/null || echo "Gateway not ready yet"
-            
-            echo "==> Status"
-            dc ps
-            
-            echo "✅ Deployment completed!"
+            chmod +x /opt/diplomaflow_scripts/deploy/deploy.sh
+            /opt/diplomaflow_scripts/deploy/deploy.sh "/opt/diplomaflow" "${{ secrets.PAT_TOKEN }}" "${{ secrets.JWT_SECRET_DEV }}" "${{ secrets.POSTGRES_PASSWORD_DEV }}" "${{ github.repository }}" "dev"
