@@ -40,6 +40,7 @@ func main() {
 		log.Fatal("failed to connect to database", zap.Error(err))
 	}
 
+	// Auth client
 	authConn, err := grpc.NewClient(cfg.Services.AuthAddr, grpc.WithTransportCredentials(insecure.NewCredentials()))
 	if err != nil {
 		log.Fatal("Failed to connect to auth service", zap.Error(err))
@@ -47,6 +48,7 @@ func main() {
 	defer authConn.Close()
 	authClient := authv1.NewAuthServiceClient(authConn)
 
+	// Initialize app
 	app, cleanup, err := team.InitializeApp(&cfg, db, log.Logger, authClient)
 	if err != nil {
 		log.Fatal("failed to initialize app", zap.Error(err))
@@ -56,33 +58,43 @@ func main() {
 	h := app.Handler
 	eventHandler := app.EventHandler
 
-	brokers := strings.Split(cfg.Kafka.Brokers, ",")
-	groupID := cfg.Kafka.GroupID
-	if groupID == "" {
-		groupID = "team-service-group"
-	}
-
-	kafkaConsumer, err := broker.NewConsumerWithRetry(brokers, groupID, log.Logger, broker.DefaultRetryConfig())
-	if err != nil {
-		log.Fatal("Failed to create kafka consumer", zap.Error(err))
-	}
-	defer kafkaConsumer.Close()
-
 	ctx, cancel := context.WithCancel(context.Background())
 
-	handlerFn := func(ctx context.Context, event broker.Event) error {
-		var payload team.ProjectCreatedEvent
-		if unmarshalErr := json.Unmarshal(event.Payload, &payload); unmarshalErr != nil {
-			return broker.Permanent(unmarshalErr)
+	if cfg.Kafka.Enabled {
+		log.Info("Kafka ENABLED - starting consumer...")
+
+		brokers := strings.Split(cfg.Kafka.Brokers, ",")
+		groupID := cfg.Kafka.GroupID
+		if groupID == "" {
+			groupID = "team-service-group"
 		}
-		return eventHandler.HandleProjectCreated(ctx, payload)
+
+		kafkaConsumer, consumerErr := broker.NewConsumerWithRetry(brokers, groupID, log.Logger, broker.DefaultRetryConfig())
+		if consumerErr != nil {
+			log.Fatal("Failed to create kafka consumer", zap.Error(consumerErr))
+		}
+		defer kafkaConsumer.Close()
+
+		handlerFn := func(ctx context.Context, event broker.Event) error {
+			var payload team.ProjectCreatedEvent
+			if unmarshalErr := json.Unmarshal(event.Payload, &payload); unmarshalErr != nil {
+				return broker.Permanent(unmarshalErr)
+			}
+			return eventHandler.HandleProjectCreated(ctx, payload)
+		}
+
+		go func() {
+			log.Info("Starting Kafka consumer",
+				zap.Strings("topics", []string{"project-events"}),
+				zap.String("group_id", groupID))
+			kafkaConsumer.Start(ctx, []string{"project-events"}, handlerFn)
+		}()
+	} else {
+		log.Warn("Kafka DISABLED - team_service will NOT receive project events automatically")
+		log.Warn("Projects must be assigned to teams manually via AssignProject RPC")
 	}
 
-	go func() {
-		log.Info("Starting Kafka consumer", zap.Strings("topics", []string{"project-events"}), zap.String("group_id", groupID))
-		kafkaConsumer.Start(ctx, []string{"project-events"}, handlerFn)
-	}()
-
+	// gRPC server
 	lis, err := net.Listen("tcp", ":"+cfg.GRPCPort)
 	if err != nil {
 		log.Fatal("failed to listen", zap.Error(err))
@@ -95,10 +107,13 @@ func main() {
 	grpc_health_v1.RegisterHealthServer(grpcServer, healthServer)
 	healthServer.SetServingStatus("", grpc_health_v1.HealthCheckResponse_SERVING)
 	healthServer.SetServingStatus("team.v1.TeamService", grpc_health_v1.HealthCheckResponse_SERVING)
+
 	reflection.Register(grpcServer)
 
 	go func() {
-		log.Info("Team Service starting", zap.String("port", cfg.GRPCPort))
+		log.Info("Team Service starting",
+			zap.String("port", cfg.GRPCPort),
+			zap.Bool("kafka_enabled", cfg.Kafka.Enabled))
 		if err := grpcServer.Serve(lis); err != nil {
 			log.Fatal("failed to serve", zap.Error(err))
 		}
@@ -106,6 +121,7 @@ func main() {
 
 	log.Info("Team Service started")
 
+	// Graceful shutdown
 	quit := make(chan os.Signal, 1)
 	signal.Notify(quit, syscall.SIGINT, syscall.SIGTERM)
 	<-quit
@@ -117,5 +133,6 @@ func main() {
 	cancel()
 	grpcServer.GracefulStop()
 	time.Sleep(300 * time.Millisecond)
+
 	log.Info("Team Service exited")
 }

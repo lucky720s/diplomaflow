@@ -3,6 +3,7 @@ grpc_port: 8084
 database:
   dsn: ""
 kafka:
+  enabled: false  # <-- переключатель, если надо включить кафку
   brokers: "kafka:29092"
 services:
   auth_addr: "auth_service:8082"
