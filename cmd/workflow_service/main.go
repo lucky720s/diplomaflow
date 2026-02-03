@@ -60,39 +60,47 @@ func main() {
 	defer projectConn.Close()
 	projectClient := projectv1.NewProjectServiceClient(projectConn)
 
-	// plugins
+	// Plugins
 	builtin.RegisterAll(notifClient)
 	log.Info("Builtin plugins registered", zap.Strings("plugins", builtin.RegisteredPlugins()))
 
-	// workflow core
+	// Workflow core
 	repo := workflow.NewRepository(db)
 	svc := workflow.NewService(repo, log.Logger)
 	base := workflow.NewHandler(svc, log.Logger)
 	eng := engine.NewWorkflowEngine(repo, log.Logger)
 	h := runtimegrpc.New(base, eng, projectClient, log.Logger)
 
-	// Kafka consumer: workflow-actions
-	brokers := strings.Split(cfg.Kafka.Brokers, ",")
-	groupID := cfg.Kafka.GroupID
-	if groupID == "" {
-		groupID = "workflow-service-group"
-	}
-
-	consumer, err := broker.NewConsumerWithRetry(brokers, groupID, log.Logger, broker.DefaultRetryConfig())
-	if err != nil {
-		log.Fatal("failed to create kafka consumer", zap.Error(err))
-	}
-	defer consumer.Close()
-
-	worker := postcommit.NewWorker(db, projectClient, log.Logger)
-
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
-	go func() {
-		log.Info("Starting Kafka consumer", zap.Strings("topics", []string{"workflow-actions"}), zap.String("group_id", groupID))
-		consumer.Start(ctx, []string{"workflow-actions"}, worker.HandleEvent)
-	}()
+	if cfg.Kafka.Enabled {
+		log.Info("Kafka ENABLED - starting workflow-actions consumer...")
+
+		brokers := strings.Split(cfg.Kafka.Brokers, ",")
+		groupID := cfg.Kafka.GroupID
+		if groupID == "" {
+			groupID = "workflow-service-group"
+		}
+
+		consumer, consumerErr := broker.NewConsumerWithRetry(brokers, groupID, log.Logger, broker.DefaultRetryConfig())
+		if consumerErr != nil {
+			log.Fatal("failed to create kafka consumer", zap.Error(consumerErr))
+		}
+		defer consumer.Close()
+
+		worker := postcommit.NewWorker(db, projectClient, log.Logger)
+
+		go func() {
+			log.Info("Starting Kafka consumer",
+				zap.Strings("topics", []string{"workflow-actions"}),
+				zap.String("group_id", groupID))
+			consumer.Start(ctx, []string{"workflow-actions"}, worker.HandleEvent)
+		}()
+	} else {
+		log.Warn("Kafka DISABLED - post-commit actions will NOT be processed asynchronously")
+		log.Warn("workflow-actions events will be skipped")
+	}
 
 	// gRPC server
 	lis, err := net.Listen("tcp", ":"+cfg.GRPCPort)
@@ -111,12 +119,15 @@ func main() {
 	reflection.Register(grpcServer)
 
 	go func() {
-		log.Info("Workflow Service starting", zap.String("port", cfg.GRPCPort))
+		log.Info("Workflow Service starting",
+			zap.String("port", cfg.GRPCPort),
+			zap.Bool("kafka_enabled", cfg.Kafka.Enabled))
 		if err := grpcServer.Serve(lis); err != nil {
 			log.Fatal("failed to serve", zap.Error(err))
 		}
 	}()
 
+	// Graceful shutdown
 	stop := make(chan os.Signal, 1)
 	signal.Notify(stop, syscall.SIGINT, syscall.SIGTERM)
 	<-stop
@@ -128,5 +139,6 @@ func main() {
 	cancel()
 	time.Sleep(300 * time.Millisecond)
 	grpcServer.GracefulStop()
+
 	log.Info("Workflow Service stopped")
 }

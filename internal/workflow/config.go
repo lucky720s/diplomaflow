@@ -14,6 +14,7 @@ type Config struct {
 	} `mapstructure:"services"`
 
 	Kafka struct {
+		Enabled bool   `mapstructure:"enabled"`
 		Brokers string `mapstructure:"brokers"`
 		GroupID string `mapstructure:"group_id"`
 	} `mapstructure:"kafka"`

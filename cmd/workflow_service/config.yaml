@@ -9,5 +9,6 @@ services:
   project_addr: "project_service:8083"
 
 kafka:
+  enabled: false  # <-- переключатель, если надо включить кафку
   brokers: "kafka:29092"
   group_id: "diplomaflow-group"

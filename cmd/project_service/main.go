@@ -38,13 +38,25 @@ func main() {
 		log.Fatal("failed to connect to database", zap.Error(err))
 	}
 
-	brokers := strings.Split(cfg.Kafka.Brokers, ",")
-	kafkaProducer, err := broker.NewProducerWithRetry(brokers, log.Logger, broker.DefaultRetryConfig())
-	if err != nil {
-		log.Fatal("Failed to create kafka producer", zap.Error(err))
-	}
-	defer kafkaProducer.Close()
+	var kafkaProducer *broker.Producer
 
+	if cfg.Kafka.Enabled {
+		log.Info("Kafka ENABLED - initializing producer...")
+		brokers := strings.Split(cfg.Kafka.Brokers, ",")
+
+		var prodErr error
+		kafkaProducer, prodErr = broker.NewProducerWithRetry(brokers, log.Logger, broker.DefaultRetryConfig())
+		if prodErr != nil {
+			log.Fatal("Failed to create kafka producer", zap.Error(prodErr))
+		}
+		defer kafkaProducer.Close()
+		log.Info("Kafka producer initialized successfully")
+	} else {
+		log.Warn("Kafka DISABLED - events will NOT be published")
+		log.Warn("OutboxProcessor will be skipped")
+	}
+
+	// Workflow client
 	wfConn, err := grpc.NewClient(cfg.Services.WorkflowAddr, grpc.WithTransportCredentials(insecure.NewCredentials()))
 	if err != nil {
 		log.Fatal("Failed to connect to workflow service", zap.Error(err))
@@ -59,9 +71,17 @@ func main() {
 	defer cleanup()
 
 	ctx, cancel := context.WithCancel(context.Background())
-	go app.OutboxProcessor.Start(ctx)
+
+	if cfg.Kafka.Enabled && kafkaProducer != nil {
+		log.Info("Starting OutboxProcessor (Kafka enabled)")
+		go app.OutboxProcessor.Start(ctx)
+	} else {
+		log.Info("OutboxProcessor SKIPPED (Kafka disabled)")
+	}
+
 	go app.DeadlineScheduler.Start(ctx)
 
+	// gRPC server
 	lis, err := net.Listen("tcp", ":"+cfg.GRPCPort)
 	if err != nil {
 		log.Fatal("listen error", zap.Error(err))
@@ -76,12 +96,15 @@ func main() {
 	healthServer.SetServingStatus("project.v1.ProjectService", grpc_health_v1.HealthCheckResponse_SERVING)
 
 	go func() {
-		log.Info("Project Service starting", zap.String("port", cfg.GRPCPort))
+		log.Info("Project Service starting",
+			zap.String("port", cfg.GRPCPort),
+			zap.Bool("kafka_enabled", cfg.Kafka.Enabled))
 		if err := grpcServer.Serve(lis); err != nil {
 			log.Fatal("serve error", zap.Error(err))
 		}
 	}()
 
+	// Graceful shutdown
 	quit := make(chan os.Signal, 1)
 	signal.Notify(quit, syscall.SIGINT, syscall.SIGTERM)
 	<-quit
@@ -91,10 +114,14 @@ func main() {
 	healthServer.SetServingStatus("project.v1.ProjectService", grpc_health_v1.HealthCheckResponse_NOT_SERVING)
 
 	cancel()
-	app.OutboxProcessor.Stop()
-	app.DeadlineScheduler.Stop()
 
+	if cfg.Kafka.Enabled && app.OutboxProcessor != nil {
+		app.OutboxProcessor.Stop()
+	}
+
+	app.DeadlineScheduler.Stop()
 	time.Sleep(500 * time.Millisecond)
 	grpcServer.GracefulStop()
+
 	log.Info("Project Service exited")
 }
