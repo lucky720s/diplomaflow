@@ -32,6 +32,8 @@ const (
 	TeamService_DeleteTeam_FullMethodName           = "/team.v1.TeamService/DeleteTeam"
 	TeamService_AddMember_FullMethodName            = "/team.v1.TeamService/AddMember"
 	TeamService_RemoveMember_FullMethodName         = "/team.v1.TeamService/RemoveMember"
+	TeamService_LeaveTeam_FullMethodName            = "/team.v1.TeamService/LeaveTeam"
+	TeamService_TransferLeadership_FullMethodName   = "/team.v1.TeamService/TransferLeadership"
 )
 
 // TeamServiceClient is the client API for TeamService service.
@@ -50,6 +52,8 @@ type TeamServiceClient interface {
 	DeleteTeam(ctx context.Context, in *DeleteTeamRequest, opts ...grpc.CallOption) (*emptypb.Empty, error)
 	AddMember(ctx context.Context, in *AddMemberRequest, opts ...grpc.CallOption) (*AddMemberResponse, error)
 	RemoveMember(ctx context.Context, in *RemoveMemberRequest, opts ...grpc.CallOption) (*emptypb.Empty, error)
+	LeaveTeam(ctx context.Context, in *LeaveTeamRequest, opts ...grpc.CallOption) (*LeaveTeamResponse, error)
+	TransferLeadership(ctx context.Context, in *TransferLeadershipRequest, opts ...grpc.CallOption) (*TransferLeadershipResponse, error)
 }
 
 type teamServiceClient struct {
@@ -180,6 +184,26 @@ func (c *teamServiceClient) RemoveMember(ctx context.Context, in *RemoveMemberRe
 	return out, nil
 }
 
+func (c *teamServiceClient) LeaveTeam(ctx context.Context, in *LeaveTeamRequest, opts ...grpc.CallOption) (*LeaveTeamResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(LeaveTeamResponse)
+	err := c.cc.Invoke(ctx, TeamService_LeaveTeam_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *teamServiceClient) TransferLeadership(ctx context.Context, in *TransferLeadershipRequest, opts ...grpc.CallOption) (*TransferLeadershipResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(TransferLeadershipResponse)
+	err := c.cc.Invoke(ctx, TeamService_TransferLeadership_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // TeamServiceServer is the server API for TeamService service.
 // All implementations must embed UnimplementedTeamServiceServer
 // for forward compatibility.
@@ -196,6 +220,8 @@ type TeamServiceServer interface {
 	DeleteTeam(context.Context, *DeleteTeamRequest) (*emptypb.Empty, error)
 	AddMember(context.Context, *AddMemberRequest) (*AddMemberResponse, error)
 	RemoveMember(context.Context, *RemoveMemberRequest) (*emptypb.Empty, error)
+	LeaveTeam(context.Context, *LeaveTeamRequest) (*LeaveTeamResponse, error)
+	TransferLeadership(context.Context, *TransferLeadershipRequest) (*TransferLeadershipResponse, error)
 	mustEmbedUnimplementedTeamServiceServer()
 }
 
@@ -241,6 +267,12 @@ func (UnimplementedTeamServiceServer) AddMember(context.Context, *AddMemberReque
 }
 func (UnimplementedTeamServiceServer) RemoveMember(context.Context, *RemoveMemberRequest) (*emptypb.Empty, error) {
 	return nil, status.Error(codes.Unimplemented, "method RemoveMember not implemented")
+}
+func (UnimplementedTeamServiceServer) LeaveTeam(context.Context, *LeaveTeamRequest) (*LeaveTeamResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method LeaveTeam not implemented")
+}
+func (UnimplementedTeamServiceServer) TransferLeadership(context.Context, *TransferLeadershipRequest) (*TransferLeadershipResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method TransferLeadership not implemented")
 }
 func (UnimplementedTeamServiceServer) mustEmbedUnimplementedTeamServiceServer() {}
 func (UnimplementedTeamServiceServer) testEmbeddedByValue()                     {}
@@ -479,6 +511,42 @@ func _TeamService_RemoveMember_Handler(srv interface{}, ctx context.Context, dec
 	return interceptor(ctx, in, info, handler)
 }
 
+func _TeamService_LeaveTeam_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(LeaveTeamRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(TeamServiceServer).LeaveTeam(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: TeamService_LeaveTeam_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(TeamServiceServer).LeaveTeam(ctx, req.(*LeaveTeamRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _TeamService_TransferLeadership_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(TransferLeadershipRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(TeamServiceServer).TransferLeadership(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: TeamService_TransferLeadership_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(TeamServiceServer).TransferLeadership(ctx, req.(*TransferLeadershipRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // TeamService_ServiceDesc is the grpc.ServiceDesc for TeamService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -533,6 +601,14 @@ var TeamService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "RemoveMember",
 			Handler:    _TeamService_RemoveMember_Handler,
+		},
+		{
+			MethodName: "LeaveTeam",
+			Handler:    _TeamService_LeaveTeam_Handler,
+		},
+		{
+			MethodName: "TransferLeadership",
+			Handler:    _TeamService_TransferLeadership_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

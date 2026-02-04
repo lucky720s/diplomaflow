@@ -4,6 +4,7 @@ package team.v1;
 
 import "google/protobuf/empty.proto";
 import "google/protobuf/field_mask.proto";
+import "validate/validate.proto";
 
 option go_package = "github.com/lucky720s/diplomaflow/pkg/protobuf/team/v1";
 
@@ -20,6 +21,9 @@ service TeamService {
   rpc DeleteTeam (DeleteTeamRequest) returns (google.protobuf.Empty);
   rpc AddMember (AddMemberRequest) returns (AddMemberResponse);
   rpc RemoveMember (RemoveMemberRequest) returns (google.protobuf.Empty);
+  rpc LeaveTeam (LeaveTeamRequest) returns (LeaveTeamResponse);
+  rpc TransferLeadership (TransferLeadershipRequest) returns (TransferLeadershipResponse);
+
 }
 message CreateTeamRequest {
   string name = 1;
@@ -122,6 +126,7 @@ message TeamInfo {
 message UpdateTeamRequest {
   Team team = 1;
   google.protobuf.FieldMask update_mask = 2;
+  int64 requester_id = 3;
 }
 
 message UpdateTeamResponse {
@@ -130,6 +135,7 @@ message UpdateTeamResponse {
 
 message DeleteTeamRequest {
   int64 team_id = 1;
+  int64 requester_id = 2;
 }
 
 message AddMemberRequest {
@@ -146,6 +152,8 @@ message AddMemberResponse {
 message RemoveMemberRequest {
   int64 team_id = 1;
   int64 user_id = 2;
+  int64 requester_id = 3;
+
 }
 message Team {
   int64 id = 1;
@@ -165,4 +173,28 @@ message ListTeamsRequest {
 message ListTeamsResponse {
   repeated Team teams = 1;
   int64 total_count = 2;
+}
+
+message LeaveTeamRequest {
+  int64 team_id = 1 [(validate.rules).int64.gt = 0];
+  int64 user_id = 2 [(validate.rules).int64.gt = 0];
+}
+
+message LeaveTeamResponse {
+  bool success = 1;
+  string message = 2;
+  bool team_deleted = 3;
+  int64 new_leader_id = 4;
+}
+
+message TransferLeadershipRequest {
+  int64 team_id = 1 [(validate.rules).int64.gt = 0];
+  int64 current_leader_id = 2 [(validate.rules).int64.gt = 0];
+  int64 new_leader_id = 3 [(validate.rules).int64.gt = 0];
+}
+
+message TransferLeadershipResponse {
+  bool success = 1;
+  string message = 2;
+  TeamInfo updated_team = 3;
 }

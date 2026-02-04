@@ -13,15 +13,13 @@ import (
 )
 
 type ProjectCreatedEvent struct {
-	ProjectID    int64 `json:"project_id"`
-	StudentID    int64 `json:"student_id"`
-	DepartmentID int64 `json:"department_id"`
-
-	// Backward/forward compatibility:
-	FirstStateID   int64 `json:"first_state_id"`
-	InitialStateID int64 `json:"initial_state_id"`
-
-	Title string `json:"title"`
+	ProjectID      int64  `json:"project_id"`
+	StudentID      int64  `json:"student_id"`
+	DepartmentID   int64  `json:"department_id"`
+	TeamID         int64  `json:"team_id"`
+	FirstStateID   int64  `json:"first_state_id"`
+	InitialStateID int64  `json:"initial_state_id"`
+	Title          string `json:"title"`
 }
 
 type EventHandler struct {
@@ -85,7 +83,7 @@ func (h *EventHandler) HandleProjectCreated(ctx context.Context, event ProjectCr
 }
 
 func (h *EventHandler) createTeamWithFallback(ctx context.Context, event ProjectCreatedEvent) error {
-	err := h.service.CreateTeamForProject(ctx, event.ProjectID, event.StudentID)
+	err := h.service.CreateTeamForProject(ctx, event)
 	if err != nil {
 		if errors.Is(err, gorm.ErrDuplicatedKey) || strings.Contains(err.Error(), "duplicate key") {
 			h.logger.Warn("Team for project already exists, skipping (idempotency)", zap.Int64("project_id", event.ProjectID))

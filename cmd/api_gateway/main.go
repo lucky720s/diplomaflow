@@ -151,6 +151,8 @@ func main() {
 			teams.POST("/:id/topic-registration", handler.SubmitTopicRegistration)
 			teams.POST("/:id/supervisor-request", handler.CreateSupervisorRequest)
 			teams.DELETE("/supervisor-requests/:id", handler.CancelSupervisorRequest)
+			teams.POST("/:id/leave", handler.LeaveTeam)
+			teams.POST("/:id/transfer-leadership", handler.TransferLeadership)
 		}
 
 		invites := v1.Group("/invites")

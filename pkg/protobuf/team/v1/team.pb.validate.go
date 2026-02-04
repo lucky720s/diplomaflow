@@ -2178,6 +2178,8 @@ func (m *UpdateTeamRequest) validate(all bool) error {
 		}
 	}
 
+	// no validation rules for RequesterId
+
 	if len(errors) > 0 {
 		return UpdateTeamRequestMultiError(errors)
 	}
@@ -2412,6 +2414,8 @@ func (m *DeleteTeamRequest) validate(all bool) error {
 	var errors []error
 
 	// no validation rules for TeamId
+
+	// no validation rules for RequesterId
 
 	if len(errors) > 0 {
 		return DeleteTeamRequestMultiError(errors)
@@ -2730,6 +2734,8 @@ func (m *RemoveMemberRequest) validate(all bool) error {
 	// no validation rules for TeamId
 
 	// no validation rules for UserId
+
+	// no validation rules for RequesterId
 
 	if len(errors) > 0 {
 		return RemoveMemberRequestMultiError(errors)
@@ -3196,3 +3202,505 @@ var _ interface {
 	Cause() error
 	ErrorName() string
 } = ListTeamsResponseValidationError{}
+
+// Validate checks the field values on LeaveTeamRequest with the rules defined
+// in the proto definition for this message. If any rules are violated, the
+// first error encountered is returned, or nil if there are no violations.
+func (m *LeaveTeamRequest) Validate() error {
+	return m.validate(false)
+}
+
+// ValidateAll checks the field values on LeaveTeamRequest with the rules
+// defined in the proto definition for this message. If any rules are
+// violated, the result is a list of violation errors wrapped in
+// LeaveTeamRequestMultiError, or nil if none found.
+func (m *LeaveTeamRequest) ValidateAll() error {
+	return m.validate(true)
+}
+
+func (m *LeaveTeamRequest) validate(all bool) error {
+	if m == nil {
+		return nil
+	}
+
+	var errors []error
+
+	if m.GetTeamId() <= 0 {
+		err := LeaveTeamRequestValidationError{
+			field:  "TeamId",
+			reason: "value must be greater than 0",
+		}
+		if !all {
+			return err
+		}
+		errors = append(errors, err)
+	}
+
+	if m.GetUserId() <= 0 {
+		err := LeaveTeamRequestValidationError{
+			field:  "UserId",
+			reason: "value must be greater than 0",
+		}
+		if !all {
+			return err
+		}
+		errors = append(errors, err)
+	}
+
+	if len(errors) > 0 {
+		return LeaveTeamRequestMultiError(errors)
+	}
+
+	return nil
+}
+
+// LeaveTeamRequestMultiError is an error wrapping multiple validation errors
+// returned by LeaveTeamRequest.ValidateAll() if the designated constraints
+// aren't met.
+type LeaveTeamRequestMultiError []error
+
+// Error returns a concatenation of all the error messages it wraps.
+func (m LeaveTeamRequestMultiError) Error() string {
+	msgs := make([]string, 0, len(m))
+	for _, err := range m {
+		msgs = append(msgs, err.Error())
+	}
+	return strings.Join(msgs, "; ")
+}
+
+// AllErrors returns a list of validation violation errors.
+func (m LeaveTeamRequestMultiError) AllErrors() []error { return m }
+
+// LeaveTeamRequestValidationError is the validation error returned by
+// LeaveTeamRequest.Validate if the designated constraints aren't met.
+type LeaveTeamRequestValidationError struct {
+	field  string
+	reason string
+	cause  error
+	key    bool
+}
+
+// Field function returns field value.
+func (e LeaveTeamRequestValidationError) Field() string { return e.field }
+
+// Reason function returns reason value.
+func (e LeaveTeamRequestValidationError) Reason() string { return e.reason }
+
+// Cause function returns cause value.
+func (e LeaveTeamRequestValidationError) Cause() error { return e.cause }
+
+// Key function returns key value.
+func (e LeaveTeamRequestValidationError) Key() bool { return e.key }
+
+// ErrorName returns error name.
+func (e LeaveTeamRequestValidationError) ErrorName() string { return "LeaveTeamRequestValidationError" }
+
+// Error satisfies the builtin error interface
+func (e LeaveTeamRequestValidationError) Error() string {
+	cause := ""
+	if e.cause != nil {
+		cause = fmt.Sprintf(" | caused by: %v", e.cause)
+	}
+
+	key := ""
+	if e.key {
+		key = "key for "
+	}
+
+	return fmt.Sprintf(
+		"invalid %sLeaveTeamRequest.%s: %s%s",
+		key,
+		e.field,
+		e.reason,
+		cause)
+}
+
+var _ error = LeaveTeamRequestValidationError{}
+
+var _ interface {
+	Field() string
+	Reason() string
+	Key() bool
+	Cause() error
+	ErrorName() string
+} = LeaveTeamRequestValidationError{}
+
+// Validate checks the field values on LeaveTeamResponse with the rules defined
+// in the proto definition for this message. If any rules are violated, the
+// first error encountered is returned, or nil if there are no violations.
+func (m *LeaveTeamResponse) Validate() error {
+	return m.validate(false)
+}
+
+// ValidateAll checks the field values on LeaveTeamResponse with the rules
+// defined in the proto definition for this message. If any rules are
+// violated, the result is a list of violation errors wrapped in
+// LeaveTeamResponseMultiError, or nil if none found.
+func (m *LeaveTeamResponse) ValidateAll() error {
+	return m.validate(true)
+}
+
+func (m *LeaveTeamResponse) validate(all bool) error {
+	if m == nil {
+		return nil
+	}
+
+	var errors []error
+
+	// no validation rules for Success
+
+	// no validation rules for Message
+
+	// no validation rules for TeamDeleted
+
+	// no validation rules for NewLeaderId
+
+	if len(errors) > 0 {
+		return LeaveTeamResponseMultiError(errors)
+	}
+
+	return nil
+}
+
+// LeaveTeamResponseMultiError is an error wrapping multiple validation errors
+// returned by LeaveTeamResponse.ValidateAll() if the designated constraints
+// aren't met.
+type LeaveTeamResponseMultiError []error
+
+// Error returns a concatenation of all the error messages it wraps.
+func (m LeaveTeamResponseMultiError) Error() string {
+	msgs := make([]string, 0, len(m))
+	for _, err := range m {
+		msgs = append(msgs, err.Error())
+	}
+	return strings.Join(msgs, "; ")
+}
+
+// AllErrors returns a list of validation violation errors.
+func (m LeaveTeamResponseMultiError) AllErrors() []error { return m }
+
+// LeaveTeamResponseValidationError is the validation error returned by
+// LeaveTeamResponse.Validate if the designated constraints aren't met.
+type LeaveTeamResponseValidationError struct {
+	field  string
+	reason string
+	cause  error
+	key    bool
+}
+
+// Field function returns field value.
+func (e LeaveTeamResponseValidationError) Field() string { return e.field }
+
+// Reason function returns reason value.
+func (e LeaveTeamResponseValidationError) Reason() string { return e.reason }
+
+// Cause function returns cause value.
+func (e LeaveTeamResponseValidationError) Cause() error { return e.cause }
+
+// Key function returns key value.
+func (e LeaveTeamResponseValidationError) Key() bool { return e.key }
+
+// ErrorName returns error name.
+func (e LeaveTeamResponseValidationError) ErrorName() string {
+	return "LeaveTeamResponseValidationError"
+}
+
+// Error satisfies the builtin error interface
+func (e LeaveTeamResponseValidationError) Error() string {
+	cause := ""
+	if e.cause != nil {
+		cause = fmt.Sprintf(" | caused by: %v", e.cause)
+	}
+
+	key := ""
+	if e.key {
+		key = "key for "
+	}
+
+	return fmt.Sprintf(
+		"invalid %sLeaveTeamResponse.%s: %s%s",
+		key,
+		e.field,
+		e.reason,
+		cause)
+}
+
+var _ error = LeaveTeamResponseValidationError{}
+
+var _ interface {
+	Field() string
+	Reason() string
+	Key() bool
+	Cause() error
+	ErrorName() string
+} = LeaveTeamResponseValidationError{}
+
+// Validate checks the field values on TransferLeadershipRequest with the rules
+// defined in the proto definition for this message. If any rules are
+// violated, the first error encountered is returned, or nil if there are no violations.
+func (m *TransferLeadershipRequest) Validate() error {
+	return m.validate(false)
+}
+
+// ValidateAll checks the field values on TransferLeadershipRequest with the
+// rules defined in the proto definition for this message. If any rules are
+// violated, the result is a list of violation errors wrapped in
+// TransferLeadershipRequestMultiError, or nil if none found.
+func (m *TransferLeadershipRequest) ValidateAll() error {
+	return m.validate(true)
+}
+
+func (m *TransferLeadershipRequest) validate(all bool) error {
+	if m == nil {
+		return nil
+	}
+
+	var errors []error
+
+	if m.GetTeamId() <= 0 {
+		err := TransferLeadershipRequestValidationError{
+			field:  "TeamId",
+			reason: "value must be greater than 0",
+		}
+		if !all {
+			return err
+		}
+		errors = append(errors, err)
+	}
+
+	if m.GetCurrentLeaderId() <= 0 {
+		err := TransferLeadershipRequestValidationError{
+			field:  "CurrentLeaderId",
+			reason: "value must be greater than 0",
+		}
+		if !all {
+			return err
+		}
+		errors = append(errors, err)
+	}
+
+	if m.GetNewLeaderId() <= 0 {
+		err := TransferLeadershipRequestValidationError{
+			field:  "NewLeaderId",
+			reason: "value must be greater than 0",
+		}
+		if !all {
+			return err
+		}
+		errors = append(errors, err)
+	}
+
+	if len(errors) > 0 {
+		return TransferLeadershipRequestMultiError(errors)
+	}
+
+	return nil
+}
+
+// TransferLeadershipRequestMultiError is an error wrapping multiple validation
+// errors returned by TransferLeadershipRequest.ValidateAll() if the
+// designated constraints aren't met.
+type TransferLeadershipRequestMultiError []error
+
+// Error returns a concatenation of all the error messages it wraps.
+func (m TransferLeadershipRequestMultiError) Error() string {
+	msgs := make([]string, 0, len(m))
+	for _, err := range m {
+		msgs = append(msgs, err.Error())
+	}
+	return strings.Join(msgs, "; ")
+}
+
+// AllErrors returns a list of validation violation errors.
+func (m TransferLeadershipRequestMultiError) AllErrors() []error { return m }
+
+// TransferLeadershipRequestValidationError is the validation error returned by
+// TransferLeadershipRequest.Validate if the designated constraints aren't met.
+type TransferLeadershipRequestValidationError struct {
+	field  string
+	reason string
+	cause  error
+	key    bool
+}
+
+// Field function returns field value.
+func (e TransferLeadershipRequestValidationError) Field() string { return e.field }
+
+// Reason function returns reason value.
+func (e TransferLeadershipRequestValidationError) Reason() string { return e.reason }
+
+// Cause function returns cause value.
+func (e TransferLeadershipRequestValidationError) Cause() error { return e.cause }
+
+// Key function returns key value.
+func (e TransferLeadershipRequestValidationError) Key() bool { return e.key }
+
+// ErrorName returns error name.
+func (e TransferLeadershipRequestValidationError) ErrorName() string {
+	return "TransferLeadershipRequestValidationError"
+}
+
+// Error satisfies the builtin error interface
+func (e TransferLeadershipRequestValidationError) Error() string {
+	cause := ""
+	if e.cause != nil {
+		cause = fmt.Sprintf(" | caused by: %v", e.cause)
+	}
+
+	key := ""
+	if e.key {
+		key = "key for "
+	}
+
+	return fmt.Sprintf(
+		"invalid %sTransferLeadershipRequest.%s: %s%s",
+		key,
+		e.field,
+		e.reason,
+		cause)
+}
+
+var _ error = TransferLeadershipRequestValidationError{}
+
+var _ interface {
+	Field() string
+	Reason() string
+	Key() bool
+	Cause() error
+	ErrorName() string
+} = TransferLeadershipRequestValidationError{}
+
+// Validate checks the field values on TransferLeadershipResponse with the
+// rules defined in the proto definition for this message. If any rules are
+// violated, the first error encountered is returned, or nil if there are no violations.
+func (m *TransferLeadershipResponse) Validate() error {
+	return m.validate(false)
+}
+
+// ValidateAll checks the field values on TransferLeadershipResponse with the
+// rules defined in the proto definition for this message. If any rules are
+// violated, the result is a list of violation errors wrapped in
+// TransferLeadershipResponseMultiError, or nil if none found.
+func (m *TransferLeadershipResponse) ValidateAll() error {
+	return m.validate(true)
+}
+
+func (m *TransferLeadershipResponse) validate(all bool) error {
+	if m == nil {
+		return nil
+	}
+
+	var errors []error
+
+	// no validation rules for Success
+
+	// no validation rules for Message
+
+	if all {
+		switch v := interface{}(m.GetUpdatedTeam()).(type) {
+		case interface{ ValidateAll() error }:
+			if err := v.ValidateAll(); err != nil {
+				errors = append(errors, TransferLeadershipResponseValidationError{
+					field:  "UpdatedTeam",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		case interface{ Validate() error }:
+			if err := v.Validate(); err != nil {
+				errors = append(errors, TransferLeadershipResponseValidationError{
+					field:  "UpdatedTeam",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		}
+	} else if v, ok := interface{}(m.GetUpdatedTeam()).(interface{ Validate() error }); ok {
+		if err := v.Validate(); err != nil {
+			return TransferLeadershipResponseValidationError{
+				field:  "UpdatedTeam",
+				reason: "embedded message failed validation",
+				cause:  err,
+			}
+		}
+	}
+
+	if len(errors) > 0 {
+		return TransferLeadershipResponseMultiError(errors)
+	}
+
+	return nil
+}
+
+// TransferLeadershipResponseMultiError is an error wrapping multiple
+// validation errors returned by TransferLeadershipResponse.ValidateAll() if
+// the designated constraints aren't met.
+type TransferLeadershipResponseMultiError []error
+
+// Error returns a concatenation of all the error messages it wraps.
+func (m TransferLeadershipResponseMultiError) Error() string {
+	msgs := make([]string, 0, len(m))
+	for _, err := range m {
+		msgs = append(msgs, err.Error())
+	}
+	return strings.Join(msgs, "; ")
+}
+
+// AllErrors returns a list of validation violation errors.
+func (m TransferLeadershipResponseMultiError) AllErrors() []error { return m }
+
+// TransferLeadershipResponseValidationError is the validation error returned
+// by TransferLeadershipResponse.Validate if the designated constraints aren't met.
+type TransferLeadershipResponseValidationError struct {
+	field  string
+	reason string
+	cause  error
+	key    bool
+}
+
+// Field function returns field value.
+func (e TransferLeadershipResponseValidationError) Field() string { return e.field }
+
+// Reason function returns reason value.
+func (e TransferLeadershipResponseValidationError) Reason() string { return e.reason }
+
+// Cause function returns cause value.
+func (e TransferLeadershipResponseValidationError) Cause() error { return e.cause }
+
+// Key function returns key value.
+func (e TransferLeadershipResponseValidationError) Key() bool { return e.key }
+
+// ErrorName returns error name.
+func (e TransferLeadershipResponseValidationError) ErrorName() string {
+	return "TransferLeadershipResponseValidationError"
+}
+
+// Error satisfies the builtin error interface
+func (e TransferLeadershipResponseValidationError) Error() string {
+	cause := ""
+	if e.cause != nil {
+		cause = fmt.Sprintf(" | caused by: %v", e.cause)
+	}
+
+	key := ""
+	if e.key {
+		key = "key for "
+	}
+
+	return fmt.Sprintf(
+		"invalid %sTransferLeadershipResponse.%s: %s%s",
+		key,
+		e.field,
+		e.reason,
+		cause)
+}
+
+var _ error = TransferLeadershipResponseValidationError{}
+
+var _ interface {
+	Field() string
+	Reason() string
+	Key() bool
+	Cause() error
+	ErrorName() string
+} = TransferLeadershipResponseValidationError{}

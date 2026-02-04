@@ -15,7 +15,9 @@ import (
 	"github.com/lucky720s/diplomaflow/pkg/config"
 	"github.com/lucky720s/diplomaflow/pkg/logger"
 	authv1 "github.com/lucky720s/diplomaflow/pkg/protobuf/auth/v1"
+	notificationv1 "github.com/lucky720s/diplomaflow/pkg/protobuf/notification/v1"
 	teamv1 "github.com/lucky720s/diplomaflow/pkg/protobuf/team/v1"
+	workflowv1 "github.com/lucky720s/diplomaflow/pkg/protobuf/workflow/v1"
 	"go.uber.org/zap"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
@@ -48,8 +50,31 @@ func main() {
 	defer authConn.Close()
 	authClient := authv1.NewAuthServiceClient(authConn)
 
-	// Initialize app
-	app, cleanup, err := team.InitializeApp(&cfg, db, log.Logger, authClient)
+	// Workflow client
+	workflowConn, err := grpc.NewClient(cfg.Services.WorkflowAddr, grpc.WithTransportCredentials(insecure.NewCredentials()))
+	if err != nil {
+		log.Fatal("Failed to connect to workflow service", zap.Error(err))
+	}
+	defer workflowConn.Close()
+	workflowClient := workflowv1.NewWorkflowServiceClient(workflowConn)
+
+	// Notification client
+	notificationConn, err := grpc.NewClient(cfg.Services.NotificationAddr, grpc.WithTransportCredentials(insecure.NewCredentials()))
+	if err != nil {
+		log.Fatal("Failed to connect to notification service", zap.Error(err))
+	}
+	defer notificationConn.Close()
+	notificationClient := notificationv1.NewNotificationServiceClient(notificationConn)
+
+	// Initialize app (теперь с 6 аргументами)
+	app, cleanup, err := team.InitializeApp(
+		&cfg,
+		db,
+		log.Logger,
+		authClient,
+		workflowClient,
+		notificationClient,
+	)
 	if err != nil {
 		log.Fatal("failed to initialize app", zap.Error(err))
 	}
