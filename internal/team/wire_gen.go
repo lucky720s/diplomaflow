@@ -8,34 +8,24 @@ package team
 
 import (
 	"github.com/lucky720s/diplomaflow/pkg/protobuf/auth/v1"
-	v1_2 "github.com/lucky720s/diplomaflow/pkg/protobuf/notification/v1"
-	v1_3 "github.com/lucky720s/diplomaflow/pkg/protobuf/workflow/v1"
+	v1_3 "github.com/lucky720s/diplomaflow/pkg/protobuf/notification/v1"
+	v1_2 "github.com/lucky720s/diplomaflow/pkg/protobuf/workflow/v1"
 	"go.uber.org/zap"
-	"google.golang.org/grpc"
-	"google.golang.org/grpc/credentials/insecure"
 	"gorm.io/gorm"
 )
 
 // Injectors from wire.go:
 
-func InitializeApp(cfg *Config, db *gorm.DB, log *zap.Logger, authClient v1.AuthServiceClient) (*App, func(), error) {
+func InitializeApp(cfg *Config, db *gorm.DB, logger *zap.Logger, authClient v1.AuthServiceClient, workflowClient v1_2.WorkflowServiceClient, notificationClient v1_3.NotificationServiceClient) (*App, func(), error) {
 	teamRepository := NewRepository(db)
-	notificationServiceClient, cleanup, err := ProvideNotificationClient(cfg)
-	if err != nil {
-		return nil, nil, err
+	service := NewService(teamRepository, authClient, workflowClient, logger)
+	handler := NewHandler(service, logger)
+	eventHandler := NewEventHandler(service, workflowClient, notificationClient, logger)
+	app := &App{
+		Handler:      handler,
+		EventHandler: eventHandler,
 	}
-	workflowServiceClient, cleanup2, err := ProvideWorkflowClient(cfg)
-	if err != nil {
-		cleanup()
-		return nil, nil, err
-	}
-	service := NewService(teamRepository, authClient, notificationServiceClient, workflowServiceClient, log)
-	handler := NewHandler(service, log)
-	eventHandler := NewEventHandler(service, workflowServiceClient, notificationServiceClient, log)
-	app := NewApp(handler, eventHandler)
 	return app, func() {
-		cleanup2()
-		cleanup()
 	}, nil
 }
 
@@ -44,29 +34,4 @@ func InitializeApp(cfg *Config, db *gorm.DB, log *zap.Logger, authClient v1.Auth
 type App struct {
 	Handler      *Handler
 	EventHandler *EventHandler
-}
-
-func NewApp(h *Handler, eh *EventHandler) *App {
-	return &App{
-		Handler:      h,
-		EventHandler: eh,
-	}
-}
-
-func ProvideNotificationClient(cfg *Config) (v1_2.NotificationServiceClient, func(), error) {
-	conn, err := grpc.NewClient(cfg.Services.NotificationAddr, grpc.WithTransportCredentials(insecure.NewCredentials()))
-	if err != nil {
-		return nil, nil, err
-	}
-	cleanup := func() { conn.Close() }
-	return v1_2.NewNotificationServiceClient(conn), cleanup, nil
-}
-
-func ProvideWorkflowClient(cfg *Config) (v1_3.WorkflowServiceClient, func(), error) {
-	conn, err := grpc.NewClient(cfg.Services.WorkflowAddr, grpc.WithTransportCredentials(insecure.NewCredentials()))
-	if err != nil {
-		return nil, nil, err
-	}
-	cleanup := func() { conn.Close() }
-	return v1_3.NewWorkflowServiceClient(conn), cleanup, nil
 }

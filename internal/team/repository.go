@@ -8,30 +8,47 @@ import (
 	"gorm.io/gorm"
 )
 
+var (
+	ErrTeamNotFound      = errors.New("team not found")
+	ErrMemberNotFound    = errors.New("member not found")
+	ErrNotTeamMember     = errors.New("user is not a team member")
+	ErrNotTeamLeader     = errors.New("user is not the team leader")
+	ErrAlreadyInTeam     = errors.New("user is already in a team")
+	ErrCannotLeaveAsLast = errors.New("cannot leave team as last member without deleting")
+)
+
 type Repository interface {
 	Create(ctx context.Context, team *Team) error
-	GetByID(ctx context.Context, id uint64) (*Team, error)
-
-	AddMember(ctx context.Context, member *TeamMember) error
-	RemoveMember(ctx context.Context, teamID uint64, userID int64) error
-	GetMember(ctx context.Context, teamID uint64, userID int64) (*TeamMember, error)
-
+	GetByID(ctx context.Context, id int64) (*Team, error)
 	Update(ctx context.Context, team *Team) error
-	Delete(ctx context.Context, id uint64) error
+	Delete(ctx context.Context, id int64) error
 
+	// Members
+	AddMember(ctx context.Context, member *TeamMember) error
+	RemoveMember(ctx context.Context, teamID, userID int64) error
+	GetMembers(ctx context.Context, teamID int64) ([]*TeamMember, error)
+	GetMember(ctx context.Context, teamID, userID int64) (*TeamMember, error)
+	GetMemberCount(ctx context.Context, teamID int64) (int64, error)
+	UpdateMemberRole(ctx context.Context, teamID, userID int64, role string) error
+	GetTeamLeader(ctx context.Context, teamID int64) (*TeamMember, error)
+
+	// User's team
+	GetUserTeam(ctx context.Context, userID int64) (*Team, *TeamMember, error)
+	IsUserInTeam(ctx context.Context, userID int64) (bool, error)
+	IsUserInSpecificTeam(ctx context.Context, userID, teamID int64) (bool, error)
+
+	// Invites
 	CreateInvite(ctx context.Context, invite *TeamInvite) error
-	GetInvitesByUserID(ctx context.Context, userID int64) ([]*TeamInvite, error)
-	GetInviteByID(ctx context.Context, inviteID uint64) (*TeamInvite, error)
-	UpdateInviteStatus(ctx context.Context, inviteID uint64, status string) error
-	DeletePendingInvitesForUser(ctx context.Context, userID int64) error
+	GetInvite(ctx context.Context, id int64) (*TeamInvite, error)
+	GetPendingInvites(ctx context.Context, userID int64) ([]*TeamInvite, error)
+	UpdateInvite(ctx context.Context, invite *TeamInvite) error
+	GetPendingInvitesCount(ctx context.Context, teamID int64) (int64, error)
 
-	IsUserInAnyTeam(ctx context.Context, userID int64) (bool, error)
+	// Project
+	AssignProject(ctx context.Context, teamID, projectID int64) error
 
-	CreateTeamWithInvites(ctx context.Context, team *Team, invites []*TeamInvite) error
-	GetTeamByUserID(ctx context.Context, userID int64) (*Team, string, error)
-	CountPendingInvitesByTeam(ctx context.Context, teamID uint64) (int64, error)
-
-	List(ctx context.Context, departmentID, projectID int64, limit, offset int) ([]*Team, int64, error)
+	// List
+	ListTeams(ctx context.Context, departmentID, projectID int64, limit, offset int) ([]*Team, int64, error)
 }
 
 type repository struct {
@@ -43,197 +60,203 @@ func NewRepository(db *gorm.DB) Repository {
 }
 
 func (r *repository) Create(ctx context.Context, team *Team) error {
+	team.CreatedAt = time.Now()
+	team.UpdatedAt = time.Now()
 	return r.db.WithContext(ctx).Create(team).Error
 }
 
-func (r *repository) GetByID(ctx context.Context, id uint64) (*Team, error) {
+func (r *repository) GetByID(ctx context.Context, id int64) (*Team, error) {
 	var team Team
-	if err := r.db.WithContext(ctx).
-		Preload("Members").
-		First(&team, id).Error; err != nil {
-
+	if err := r.db.WithContext(ctx).First(&team, id).Error; err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
-			return nil, errors.New("team not found")
+			return nil, ErrTeamNotFound
 		}
 		return nil, err
 	}
 	return &team, nil
 }
 
-func (r *repository) AddMember(ctx context.Context, member *TeamMember) error {
-	return r.db.WithContext(ctx).Create(member).Error
-}
-
-func (r *repository) RemoveMember(ctx context.Context, teamID uint64, userID int64) error {
-	return r.db.WithContext(ctx).
-		Where("team_id = ? AND user_id = ?", teamID, userID).
-		Delete(&TeamMember{}).Error
-}
-
-func (r *repository) GetMember(ctx context.Context, teamID uint64, userID int64) (*TeamMember, error) {
-	var member TeamMember
-	err := r.db.WithContext(ctx).
-		Where("team_id = ? AND user_id = ?", teamID, userID).
-		First(&member).Error
-
-	if err != nil {
-		if errors.Is(err, gorm.ErrRecordNotFound) {
-			return nil, nil
-		}
-		return nil, err
-	}
-	return &member, nil
-}
-
 func (r *repository) Update(ctx context.Context, team *Team) error {
+	team.UpdatedAt = time.Now()
 	return r.db.WithContext(ctx).Save(team).Error
 }
 
-func (r *repository) Delete(ctx context.Context, id uint64) error {
+func (r *repository) Delete(ctx context.Context, id int64) error {
 	return r.db.WithContext(ctx).Transaction(func(tx *gorm.DB) error {
+		// Удаляем приглашения
 		if err := tx.Where("team_id = ?", id).Delete(&TeamInvite{}).Error; err != nil {
 			return err
 		}
 		if err := tx.Where("team_id = ?", id).Delete(&TeamMember{}).Error; err != nil {
 			return err
 		}
-		if err := tx.Delete(&Team{}, id).Error; err != nil {
-			return err
-		}
-		return nil
+		return tx.Delete(&Team{}, id).Error
 	})
 }
 
+func (r *repository) AddMember(ctx context.Context, member *TeamMember) error {
+	member.CreatedAt = time.Now()
+	return r.db.WithContext(ctx).Create(member).Error
+}
+
+func (r *repository) RemoveMember(ctx context.Context, teamID, userID int64) error {
+	result := r.db.WithContext(ctx).
+		Where("team_id = ? AND user_id = ?", teamID, userID).
+		Delete(&TeamMember{})
+	if result.RowsAffected == 0 {
+		return ErrMemberNotFound
+	}
+	return result.Error
+}
+
+func (r *repository) GetMembers(ctx context.Context, teamID int64) ([]*TeamMember, error) {
+	var members []*TeamMember
+	err := r.db.WithContext(ctx).
+		Where("team_id = ?", teamID).
+		Order("role DESC, created_at ASC").
+		Find(&members).Error
+	return members, err
+}
+
+func (r *repository) GetMember(ctx context.Context, teamID, userID int64) (*TeamMember, error) {
+	var member TeamMember
+	err := r.db.WithContext(ctx).
+		Where("team_id = ? AND user_id = ?", teamID, userID).
+		First(&member).Error
+	if errors.Is(err, gorm.ErrRecordNotFound) {
+		return nil, ErrMemberNotFound
+	}
+	return &member, err
+}
+
+func (r *repository) GetMemberCount(ctx context.Context, teamID int64) (int64, error) {
+	var count int64
+	err := r.db.WithContext(ctx).
+		Model(&TeamMember{}).
+		Where("team_id = ?", teamID).
+		Count(&count).Error
+	return count, err
+}
+
+func (r *repository) UpdateMemberRole(ctx context.Context, teamID, userID int64, role string) error {
+	result := r.db.WithContext(ctx).
+		Model(&TeamMember{}).
+		Where("team_id = ? AND user_id = ?", teamID, userID).
+		Update("role", role)
+	if result.RowsAffected == 0 {
+		return ErrMemberNotFound
+	}
+	return result.Error
+}
+
+func (r *repository) GetTeamLeader(ctx context.Context, teamID int64) (*TeamMember, error) {
+	var member TeamMember
+	err := r.db.WithContext(ctx).
+		Where("team_id = ? AND role = ?", teamID, RoleLeader).
+		First(&member).Error
+	if errors.Is(err, gorm.ErrRecordNotFound) {
+		return nil, ErrMemberNotFound
+	}
+	return &member, err
+}
+
+func (r *repository) GetUserTeam(ctx context.Context, userID int64) (*Team, *TeamMember, error) {
+	var member TeamMember
+	err := r.db.WithContext(ctx).
+		Where("user_id = ?", userID).
+		First(&member).Error
+	if errors.Is(err, gorm.ErrRecordNotFound) {
+		return nil, nil, nil // Пользователь не в команде
+	}
+	if err != nil {
+		return nil, nil, err
+	}
+
+	var team Team
+	if err := r.db.WithContext(ctx).First(&team, member.TeamID).Error; err != nil {
+		return nil, nil, err
+	}
+
+	return &team, &member, nil
+}
+
+func (r *repository) IsUserInTeam(ctx context.Context, userID int64) (bool, error) {
+	var count int64
+	err := r.db.WithContext(ctx).
+		Model(&TeamMember{}).
+		Where("user_id = ?", userID).
+		Count(&count).Error
+	return count > 0, err
+}
+
+func (r *repository) IsUserInSpecificTeam(ctx context.Context, userID, teamID int64) (bool, error) {
+	var count int64
+	err := r.db.WithContext(ctx).
+		Model(&TeamMember{}).
+		Where("user_id = ? AND team_id = ?", userID, teamID).
+		Count(&count).Error
+	return count > 0, err
+}
+
 func (r *repository) CreateInvite(ctx context.Context, invite *TeamInvite) error {
+	invite.CreatedAt = time.Now()
+	invite.UpdatedAt = time.Now()
 	return r.db.WithContext(ctx).Create(invite).Error
 }
 
-func (r *repository) GetInvitesByUserID(ctx context.Context, userID int64) ([]*TeamInvite, error) {
-	var invites []*TeamInvite
-	err := r.db.WithContext(ctx).
-		Preload("Team").
-		Where("user_id = ? AND status = ?", userID, "PENDING").
-		Order("created_at DESC").
-		Find(&invites).Error
-	return invites, err
-}
-
-func (r *repository) GetInviteByID(ctx context.Context, inviteID uint64) (*TeamInvite, error) {
+func (r *repository) GetInvite(ctx context.Context, id int64) (*TeamInvite, error) {
 	var invite TeamInvite
-	err := r.db.WithContext(ctx).
-		Preload("Team").
-		First(&invite, inviteID).Error
-	if err != nil {
+	if err := r.db.WithContext(ctx).First(&invite, id).Error; err != nil {
 		return nil, err
 	}
 	return &invite, nil
 }
 
-func (r *repository) UpdateInviteStatus(ctx context.Context, inviteID uint64, status string) error {
-	return r.db.WithContext(ctx).
-		Model(&TeamInvite{}).
-		Where("id = ?", inviteID).
-		Updates(map[string]interface{}{
-			"status":     status,
-			"updated_at": time.Now().UTC(),
-		}).Error
-}
-
-func (r *repository) DeletePendingInvitesForUser(ctx context.Context, userID int64) error {
-	return r.db.WithContext(ctx).
-		Model(&TeamInvite{}).
-		Where("user_id = ? AND status = ?", userID, "PENDING").
-		Updates(map[string]interface{}{
-			"status":     "AUTO_DECLINED",
-			"updated_at": time.Now().UTC(),
-		}).Error
-}
-
-// Senior fix: учитывать soft-delete команд.
-// Иначе пользователь, который был в удалённой команде, останется "занятым".
-func (r *repository) IsUserInAnyTeam(ctx context.Context, userID int64) (bool, error) {
-	var count int64
+func (r *repository) GetPendingInvites(ctx context.Context, userID int64) ([]*TeamInvite, error) {
+	var invites []*TeamInvite
 	err := r.db.WithContext(ctx).
-		Table("team_members tm").
-		Joins("JOIN teams t ON t.id = tm.team_id AND t.deleted_at IS NULL").
-		Where("tm.user_id = ?", userID).
-		Count(&count).Error
-	return count > 0, err
+		Where("user_id = ? AND status = ?", userID, InviteStatusPending).
+		Find(&invites).Error
+	return invites, err
 }
 
-func (r *repository) CreateTeamWithInvites(ctx context.Context, team *Team, invites []*TeamInvite) error {
-	return r.db.WithContext(ctx).Transaction(func(tx *gorm.DB) error {
-		if err := tx.Create(team).Error; err != nil {
-			return err
-		}
-		if len(invites) == 0 {
-			return nil
-		}
-		now := time.Now().UTC()
-		for _, inv := range invites {
-			inv.TeamID = int64(team.ID)
-			if inv.CreatedAt.IsZero() {
-				inv.CreatedAt = now
-			}
-			inv.UpdatedAt = now
-		}
-		return tx.Create(&invites).Error
-	})
+func (r *repository) UpdateInvite(ctx context.Context, invite *TeamInvite) error {
+	invite.UpdatedAt = time.Now()
+	return r.db.WithContext(ctx).Save(invite).Error
 }
 
-func (r *repository) GetTeamByUserID(ctx context.Context, userID int64) (*Team, string, error) {
-	var member TeamMember
-	if err := r.db.WithContext(ctx).Where("user_id = ?", userID).First(&member).Error; err != nil {
-		if errors.Is(err, gorm.ErrRecordNotFound) {
-			return nil, "", nil
-		}
-		return nil, "", err
-	}
-
-	var team Team
-	if err := r.db.WithContext(ctx).
-		Preload("Members").
-		First(&team, member.TeamID).Error; err != nil {
-		return nil, "", err
-	}
-
-	return &team, member.Role, nil
-}
-
-func (r *repository) CountPendingInvitesByTeam(ctx context.Context, teamID uint64) (int64, error) {
+func (r *repository) GetPendingInvitesCount(ctx context.Context, teamID int64) (int64, error) {
 	var count int64
 	err := r.db.WithContext(ctx).
 		Model(&TeamInvite{}).
-		Where("team_id = ? AND status = ?", teamID, "PENDING").
+		Where("team_id = ? AND status = ?", teamID, InviteStatusPending).
 		Count(&count).Error
 	return count, err
 }
 
-// ✅ Главная часть шага 3: department filter через JOIN projects.department_id
-func (r *repository) List(ctx context.Context, departmentID, projectID int64, limit, offset int) ([]*Team, int64, error) {
+func (r *repository) AssignProject(ctx context.Context, teamID, projectID int64) error {
+	return r.db.WithContext(ctx).
+		Model(&Team{}).
+		Where("id = ?", teamID).
+		Update("project_id", projectID).Error
+}
+
+func (r *repository) ListTeams(ctx context.Context, departmentID, projectID int64, limit, offset int) ([]*Team, int64, error) {
 	var teams []*Team
 	var total int64
 
-	q := r.db.WithContext(ctx).Model(&Team{})
+	query := r.db.WithContext(ctx).Model(&Team{})
 
-	// filter by project
 	if projectID > 0 {
-		q = q.Where("teams.project_id = ?", projectID)
+		query = query.Where("project_id = ?", projectID)
 	}
 
-	// filter by department (через projects)
-	// Основание: department_id находится в projects, а teams связаны по teams.project_id [[1]].
-	if departmentID > 0 {
-		q = q.Joins("JOIN projects p ON p.id = teams.project_id").
-			Where("p.department_id = ?", departmentID)
-	}
-
-	if err := q.Count(&total).Error; err != nil {
+	if err := query.Count(&total).Error; err != nil {
 		return nil, 0, err
 	}
 
-	err := q.Preload("Members").
-		Order("teams.created_at DESC").
+	err := query.
+		Order("created_at DESC").
 		Limit(limit).
 		Offset(offset).
 		Find(&teams).Error

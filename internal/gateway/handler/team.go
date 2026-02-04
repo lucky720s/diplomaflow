@@ -206,6 +206,8 @@ func (h *Handler) UpdateTeam(c *gin.Context) {
 		return
 	}
 
+	userID := c.GetInt64("userId")
+
 	var reqBody struct {
 		Name string `json:"name"`
 	}
@@ -222,6 +224,7 @@ func (h *Handler) UpdateTeam(c *gin.Context) {
 		UpdateMask: &field_mask.FieldMask{
 			Paths: []string{"name"},
 		},
+		RequesterId: userID,
 	})
 	if err != nil {
 		MapGRPCError(c, err)
@@ -237,8 +240,11 @@ func (h *Handler) DeleteTeam(c *gin.Context) {
 		return
 	}
 
+	userID := c.GetInt64("userId")
+
 	_, err = h.teamClient.DeleteTeam(c.Request.Context(), &teamv1.DeleteTeamRequest{
-		TeamId: teamID,
+		TeamId:      teamID,
+		RequesterId: userID,
 	})
 	if err != nil {
 		MapGRPCError(c, err)
@@ -282,6 +288,8 @@ func (h *Handler) RemoveMember(c *gin.Context) {
 		return
 	}
 
+	userID := c.GetInt64("userId")
+
 	var reqBody struct {
 		UserID int64 `json:"user_id" binding:"required"`
 	}
@@ -291,12 +299,84 @@ func (h *Handler) RemoveMember(c *gin.Context) {
 	}
 
 	_, err = h.teamClient.RemoveMember(c.Request.Context(), &teamv1.RemoveMemberRequest{
-		TeamId: teamID,
-		UserId: reqBody.UserID,
+		TeamId:      teamID,
+		UserId:      reqBody.UserID,
+		RequesterId: userID,
 	})
 	if err != nil {
 		MapGRPCError(c, err)
 		return
 	}
 	c.JSON(http.StatusNoContent, nil)
+}
+
+// LeaveTeam - студент выходит из команды
+func (h *Handler) LeaveTeam(c *gin.Context) {
+	teamID, err := strconv.ParseInt(c.Param("id"), 10, 64)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid team id"})
+		return
+	}
+
+	userID := c.GetInt64("userId")
+	if userID == 0 {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "unauthorized"})
+		return
+	}
+
+	res, err := h.teamClient.LeaveTeam(c.Request.Context(), &teamv1.LeaveTeamRequest{
+		TeamId: teamID,
+		UserId: userID,
+	})
+	if err != nil {
+		MapGRPCError(c, err)
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"success":       res.Success,
+		"message":       res.Message,
+		"team_deleted":  res.TeamDeleted,
+		"new_leader_id": res.NewLeaderId,
+	})
+}
+
+// TransferLeadership - лидер передаёт лидерство другому участнику
+func (h *Handler) TransferLeadership(c *gin.Context) {
+	teamID, err := strconv.ParseInt(c.Param("id"), 10, 64)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid team id"})
+		return
+	}
+
+	userID := c.GetInt64("userId")
+	if userID == 0 {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "unauthorized"})
+		return
+	}
+
+	var reqBody struct {
+		NewLeaderID int64 `json:"new_leader_id" binding:"required"`
+	}
+	err = c.ShouldBindJSON(&reqBody)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	res, err := h.teamClient.TransferLeadership(c.Request.Context(), &teamv1.TransferLeadershipRequest{
+		TeamId:          teamID,
+		CurrentLeaderId: userID,
+		NewLeaderId:     reqBody.NewLeaderID,
+	})
+	if err != nil {
+		MapGRPCError(c, err)
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"success":      res.Success,
+		"message":      res.Message,
+		"updated_team": res.UpdatedTeam,
+	})
 }

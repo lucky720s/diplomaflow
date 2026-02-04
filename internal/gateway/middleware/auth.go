@@ -13,6 +13,8 @@ type JwtClaims struct {
 	Id           int64  `json:"Id"`
 	Email        string `json:"Email"`
 	Role         string `json:"Role"`
+	FirstName    string `json:"FirstName"`
+	LastName     string `json:"LastName"`
 	UniversityID int64  `json:"UniversityID"`
 	DepartmentID int64  `json:"DepartmentID"`
 }
@@ -45,6 +47,8 @@ func AuthMiddleware(secret string) gin.HandlerFunc {
 
 		c.Set("userId", claims.Id)
 		c.Set("role", claims.Role)
+		c.Set("firstName", claims.FirstName)
+		c.Set("lastName", claims.LastName)
 		c.Set("universityId", claims.UniversityID)
 		c.Set("departmentId", claims.DepartmentID)
 		c.Set("email", claims.Email)

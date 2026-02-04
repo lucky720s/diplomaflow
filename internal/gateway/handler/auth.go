@@ -152,6 +152,8 @@ func (h *Handler) AssignRole(c *gin.Context) {
 func (h *Handler) GetMe(c *gin.Context) {
 	userID := c.GetInt64("userId")
 	email := c.GetString("email")
+	firstName := c.GetString("firstName")
+	lastName := c.GetString("lastName")
 	role := c.GetString("role")
 	universityID := c.GetInt64("universityId")
 	departmentID := c.GetInt64("departmentId")
@@ -160,6 +162,8 @@ func (h *Handler) GetMe(c *gin.Context) {
 		"id":            userID,
 		"email":         email,
 		"role":          role,
+		"first_name":    firstName,
+		"last_name":     lastName,
 		"university_id": universityID,
 		"department_id": departmentID,
 	})

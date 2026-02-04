@@ -23,6 +23,8 @@ type JwtClaims struct {
 	Id           int64
 	Email        string
 	Role         string
+	FirstName    string
+	LastName     string
 	UniversityID int64
 	DepartmentID int64
 	jwt.RegisteredClaims
@@ -66,6 +68,8 @@ func (j *JwtWrapper) GenerateAccessToken(user User) (string, error) {
 		Id:           user.ID,
 		Email:        user.Email,
 		Role:         user.Role,
+		FirstName:    user.FirstName,
+		LastName:     user.LastName,
 		UniversityID: user.UniversityID,
 		DepartmentID: user.DepartmentID,
 		RegisteredClaims: jwt.RegisteredClaims{
