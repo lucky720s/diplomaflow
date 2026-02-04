@@ -358,7 +358,8 @@ func (h *Handler) TransferLeadership(c *gin.Context) {
 	var reqBody struct {
 		NewLeaderID int64 `json:"new_leader_id" binding:"required"`
 	}
-	if err := c.ShouldBindJSON(&reqBody); err != nil {
+	err = c.ShouldBindJSON(&reqBody)
+	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
