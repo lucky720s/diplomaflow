@@ -24,3 +24,5 @@ go.work.sum
 .env.desired
 .env.bak.*
 .state/
+diplomaflow_deploy
+diplomaflow_deploy.pub

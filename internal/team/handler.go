@@ -285,7 +285,7 @@ func (h *Handler) RespondToInvite(ctx context.Context, req *teamv1.RespondToInvi
 }
 
 func (h *Handler) GetAvailableStudents(ctx context.Context, req *teamv1.GetAvailableStudentsRequest) (*teamv1.GetAvailableStudentsResponse, error) {
-	users, err := h.service.GetAvailableStudents(ctx, req.UniversityId, req.ExcludeUserId)
+	users, err := h.service.GetAvailableStudents(ctx, req.UniversityId, req.GetDepartmentId(), req.ExcludeUserId)
 	if err != nil {
 		return nil, mapError(err)
 	}

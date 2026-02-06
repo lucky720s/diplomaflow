@@ -56,10 +56,11 @@ message ValidateTokenResponse {
 
 message ListUsersRequest {
   int64 university_id = 1;
-  string role = 2;
-  int32 page = 3;
-  int32 page_size = 4;
-  int64 exclude_user_id = 5;
+  int64 department_id = 2;
+  string role = 3;
+  int32 page = 4;
+  int32 page_size = 5;
+  int64 exclude_user_id = 6;
 }
 
 message UserPreview {

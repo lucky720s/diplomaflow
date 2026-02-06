@@ -754,6 +754,45 @@ func (m *ProjectPreview) validate(all bool) error {
 
 	// no validation rules for CurrentState
 
+	// no validation rules for TeamId
+
+	// no validation rules for WorkflowId
+
+	// no validation rules for CurrentStateId
+
+	// no validation rules for WorkflowName
+
+	// no validation rules for CurrentStateName
+
+	if all {
+		switch v := interface{}(m.GetDeadlineAt()).(type) {
+		case interface{ ValidateAll() error }:
+			if err := v.ValidateAll(); err != nil {
+				errors = append(errors, ProjectPreviewValidationError{
+					field:  "DeadlineAt",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		case interface{ Validate() error }:
+			if err := v.Validate(); err != nil {
+				errors = append(errors, ProjectPreviewValidationError{
+					field:  "DeadlineAt",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		}
+	} else if v, ok := interface{}(m.GetDeadlineAt()).(interface{ Validate() error }); ok {
+		if err := v.Validate(); err != nil {
+			return ProjectPreviewValidationError{
+				field:  "DeadlineAt",
+				reason: "embedded message failed validation",
+				cause:  err,
+			}
+		}
+	}
+
 	if len(errors) > 0 {
 		return ProjectPreviewMultiError(errors)
 	}

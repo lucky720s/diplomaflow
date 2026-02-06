@@ -160,7 +160,7 @@ func (s *Service) Validate(ctx context.Context, token string) (*JwtClaims, error
 	return s.jwtWrapper.ValidateToken(token)
 }
 
-func (s *Service) ListUsers(ctx context.Context, universityID int64, role string, page, pageSize int32, excludeUserID int64) ([]*User, int64, error) {
+func (s *Service) ListUsers(ctx context.Context, universityID int64, departmentID int64, role string, page, pageSize int32, excludeUserID int64) ([]*User, int64, error) {
 	if pageSize <= 0 {
 		pageSize = 10
 	}
@@ -171,6 +171,7 @@ func (s *Service) ListUsers(ctx context.Context, universityID int64, role string
 
 	filter := UserFilter{
 		UniversityID:  universityID,
+		DepartmentID:  departmentID,
 		Role:          role,
 		ExcludeUserID: excludeUserID,
 		Limit:         int(pageSize),

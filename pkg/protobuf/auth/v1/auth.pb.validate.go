@@ -773,6 +773,8 @@ func (m *ListUsersRequest) validate(all bool) error {
 
 	// no validation rules for UniversityId
 
+	// no validation rules for DepartmentId
+
 	// no validation rules for Role
 
 	// no validation rules for Page

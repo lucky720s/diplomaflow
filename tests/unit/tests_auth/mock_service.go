@@ -75,9 +75,8 @@ func (m *MockService) Validate(ctx context.Context, token string) (*auth.JwtClai
 }
 
 // ListUsers принимает excludeUserID
-func (m *MockService) ListUsers(ctx context.Context, universityID int64, role string, page, pageSize int32, excludeUserID int64) ([]*auth.User, int64, error) {
-	args := m.Called(ctx, universityID, role, page, pageSize, excludeUserID)
-
+func (m *MockService) ListUsers(ctx context.Context, universityID int64, departmentID int64, role string, page, pageSize int32, excludeUserID int64) ([]*auth.User, int64, error) {
+	args := m.Called(ctx, universityID, departmentID, role, page, pageSize, excludeUserID)
 	var users []*auth.User
 	if args.Get(0) != nil {
 		var ok bool

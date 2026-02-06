@@ -25,6 +25,7 @@ type Repository interface {
 
 type UserFilter struct {
 	UniversityID  int64
+	DepartmentID  int64
 	Role          string
 	ExcludeUserID int64
 	Limit         int
