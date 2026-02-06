@@ -303,9 +303,10 @@ func (x *GetTeamResponse) GetMembers() []*TeamMember {
 type GetAvailableStudentsRequest struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	UniversityId  int64                  `protobuf:"varint,1,opt,name=university_id,json=universityId,proto3" json:"university_id,omitempty"`
-	ExcludeUserId int64                  `protobuf:"varint,2,opt,name=exclude_user_id,json=excludeUserId,proto3" json:"exclude_user_id,omitempty"`
-	Page          int32                  `protobuf:"varint,3,opt,name=page,proto3" json:"page,omitempty"`
-	PageSize      int32                  `protobuf:"varint,4,opt,name=page_size,json=pageSize,proto3" json:"page_size,omitempty"`
+	DepartmentId  int64                  `protobuf:"varint,2,opt,name=department_id,json=departmentId,proto3" json:"department_id,omitempty"`
+	ExcludeUserId int64                  `protobuf:"varint,3,opt,name=exclude_user_id,json=excludeUserId,proto3" json:"exclude_user_id,omitempty"`
+	Page          int32                  `protobuf:"varint,4,opt,name=page,proto3" json:"page,omitempty"`
+	PageSize      int32                  `protobuf:"varint,5,opt,name=page_size,json=pageSize,proto3" json:"page_size,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -343,6 +344,13 @@ func (*GetAvailableStudentsRequest) Descriptor() ([]byte, []int) {
 func (x *GetAvailableStudentsRequest) GetUniversityId() int64 {
 	if x != nil {
 		return x.UniversityId
+	}
+	return 0
+}
+
+func (x *GetAvailableStudentsRequest) GetDepartmentId() int64 {
+	if x != nil {
+		return x.DepartmentId
 	}
 	return 0
 }
@@ -1821,12 +1829,13 @@ const file_team_v1_team_proto_rawDesc = "" +
 	"\x04name\x18\x02 \x01(\tR\x04name\x12\x1d\n" +
 	"\n" +
 	"project_id\x18\x03 \x01(\x03R\tprojectId\x12-\n" +
-	"\amembers\x18\x04 \x03(\v2\x13.team.v1.TeamMemberR\amembers\"\x9b\x01\n" +
+	"\amembers\x18\x04 \x03(\v2\x13.team.v1.TeamMemberR\amembers\"\xc0\x01\n" +
 	"\x1bGetAvailableStudentsRequest\x12#\n" +
-	"\runiversity_id\x18\x01 \x01(\x03R\funiversityId\x12&\n" +
-	"\x0fexclude_user_id\x18\x02 \x01(\x03R\rexcludeUserId\x12\x12\n" +
-	"\x04page\x18\x03 \x01(\x05R\x04page\x12\x1b\n" +
-	"\tpage_size\x18\x04 \x01(\x05R\bpageSize\"S\n" +
+	"\runiversity_id\x18\x01 \x01(\x03R\funiversityId\x12#\n" +
+	"\rdepartment_id\x18\x02 \x01(\x03R\fdepartmentId\x12&\n" +
+	"\x0fexclude_user_id\x18\x03 \x01(\x03R\rexcludeUserId\x12\x12\n" +
+	"\x04page\x18\x04 \x01(\x05R\x04page\x12\x1b\n" +
+	"\tpage_size\x18\x05 \x01(\x05R\bpageSize\"S\n" +
 	"\x0eStudentPreview\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\x03R\x02id\x12\x1b\n" +
 	"\tfull_name\x18\x02 \x01(\tR\bfullName\x12\x14\n" +

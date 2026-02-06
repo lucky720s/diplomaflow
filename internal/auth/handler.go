@@ -109,7 +109,7 @@ type AuthService interface {
 	Register(ctx context.Context, email, password, firstName, lastName, role string, universityID, departmentID int64) (int64, error)
 	Login(ctx context.Context, email, password, userAgent, ip string) (string, string, error)
 	Validate(ctx context.Context, token string) (*JwtClaims, error)
-	ListUsers(ctx context.Context, universityID int64, role string, page, pageSize int32, excludeUserID int64) ([]*User, int64, error)
+	ListUsers(ctx context.Context, universityID int64, departmentID int64, role string, page, pageSize int32, excludeUserID int64) ([]*User, int64, error)
 	AssignRole(ctx context.Context, userID int64, role string) error
 }
 
@@ -201,10 +201,11 @@ func (h *Handler) ListUsers(ctx context.Context, req *authv1.ListUsersRequest) (
 	users, total, err := h.service.ListUsers(
 		ctx,
 		req.UniversityId,
+		req.DepartmentId,
 		req.Role,
 		req.Page,
 		req.PageSize,
-		0,
+		req.ExcludeUserId,
 	)
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, "failed to list users: %v", err)
@@ -219,6 +220,7 @@ func (h *Handler) ListUsers(ctx context.Context, req *authv1.ListUsersRequest) (
 			LastName:     u.LastName,
 			Role:         u.Role,
 			UniversityId: u.UniversityID,
+			DepartmentId: u.DepartmentID,
 		})
 	}
 

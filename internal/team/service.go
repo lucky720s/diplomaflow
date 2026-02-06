@@ -405,9 +405,10 @@ func (s *Service) RespondToInvite(ctx context.Context, inviteID int64, userID in
 	return s.repo.UpdateInvite(ctx, invite)
 }
 
-func (s *Service) GetAvailableStudents(ctx context.Context, universityID int64, excludeUserID int64) ([]*authv1.UserPreview, error) {
+func (s *Service) GetAvailableStudents(ctx context.Context, universityID int64, departmentID int64, excludeUserID int64) ([]*authv1.UserPreview, error) {
 	resp, err := s.authClient.ListUsers(ctx, &authv1.ListUsersRequest{
 		UniversityId:  universityID,
+		DepartmentId:  departmentID,
 		Role:          "student",
 		Page:          1,
 		PageSize:      100,

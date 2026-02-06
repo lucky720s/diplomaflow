@@ -10,6 +10,7 @@ import (
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/metadata"
 	"google.golang.org/grpc/status"
+	"google.golang.org/protobuf/types/known/timestamppb"
 )
 
 type ProjectUseCase interface {
@@ -89,12 +90,27 @@ func (h *Handler) GetStudentProjects(ctx context.Context, req *projectv1.GetStud
 	}
 	resp := &projectv1.GetStudentProjectsResponse{}
 	for _, p := range list {
-		resp.Projects = append(resp.Projects, &projectv1.ProjectPreview{
-			ProjectId:    p.ID,
-			Title:        p.Title,
-			Status:       p.Status,
-			CurrentState: p.CurrentStateName,
-		})
+		teamID := int64(0)
+		if p.TeamID != nil {
+			teamID = *p.TeamID
+		}
+		pp := &projectv1.ProjectPreview{
+			ProjectId:        p.ID,
+			Title:            p.Title,
+			Status:           p.Status,
+			CurrentState:     p.CurrentStateName,
+			TeamId:           teamID,
+			WorkflowId:       p.WorkflowID,
+			WorkflowName:     p.WorkflowName,
+			CurrentStateId:   p.CurrentStateID,
+			CurrentStateName: p.CurrentStateName,
+		}
+
+		if p.DeadlineAt != nil {
+			pp.DeadlineAt = timestamppb.New(*p.DeadlineAt)
+		}
+
+		resp.Projects = append(resp.Projects, pp)
 	}
 	return resp, nil
 }

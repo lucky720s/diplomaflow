@@ -432,13 +432,19 @@ func (x *GetStudentProjectsRequest) GetStudentId() int64 {
 }
 
 type ProjectPreview struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	ProjectId     int64                  `protobuf:"varint,1,opt,name=project_id,json=projectId,proto3" json:"project_id,omitempty"`
-	Title         string                 `protobuf:"bytes,2,opt,name=title,proto3" json:"title,omitempty"`
-	Status        string                 `protobuf:"bytes,3,opt,name=status,proto3" json:"status,omitempty"`
-	CurrentState  string                 `protobuf:"bytes,4,opt,name=current_state,json=currentState,proto3" json:"current_state,omitempty"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
+	state            protoimpl.MessageState `protogen:"open.v1"`
+	ProjectId        int64                  `protobuf:"varint,1,opt,name=project_id,json=projectId,proto3" json:"project_id,omitempty"`
+	Title            string                 `protobuf:"bytes,2,opt,name=title,proto3" json:"title,omitempty"`
+	Status           string                 `protobuf:"bytes,3,opt,name=status,proto3" json:"status,omitempty"`
+	CurrentState     string                 `protobuf:"bytes,4,opt,name=current_state,json=currentState,proto3" json:"current_state,omitempty"`
+	TeamId           int64                  `protobuf:"varint,5,opt,name=team_id,json=teamId,proto3" json:"team_id,omitempty"`
+	WorkflowId       int64                  `protobuf:"varint,6,opt,name=workflow_id,json=workflowId,proto3" json:"workflow_id,omitempty"`
+	CurrentStateId   int64                  `protobuf:"varint,7,opt,name=current_state_id,json=currentStateId,proto3" json:"current_state_id,omitempty"`
+	WorkflowName     string                 `protobuf:"bytes,8,opt,name=workflow_name,json=workflowName,proto3" json:"workflow_name,omitempty"`
+	CurrentStateName string                 `protobuf:"bytes,9,opt,name=current_state_name,json=currentStateName,proto3" json:"current_state_name,omitempty"`
+	DeadlineAt       *timestamppb.Timestamp `protobuf:"bytes,10,opt,name=deadline_at,json=deadlineAt,proto3" json:"deadline_at,omitempty"`
+	unknownFields    protoimpl.UnknownFields
+	sizeCache        protoimpl.SizeCache
 }
 
 func (x *ProjectPreview) Reset() {
@@ -497,6 +503,48 @@ func (x *ProjectPreview) GetCurrentState() string {
 		return x.CurrentState
 	}
 	return ""
+}
+
+func (x *ProjectPreview) GetTeamId() int64 {
+	if x != nil {
+		return x.TeamId
+	}
+	return 0
+}
+
+func (x *ProjectPreview) GetWorkflowId() int64 {
+	if x != nil {
+		return x.WorkflowId
+	}
+	return 0
+}
+
+func (x *ProjectPreview) GetCurrentStateId() int64 {
+	if x != nil {
+		return x.CurrentStateId
+	}
+	return 0
+}
+
+func (x *ProjectPreview) GetWorkflowName() string {
+	if x != nil {
+		return x.WorkflowName
+	}
+	return ""
+}
+
+func (x *ProjectPreview) GetCurrentStateName() string {
+	if x != nil {
+		return x.CurrentStateName
+	}
+	return ""
+}
+
+func (x *ProjectPreview) GetDeadlineAt() *timestamppb.Timestamp {
+	if x != nil {
+		return x.DeadlineAt
+	}
+	return nil
 }
 
 type GetStudentProjectsResponse struct {
@@ -1142,13 +1190,22 @@ const file_project_v1_project_proto_rawDesc = "" +
 	"\ahistory\x18\t \x03(\v2\x18.project.v1.StateHistoryR\ahistory\":\n" +
 	"\x19GetStudentProjectsRequest\x12\x1d\n" +
 	"\n" +
-	"student_id\x18\x01 \x01(\x03R\tstudentId\"\x82\x01\n" +
+	"student_id\x18\x01 \x01(\x03R\tstudentId\"\xf6\x02\n" +
 	"\x0eProjectPreview\x12\x1d\n" +
 	"\n" +
 	"project_id\x18\x01 \x01(\x03R\tprojectId\x12\x14\n" +
 	"\x05title\x18\x02 \x01(\tR\x05title\x12\x16\n" +
 	"\x06status\x18\x03 \x01(\tR\x06status\x12#\n" +
-	"\rcurrent_state\x18\x04 \x01(\tR\fcurrentState\"T\n" +
+	"\rcurrent_state\x18\x04 \x01(\tR\fcurrentState\x12\x17\n" +
+	"\ateam_id\x18\x05 \x01(\x03R\x06teamId\x12\x1f\n" +
+	"\vworkflow_id\x18\x06 \x01(\x03R\n" +
+	"workflowId\x12(\n" +
+	"\x10current_state_id\x18\a \x01(\x03R\x0ecurrentStateId\x12#\n" +
+	"\rworkflow_name\x18\b \x01(\tR\fworkflowName\x12,\n" +
+	"\x12current_state_name\x18\t \x01(\tR\x10currentStateName\x12;\n" +
+	"\vdeadline_at\x18\n" +
+	" \x01(\v2\x1a.google.protobuf.TimestampR\n" +
+	"deadlineAt\"T\n" +
 	"\x1aGetStudentProjectsResponse\x126\n" +
 	"\bprojects\x18\x01 \x03(\v2\x1a.project.v1.ProjectPreviewR\bprojects\"\x89\x01\n" +
 	"\x14PerformActionRequest\x12\x1d\n" +
@@ -1252,35 +1309,36 @@ var file_project_v1_project_proto_goTypes = []any{
 	(*PostCommitActionGroup)(nil),      // 12: project.v1.PostCommitActionGroup
 	(*CommitTransitionRequest)(nil),    // 13: project.v1.CommitTransitionRequest
 	(*CommitTransitionResponse)(nil),   // 14: project.v1.CommitTransitionResponse
-	(*structpb.Struct)(nil),            // 15: google.protobuf.Struct
-	(*timestamppb.Timestamp)(nil),      // 16: google.protobuf.Timestamp
+	(*timestamppb.Timestamp)(nil),      // 15: google.protobuf.Timestamp
+	(*structpb.Struct)(nil),            // 16: google.protobuf.Struct
 }
 var file_project_v1_project_proto_depIdxs = []int32{
 	3,  // 0: project.v1.GetProjectResponse.history:type_name -> project.v1.StateHistory
-	6,  // 1: project.v1.GetStudentProjectsResponse.projects:type_name -> project.v1.ProjectPreview
-	15, // 2: project.v1.PerformActionRequest.payload:type_name -> google.protobuf.Struct
-	15, // 3: project.v1.GetProjectRuntimeResponse.data:type_name -> google.protobuf.Struct
-	16, // 4: project.v1.GetProjectRuntimeResponse.deadline_at:type_name -> google.protobuf.Timestamp
-	16, // 5: project.v1.CommitTransitionRequest.new_deadline_at:type_name -> google.protobuf.Timestamp
-	15, // 6: project.v1.CommitTransitionRequest.data_patch:type_name -> google.protobuf.Struct
-	12, // 7: project.v1.CommitTransitionRequest.post_actions:type_name -> project.v1.PostCommitActionGroup
-	0,  // 8: project.v1.ProjectService.CreateProject:input_type -> project.v1.CreateProjectRequest
-	2,  // 9: project.v1.ProjectService.GetProject:input_type -> project.v1.GetProjectRequest
-	5,  // 10: project.v1.ProjectService.GetStudentProjects:input_type -> project.v1.GetStudentProjectsRequest
-	8,  // 11: project.v1.ProjectService.PerformAction:input_type -> project.v1.PerformActionRequest
-	10, // 12: project.v1.ProjectService.GetProjectRuntime:input_type -> project.v1.GetProjectRuntimeRequest
-	13, // 13: project.v1.ProjectService.CommitTransition:input_type -> project.v1.CommitTransitionRequest
-	1,  // 14: project.v1.ProjectService.CreateProject:output_type -> project.v1.CreateProjectResponse
-	4,  // 15: project.v1.ProjectService.GetProject:output_type -> project.v1.GetProjectResponse
-	7,  // 16: project.v1.ProjectService.GetStudentProjects:output_type -> project.v1.GetStudentProjectsResponse
-	9,  // 17: project.v1.ProjectService.PerformAction:output_type -> project.v1.PerformActionResponse
-	11, // 18: project.v1.ProjectService.GetProjectRuntime:output_type -> project.v1.GetProjectRuntimeResponse
-	14, // 19: project.v1.ProjectService.CommitTransition:output_type -> project.v1.CommitTransitionResponse
-	14, // [14:20] is the sub-list for method output_type
-	8,  // [8:14] is the sub-list for method input_type
-	8,  // [8:8] is the sub-list for extension type_name
-	8,  // [8:8] is the sub-list for extension extendee
-	0,  // [0:8] is the sub-list for field type_name
+	15, // 1: project.v1.ProjectPreview.deadline_at:type_name -> google.protobuf.Timestamp
+	6,  // 2: project.v1.GetStudentProjectsResponse.projects:type_name -> project.v1.ProjectPreview
+	16, // 3: project.v1.PerformActionRequest.payload:type_name -> google.protobuf.Struct
+	16, // 4: project.v1.GetProjectRuntimeResponse.data:type_name -> google.protobuf.Struct
+	15, // 5: project.v1.GetProjectRuntimeResponse.deadline_at:type_name -> google.protobuf.Timestamp
+	15, // 6: project.v1.CommitTransitionRequest.new_deadline_at:type_name -> google.protobuf.Timestamp
+	16, // 7: project.v1.CommitTransitionRequest.data_patch:type_name -> google.protobuf.Struct
+	12, // 8: project.v1.CommitTransitionRequest.post_actions:type_name -> project.v1.PostCommitActionGroup
+	0,  // 9: project.v1.ProjectService.CreateProject:input_type -> project.v1.CreateProjectRequest
+	2,  // 10: project.v1.ProjectService.GetProject:input_type -> project.v1.GetProjectRequest
+	5,  // 11: project.v1.ProjectService.GetStudentProjects:input_type -> project.v1.GetStudentProjectsRequest
+	8,  // 12: project.v1.ProjectService.PerformAction:input_type -> project.v1.PerformActionRequest
+	10, // 13: project.v1.ProjectService.GetProjectRuntime:input_type -> project.v1.GetProjectRuntimeRequest
+	13, // 14: project.v1.ProjectService.CommitTransition:input_type -> project.v1.CommitTransitionRequest
+	1,  // 15: project.v1.ProjectService.CreateProject:output_type -> project.v1.CreateProjectResponse
+	4,  // 16: project.v1.ProjectService.GetProject:output_type -> project.v1.GetProjectResponse
+	7,  // 17: project.v1.ProjectService.GetStudentProjects:output_type -> project.v1.GetStudentProjectsResponse
+	9,  // 18: project.v1.ProjectService.PerformAction:output_type -> project.v1.PerformActionResponse
+	11, // 19: project.v1.ProjectService.GetProjectRuntime:output_type -> project.v1.GetProjectRuntimeResponse
+	14, // 20: project.v1.ProjectService.CommitTransition:output_type -> project.v1.CommitTransitionResponse
+	15, // [15:21] is the sub-list for method output_type
+	9,  // [9:15] is the sub-list for method input_type
+	9,  // [9:9] is the sub-list for extension type_name
+	9,  // [9:9] is the sub-list for extension extendee
+	0,  // [0:9] is the sub-list for field type_name
 }
 
 func init() { file_project_v1_project_proto_init() }

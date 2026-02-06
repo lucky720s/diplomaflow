@@ -409,10 +409,11 @@ func (x *ValidateTokenResponse) GetDepartmentId() int64 {
 type ListUsersRequest struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	UniversityId  int64                  `protobuf:"varint,1,opt,name=university_id,json=universityId,proto3" json:"university_id,omitempty"`
-	Role          string                 `protobuf:"bytes,2,opt,name=role,proto3" json:"role,omitempty"`
-	Page          int32                  `protobuf:"varint,3,opt,name=page,proto3" json:"page,omitempty"`
-	PageSize      int32                  `protobuf:"varint,4,opt,name=page_size,json=pageSize,proto3" json:"page_size,omitempty"`
-	ExcludeUserId int64                  `protobuf:"varint,5,opt,name=exclude_user_id,json=excludeUserId,proto3" json:"exclude_user_id,omitempty"`
+	DepartmentId  int64                  `protobuf:"varint,2,opt,name=department_id,json=departmentId,proto3" json:"department_id,omitempty"`
+	Role          string                 `protobuf:"bytes,3,opt,name=role,proto3" json:"role,omitempty"`
+	Page          int32                  `protobuf:"varint,4,opt,name=page,proto3" json:"page,omitempty"`
+	PageSize      int32                  `protobuf:"varint,5,opt,name=page_size,json=pageSize,proto3" json:"page_size,omitempty"`
+	ExcludeUserId int64                  `protobuf:"varint,6,opt,name=exclude_user_id,json=excludeUserId,proto3" json:"exclude_user_id,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -450,6 +451,13 @@ func (*ListUsersRequest) Descriptor() ([]byte, []int) {
 func (x *ListUsersRequest) GetUniversityId() int64 {
 	if x != nil {
 		return x.UniversityId
+	}
+	return 0
+}
+
+func (x *ListUsersRequest) GetDepartmentId() int64 {
+	if x != nil {
+		return x.DepartmentId
 	}
 	return 0
 }
@@ -1144,13 +1152,14 @@ const file_auth_v1_auth_proto_rawDesc = "" +
 	"\auser_id\x18\x03 \x01(\x03R\x06userId\x12\x12\n" +
 	"\x04role\x18\x04 \x01(\tR\x04role\x12#\n" +
 	"\runiversity_id\x18\x05 \x01(\x03R\funiversityId\x12#\n" +
-	"\rdepartment_id\x18\x06 \x01(\x03R\fdepartmentId\"\xa4\x01\n" +
+	"\rdepartment_id\x18\x06 \x01(\x03R\fdepartmentId\"\xc9\x01\n" +
 	"\x10ListUsersRequest\x12#\n" +
-	"\runiversity_id\x18\x01 \x01(\x03R\funiversityId\x12\x12\n" +
-	"\x04role\x18\x02 \x01(\tR\x04role\x12\x12\n" +
-	"\x04page\x18\x03 \x01(\x05R\x04page\x12\x1b\n" +
-	"\tpage_size\x18\x04 \x01(\x05R\bpageSize\x12&\n" +
-	"\x0fexclude_user_id\x18\x05 \x01(\x03R\rexcludeUserId\"\xcd\x01\n" +
+	"\runiversity_id\x18\x01 \x01(\x03R\funiversityId\x12#\n" +
+	"\rdepartment_id\x18\x02 \x01(\x03R\fdepartmentId\x12\x12\n" +
+	"\x04role\x18\x03 \x01(\tR\x04role\x12\x12\n" +
+	"\x04page\x18\x04 \x01(\x05R\x04page\x12\x1b\n" +
+	"\tpage_size\x18\x05 \x01(\x05R\bpageSize\x12&\n" +
+	"\x0fexclude_user_id\x18\x06 \x01(\x03R\rexcludeUserId\"\xcd\x01\n" +
 	"\vUserPreview\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\x03R\x02id\x12\x14\n" +
 	"\x05email\x18\x02 \x01(\tR\x05email\x12\x1d\n" +

@@ -616,6 +616,8 @@ func (m *GetAvailableStudentsRequest) validate(all bool) error {
 
 	// no validation rules for UniversityId
 
+	// no validation rules for DepartmentId
+
 	// no validation rules for ExcludeUserId
 
 	// no validation rules for Page

@@ -77,8 +77,17 @@ func (h *Handler) GetTeam(c *gin.Context) {
 func (h *Handler) GetAvailableStudents(c *gin.Context) {
 	uniID := c.GetInt64("universityId")
 	userID := c.GetInt64("userId")
-	res, err := h.teamClient.GetAvailableStudents(c.Request.Context(), &teamv1.GetAvailableStudentsRequest{
+	departmentID := c.GetInt64("departmentId")
+
+	ctx := metadata.AppendToOutgoingContext(
+		c.Request.Context(),
+		"x-department-id", strconv.FormatInt(departmentID, 10),
+		"x-user-id", strconv.FormatInt(userID, 10),
+	)
+
+	res, err := h.teamClient.GetAvailableStudents(ctx, &teamv1.GetAvailableStudentsRequest{
 		UniversityId:  uniID,
+		DepartmentId:  departmentID,
 		ExcludeUserId: userID,
 	})
 	if err != nil {

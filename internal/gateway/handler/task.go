@@ -7,6 +7,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 	taskv1 "github.com/lucky720s/diplomaflow/pkg/protobuf/task/v1"
+	teamv1 "github.com/lucky720s/diplomaflow/pkg/protobuf/team/v1"
 	"google.golang.org/protobuf/types/known/fieldmaskpb"
 	"google.golang.org/protobuf/types/known/timestamppb"
 )
@@ -737,6 +738,43 @@ func (h *Handler) GetUpcomingDeadlines(c *gin.Context) {
 		if v, _ := strconv.ParseInt(d, 10, 32); v > 0 {
 			daysAhead = int32(v)
 		}
+	}
+
+	if boardID == 0 {
+		teamResp, err := h.teamClient.GetMyTeam(c.Request.Context(), &teamv1.GetMyTeamRequest{
+			UserId: userID,
+		})
+		if err != nil {
+			MapGRPCError(c, err)
+			return
+		}
+		if teamResp == nil || !teamResp.HasTeam || teamResp.Team == nil || teamResp.Team.TeamId == 0 {
+			c.JSON(http.StatusOK, &taskv1.ListTasksResponse{
+				Tasks:      nil,
+				TotalCount: 0,
+			})
+			return
+		}
+
+		boardResp, err := h.taskClient.GetBoardByTeam(c.Request.Context(), &taskv1.GetBoardByTeamRequest{
+			TeamId: teamResp.Team.TeamId,
+		})
+		if err != nil {
+			c.JSON(http.StatusOK, &taskv1.ListTasksResponse{
+				Tasks:      nil,
+				TotalCount: 0,
+			})
+			return
+		}
+		if boardResp == nil || boardResp.Board == nil || boardResp.Board.Id == 0 {
+			c.JSON(http.StatusOK, &taskv1.ListTasksResponse{
+				Tasks:      nil,
+				TotalCount: 0,
+			})
+			return
+		}
+
+		boardID = boardResp.Board.Id
 	}
 
 	resp, err := h.taskClient.GetUpcomingDeadlines(c.Request.Context(), &taskv1.GetUpcomingDeadlinesRequest{
