@@ -2,185 +2,12 @@ name: CD - Deploy to Dev Server
 
 on:
   push:
-    branches: [dev]
+    branches:
+      - dev
   workflow_dispatch:
 
-concurrency:
-  group: deploy-dev
-  cancel-in-progress: true
-
-permissions:
-  contents: read
-  packages: write
-
 jobs:
-  plan:
-    runs-on: ubuntu-latest
-    outputs:
-      matrix: ${{ steps.matrix.outputs.matrix }}
-      should_build: ${{ steps.matrix.outputs.should_build }}
-      image_base: ${{ steps.vars.outputs.image_base }}
-      image_tag: ${{ steps.vars.outputs.image_tag }}
-      trace_tag: ${{ steps.vars.outputs.trace_tag }}
-    steps:
-      - uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
-
-      - id: vars
-        shell: bash
-        run: |
-          echo "image_base=ghcr.io/${GITHUB_REPOSITORY,,}" >> "$GITHUB_OUTPUT"
-          echo "image_tag=dev" >> "$GITHUB_OUTPUT"
-          echo "trace_tag=dev-${GITHUB_SHA}" >> "$GITHUB_OUTPUT"
-
-      - id: changes
-        uses: dorny/paths-filter@v3
-        with:
-          filters: |
-            common:
-              - 'internal/**'
-              - 'pkg/**'
-              - 'api/**'
-              - 'go.mod'
-              - 'go.sum'
-              - 'compose.yaml'
-              - 'docker-compose.yml'
-
-            migrate:
-              - 'cmd/migrate/**'
-              - 'db/migrations/**'
-
-            api_gateway:
-              - 'cmd/api_gateway/**'
-
-            university_service:
-              - 'cmd/university_service/**'
-
-            auth_service:
-              - 'cmd/auth_service/**'
-
-            project_service:
-              - 'cmd/project_service/**'
-
-            team_service:
-              - 'cmd/team_service/**'
-
-            workflow_service:
-              - 'cmd/workflow_service/**'
-
-            role_service:
-              - 'cmd/role_service/**'
-
-            notification_service:
-              - 'cmd/notification_service/**'
-
-            file_service:
-              - 'cmd/file_service/**'
-
-            form_service:
-              - 'cmd/form_service/**'
-
-            admin_service:
-              - 'cmd/admin_service/**'
-
-            task_service:
-              - 'cmd/task_service/**'
-
-      - id: matrix
-        shell: bash
-        run: |
-          set -euo pipefail
-
-          python3 - <<'PY'
-          import os, json
-
-          services = [
-            ("migrate", "cmd/migrate/Dockerfile"),
-            ("api_gateway", "cmd/api_gateway/Dockerfile"),
-            ("university_service", "cmd/university_service/Dockerfile"),
-            ("auth_service", "cmd/auth_service/Dockerfile"),
-            ("project_service", "cmd/project_service/Dockerfile"),
-            ("team_service", "cmd/team_service/Dockerfile"),
-            ("workflow_service", "cmd/workflow_service/Dockerfile"),
-            ("role_service", "cmd/role_service/Dockerfile"),
-            ("notification_service", "cmd/notification_service/Dockerfile"),
-            ("file_service", "cmd/file_service/Dockerfile"),
-            ("form_service", "cmd/form_service/Dockerfile"),
-            ("admin_service", "cmd/admin_service/Dockerfile"),
-            ("task_service", "cmd/task_service/Dockerfile"),
-          ]
-
-          common = os.getenv("CH_COMMON", "false").lower() == "true"
-
-          out = []
-          if common:
-            out = [{"image": s, "dockerfile": df} for s, df in services]
-          else:
-            for s, df in services:
-              if os.getenv(f"CH_{s}", "false").lower() == "true":
-                out.append({"image": s, "dockerfile": df})
-
-          matrix = json.dumps(out, separators=(",", ":"))
-          should_build = "true" if len(out) > 0 else "false"
-
-          # Пишем outputs для GitHub Actions
-          with open(os.environ["GITHUB_OUTPUT"], "a") as f:
-            f.write(f"matrix={matrix}\n")
-            f.write(f"should_build={should_build}\n")
-          PY
-        env:
-          CH_COMMON: ${{ steps.changes.outputs.common }}
-          CH_migrate: ${{ steps.changes.outputs.migrate }}
-          CH_api_gateway: ${{ steps.changes.outputs.api_gateway }}
-          CH_university_service: ${{ steps.changes.outputs.university_service }}
-          CH_auth_service: ${{ steps.changes.outputs.auth_service }}
-          CH_project_service: ${{ steps.changes.outputs.project_service }}
-          CH_team_service: ${{ steps.changes.outputs.team_service }}
-          CH_workflow_service: ${{ steps.changes.outputs.workflow_service }}
-          CH_role_service: ${{ steps.changes.outputs.role_service }}
-          CH_notification_service: ${{ steps.changes.outputs.notification_service }}
-          CH_file_service: ${{ steps.changes.outputs.file_service }}
-          CH_form_service: ${{ steps.changes.outputs.form_service }}
-          CH_admin_service: ${{ steps.changes.outputs.admin_service }}
-          CH_task_service: ${{ steps.changes.outputs.task_service }}
-
-  build_and_push:
-    needs: plan
-    if: needs.plan.outputs.should_build == 'true'
-    runs-on: ubuntu-latest
-    strategy:
-      fail-fast: false
-      matrix:
-        include: ${{ fromJson(needs.plan.outputs.matrix) }}
-    steps:
-      - uses: actions/checkout@v4
-
-      - uses: docker/setup-buildx-action@v3
-
-      - uses: docker/login-action@v3
-        with:
-          registry: ghcr.io
-          username: ${{ github.actor }}
-          password: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Build & push ${{ matrix.image }}
-        uses: docker/build-push-action@v6
-        with:
-          context: .
-          file: ${{ matrix.dockerfile }}
-          push: true
-          tags: |
-            ${{ needs.plan.outputs.image_base }}/${{ matrix.image }}:${{ needs.plan.outputs.image_tag }}
-            ${{ needs.plan.outputs.image_base }}/${{ matrix.image }}:${{ needs.plan.outputs.trace_tag }}
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
-
   deploy:
-    needs: [plan, build_and_push]
-    if: >
-      needs.plan.result == 'success' &&
-      (needs.build_and_push.result == 'success' || needs.build_and_push.result == 'skipped')
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -195,24 +22,13 @@ jobs:
           target: "/opt/diplomaflow_scripts"
           overwrite: true
 
-      - name: Deploy via SSH (pull & up)
+      - name: Deploy via SSH
         uses: appleboy/ssh-action@v1.0.3
         with:
           host: ${{ secrets.SERVER_HOST }}
           username: ${{ secrets.SERVER_USER }}
           key: ${{ secrets.SSH_PRIVATE_KEY }}
-          command_timeout: 30m
+          command_timeout: 60m
           script: |
-            set -e
             chmod +x /opt/diplomaflow_scripts/deploy/deploy.sh
-            /opt/diplomaflow_scripts/deploy/deploy.sh \
-              "/opt/diplomaflow" \
-              "${{ secrets.PAT_TOKEN }}" \
-              "${{ secrets.JWT_SECRET_DEV }}" \
-              "${{ secrets.POSTGRES_PASSWORD_DEV }}" \
-              "${{ github.repository }}" \
-              "dev" \
-              "ghcr.io/${{ github.repository }}" \
-              "dev" \
-              "${{ secrets.GHCR_USERNAME }}" \
-              "${{ secrets.GHCR_TOKEN }}"
+            /opt/diplomaflow_scripts/deploy/deploy.sh "/opt/diplomaflow" "${{ secrets.PAT_TOKEN }}" "${{ secrets.JWT_SECRET_DEV }}" "${{ secrets.POSTGRES_PASSWORD_DEV }}" "${{ github.repository }}" "dev"
