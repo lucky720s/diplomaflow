@@ -14,103 +14,171 @@ permissions:
   packages: write
 
 jobs:
-  build_and_push:
+  plan:
     runs-on: ubuntu-latest
-    strategy:
-      fail-fast: false
-      matrix:
-        include:
-          - image: migrate
-            dockerfile: cmd/migrate/Dockerfile
-          - image: api_gateway
-            dockerfile: cmd/api_gateway/Dockerfile
-          - image: university_service
-            dockerfile: cmd/university_service/Dockerfile
-          - image: auth_service
-            dockerfile: cmd/auth_service/Dockerfile
-          - image: project_service
-            dockerfile: cmd/project_service/Dockerfile
-          - image: team_service
-            dockerfile: cmd/team_service/Dockerfile
-          - image: workflow_service
-            dockerfile: cmd/workflow_service/Dockerfile
-          - image: role_service
-            dockerfile: cmd/role_service/Dockerfile
-          - image: notification_service
-            dockerfile: cmd/notification_service/Dockerfile
-          - image: file_service
-            dockerfile: cmd/file_service/Dockerfile
-          - image: form_service
-            dockerfile: cmd/form_service/Dockerfile
-          - image: admin_service
-            dockerfile: cmd/admin_service/Dockerfile
-          - image: task_service
-            dockerfile: cmd/task_service/Dockerfile
-
+    outputs:
+      matrix: ${{ steps.set-matrix.outputs.matrix }}
+      should_build: ${{ steps.set-matrix.outputs.should_build }}
+      image_base: ${{ steps.vars.outputs.image_base }}
+      image_tag: ${{ steps.vars.outputs.image_tag }}
+      trace_tag: ${{ steps.vars.outputs.trace_tag }}
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
-      - name: Set image vars
+      - id: vars
         run: |
-          echo "IMAGE_BASE=ghcr.io/${GITHUB_REPOSITORY,,}" >> $GITHUB_ENV
-          echo "IMAGE_TAG=dev-${GITHUB_SHA}" >> $GITHUB_ENV
+          echo "image_base=ghcr.io/${GITHUB_REPOSITORY,,}" >> "$GITHUB_OUTPUT"
+          echo "image_tag=dev" >> "$GITHUB_OUTPUT"
+          echo "trace_tag=dev-${GITHUB_SHA}" >> "$GITHUB_OUTPUT"
 
-      - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v3
+      - id: set-matrix
+        shell: bash
+        run: |
+          set -euo pipefail
 
-      - name: Login to GHCR
-        uses: docker/login-action@v3
-        with:
-          registry: ghcr.io
-          username: ${{ github.actor }}
-          password: ${{ secrets.GITHUB_TOKEN }}
+          BEFORE="${{ github.event.before }}"
+          AFTER="${{ github.sha }}"
 
-      - name: Build & push ${{ matrix.image }}
-        uses: docker/build-push-action@v6
-        with:
-          context: .
-          file: ${{ matrix.dockerfile }}
-          push: true
-          tags: |
-            ${{ env.IMAGE_BASE }}/${{ matrix.image }}:${{ env.IMAGE_TAG }}
-            ${{ env.IMAGE_BASE }}/${{ matrix.image }}:dev
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
+          # Если это первый пуш/нет before — билдим всё
+          if [[ -z "$BEFORE" || "$BEFORE" == "0000000000000000000000000000000000000000" ]]; then
+            ALL=1
+            CHANGED=""
+          else
+            CHANGED="$(git diff --name-only "$BEFORE" "$AFTER" || true)"
+            ALL=0
+          fi
 
-  deploy:
-    needs: build_and_push
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
+          echo "Changed files:"
+          echo "$CHANGED"
 
-      - name: Copy deploy script
-        uses: appleboy/scp-action@v0.1.7
-        with:
-          host: ${{ secrets.SERVER_HOST }}
-          username: ${{ secrets.SERVER_USER }}
-          key: ${{ secrets.SSH_PRIVATE_KEY }}
-          source: "deploy/deploy.sh"
-          target: "/opt/diplomaflow_scripts"
-          overwrite: true
+          # Правило: если менялись общие части — билдим всё
+          if [[ "$ALL" -eq 0 ]]; then
+            if echo "$CHANGED" | grep -Eq '^(internal/|pkg/|api/|go\.mod|go\.sum)'; then
+              ALL=1
+            fi
+          fi
 
-      - name: Deploy via SSH (pull & up)
-        uses: appleboy/ssh-action@v1.0.3
-        with:
-          host: ${{ secrets.SERVER_HOST }}
-          username: ${{ secrets.SERVER_USER }}
-          key: ${{ secrets.SSH_PRIVATE_KEY }}
-          command_timeout: 30m
-          script: |
-            set -e
-            chmod +x /opt/diplomaflow_scripts/deploy/deploy.sh
-            /opt/diplomaflow_scripts/deploy/deploy.sh \
-              "/opt/diplomaflow" \
-              "${{ secrets.PAT_TOKEN }}" \
-              "${{ secrets.JWT_SECRET_DEV }}" \
-              "${{ secrets.POSTGRES_PASSWORD_DEV }}" \
-              "${{ github.repository }}" \
-              "dev" \
-              "ghcr.io/${{ github.repository }}" \
-              "dev-${{ github.sha }}" \
-              "${{ secrets.GHCR_USERNAME }}" \
-              "${{ secrets.GHCR_TOKEN }}"
+          # Список сервисов и Dockerfile
+          # (должны совпадать с тем, что ты пушишь в GHCR)
+          SERVICES_JSON='[
+            {"image":"migrate","dockerfile":"cmd/migrate/Dockerfile"},
+            {"image":"api_gateway","dockerfile":"cmd/api_gateway/Dockerfile"},
+            {"image":"university_service","dockerfile":"cmd/university_service/Dockerfile"},
+            {"image":"auth_service","dockerfile":"cmd/auth_service/Dockerfile"},
+            {"image":"project_service","dockerfile":"cmd/project_service/Dockerfile"},
+            {"image":"team_service","dockerfile":"cmd/team_service/Dockerfile"},
+            {"image":"workflow_service","dockerfile":"cmd/workflow_service/Dockerfile"},
+            {"image":"role_service","dockerfile":"cmd/role_service/Dockerfile"},
+            {"image":"notification_service","dockerfile":"cmd/notification_service/Dockerfile"},
+            {"image":"file_service","dockerfile":"cmd/file_service/Dockerfile"},
+            {"image":"form_service","dockerfile":"cmd/form_service/Dockerfile"},
+            {"image":"admin_service","dockerfile":"cmd/admin_service/Dockerfile"},
+            {"image":"task_service","dockerfile":"cmd/task_service/Dockerfile"}
+          ]'
+
+          if [[ "$ALL" -eq 1 ]]; then
+            MATRIX="$SERVICES_JSON"
+          else
+            # Выбираем точечно:
+            # - migrate если поменялись миграции или cmd/migrate
+            # - сервис если поменялся cmd/<service>/
+            MATRIX="$(node - <<'NODE'
+          const services = JSON.parse(process.env.SERVICES_JSON);
+          const changed = (process.env.CHANGED || "").split("\n").filter(Boolean);
+
+          function changedUnder(prefix) {
+            return changed.some(f => f.startsWith(prefix));
+          }
+
+          const out = [];
+          for (const s of services) {
+            if (s.image === "migrate") {
+              if (changedUnder("db/migrations/") || changedUnder("cmd/migrate/")) out.push(s);
+              continue;
+            }
+            if (changedUnder(`cmd/${s.image}/`)) out.push(s);
+          }
+
+          process.stdout.write(JSON.stringify(out));
+  NODE
+  )"
+  fi
+  
+  SHOULD_BUILD="$(node -e 'const m=JSON.parse(process.argv[1]); process.stdout.write(m.length>0?"true":"false")' "$MATRIX")"
+  
+  echo "matrix=$MATRIX" >> "$GITHUB_OUTPUT"
+  echo "should_build=$SHOULD_BUILD" >> "$GITHUB_OUTPUT"
+env:
+  CHANGED: ${{ steps.set-matrix.outputs.changed }}
+  SERVICES_JSON: ${{ steps.set-matrix.outputs.services_json }}
+
+build_and_push:
+  needs: plan
+  if: needs.plan.outputs.should_build == 'true'
+  runs-on: ubuntu-latest
+  strategy:
+    fail-fast: false
+    matrix:
+      include: ${{ fromJson(needs.plan.outputs.matrix) }}
+  steps:
+    - uses: actions/checkout@v4
+
+    - uses: docker/setup-buildx-action@v3
+
+    - uses: docker/login-action@v3
+      with:
+        registry: ghcr.io
+        username: ${{ github.actor }}
+        password: ${{ secrets.GITHUB_TOKEN }}
+
+    - name: Build & push ${{ matrix.image }}
+      uses: docker/build-push-action@v6
+      with:
+        context: .
+        file: ${{ matrix.dockerfile }}
+        push: true
+        tags: |
+          ${{ needs.plan.outputs.image_base }}/${{ matrix.image }}:${{ needs.plan.outputs.image_tag }}
+          ${{ needs.plan.outputs.image_base }}/${{ matrix.image }}:${{ needs.plan.outputs.trace_tag }}
+        cache-from: type=gha
+        cache-to: type=gha,mode=max
+
+deploy:
+  needs: [plan, build_and_push]
+  runs-on: ubuntu-latest
+  steps:
+    - uses: actions/checkout@v4
+
+    - name: Copy deploy script
+      uses: appleboy/scp-action@v0.1.7
+      with:
+        host: ${{ secrets.SERVER_HOST }}
+        username: ${{ secrets.SERVER_USER }}
+        key: ${{ secrets.SSH_PRIVATE_KEY }}
+        source: "deploy/deploy.sh"
+        target: "/opt/diplomaflow_scripts"
+        overwrite: true
+
+    - name: Deploy via SSH (pull & up)
+      uses: appleboy/ssh-action@v1.0.3
+      with:
+        host: ${{ secrets.SERVER_HOST }}
+        username: ${{ secrets.SERVER_USER }}
+        key: ${{ secrets.SSH_PRIVATE_KEY }}
+        command_timeout: 30m
+        script: |
+          set -e
+          chmod +x /opt/diplomaflow_scripts/deploy/deploy.sh
+          /opt/diplomaflow_scripts/deploy/deploy.sh \
+            "/opt/diplomaflow" \
+            "${{ secrets.PAT_TOKEN }}" \
+            "${{ secrets.JWT_SECRET_DEV }}" \
+            "${{ secrets.POSTGRES_PASSWORD_DEV }}" \
+            "${{ github.repository }}" \
+            "dev" \
+            "ghcr.io/${{ github.repository }}" \
+            "dev" \
+            "${{ secrets.GHCR_USERNAME }}" \
+            "${{ secrets.GHCR_TOKEN }}"

@@ -40,24 +40,22 @@ fi
 
 echo "==> Create .env"
 cat > "$ENV_FILE" <<EOF
+IMAGE_BASE="$(echo "$IMAGE_BASE" | tr '[:upper:]' '[:lower:]')"
+
+echo "==> Create .env"
+cat > "$ENV_FILE" <<EOF
 ENV=dev
 GIN_MODE=release
-
 JWT_SECRET=${JWT_SECRET}
-
 POSTGRES_USER=diplomaflow
 POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
 POSTGRES_DB=diplomaflow
-
 DATABASE_DSN=host=127.0.0.1 user=diplomaflow password=${POSTGRES_PASSWORD} dbname=diplomaflow port=5433 sslmode=disable TimeZone=UTC
 DATABASE_URL=postgres://diplomaflow:${POSTGRES_PASSWORD}@127.0.0.1:5433/diplomaflow?sslmode=disable
-
 REDIS_ADDR=127.0.0.1:6380
-
 ACCESS_TOKEN_TTL=15m
 REFRESH_TOKEN_TTL=720h
-
-IMAGE_BASE="$(echo "$IMAGE_BASE" | tr '[:upper:]' '[:lower:]')"
+IMAGE_BASE=${IMAGE_BASE}
 IMAGE_TAG=${IMAGE_TAG}
 EOF
 chmod 600 "$ENV_FILE"
