@@ -8,6 +8,13 @@ import (
 	"gorm.io/gorm"
 )
 
+// TaskCounts - счётчики для задачи (для batch-запроса)
+type TaskCounts struct {
+	Comments    int32
+	Attachments int32
+	Watchers    int32
+}
+
 // Repository - интерфейс репозитория для task_service
 type Repository interface {
 	// Board
@@ -43,6 +50,7 @@ type Repository interface {
 	// Task Counts
 	GetTaskCounts(ctx context.Context, taskID int64) (comments, attachments, watchers int32, err error)
 	GetColumnTaskCounts(ctx context.Context, boardID int64) (map[int64]int32, error)
+	GetTasksCountsBatch(ctx context.Context, taskIDs []int64) (map[int64]TaskCounts, error)
 
 	// Comment
 	CreateComment(ctx context.Context, comment *Comment) error
@@ -105,8 +113,6 @@ type MyTasksFilter struct {
 	Offset           int
 }
 
-// ==================== Implementation ====================
-
 type repository struct {
 	db *gorm.DB
 }
@@ -115,8 +121,6 @@ type repository struct {
 func NewRepository(db *gorm.DB) Repository {
 	return &repository{db: db}
 }
-
-// ==================== Board ====================
 
 func (r *repository) CreateBoard(ctx context.Context, board *Board) error {
 	board.CreatedAt = time.Now()
@@ -148,8 +152,6 @@ func (r *repository) UpdateBoard(ctx context.Context, board *Board) error {
 func (r *repository) DeleteBoard(ctx context.Context, id int64) error {
 	return r.db.WithContext(ctx).Delete(&Board{}, id).Error
 }
-
-// ==================== Column ====================
 
 func (r *repository) CreateColumn(ctx context.Context, column *Column) error {
 	column.CreatedAt = time.Now()
@@ -232,8 +234,6 @@ func (r *repository) GetMaxColumnOrder(ctx context.Context, boardID int64) (int3
 	return *maxOrder, nil
 }
 
-// ==================== Task ====================
-
 func (r *repository) CreateTask(ctx context.Context, task *Task) error {
 	task.CreatedAt = time.Now()
 	task.UpdatedAt = time.Now()
@@ -305,7 +305,7 @@ func (r *repository) ListTasks(ctx context.Context, filter TaskFilter) ([]*Task,
 	}
 	query = query.Order(fmt.Sprintf("%s %s", sortBy, sortOrder))
 
-	// Pagination
+	// Pagination (Limit 0 = без лимита - нужно для DeleteColumn)
 	if filter.Limit > 0 {
 		query = query.Limit(filter.Limit).Offset(filter.Offset)
 	}
@@ -314,6 +314,7 @@ func (r *repository) ListTasks(ctx context.Context, filter TaskFilter) ([]*Task,
 	return tasks, total, err
 }
 
+// MoveTask - перемещает задачу
 func (r *repository) MoveTask(ctx context.Context, taskID, toColumnID int64, position int32) error {
 	return r.db.WithContext(ctx).Transaction(func(tx *gorm.DB) error {
 		// Получаем задачу
@@ -323,6 +324,7 @@ func (r *repository) MoveTask(ctx context.Context, taskID, toColumnID int64, pos
 		}
 
 		oldColumnID := task.ColumnID
+		oldPosition := task.Position
 
 		// Получаем целевую колонку для определения статуса
 		var toColumn Column
@@ -343,19 +345,40 @@ func (r *repository) MoveTask(ctx context.Context, taskID, toColumnID int64, pos
 			newStatus = TaskStatusDone
 		}
 
-		// Сдвигаем задачи в старой колонке
-		if oldColumnID != toColumnID {
+		if oldColumnID == toColumnID {
+			// Перемещение ВНУТРИ одной колонки
+			if oldPosition == position {
+				return nil // Позиция не изменилась
+			}
+
+			if oldPosition < position {
+				// Двигаем вниз: сдвигаем промежуточные задачи вверх
+				tx.Model(&Task{}).
+					Where("column_id = ? AND position > ? AND position <= ? AND id != ?",
+						toColumnID, oldPosition, position, taskID).
+					UpdateColumn("position", gorm.Expr("position - 1"))
+			} else {
+				// Двигаем вверх: сдвигаем промежуточные задачи вниз
+				tx.Model(&Task{}).
+					Where("column_id = ? AND position >= ? AND position < ? AND id != ?",
+						toColumnID, position, oldPosition, taskID).
+					UpdateColumn("position", gorm.Expr("position + 1"))
+			}
+		} else {
+			// Перемещение МЕЖДУ колонками
+
+			// 1. Сдвигаем задачи в старой колонке (закрываем дырку)
 			tx.Model(&Task{}).
-				Where("column_id = ? AND position > ?", oldColumnID, task.Position).
+				Where("column_id = ? AND position > ?", oldColumnID, oldPosition).
 				UpdateColumn("position", gorm.Expr("position - 1"))
+
+			// 2. Сдвигаем задачи в новой колонке (освобождаем место)
+			tx.Model(&Task{}).
+				Where("column_id = ? AND position >= ?", toColumnID, position).
+				UpdateColumn("position", gorm.Expr("position + 1"))
 		}
 
-		// Сдвигаем задачи в новой колонке
-		tx.Model(&Task{}).
-			Where("column_id = ? AND position >= ?", toColumnID, position).
-			UpdateColumn("position", gorm.Expr("position + 1"))
-
-		// Обновляем задачу
+		// Обновляем саму задачу
 		updates := map[string]interface{}{
 			"column_id":  toColumnID,
 			"position":   position,
@@ -409,6 +432,9 @@ func (r *repository) GetMaxPosition(ctx context.Context, columnID int64) (int32,
 }
 
 func (r *repository) BulkUpdateTasks(ctx context.Context, taskIDs []int64, updates map[string]interface{}) error {
+	if len(taskIDs) == 0 {
+		return nil // Пустой список - ничего не делаем
+	}
 	updates["updated_at"] = time.Now()
 	return r.db.WithContext(ctx).
 		Model(&Task{}).
@@ -417,12 +443,13 @@ func (r *repository) BulkUpdateTasks(ctx context.Context, taskIDs []int64, updat
 }
 
 func (r *repository) BulkDeleteTasks(ctx context.Context, taskIDs []int64) error {
+	if len(taskIDs) == 0 {
+		return nil
+	}
 	return r.db.WithContext(ctx).
 		Where("id IN ?", taskIDs).
 		Delete(&Task{}).Error
 }
-
-// ==================== Task Counts ====================
 
 func (r *repository) GetTaskCounts(ctx context.Context, taskID int64) (comments, attachments, watchers int32, err error) {
 	var c, a, w int64
@@ -455,7 +482,68 @@ func (r *repository) GetColumnTaskCounts(ctx context.Context, boardID int64) (ma
 	return counts, err
 }
 
-// ==================== Comment ====================
+func (r *repository) GetTasksCountsBatch(ctx context.Context, taskIDs []int64) (map[int64]TaskCounts, error) {
+	if len(taskIDs) == 0 {
+		return make(map[int64]TaskCounts), nil
+	}
+
+	result := make(map[int64]TaskCounts)
+	for _, id := range taskIDs {
+		result[id] = TaskCounts{}
+	}
+
+	type countResult struct {
+		TaskID int64
+		Count  int64
+	}
+
+	// Comments - один запрос для всех задач
+	var commentCounts []countResult
+	r.db.WithContext(ctx).
+		Model(&Comment{}).
+		Select("task_id, COUNT(*) as count").
+		Where("task_id IN ? AND deleted_at IS NULL", taskIDs).
+		Group("task_id").
+		Find(&commentCounts)
+	for _, c := range commentCounts {
+		if counts, ok := result[c.TaskID]; ok {
+			counts.Comments = int32(c.Count)
+			result[c.TaskID] = counts
+		}
+	}
+
+	// Attachments - один запрос для всех задач
+	var attachmentCounts []countResult
+	r.db.WithContext(ctx).
+		Model(&Attachment{}).
+		Select("task_id, COUNT(*) as count").
+		Where("task_id IN ?", taskIDs).
+		Group("task_id").
+		Find(&attachmentCounts)
+	for _, c := range attachmentCounts {
+		if counts, ok := result[c.TaskID]; ok {
+			counts.Attachments = int32(c.Count)
+			result[c.TaskID] = counts
+		}
+	}
+
+	// Watchers - один запрос для всех задач
+	var watcherCounts []countResult
+	r.db.WithContext(ctx).
+		Model(&Watcher{}).
+		Select("task_id, COUNT(*) as count").
+		Where("task_id IN ?", taskIDs).
+		Group("task_id").
+		Find(&watcherCounts)
+	for _, c := range watcherCounts {
+		if counts, ok := result[c.TaskID]; ok {
+			counts.Watchers = int32(c.Count)
+			result[c.TaskID] = counts
+		}
+	}
+
+	return result, nil
+}
 
 func (r *repository) CreateComment(ctx context.Context, comment *Comment) error {
 	comment.CreatedAt = time.Now()
@@ -531,8 +619,6 @@ func (r *repository) ListAttachments(ctx context.Context, taskID int64) ([]*Atta
 	return attachments, err
 }
 
-// ==================== Activity Log ====================
-
 func (r *repository) LogActivity(ctx context.Context, log *ActivityLog) error {
 	log.CreatedAt = time.Now()
 	return r.db.WithContext(ctx).Create(log).Error
@@ -557,8 +643,6 @@ func (r *repository) ListActivity(ctx context.Context, taskID int64, limit, offs
 
 	return logs, total, err
 }
-
-// ==================== Watcher ====================
 
 func (r *repository) AddWatcher(ctx context.Context, watcher *Watcher) error {
 	watcher.CreatedAt = time.Now()
@@ -587,8 +671,6 @@ func (r *repository) IsWatching(ctx context.Context, taskID, userID int64) (bool
 		Count(&count).Error
 	return count > 0, err
 }
-
-// ==================== Stats ====================
 
 func (r *repository) GetBoardStats(ctx context.Context, boardID int64) (*BoardStats, error) {
 	stats := &BoardStats{
@@ -701,8 +783,6 @@ func (r *repository) GetDailyStats(ctx context.Context, boardID int64, days int)
 
 	return stats, nil
 }
-
-// ==================== My Tasks ====================
 
 func (r *repository) GetMyTasks(ctx context.Context, userID int64, filter MyTasksFilter) ([]*Task, int64, error) {
 	var tasks []*Task
