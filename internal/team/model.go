@@ -19,8 +19,15 @@ const (
 )
 
 type Team struct {
-	ID        int64  `gorm:"primaryKey"`
-	Name      string `gorm:"not null"`
+	ID   int64  `gorm:"primaryKey"`
+	Name string `gorm:"not null"`
+
+	UniversityID        int64  `gorm:"not null;index"`
+	DepartmentID        int64  `gorm:"not null;index"`
+	InviteCode          string `gorm:"type:varchar(6);not null"`
+	CompositionLocked   bool   `gorm:"not null;default:false"`
+	CompositionLockedAt *time.Time
+
 	CreatedAt time.Time
 	UpdatedAt time.Time
 	DeletedAt gorm.DeletedAt `gorm:"index"`

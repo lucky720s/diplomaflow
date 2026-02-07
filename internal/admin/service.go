@@ -12,6 +12,7 @@ import (
 	teamv1 "github.com/lucky720s/diplomaflow/pkg/protobuf/team/v1"
 	workflowv1 "github.com/lucky720s/diplomaflow/pkg/protobuf/workflow/v1"
 	"go.uber.org/zap"
+	"google.golang.org/grpc/metadata"
 )
 
 type Service struct {
@@ -69,7 +70,12 @@ func (s *Service) SubmitTopicRegistration(ctx context.Context, req *SubmitTopicR
 	if err := s.repo.CreateTopicRegistration(ctx, reg); err != nil {
 		return nil, fmt.Errorf("не удалось создать заявление: %w", err)
 	}
+	ctx2 := metadata.AppendToOutgoingContext(ctx, "x-internal-service", "admin_service")
 
+	_, _ = s.teamClient.LockTeamComposition(ctx2, &teamv1.LockTeamCompositionRequest{
+		TeamId: req.TeamID,
+		Reason: "topic_registration_submitted",
+	})
 	// Создаём запись в истории
 	review := &TopicRegistrationReview{
 		RegistrationID: reg.ID,

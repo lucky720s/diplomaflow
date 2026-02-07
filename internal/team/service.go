@@ -2,6 +2,7 @@ package team
 
 import (
 	"context"
+	"crypto/rand"
 	"errors"
 	"fmt"
 	"time"
@@ -12,13 +13,19 @@ import (
 )
 
 var (
-	ErrUnauthorized         = errors.New("unauthorized")
-	ErrNotLeader            = errors.New("only team leader can perform this action")
-	ErrCannotRemoveLeader   = errors.New("cannot remove team leader")
-	ErrNewLeaderNotInTeam   = errors.New("new leader must be a team member")
-	ErrCannotLeaveAsLeader  = errors.New("leader cannot leave without transferring leadership first")
-	ErrTeamHasActiveProject = errors.New("cannot delete team with active project")
+	ErrUnauthorized          = errors.New("unauthorized")
+	ErrNotLeader             = errors.New("only team leader can perform this action")
+	ErrCannotRemoveLeader    = errors.New("cannot remove team leader")
+	ErrNewLeaderNotInTeam    = errors.New("new leader must be a team member")
+	ErrCannotLeaveAsLeader   = errors.New("leader cannot leave without transferring leadership first")
+	ErrTeamHasActiveProject  = errors.New("cannot delete team with active project")
+	ErrInvalidInviteCode     = errors.New("invalid invite code")
+	ErrTeamCompositionLocked = errors.New("team composition is locked")
+	ErrTeamFull              = errors.New("team is full")
+	ErrForbiddenDepartment   = errors.New("user department does not match team department")
+	ErrForbiddenRole         = errors.New("only students can join by code")
 )
+var inviteAlphabet = []byte("0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz")
 
 type Service struct {
 	repo           Repository
@@ -41,8 +48,14 @@ func NewService(
 	}
 }
 
-func (s *Service) CreateTeam(ctx context.Context, name string, leaderID int64, memberIDs []int64, departmentID int64) (int64, error) {
-	// Проверяем, что лидер не состоит в другой команде
+func (s *Service) CreateTeam(
+	ctx context.Context,
+	name string,
+	leaderID int64,
+	memberIDs []int64,
+	departmentID, universityID int64,
+) (int64, error) {
+	// 1) Лидер не должен быть в другой команде
 	inTeam, err := s.repo.IsUserInTeam(ctx, leaderID)
 	if err != nil {
 		return 0, fmt.Errorf("check user team: %w", err)
@@ -51,31 +64,78 @@ func (s *Service) CreateTeam(ctx context.Context, name string, leaderID int64, m
 		return 0, ErrAlreadyInTeam
 	}
 
-	// Создаём команду
-	team := &Team{
-		Name: name,
-	}
-	if err := s.repo.Create(ctx, team); err != nil {
-		return 0, fmt.Errorf("create team: %w", err)
+	// 2) Берём team config из workflow и проверяем max_size
+	cfg, cfgErr := s.workflowClient.GetTeamConfiguration(ctx, &workflowv1.GetTeamConfigurationRequest{
+		DepartmentId: departmentID,
+		WorkflowId:   0,
+		StateId:      0,
+	})
+	if cfgErr == nil && cfg != nil && cfg.TeamConfig != nil && cfg.TeamConfig.MaxSize > 0 {
+		requested := int32(1 + len(memberIDs)) // лидер + приглашённые
+		if requested > cfg.TeamConfig.MaxSize {
+			return 0, ErrTeamFull
+		}
 	}
 
-	// Добавляем лидера
+	// 3) Создаём команду + invite_code (retry при уникальном конфликте)
+	var team *Team
+	for i := 0; i < 10; i++ {
+		code, err := generateInviteCode()
+		if err != nil {
+			return 0, fmt.Errorf("generate invite code: %w", err)
+		}
+
+		t := &Team{
+			Name:         name,
+			UniversityID: universityID,
+			DepartmentID: departmentID,
+			InviteCode:   code,
+		}
+
+		if err := s.repo.Create(ctx, t); err != nil {
+			if isUniqueViolation(err) {
+				continue
+			}
+			return 0, fmt.Errorf("create team: %w", err)
+		}
+
+		team = t
+		break
+	}
+	if team == nil {
+		return 0, errors.New("failed to generate unique invite code")
+	}
+
+	// 4) Добавляем лидера
 	leaderMember := &TeamMember{
 		TeamID: team.ID,
 		UserID: leaderID,
 		Role:   RoleLeader,
 	}
 	if err := s.repo.AddMember(ctx, leaderMember); err != nil {
+		// best-effort rollback, чтобы не осталась пустая команда
+		_ = s.repo.Delete(ctx, team.ID)
 		return 0, fmt.Errorf("add leader: %w", err)
 	}
 
-	// Создаём приглашения для остальных участников
+	// 5) ExpiresAt берём из workflow (если доступен), иначе 3 дня
+	inviteDays := int32(3)
+	if cfgErr == nil && cfg != nil && cfg.InviteExpireDays > 0 {
+		inviteDays = cfg.InviteExpireDays
+	}
+
+	// 6) Создаём приглашения
 	for _, memberID := range memberIDs {
 		if memberID == leaderID {
 			continue
 		}
-		// Проверяем, не в команде ли уже участник
-		memberInTeam, _ := s.repo.IsUserInTeam(ctx, memberID)
+
+		memberInTeam, err := s.repo.IsUserInTeam(ctx, memberID)
+		if err != nil {
+			// лучше логировать и продолжать, чем падать после создания команды
+			s.logger.Warn("check member team failed", zap.Int64("user_id", memberID), zap.Error(err))
+			continue
+		}
 		if memberInTeam {
 			continue
 		}
@@ -85,15 +145,23 @@ func (s *Service) CreateTeam(ctx context.Context, name string, leaderID int64, m
 			UserID:    memberID,
 			InviterID: leaderID,
 			Status:    InviteStatusPending,
-			ExpiresAt: time.Now().Add(72 * time.Hour), // 3 дня на ответ
+			ExpiresAt: time.Now().Add(time.Duration(inviteDays) * 24 * time.Hour),
 		}
-		_ = s.repo.CreateInvite(ctx, invite)
+		if err := s.repo.CreateInvite(ctx, invite); err != nil {
+			s.logger.Warn("create invite failed",
+				zap.Int64("team_id", team.ID),
+				zap.Int64("user_id", memberID),
+				zap.Error(err),
+			)
+			continue
+		}
 	}
 
 	s.logger.Info("Team created",
 		zap.Int64("team_id", team.ID),
 		zap.String("name", name),
-		zap.Int64("leader_id", leaderID))
+		zap.Int64("leader_id", leaderID),
+	)
 
 	return team.ID, nil
 }
@@ -174,6 +242,10 @@ func (s *Service) DeleteTeam(ctx context.Context, teamID int64, requesterID int6
 }
 
 func (s *Service) LeaveTeam(ctx context.Context, teamID int64, userID int64) (*LeaveTeamResult, error) {
+	if err := s.ensureCompositionUnlocked(ctx, teamID); err != nil {
+		return nil, err
+	}
+
 	// Проверяем, что пользователь состоит в этой команде
 	member, err := s.repo.GetMember(ctx, teamID, userID)
 	if err != nil {
@@ -261,6 +333,10 @@ type LeaveTeamResult struct {
 }
 
 func (s *Service) TransferLeadership(ctx context.Context, teamID int64, currentLeaderID int64, newLeaderID int64) (*Team, []*TeamMember, error) {
+	if err := s.ensureCompositionUnlocked(ctx, teamID); err != nil {
+		return nil, nil, err
+	}
+
 	// Проверяем, что текущий пользователь — лидер
 	if err := s.validateLeader(ctx, teamID, currentLeaderID); err != nil {
 		return nil, nil, err
@@ -296,7 +372,14 @@ func (s *Service) TransferLeadership(ctx context.Context, teamID int64, currentL
 	return s.GetTeam(ctx, teamID)
 }
 
-func (s *Service) AddMember(ctx context.Context, teamID int64, userID int64, role string) error {
+func (s *Service) AddMember(ctx context.Context, teamID int64, userID int64, role string, requesterID int64) error {
+	if err := s.ensureCompositionUnlocked(ctx, teamID); err != nil {
+		return err
+	}
+	if err := s.validateLeader(ctx, teamID, requesterID); err != nil {
+		return err
+	}
+
 	// Проверяем, не в команде ли уже
 	inTeam, err := s.repo.IsUserInTeam(ctx, userID)
 	if err != nil {
@@ -320,6 +403,10 @@ func (s *Service) AddMember(ctx context.Context, teamID int64, userID int64, rol
 }
 
 func (s *Service) RemoveMember(ctx context.Context, teamID int64, userID int64, requesterID int64) error {
+	if err := s.ensureCompositionUnlocked(ctx, teamID); err != nil {
+		return err
+	}
+
 	// Проверяем права: только лидер может удалять участников
 	if err := s.validateLeader(ctx, teamID, requesterID); err != nil {
 		return err
@@ -368,6 +455,9 @@ func (s *Service) RespondToInvite(ctx context.Context, inviteID int64, userID in
 	}
 
 	if accept {
+		if err := s.ensureCompositionUnlocked(ctx, invite.TeamID); err != nil {
+			return err
+		}
 		// Проверяем, не в команде ли уже
 		inTeam, _ := s.repo.IsUserInTeam(ctx, userID)
 		if inTeam {
@@ -440,6 +530,112 @@ func (s *Service) validateLeader(ctx context.Context, teamID int64, userID int64
 
 	if member.Role != RoleLeader {
 		return ErrNotLeader
+	}
+	return nil
+}
+
+func generateInviteCode() (string, error) {
+	const n = 6
+	b := make([]byte, n)
+	rb := make([]byte, n)
+	if _, err := rand.Read(rb); err != nil { // crypto/rand
+		return "", err
+	}
+	for i := 0; i < n; i++ {
+		b[i] = inviteAlphabet[int(rb[i])%len(inviteAlphabet)]
+	}
+	return string(b), nil
+}
+func (s *Service) LockTeamComposition(ctx context.Context, teamID int64) error {
+	now := time.Now().UTC()
+	return s.repo.SetCompositionLocked(ctx, teamID, true, &now)
+}
+func (s *Service) JoinTeamByCode(ctx context.Context, inviteCode string, userID, universityID, departmentID int64, role string) (int64, error) {
+	if role != "student" {
+		return 0, ErrForbiddenRole
+	}
+	if len(inviteCode) != 6 {
+		return 0, ErrInvalidInviteCode
+	}
+
+	inTeam, err := s.repo.IsUserInTeam(ctx, userID)
+	if err != nil {
+		return 0, err
+	}
+	if inTeam {
+		return 0, ErrAlreadyInTeam
+	}
+
+	team, err := s.repo.GetByInviteCode(ctx, universityID, inviteCode)
+	if err != nil {
+		return 0, err
+	}
+
+	if team.CompositionLocked {
+		return 0, ErrTeamCompositionLocked
+	}
+	if team.DepartmentID != departmentID {
+		return 0, ErrForbiddenDepartment
+	}
+
+	cfg, err := s.workflowClient.GetTeamConfiguration(ctx, &workflowv1.GetTeamConfigurationRequest{
+		DepartmentId: team.DepartmentID,
+		WorkflowId:   0,
+		StateId:      0,
+	})
+	if err == nil && cfg != nil && cfg.TeamConfig != nil && cfg.TeamConfig.MaxSize > 0 {
+		cnt, err := s.repo.GetMemberCount(ctx, team.ID)
+		if err != nil {
+			return 0, err
+		}
+		if int32(cnt) >= cfg.TeamConfig.MaxSize {
+			return 0, ErrTeamFull
+		}
+	}
+	if err := s.repo.AddMember(ctx, &TeamMember{
+		TeamID: team.ID,
+		UserID: userID,
+		Role:   RoleMember,
+	}); err != nil {
+		return 0, err
+	}
+	return team.ID, nil
+}
+func (s *Service) RegenerateInviteCode(ctx context.Context, teamID, requesterID int64) (string, error) {
+	if err := s.validateLeader(ctx, teamID, requesterID); err != nil { // уже есть [[1]]
+		return "", err
+	}
+	team, err := s.repo.GetByID(ctx, teamID)
+	if err != nil {
+		return "", err
+	}
+	if team.CompositionLocked {
+		return "", ErrTeamCompositionLocked
+	}
+
+	for i := 0; i < 10; i++ {
+		c, err := generateInviteCode()
+		if err != nil {
+			return "", err
+		}
+		err = s.repo.UpdateInviteCode(ctx, teamID, c)
+		if err == nil {
+			return c, nil
+		}
+		if isUniqueViolation(err) {
+			continue
+		}
+		return "", err
+	}
+	return "", errors.New("failed to generate unique invite code")
+}
+func (s *Service) ensureCompositionUnlocked(ctx context.Context, teamID int64) error {
+	team, err := s.repo.GetByID(ctx, teamID)
+	if err != nil {
+		return err
+	}
+	if team.CompositionLocked {
+		return ErrTeamCompositionLocked
 	}
 	return nil
 }

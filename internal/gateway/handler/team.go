@@ -27,11 +27,11 @@ func (h *Handler) CreateTeam(c *gin.Context) {
 		return
 	}
 
-	// Важно: TeamService ожидает department_id в metadata (x-department-id) [[1]]
 	departmentID := c.GetInt64("departmentId")
 	ctx := metadata.AppendToOutgoingContext(
 		c.Request.Context(),
 		"x-department-id", strconv.FormatInt(departmentID, 10),
+		"x-university-id", strconv.FormatInt(c.GetInt64("universityId"), 10),
 		"x-user-id", strconv.FormatInt(leaderID, 10),
 	)
 
@@ -190,8 +190,11 @@ func (h *Handler) UpdateTeam(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, gin.H{"error": bindErr.Error()})
 		return
 	}
-
-	res, err := h.teamClient.UpdateTeam(c.Request.Context(), &teamv1.UpdateTeamRequest{
+	ctx := metadata.AppendToOutgoingContext(
+		c.Request.Context(),
+		"x-user-id", strconv.FormatInt(userID, 10),
+	)
+	res, err := h.teamClient.UpdateTeam(ctx, &teamv1.UpdateTeamRequest{
 		Team: &teamv1.Team{
 			Id:   teamID,
 			Name: reqBody.Name,
@@ -216,8 +219,11 @@ func (h *Handler) DeleteTeam(c *gin.Context) {
 	}
 
 	userID := c.GetInt64("userId")
-
-	_, err = h.teamClient.DeleteTeam(c.Request.Context(), &teamv1.DeleteTeamRequest{
+	ctx := metadata.AppendToOutgoingContext(
+		c.Request.Context(),
+		"x-user-id", strconv.FormatInt(userID, 10),
+	)
+	_, err = h.teamClient.DeleteTeam(ctx, &teamv1.DeleteTeamRequest{
 		TeamId:      teamID,
 		RequesterId: userID,
 	})
@@ -244,7 +250,13 @@ func (h *Handler) AddMember(c *gin.Context) {
 		return
 	}
 
-	res, err := h.teamClient.AddMember(c.Request.Context(), &teamv1.AddMemberRequest{
+	userID := c.GetInt64("userId")
+	ctx := metadata.AppendToOutgoingContext(
+		c.Request.Context(),
+		"x-user-id", strconv.FormatInt(userID, 10),
+	)
+
+	res, err := h.teamClient.AddMember(ctx, &teamv1.AddMemberRequest{
 		TeamId: teamID,
 		UserId: reqBody.UserID,
 		Role:   reqBody.Role,
@@ -272,8 +284,11 @@ func (h *Handler) RemoveMember(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, gin.H{"error": bindErr.Error()})
 		return
 	}
-
-	_, err = h.teamClient.RemoveMember(c.Request.Context(), &teamv1.RemoveMemberRequest{
+	ctx := metadata.AppendToOutgoingContext(
+		c.Request.Context(),
+		"x-user-id", strconv.FormatInt(userID, 10),
+	)
+	_, err = h.teamClient.RemoveMember(ctx, &teamv1.RemoveMemberRequest{
 		TeamId:      teamID,
 		UserId:      reqBody.UserID,
 		RequesterId: userID,
@@ -354,4 +369,57 @@ func (h *Handler) TransferLeadership(c *gin.Context) {
 		"message":      res.Message,
 		"updated_team": res.UpdatedTeam,
 	})
+}
+func (h *Handler) JoinTeamByCode(c *gin.Context) {
+	if c.GetString("role") != "student" {
+		c.JSON(http.StatusForbidden, gin.H{"error": "only students can join"})
+		return
+	}
+	userID := c.GetInt64("userId")
+	universityID := c.GetInt64("universityId")
+	departmentID := c.GetInt64("departmentId")
+
+	var req struct {
+		Code string `json:"code" binding:"required,len=6"`
+	}
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	ctx := metadata.AppendToOutgoingContext(
+		c.Request.Context(),
+		"x-user-id", strconv.FormatInt(userID, 10),
+		"x-user-role", c.GetString("role"),
+		"x-university-id", strconv.FormatInt(universityID, 10),
+		"x-department-id", strconv.FormatInt(departmentID, 10),
+	)
+
+	resp, err := h.teamClient.JoinTeamByCode(ctx, &teamv1.JoinTeamByCodeRequest{InviteCode: req.Code})
+	if err != nil {
+		MapGRPCError(c, err)
+		return
+	}
+	c.JSON(http.StatusOK, resp)
+}
+func (h *Handler) RegenerateInviteCode(c *gin.Context) {
+	teamID, err := strconv.ParseInt(c.Param("id"), 10, 64)
+	if err != nil {
+		c.JSON(400, gin.H{"error": "invalid team id"})
+		return
+	}
+
+	userID := c.GetInt64("userId")
+
+	ctx := metadata.AppendToOutgoingContext(
+		c.Request.Context(),
+		"x-user-id", strconv.FormatInt(userID, 10),
+	)
+
+	resp, err := h.teamClient.RegenerateInviteCode(ctx, &teamv1.RegenerateInviteCodeRequest{TeamId: teamID})
+	if err != nil {
+		MapGRPCError(c, err)
+		return
+	}
+	c.JSON(http.StatusOK, resp)
 }

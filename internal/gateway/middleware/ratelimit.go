@@ -33,3 +33,30 @@ func RateLimitMiddleware(rdb *redis.Client, limit int, window time.Duration) gin
 		c.Next()
 	}
 }
+func RateLimitByUserMiddleware(rdb *redis.Client, limit int, window time.Duration) gin.HandlerFunc {
+	return func(c *gin.Context) {
+		userID := c.GetInt64("userId")
+		if userID == 0 {
+			c.Next()
+			return
+		}
+		path := c.FullPath()
+		key := fmt.Sprintf("rate_limit:user:%d:%s", userID, path)
+
+		count, err := rdb.Incr(context.Background(), key).Result()
+		if err != nil {
+			c.Next()
+			return
+		}
+		if count == 1 {
+			rdb.Expire(context.Background(), key, window)
+		}
+		if count > int64(limit) {
+			c.AbortWithStatusJSON(http.StatusTooManyRequests, gin.H{
+				"error": "Too many join attempts. Try later.",
+			})
+			return
+		}
+		c.Next()
+	}
+}

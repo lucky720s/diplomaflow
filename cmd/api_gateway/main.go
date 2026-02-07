@@ -152,6 +152,12 @@ func main() {
 			teams.DELETE("/supervisor-requests/:id", handler.CancelSupervisorRequest)
 			teams.POST("/:id/leave", handler.LeaveTeam)
 			teams.POST("/:id/transfer-leadership", handler.TransferLeadership)
+			teams.POST("/join-by-code",
+				middleware.RateLimitByUserMiddleware(rdb, 10, time.Hour),
+				handler.JoinTeamByCode,
+			)
+			teams.POST("/:id/invite-code/regenerate", handler.RegenerateInviteCode)
+
 		}
 
 		invites := v1.Group("/invites")

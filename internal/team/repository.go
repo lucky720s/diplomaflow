@@ -46,6 +46,12 @@ type Repository interface {
 
 	// List
 	ListTeams(ctx context.Context, departmentID int64, limit, offset int) ([]*Team, int64, error)
+	// Invite code
+	GetByInviteCode(ctx context.Context, universityID int64, code string) (*Team, error)
+	UpdateInviteCode(ctx context.Context, teamID int64, code string) error
+
+	// Lock
+	SetCompositionLocked(ctx context.Context, teamID int64, locked bool, lockedAt *time.Time) error
 }
 
 type repository struct {
@@ -238,8 +244,9 @@ func (r *repository) ListTeams(ctx context.Context, departmentID int64, limit, o
 	query := r.db.WithContext(ctx).Model(&Team{})
 
 	if departmentID > 0 {
-		query = query.Joins("JOIN projects p ON p.id = teams.project_id").
+		query = query.Joins("JOIN projects p ON p.team_id = teams.id").
 			Where("p.department_id = ?", departmentID)
+
 	}
 
 	if err := query.Count(&total).Error; err != nil {
@@ -253,4 +260,35 @@ func (r *repository) ListTeams(ctx context.Context, departmentID int64, limit, o
 		Find(&teams).Error
 
 	return teams, total, err
+}
+func (r *repository) GetByInviteCode(ctx context.Context, universityID int64, code string) (*Team, error) {
+	var team Team
+	err := r.db.WithContext(ctx).
+		Where("university_id = ? AND invite_code = ?", universityID, code).
+		First(&team).Error
+	if errors.Is(err, gorm.ErrRecordNotFound) {
+		return nil, ErrTeamNotFound
+	}
+	return &team, err
+}
+
+func (r *repository) UpdateInviteCode(ctx context.Context, teamID int64, code string) error {
+	return r.db.WithContext(ctx).
+		Model(&Team{}).
+		Where("id = ?", teamID).
+		Updates(map[string]any{
+			"invite_code": code,
+			"updated_at":  time.Now(),
+		}).Error
+}
+
+func (r *repository) SetCompositionLocked(ctx context.Context, teamID int64, locked bool, lockedAt *time.Time) error {
+	return r.db.WithContext(ctx).
+		Model(&Team{}).
+		Where("id = ?", teamID).
+		Updates(map[string]any{
+			"composition_locked":    locked,
+			"composition_locked_at": lockedAt,
+			"updated_at":            time.Now(),
+		}).Error
 }

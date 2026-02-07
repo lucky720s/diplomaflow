@@ -844,6 +844,8 @@ type TeamInfo struct {
 	Members             []*TeamMember          `protobuf:"bytes,4,rep,name=members,proto3" json:"members,omitempty"`
 	MemberCount         int32                  `protobuf:"varint,5,opt,name=member_count,json=memberCount,proto3" json:"member_count,omitempty"`
 	PendingInvitesCount int32                  `protobuf:"varint,6,opt,name=pending_invites_count,json=pendingInvitesCount,proto3" json:"pending_invites_count,omitempty"`
+	InviteCode          string                 `protobuf:"bytes,7,opt,name=invite_code,json=inviteCode,proto3" json:"invite_code,omitempty"`
+	CompositionLocked   bool                   `protobuf:"varint,8,opt,name=composition_locked,json=compositionLocked,proto3" json:"composition_locked,omitempty"`
 	unknownFields       protoimpl.UnknownFields
 	sizeCache           protoimpl.SizeCache
 }
@@ -918,6 +920,20 @@ func (x *TeamInfo) GetPendingInvitesCount() int32 {
 		return x.PendingInvitesCount
 	}
 	return 0
+}
+
+func (x *TeamInfo) GetInviteCode() string {
+	if x != nil {
+		return x.InviteCode
+	}
+	return ""
+}
+
+func (x *TeamInfo) GetCompositionLocked() bool {
+	if x != nil {
+		return x.CompositionLocked
+	}
+	return false
 }
 
 type UpdateTeamRequest struct {
@@ -1668,6 +1684,294 @@ func (x *TransferLeadershipResponse) GetUpdatedTeam() *TeamInfo {
 	return nil
 }
 
+type JoinTeamByCodeRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	InviteCode    string                 `protobuf:"bytes,1,opt,name=invite_code,json=inviteCode,proto3" json:"invite_code,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *JoinTeamByCodeRequest) Reset() {
+	*x = JoinTeamByCodeRequest{}
+	mi := &file_team_v1_team_proto_msgTypes[29]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *JoinTeamByCodeRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*JoinTeamByCodeRequest) ProtoMessage() {}
+
+func (x *JoinTeamByCodeRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_team_v1_team_proto_msgTypes[29]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use JoinTeamByCodeRequest.ProtoReflect.Descriptor instead.
+func (*JoinTeamByCodeRequest) Descriptor() ([]byte, []int) {
+	return file_team_v1_team_proto_rawDescGZIP(), []int{29}
+}
+
+func (x *JoinTeamByCodeRequest) GetInviteCode() string {
+	if x != nil {
+		return x.InviteCode
+	}
+	return ""
+}
+
+type JoinTeamByCodeResponse struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Success       bool                   `protobuf:"varint,1,opt,name=success,proto3" json:"success,omitempty"`
+	Message       string                 `protobuf:"bytes,2,opt,name=message,proto3" json:"message,omitempty"`
+	TeamId        int64                  `protobuf:"varint,3,opt,name=team_id,json=teamId,proto3" json:"team_id,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *JoinTeamByCodeResponse) Reset() {
+	*x = JoinTeamByCodeResponse{}
+	mi := &file_team_v1_team_proto_msgTypes[30]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *JoinTeamByCodeResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*JoinTeamByCodeResponse) ProtoMessage() {}
+
+func (x *JoinTeamByCodeResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_team_v1_team_proto_msgTypes[30]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use JoinTeamByCodeResponse.ProtoReflect.Descriptor instead.
+func (*JoinTeamByCodeResponse) Descriptor() ([]byte, []int) {
+	return file_team_v1_team_proto_rawDescGZIP(), []int{30}
+}
+
+func (x *JoinTeamByCodeResponse) GetSuccess() bool {
+	if x != nil {
+		return x.Success
+	}
+	return false
+}
+
+func (x *JoinTeamByCodeResponse) GetMessage() string {
+	if x != nil {
+		return x.Message
+	}
+	return ""
+}
+
+func (x *JoinTeamByCodeResponse) GetTeamId() int64 {
+	if x != nil {
+		return x.TeamId
+	}
+	return 0
+}
+
+type RegenerateInviteCodeRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	TeamId        int64                  `protobuf:"varint,1,opt,name=team_id,json=teamId,proto3" json:"team_id,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *RegenerateInviteCodeRequest) Reset() {
+	*x = RegenerateInviteCodeRequest{}
+	mi := &file_team_v1_team_proto_msgTypes[31]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *RegenerateInviteCodeRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*RegenerateInviteCodeRequest) ProtoMessage() {}
+
+func (x *RegenerateInviteCodeRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_team_v1_team_proto_msgTypes[31]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use RegenerateInviteCodeRequest.ProtoReflect.Descriptor instead.
+func (*RegenerateInviteCodeRequest) Descriptor() ([]byte, []int) {
+	return file_team_v1_team_proto_rawDescGZIP(), []int{31}
+}
+
+func (x *RegenerateInviteCodeRequest) GetTeamId() int64 {
+	if x != nil {
+		return x.TeamId
+	}
+	return 0
+}
+
+type RegenerateInviteCodeResponse struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	InviteCode    string                 `protobuf:"bytes,1,opt,name=invite_code,json=inviteCode,proto3" json:"invite_code,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *RegenerateInviteCodeResponse) Reset() {
+	*x = RegenerateInviteCodeResponse{}
+	mi := &file_team_v1_team_proto_msgTypes[32]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *RegenerateInviteCodeResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*RegenerateInviteCodeResponse) ProtoMessage() {}
+
+func (x *RegenerateInviteCodeResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_team_v1_team_proto_msgTypes[32]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use RegenerateInviteCodeResponse.ProtoReflect.Descriptor instead.
+func (*RegenerateInviteCodeResponse) Descriptor() ([]byte, []int) {
+	return file_team_v1_team_proto_rawDescGZIP(), []int{32}
+}
+
+func (x *RegenerateInviteCodeResponse) GetInviteCode() string {
+	if x != nil {
+		return x.InviteCode
+	}
+	return ""
+}
+
+type LockTeamCompositionRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	TeamId        int64                  `protobuf:"varint,1,opt,name=team_id,json=teamId,proto3" json:"team_id,omitempty"`
+	Reason        string                 `protobuf:"bytes,2,opt,name=reason,proto3" json:"reason,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *LockTeamCompositionRequest) Reset() {
+	*x = LockTeamCompositionRequest{}
+	mi := &file_team_v1_team_proto_msgTypes[33]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *LockTeamCompositionRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*LockTeamCompositionRequest) ProtoMessage() {}
+
+func (x *LockTeamCompositionRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_team_v1_team_proto_msgTypes[33]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use LockTeamCompositionRequest.ProtoReflect.Descriptor instead.
+func (*LockTeamCompositionRequest) Descriptor() ([]byte, []int) {
+	return file_team_v1_team_proto_rawDescGZIP(), []int{33}
+}
+
+func (x *LockTeamCompositionRequest) GetTeamId() int64 {
+	if x != nil {
+		return x.TeamId
+	}
+	return 0
+}
+
+func (x *LockTeamCompositionRequest) GetReason() string {
+	if x != nil {
+		return x.Reason
+	}
+	return ""
+}
+
+type LockTeamCompositionResponse struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Success       bool                   `protobuf:"varint,1,opt,name=success,proto3" json:"success,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *LockTeamCompositionResponse) Reset() {
+	*x = LockTeamCompositionResponse{}
+	mi := &file_team_v1_team_proto_msgTypes[34]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *LockTeamCompositionResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*LockTeamCompositionResponse) ProtoMessage() {}
+
+func (x *LockTeamCompositionResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_team_v1_team_proto_msgTypes[34]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use LockTeamCompositionResponse.ProtoReflect.Descriptor instead.
+func (*LockTeamCompositionResponse) Descriptor() ([]byte, []int) {
+	return file_team_v1_team_proto_rawDescGZIP(), []int{34}
+}
+
+func (x *LockTeamCompositionResponse) GetSuccess() bool {
+	if x != nil {
+		return x.Success
+	}
+	return false
+}
+
 var File_team_v1_team_proto protoreflect.FileDescriptor
 
 const file_team_v1_team_proto_rawDesc = "" +
@@ -1724,14 +2028,17 @@ const file_team_v1_team_proto_rawDesc = "" +
 	"\auser_id\x18\x01 \x01(\x03R\x06userId\"U\n" +
 	"\x11GetMyTeamResponse\x12\x19\n" +
 	"\bhas_team\x18\x01 \x01(\bR\ahasTeam\x12%\n" +
-	"\x04team\x18\x02 \x01(\v2\x11.team.v1.TeamInfoR\x04team\"\xd1\x01\n" +
+	"\x04team\x18\x02 \x01(\v2\x11.team.v1.TeamInfoR\x04team\"\xa1\x02\n" +
 	"\bTeamInfo\x12\x17\n" +
 	"\ateam_id\x18\x01 \x01(\x03R\x06teamId\x12\x12\n" +
 	"\x04name\x18\x02 \x01(\tR\x04name\x12\x12\n" +
 	"\x04role\x18\x03 \x01(\tR\x04role\x12-\n" +
 	"\amembers\x18\x04 \x03(\v2\x13.team.v1.TeamMemberR\amembers\x12!\n" +
 	"\fmember_count\x18\x05 \x01(\x05R\vmemberCount\x122\n" +
-	"\x15pending_invites_count\x18\x06 \x01(\x05R\x13pendingInvitesCount\"\x96\x01\n" +
+	"\x15pending_invites_count\x18\x06 \x01(\x05R\x13pendingInvitesCount\x12\x1f\n" +
+	"\vinvite_code\x18\a \x01(\tR\n" +
+	"inviteCode\x12-\n" +
+	"\x12composition_locked\x18\b \x01(\bR\x11compositionLocked\"\x96\x01\n" +
 	"\x11UpdateTeamRequest\x12!\n" +
 	"\x04team\x18\x01 \x01(\v2\r.team.v1.TeamR\x04team\x12;\n" +
 	"\vupdate_mask\x18\x02 \x01(\v2\x1a.google.protobuf.FieldMaskR\n" +
@@ -1782,7 +2089,24 @@ const file_team_v1_team_proto_rawDesc = "" +
 	"\x1aTransferLeadershipResponse\x12\x18\n" +
 	"\asuccess\x18\x01 \x01(\bR\asuccess\x12\x18\n" +
 	"\amessage\x18\x02 \x01(\tR\amessage\x124\n" +
-	"\fupdated_team\x18\x03 \x01(\v2\x11.team.v1.TeamInfoR\vupdatedTeam2\xd8\a\n" +
+	"\fupdated_team\x18\x03 \x01(\v2\x11.team.v1.TeamInfoR\vupdatedTeam\"C\n" +
+	"\x15JoinTeamByCodeRequest\x12*\n" +
+	"\vinvite_code\x18\x01 \x01(\tB\t\xfaB\x06r\x04\x10\x06\x18\x06R\n" +
+	"inviteCode\"e\n" +
+	"\x16JoinTeamByCodeResponse\x12\x18\n" +
+	"\asuccess\x18\x01 \x01(\bR\asuccess\x12\x18\n" +
+	"\amessage\x18\x02 \x01(\tR\amessage\x12\x17\n" +
+	"\ateam_id\x18\x03 \x01(\x03R\x06teamId\"?\n" +
+	"\x1bRegenerateInviteCodeRequest\x12 \n" +
+	"\ateam_id\x18\x01 \x01(\x03B\a\xfaB\x04\"\x02 \x00R\x06teamId\"?\n" +
+	"\x1cRegenerateInviteCodeResponse\x12\x1f\n" +
+	"\vinvite_code\x18\x01 \x01(\tR\n" +
+	"inviteCode\"V\n" +
+	"\x1aLockTeamCompositionRequest\x12 \n" +
+	"\ateam_id\x18\x01 \x01(\x03B\a\xfaB\x04\"\x02 \x00R\x06teamId\x12\x16\n" +
+	"\x06reason\x18\x02 \x01(\tR\x06reason\"7\n" +
+	"\x1bLockTeamCompositionResponse\x12\x18\n" +
+	"\asuccess\x18\x01 \x01(\bR\asuccess2\xf2\t\n" +
 	"\vTeamService\x12E\n" +
 	"\n" +
 	"CreateTeam\x12\x1a.team.v1.CreateTeamRequest\x1a\x1b.team.v1.CreateTeamResponse\x12<\n" +
@@ -1799,7 +2123,10 @@ const file_team_v1_team_proto_rawDesc = "" +
 	"\tAddMember\x12\x19.team.v1.AddMemberRequest\x1a\x1a.team.v1.AddMemberResponse\x12D\n" +
 	"\fRemoveMember\x12\x1c.team.v1.RemoveMemberRequest\x1a\x16.google.protobuf.Empty\x12B\n" +
 	"\tLeaveTeam\x12\x19.team.v1.LeaveTeamRequest\x1a\x1a.team.v1.LeaveTeamResponse\x12]\n" +
-	"\x12TransferLeadership\x12\".team.v1.TransferLeadershipRequest\x1a#.team.v1.TransferLeadershipResponseB7Z5github.com/lucky720s/diplomaflow/pkg/protobuf/team/v1b\x06proto3"
+	"\x12TransferLeadership\x12\".team.v1.TransferLeadershipRequest\x1a#.team.v1.TransferLeadershipResponse\x12Q\n" +
+	"\x0eJoinTeamByCode\x12\x1e.team.v1.JoinTeamByCodeRequest\x1a\x1f.team.v1.JoinTeamByCodeResponse\x12c\n" +
+	"\x14RegenerateInviteCode\x12$.team.v1.RegenerateInviteCodeRequest\x1a%.team.v1.RegenerateInviteCodeResponse\x12`\n" +
+	"\x13LockTeamComposition\x12#.team.v1.LockTeamCompositionRequest\x1a$.team.v1.LockTeamCompositionResponseB7Z5github.com/lucky720s/diplomaflow/pkg/protobuf/team/v1b\x06proto3"
 
 var (
 	file_team_v1_team_proto_rawDescOnce sync.Once
@@ -1813,7 +2140,7 @@ func file_team_v1_team_proto_rawDescGZIP() []byte {
 	return file_team_v1_team_proto_rawDescData
 }
 
-var file_team_v1_team_proto_msgTypes = make([]protoimpl.MessageInfo, 29)
+var file_team_v1_team_proto_msgTypes = make([]protoimpl.MessageInfo, 35)
 var file_team_v1_team_proto_goTypes = []any{
 	(*CreateTeamRequest)(nil),            // 0: team.v1.CreateTeamRequest
 	(*CreateTeamResponse)(nil),           // 1: team.v1.CreateTeamResponse
@@ -1844,8 +2171,14 @@ var file_team_v1_team_proto_goTypes = []any{
 	(*LeaveTeamResponse)(nil),            // 26: team.v1.LeaveTeamResponse
 	(*TransferLeadershipRequest)(nil),    // 27: team.v1.TransferLeadershipRequest
 	(*TransferLeadershipResponse)(nil),   // 28: team.v1.TransferLeadershipResponse
-	(*fieldmaskpb.FieldMask)(nil),        // 29: google.protobuf.FieldMask
-	(*emptypb.Empty)(nil),                // 30: google.protobuf.Empty
+	(*JoinTeamByCodeRequest)(nil),        // 29: team.v1.JoinTeamByCodeRequest
+	(*JoinTeamByCodeResponse)(nil),       // 30: team.v1.JoinTeamByCodeResponse
+	(*RegenerateInviteCodeRequest)(nil),  // 31: team.v1.RegenerateInviteCodeRequest
+	(*RegenerateInviteCodeResponse)(nil), // 32: team.v1.RegenerateInviteCodeResponse
+	(*LockTeamCompositionRequest)(nil),   // 33: team.v1.LockTeamCompositionRequest
+	(*LockTeamCompositionResponse)(nil),  // 34: team.v1.LockTeamCompositionResponse
+	(*fieldmaskpb.FieldMask)(nil),        // 35: google.protobuf.FieldMask
+	(*emptypb.Empty)(nil),                // 36: google.protobuf.Empty
 }
 var file_team_v1_team_proto_depIdxs = []int32{
 	3,  // 0: team.v1.GetTeamResponse.members:type_name -> team.v1.TeamMember
@@ -1854,7 +2187,7 @@ var file_team_v1_team_proto_depIdxs = []int32{
 	15, // 3: team.v1.GetMyTeamResponse.team:type_name -> team.v1.TeamInfo
 	3,  // 4: team.v1.TeamInfo.members:type_name -> team.v1.TeamMember
 	22, // 5: team.v1.UpdateTeamRequest.team:type_name -> team.v1.Team
-	29, // 6: team.v1.UpdateTeamRequest.update_mask:type_name -> google.protobuf.FieldMask
+	35, // 6: team.v1.UpdateTeamRequest.update_mask:type_name -> google.protobuf.FieldMask
 	22, // 7: team.v1.UpdateTeamResponse.team:type_name -> team.v1.Team
 	3,  // 8: team.v1.Team.members:type_name -> team.v1.TeamMember
 	22, // 9: team.v1.ListTeamsResponse.teams:type_name -> team.v1.Team
@@ -1872,21 +2205,27 @@ var file_team_v1_team_proto_depIdxs = []int32{
 	21, // 21: team.v1.TeamService.RemoveMember:input_type -> team.v1.RemoveMemberRequest
 	25, // 22: team.v1.TeamService.LeaveTeam:input_type -> team.v1.LeaveTeamRequest
 	27, // 23: team.v1.TeamService.TransferLeadership:input_type -> team.v1.TransferLeadershipRequest
-	1,  // 24: team.v1.TeamService.CreateTeam:output_type -> team.v1.CreateTeamResponse
-	4,  // 25: team.v1.TeamService.GetTeam:output_type -> team.v1.GetTeamResponse
-	7,  // 26: team.v1.TeamService.GetAvailableStudents:output_type -> team.v1.GetAvailableStudentsResponse
-	10, // 27: team.v1.TeamService.GetMyInvites:output_type -> team.v1.GetMyInvitesResponse
-	12, // 28: team.v1.TeamService.RespondToInvite:output_type -> team.v1.RespondToInviteResponse
-	14, // 29: team.v1.TeamService.GetMyTeam:output_type -> team.v1.GetMyTeamResponse
-	24, // 30: team.v1.TeamService.ListTeams:output_type -> team.v1.ListTeamsResponse
-	17, // 31: team.v1.TeamService.UpdateTeam:output_type -> team.v1.UpdateTeamResponse
-	30, // 32: team.v1.TeamService.DeleteTeam:output_type -> google.protobuf.Empty
-	20, // 33: team.v1.TeamService.AddMember:output_type -> team.v1.AddMemberResponse
-	30, // 34: team.v1.TeamService.RemoveMember:output_type -> google.protobuf.Empty
-	26, // 35: team.v1.TeamService.LeaveTeam:output_type -> team.v1.LeaveTeamResponse
-	28, // 36: team.v1.TeamService.TransferLeadership:output_type -> team.v1.TransferLeadershipResponse
-	24, // [24:37] is the sub-list for method output_type
-	11, // [11:24] is the sub-list for method input_type
+	29, // 24: team.v1.TeamService.JoinTeamByCode:input_type -> team.v1.JoinTeamByCodeRequest
+	31, // 25: team.v1.TeamService.RegenerateInviteCode:input_type -> team.v1.RegenerateInviteCodeRequest
+	33, // 26: team.v1.TeamService.LockTeamComposition:input_type -> team.v1.LockTeamCompositionRequest
+	1,  // 27: team.v1.TeamService.CreateTeam:output_type -> team.v1.CreateTeamResponse
+	4,  // 28: team.v1.TeamService.GetTeam:output_type -> team.v1.GetTeamResponse
+	7,  // 29: team.v1.TeamService.GetAvailableStudents:output_type -> team.v1.GetAvailableStudentsResponse
+	10, // 30: team.v1.TeamService.GetMyInvites:output_type -> team.v1.GetMyInvitesResponse
+	12, // 31: team.v1.TeamService.RespondToInvite:output_type -> team.v1.RespondToInviteResponse
+	14, // 32: team.v1.TeamService.GetMyTeam:output_type -> team.v1.GetMyTeamResponse
+	24, // 33: team.v1.TeamService.ListTeams:output_type -> team.v1.ListTeamsResponse
+	17, // 34: team.v1.TeamService.UpdateTeam:output_type -> team.v1.UpdateTeamResponse
+	36, // 35: team.v1.TeamService.DeleteTeam:output_type -> google.protobuf.Empty
+	20, // 36: team.v1.TeamService.AddMember:output_type -> team.v1.AddMemberResponse
+	36, // 37: team.v1.TeamService.RemoveMember:output_type -> google.protobuf.Empty
+	26, // 38: team.v1.TeamService.LeaveTeam:output_type -> team.v1.LeaveTeamResponse
+	28, // 39: team.v1.TeamService.TransferLeadership:output_type -> team.v1.TransferLeadershipResponse
+	30, // 40: team.v1.TeamService.JoinTeamByCode:output_type -> team.v1.JoinTeamByCodeResponse
+	32, // 41: team.v1.TeamService.RegenerateInviteCode:output_type -> team.v1.RegenerateInviteCodeResponse
+	34, // 42: team.v1.TeamService.LockTeamComposition:output_type -> team.v1.LockTeamCompositionResponse
+	27, // [27:43] is the sub-list for method output_type
+	11, // [11:27] is the sub-list for method input_type
 	11, // [11:11] is the sub-list for extension type_name
 	11, // [11:11] is the sub-list for extension extendee
 	0,  // [0:11] is the sub-list for field type_name
@@ -1903,7 +2242,7 @@ func file_team_v1_team_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_team_v1_team_proto_rawDesc), len(file_team_v1_team_proto_rawDesc)),
 			NumEnums:      0,
-			NumMessages:   29,
+			NumMessages:   35,
 			NumExtensions: 0,
 			NumServices:   1,
 		},

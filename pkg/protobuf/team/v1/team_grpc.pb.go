@@ -33,6 +33,9 @@ const (
 	TeamService_RemoveMember_FullMethodName         = "/team.v1.TeamService/RemoveMember"
 	TeamService_LeaveTeam_FullMethodName            = "/team.v1.TeamService/LeaveTeam"
 	TeamService_TransferLeadership_FullMethodName   = "/team.v1.TeamService/TransferLeadership"
+	TeamService_JoinTeamByCode_FullMethodName       = "/team.v1.TeamService/JoinTeamByCode"
+	TeamService_RegenerateInviteCode_FullMethodName = "/team.v1.TeamService/RegenerateInviteCode"
+	TeamService_LockTeamComposition_FullMethodName  = "/team.v1.TeamService/LockTeamComposition"
 )
 
 // TeamServiceClient is the client API for TeamService service.
@@ -52,6 +55,9 @@ type TeamServiceClient interface {
 	RemoveMember(ctx context.Context, in *RemoveMemberRequest, opts ...grpc.CallOption) (*emptypb.Empty, error)
 	LeaveTeam(ctx context.Context, in *LeaveTeamRequest, opts ...grpc.CallOption) (*LeaveTeamResponse, error)
 	TransferLeadership(ctx context.Context, in *TransferLeadershipRequest, opts ...grpc.CallOption) (*TransferLeadershipResponse, error)
+	JoinTeamByCode(ctx context.Context, in *JoinTeamByCodeRequest, opts ...grpc.CallOption) (*JoinTeamByCodeResponse, error)
+	RegenerateInviteCode(ctx context.Context, in *RegenerateInviteCodeRequest, opts ...grpc.CallOption) (*RegenerateInviteCodeResponse, error)
+	LockTeamComposition(ctx context.Context, in *LockTeamCompositionRequest, opts ...grpc.CallOption) (*LockTeamCompositionResponse, error)
 }
 
 type teamServiceClient struct {
@@ -192,6 +198,36 @@ func (c *teamServiceClient) TransferLeadership(ctx context.Context, in *Transfer
 	return out, nil
 }
 
+func (c *teamServiceClient) JoinTeamByCode(ctx context.Context, in *JoinTeamByCodeRequest, opts ...grpc.CallOption) (*JoinTeamByCodeResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(JoinTeamByCodeResponse)
+	err := c.cc.Invoke(ctx, TeamService_JoinTeamByCode_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *teamServiceClient) RegenerateInviteCode(ctx context.Context, in *RegenerateInviteCodeRequest, opts ...grpc.CallOption) (*RegenerateInviteCodeResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(RegenerateInviteCodeResponse)
+	err := c.cc.Invoke(ctx, TeamService_RegenerateInviteCode_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *teamServiceClient) LockTeamComposition(ctx context.Context, in *LockTeamCompositionRequest, opts ...grpc.CallOption) (*LockTeamCompositionResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(LockTeamCompositionResponse)
+	err := c.cc.Invoke(ctx, TeamService_LockTeamComposition_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // TeamServiceServer is the server API for TeamService service.
 // All implementations must embed UnimplementedTeamServiceServer
 // for forward compatibility.
@@ -209,6 +245,9 @@ type TeamServiceServer interface {
 	RemoveMember(context.Context, *RemoveMemberRequest) (*emptypb.Empty, error)
 	LeaveTeam(context.Context, *LeaveTeamRequest) (*LeaveTeamResponse, error)
 	TransferLeadership(context.Context, *TransferLeadershipRequest) (*TransferLeadershipResponse, error)
+	JoinTeamByCode(context.Context, *JoinTeamByCodeRequest) (*JoinTeamByCodeResponse, error)
+	RegenerateInviteCode(context.Context, *RegenerateInviteCodeRequest) (*RegenerateInviteCodeResponse, error)
+	LockTeamComposition(context.Context, *LockTeamCompositionRequest) (*LockTeamCompositionResponse, error)
 	mustEmbedUnimplementedTeamServiceServer()
 }
 
@@ -257,6 +296,15 @@ func (UnimplementedTeamServiceServer) LeaveTeam(context.Context, *LeaveTeamReque
 }
 func (UnimplementedTeamServiceServer) TransferLeadership(context.Context, *TransferLeadershipRequest) (*TransferLeadershipResponse, error) {
 	return nil, status.Error(codes.Unimplemented, "method TransferLeadership not implemented")
+}
+func (UnimplementedTeamServiceServer) JoinTeamByCode(context.Context, *JoinTeamByCodeRequest) (*JoinTeamByCodeResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method JoinTeamByCode not implemented")
+}
+func (UnimplementedTeamServiceServer) RegenerateInviteCode(context.Context, *RegenerateInviteCodeRequest) (*RegenerateInviteCodeResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method RegenerateInviteCode not implemented")
+}
+func (UnimplementedTeamServiceServer) LockTeamComposition(context.Context, *LockTeamCompositionRequest) (*LockTeamCompositionResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method LockTeamComposition not implemented")
 }
 func (UnimplementedTeamServiceServer) mustEmbedUnimplementedTeamServiceServer() {}
 func (UnimplementedTeamServiceServer) testEmbeddedByValue()                     {}
@@ -513,6 +561,60 @@ func _TeamService_TransferLeadership_Handler(srv interface{}, ctx context.Contex
 	return interceptor(ctx, in, info, handler)
 }
 
+func _TeamService_JoinTeamByCode_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(JoinTeamByCodeRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(TeamServiceServer).JoinTeamByCode(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: TeamService_JoinTeamByCode_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(TeamServiceServer).JoinTeamByCode(ctx, req.(*JoinTeamByCodeRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _TeamService_RegenerateInviteCode_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(RegenerateInviteCodeRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(TeamServiceServer).RegenerateInviteCode(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: TeamService_RegenerateInviteCode_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(TeamServiceServer).RegenerateInviteCode(ctx, req.(*RegenerateInviteCodeRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _TeamService_LockTeamComposition_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(LockTeamCompositionRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(TeamServiceServer).LockTeamComposition(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: TeamService_LockTeamComposition_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(TeamServiceServer).LockTeamComposition(ctx, req.(*LockTeamCompositionRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // TeamService_ServiceDesc is the grpc.ServiceDesc for TeamService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -571,6 +673,18 @@ var TeamService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "TransferLeadership",
 			Handler:    _TeamService_TransferLeadership_Handler,
+		},
+		{
+			MethodName: "JoinTeamByCode",
+			Handler:    _TeamService_JoinTeamByCode_Handler,
+		},
+		{
+			MethodName: "RegenerateInviteCode",
+			Handler:    _TeamService_RegenerateInviteCode_Handler,
+		},
+		{
+			MethodName: "LockTeamComposition",
+			Handler:    _TeamService_LockTeamComposition_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

@@ -1807,6 +1807,10 @@ func (m *TeamInfo) validate(all bool) error {
 
 	// no validation rules for PendingInvitesCount
 
+	// no validation rules for InviteCode
+
+	// no validation rules for CompositionLocked
+
 	if len(errors) > 0 {
 		return TeamInfoMultiError(errors)
 	}
@@ -3486,3 +3490,664 @@ var _ interface {
 	Cause() error
 	ErrorName() string
 } = TransferLeadershipResponseValidationError{}
+
+// Validate checks the field values on JoinTeamByCodeRequest with the rules
+// defined in the proto definition for this message. If any rules are
+// violated, the first error encountered is returned, or nil if there are no violations.
+func (m *JoinTeamByCodeRequest) Validate() error {
+	return m.validate(false)
+}
+
+// ValidateAll checks the field values on JoinTeamByCodeRequest with the rules
+// defined in the proto definition for this message. If any rules are
+// violated, the result is a list of violation errors wrapped in
+// JoinTeamByCodeRequestMultiError, or nil if none found.
+func (m *JoinTeamByCodeRequest) ValidateAll() error {
+	return m.validate(true)
+}
+
+func (m *JoinTeamByCodeRequest) validate(all bool) error {
+	if m == nil {
+		return nil
+	}
+
+	var errors []error
+
+	if utf8.RuneCountInString(m.GetInviteCode()) != 6 {
+		err := JoinTeamByCodeRequestValidationError{
+			field:  "InviteCode",
+			reason: "value length must be 6 runes",
+		}
+		if !all {
+			return err
+		}
+		errors = append(errors, err)
+
+	}
+
+	if len(errors) > 0 {
+		return JoinTeamByCodeRequestMultiError(errors)
+	}
+
+	return nil
+}
+
+// JoinTeamByCodeRequestMultiError is an error wrapping multiple validation
+// errors returned by JoinTeamByCodeRequest.ValidateAll() if the designated
+// constraints aren't met.
+type JoinTeamByCodeRequestMultiError []error
+
+// Error returns a concatenation of all the error messages it wraps.
+func (m JoinTeamByCodeRequestMultiError) Error() string {
+	msgs := make([]string, 0, len(m))
+	for _, err := range m {
+		msgs = append(msgs, err.Error())
+	}
+	return strings.Join(msgs, "; ")
+}
+
+// AllErrors returns a list of validation violation errors.
+func (m JoinTeamByCodeRequestMultiError) AllErrors() []error { return m }
+
+// JoinTeamByCodeRequestValidationError is the validation error returned by
+// JoinTeamByCodeRequest.Validate if the designated constraints aren't met.
+type JoinTeamByCodeRequestValidationError struct {
+	field  string
+	reason string
+	cause  error
+	key    bool
+}
+
+// Field function returns field value.
+func (e JoinTeamByCodeRequestValidationError) Field() string { return e.field }
+
+// Reason function returns reason value.
+func (e JoinTeamByCodeRequestValidationError) Reason() string { return e.reason }
+
+// Cause function returns cause value.
+func (e JoinTeamByCodeRequestValidationError) Cause() error { return e.cause }
+
+// Key function returns key value.
+func (e JoinTeamByCodeRequestValidationError) Key() bool { return e.key }
+
+// ErrorName returns error name.
+func (e JoinTeamByCodeRequestValidationError) ErrorName() string {
+	return "JoinTeamByCodeRequestValidationError"
+}
+
+// Error satisfies the builtin error interface
+func (e JoinTeamByCodeRequestValidationError) Error() string {
+	cause := ""
+	if e.cause != nil {
+		cause = fmt.Sprintf(" | caused by: %v", e.cause)
+	}
+
+	key := ""
+	if e.key {
+		key = "key for "
+	}
+
+	return fmt.Sprintf(
+		"invalid %sJoinTeamByCodeRequest.%s: %s%s",
+		key,
+		e.field,
+		e.reason,
+		cause)
+}
+
+var _ error = JoinTeamByCodeRequestValidationError{}
+
+var _ interface {
+	Field() string
+	Reason() string
+	Key() bool
+	Cause() error
+	ErrorName() string
+} = JoinTeamByCodeRequestValidationError{}
+
+// Validate checks the field values on JoinTeamByCodeResponse with the rules
+// defined in the proto definition for this message. If any rules are
+// violated, the first error encountered is returned, or nil if there are no violations.
+func (m *JoinTeamByCodeResponse) Validate() error {
+	return m.validate(false)
+}
+
+// ValidateAll checks the field values on JoinTeamByCodeResponse with the rules
+// defined in the proto definition for this message. If any rules are
+// violated, the result is a list of violation errors wrapped in
+// JoinTeamByCodeResponseMultiError, or nil if none found.
+func (m *JoinTeamByCodeResponse) ValidateAll() error {
+	return m.validate(true)
+}
+
+func (m *JoinTeamByCodeResponse) validate(all bool) error {
+	if m == nil {
+		return nil
+	}
+
+	var errors []error
+
+	// no validation rules for Success
+
+	// no validation rules for Message
+
+	// no validation rules for TeamId
+
+	if len(errors) > 0 {
+		return JoinTeamByCodeResponseMultiError(errors)
+	}
+
+	return nil
+}
+
+// JoinTeamByCodeResponseMultiError is an error wrapping multiple validation
+// errors returned by JoinTeamByCodeResponse.ValidateAll() if the designated
+// constraints aren't met.
+type JoinTeamByCodeResponseMultiError []error
+
+// Error returns a concatenation of all the error messages it wraps.
+func (m JoinTeamByCodeResponseMultiError) Error() string {
+	msgs := make([]string, 0, len(m))
+	for _, err := range m {
+		msgs = append(msgs, err.Error())
+	}
+	return strings.Join(msgs, "; ")
+}
+
+// AllErrors returns a list of validation violation errors.
+func (m JoinTeamByCodeResponseMultiError) AllErrors() []error { return m }
+
+// JoinTeamByCodeResponseValidationError is the validation error returned by
+// JoinTeamByCodeResponse.Validate if the designated constraints aren't met.
+type JoinTeamByCodeResponseValidationError struct {
+	field  string
+	reason string
+	cause  error
+	key    bool
+}
+
+// Field function returns field value.
+func (e JoinTeamByCodeResponseValidationError) Field() string { return e.field }
+
+// Reason function returns reason value.
+func (e JoinTeamByCodeResponseValidationError) Reason() string { return e.reason }
+
+// Cause function returns cause value.
+func (e JoinTeamByCodeResponseValidationError) Cause() error { return e.cause }
+
+// Key function returns key value.
+func (e JoinTeamByCodeResponseValidationError) Key() bool { return e.key }
+
+// ErrorName returns error name.
+func (e JoinTeamByCodeResponseValidationError) ErrorName() string {
+	return "JoinTeamByCodeResponseValidationError"
+}
+
+// Error satisfies the builtin error interface
+func (e JoinTeamByCodeResponseValidationError) Error() string {
+	cause := ""
+	if e.cause != nil {
+		cause = fmt.Sprintf(" | caused by: %v", e.cause)
+	}
+
+	key := ""
+	if e.key {
+		key = "key for "
+	}
+
+	return fmt.Sprintf(
+		"invalid %sJoinTeamByCodeResponse.%s: %s%s",
+		key,
+		e.field,
+		e.reason,
+		cause)
+}
+
+var _ error = JoinTeamByCodeResponseValidationError{}
+
+var _ interface {
+	Field() string
+	Reason() string
+	Key() bool
+	Cause() error
+	ErrorName() string
+} = JoinTeamByCodeResponseValidationError{}
+
+// Validate checks the field values on RegenerateInviteCodeRequest with the
+// rules defined in the proto definition for this message. If any rules are
+// violated, the first error encountered is returned, or nil if there are no violations.
+func (m *RegenerateInviteCodeRequest) Validate() error {
+	return m.validate(false)
+}
+
+// ValidateAll checks the field values on RegenerateInviteCodeRequest with the
+// rules defined in the proto definition for this message. If any rules are
+// violated, the result is a list of violation errors wrapped in
+// RegenerateInviteCodeRequestMultiError, or nil if none found.
+func (m *RegenerateInviteCodeRequest) ValidateAll() error {
+	return m.validate(true)
+}
+
+func (m *RegenerateInviteCodeRequest) validate(all bool) error {
+	if m == nil {
+		return nil
+	}
+
+	var errors []error
+
+	if m.GetTeamId() <= 0 {
+		err := RegenerateInviteCodeRequestValidationError{
+			field:  "TeamId",
+			reason: "value must be greater than 0",
+		}
+		if !all {
+			return err
+		}
+		errors = append(errors, err)
+	}
+
+	if len(errors) > 0 {
+		return RegenerateInviteCodeRequestMultiError(errors)
+	}
+
+	return nil
+}
+
+// RegenerateInviteCodeRequestMultiError is an error wrapping multiple
+// validation errors returned by RegenerateInviteCodeRequest.ValidateAll() if
+// the designated constraints aren't met.
+type RegenerateInviteCodeRequestMultiError []error
+
+// Error returns a concatenation of all the error messages it wraps.
+func (m RegenerateInviteCodeRequestMultiError) Error() string {
+	msgs := make([]string, 0, len(m))
+	for _, err := range m {
+		msgs = append(msgs, err.Error())
+	}
+	return strings.Join(msgs, "; ")
+}
+
+// AllErrors returns a list of validation violation errors.
+func (m RegenerateInviteCodeRequestMultiError) AllErrors() []error { return m }
+
+// RegenerateInviteCodeRequestValidationError is the validation error returned
+// by RegenerateInviteCodeRequest.Validate if the designated constraints
+// aren't met.
+type RegenerateInviteCodeRequestValidationError struct {
+	field  string
+	reason string
+	cause  error
+	key    bool
+}
+
+// Field function returns field value.
+func (e RegenerateInviteCodeRequestValidationError) Field() string { return e.field }
+
+// Reason function returns reason value.
+func (e RegenerateInviteCodeRequestValidationError) Reason() string { return e.reason }
+
+// Cause function returns cause value.
+func (e RegenerateInviteCodeRequestValidationError) Cause() error { return e.cause }
+
+// Key function returns key value.
+func (e RegenerateInviteCodeRequestValidationError) Key() bool { return e.key }
+
+// ErrorName returns error name.
+func (e RegenerateInviteCodeRequestValidationError) ErrorName() string {
+	return "RegenerateInviteCodeRequestValidationError"
+}
+
+// Error satisfies the builtin error interface
+func (e RegenerateInviteCodeRequestValidationError) Error() string {
+	cause := ""
+	if e.cause != nil {
+		cause = fmt.Sprintf(" | caused by: %v", e.cause)
+	}
+
+	key := ""
+	if e.key {
+		key = "key for "
+	}
+
+	return fmt.Sprintf(
+		"invalid %sRegenerateInviteCodeRequest.%s: %s%s",
+		key,
+		e.field,
+		e.reason,
+		cause)
+}
+
+var _ error = RegenerateInviteCodeRequestValidationError{}
+
+var _ interface {
+	Field() string
+	Reason() string
+	Key() bool
+	Cause() error
+	ErrorName() string
+} = RegenerateInviteCodeRequestValidationError{}
+
+// Validate checks the field values on RegenerateInviteCodeResponse with the
+// rules defined in the proto definition for this message. If any rules are
+// violated, the first error encountered is returned, or nil if there are no violations.
+func (m *RegenerateInviteCodeResponse) Validate() error {
+	return m.validate(false)
+}
+
+// ValidateAll checks the field values on RegenerateInviteCodeResponse with the
+// rules defined in the proto definition for this message. If any rules are
+// violated, the result is a list of violation errors wrapped in
+// RegenerateInviteCodeResponseMultiError, or nil if none found.
+func (m *RegenerateInviteCodeResponse) ValidateAll() error {
+	return m.validate(true)
+}
+
+func (m *RegenerateInviteCodeResponse) validate(all bool) error {
+	if m == nil {
+		return nil
+	}
+
+	var errors []error
+
+	// no validation rules for InviteCode
+
+	if len(errors) > 0 {
+		return RegenerateInviteCodeResponseMultiError(errors)
+	}
+
+	return nil
+}
+
+// RegenerateInviteCodeResponseMultiError is an error wrapping multiple
+// validation errors returned by RegenerateInviteCodeResponse.ValidateAll() if
+// the designated constraints aren't met.
+type RegenerateInviteCodeResponseMultiError []error
+
+// Error returns a concatenation of all the error messages it wraps.
+func (m RegenerateInviteCodeResponseMultiError) Error() string {
+	msgs := make([]string, 0, len(m))
+	for _, err := range m {
+		msgs = append(msgs, err.Error())
+	}
+	return strings.Join(msgs, "; ")
+}
+
+// AllErrors returns a list of validation violation errors.
+func (m RegenerateInviteCodeResponseMultiError) AllErrors() []error { return m }
+
+// RegenerateInviteCodeResponseValidationError is the validation error returned
+// by RegenerateInviteCodeResponse.Validate if the designated constraints
+// aren't met.
+type RegenerateInviteCodeResponseValidationError struct {
+	field  string
+	reason string
+	cause  error
+	key    bool
+}
+
+// Field function returns field value.
+func (e RegenerateInviteCodeResponseValidationError) Field() string { return e.field }
+
+// Reason function returns reason value.
+func (e RegenerateInviteCodeResponseValidationError) Reason() string { return e.reason }
+
+// Cause function returns cause value.
+func (e RegenerateInviteCodeResponseValidationError) Cause() error { return e.cause }
+
+// Key function returns key value.
+func (e RegenerateInviteCodeResponseValidationError) Key() bool { return e.key }
+
+// ErrorName returns error name.
+func (e RegenerateInviteCodeResponseValidationError) ErrorName() string {
+	return "RegenerateInviteCodeResponseValidationError"
+}
+
+// Error satisfies the builtin error interface
+func (e RegenerateInviteCodeResponseValidationError) Error() string {
+	cause := ""
+	if e.cause != nil {
+		cause = fmt.Sprintf(" | caused by: %v", e.cause)
+	}
+
+	key := ""
+	if e.key {
+		key = "key for "
+	}
+
+	return fmt.Sprintf(
+		"invalid %sRegenerateInviteCodeResponse.%s: %s%s",
+		key,
+		e.field,
+		e.reason,
+		cause)
+}
+
+var _ error = RegenerateInviteCodeResponseValidationError{}
+
+var _ interface {
+	Field() string
+	Reason() string
+	Key() bool
+	Cause() error
+	ErrorName() string
+} = RegenerateInviteCodeResponseValidationError{}
+
+// Validate checks the field values on LockTeamCompositionRequest with the
+// rules defined in the proto definition for this message. If any rules are
+// violated, the first error encountered is returned, or nil if there are no violations.
+func (m *LockTeamCompositionRequest) Validate() error {
+	return m.validate(false)
+}
+
+// ValidateAll checks the field values on LockTeamCompositionRequest with the
+// rules defined in the proto definition for this message. If any rules are
+// violated, the result is a list of violation errors wrapped in
+// LockTeamCompositionRequestMultiError, or nil if none found.
+func (m *LockTeamCompositionRequest) ValidateAll() error {
+	return m.validate(true)
+}
+
+func (m *LockTeamCompositionRequest) validate(all bool) error {
+	if m == nil {
+		return nil
+	}
+
+	var errors []error
+
+	if m.GetTeamId() <= 0 {
+		err := LockTeamCompositionRequestValidationError{
+			field:  "TeamId",
+			reason: "value must be greater than 0",
+		}
+		if !all {
+			return err
+		}
+		errors = append(errors, err)
+	}
+
+	// no validation rules for Reason
+
+	if len(errors) > 0 {
+		return LockTeamCompositionRequestMultiError(errors)
+	}
+
+	return nil
+}
+
+// LockTeamCompositionRequestMultiError is an error wrapping multiple
+// validation errors returned by LockTeamCompositionRequest.ValidateAll() if
+// the designated constraints aren't met.
+type LockTeamCompositionRequestMultiError []error
+
+// Error returns a concatenation of all the error messages it wraps.
+func (m LockTeamCompositionRequestMultiError) Error() string {
+	msgs := make([]string, 0, len(m))
+	for _, err := range m {
+		msgs = append(msgs, err.Error())
+	}
+	return strings.Join(msgs, "; ")
+}
+
+// AllErrors returns a list of validation violation errors.
+func (m LockTeamCompositionRequestMultiError) AllErrors() []error { return m }
+
+// LockTeamCompositionRequestValidationError is the validation error returned
+// by LockTeamCompositionRequest.Validate if the designated constraints aren't met.
+type LockTeamCompositionRequestValidationError struct {
+	field  string
+	reason string
+	cause  error
+	key    bool
+}
+
+// Field function returns field value.
+func (e LockTeamCompositionRequestValidationError) Field() string { return e.field }
+
+// Reason function returns reason value.
+func (e LockTeamCompositionRequestValidationError) Reason() string { return e.reason }
+
+// Cause function returns cause value.
+func (e LockTeamCompositionRequestValidationError) Cause() error { return e.cause }
+
+// Key function returns key value.
+func (e LockTeamCompositionRequestValidationError) Key() bool { return e.key }
+
+// ErrorName returns error name.
+func (e LockTeamCompositionRequestValidationError) ErrorName() string {
+	return "LockTeamCompositionRequestValidationError"
+}
+
+// Error satisfies the builtin error interface
+func (e LockTeamCompositionRequestValidationError) Error() string {
+	cause := ""
+	if e.cause != nil {
+		cause = fmt.Sprintf(" | caused by: %v", e.cause)
+	}
+
+	key := ""
+	if e.key {
+		key = "key for "
+	}
+
+	return fmt.Sprintf(
+		"invalid %sLockTeamCompositionRequest.%s: %s%s",
+		key,
+		e.field,
+		e.reason,
+		cause)
+}
+
+var _ error = LockTeamCompositionRequestValidationError{}
+
+var _ interface {
+	Field() string
+	Reason() string
+	Key() bool
+	Cause() error
+	ErrorName() string
+} = LockTeamCompositionRequestValidationError{}
+
+// Validate checks the field values on LockTeamCompositionResponse with the
+// rules defined in the proto definition for this message. If any rules are
+// violated, the first error encountered is returned, or nil if there are no violations.
+func (m *LockTeamCompositionResponse) Validate() error {
+	return m.validate(false)
+}
+
+// ValidateAll checks the field values on LockTeamCompositionResponse with the
+// rules defined in the proto definition for this message. If any rules are
+// violated, the result is a list of violation errors wrapped in
+// LockTeamCompositionResponseMultiError, or nil if none found.
+func (m *LockTeamCompositionResponse) ValidateAll() error {
+	return m.validate(true)
+}
+
+func (m *LockTeamCompositionResponse) validate(all bool) error {
+	if m == nil {
+		return nil
+	}
+
+	var errors []error
+
+	// no validation rules for Success
+
+	if len(errors) > 0 {
+		return LockTeamCompositionResponseMultiError(errors)
+	}
+
+	return nil
+}
+
+// LockTeamCompositionResponseMultiError is an error wrapping multiple
+// validation errors returned by LockTeamCompositionResponse.ValidateAll() if
+// the designated constraints aren't met.
+type LockTeamCompositionResponseMultiError []error
+
+// Error returns a concatenation of all the error messages it wraps.
+func (m LockTeamCompositionResponseMultiError) Error() string {
+	msgs := make([]string, 0, len(m))
+	for _, err := range m {
+		msgs = append(msgs, err.Error())
+	}
+	return strings.Join(msgs, "; ")
+}
+
+// AllErrors returns a list of validation violation errors.
+func (m LockTeamCompositionResponseMultiError) AllErrors() []error { return m }
+
+// LockTeamCompositionResponseValidationError is the validation error returned
+// by LockTeamCompositionResponse.Validate if the designated constraints
+// aren't met.
+type LockTeamCompositionResponseValidationError struct {
+	field  string
+	reason string
+	cause  error
+	key    bool
+}
+
+// Field function returns field value.
+func (e LockTeamCompositionResponseValidationError) Field() string { return e.field }
+
+// Reason function returns reason value.
+func (e LockTeamCompositionResponseValidationError) Reason() string { return e.reason }
+
+// Cause function returns cause value.
+func (e LockTeamCompositionResponseValidationError) Cause() error { return e.cause }
+
+// Key function returns key value.
+func (e LockTeamCompositionResponseValidationError) Key() bool { return e.key }
+
+// ErrorName returns error name.
+func (e LockTeamCompositionResponseValidationError) ErrorName() string {
+	return "LockTeamCompositionResponseValidationError"
+}
+
+// Error satisfies the builtin error interface
+func (e LockTeamCompositionResponseValidationError) Error() string {
+	cause := ""
+	if e.cause != nil {
+		cause = fmt.Sprintf(" | caused by: %v", e.cause)
+	}
+
+	key := ""
+	if e.key {
+		key = "key for "
+	}
+
+	return fmt.Sprintf(
+		"invalid %sLockTeamCompositionResponse.%s: %s%s",
+		key,
+		e.field,
+		e.reason,
+		cause)
+}
+
+var _ error = LockTeamCompositionResponseValidationError{}
+
+var _ interface {
+	Field() string
+	Reason() string
+	Key() bool
+	Cause() error
+	ErrorName() string
+} = LockTeamCompositionResponseValidationError{}

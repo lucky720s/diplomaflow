@@ -35,6 +35,34 @@ func getRequesterID(ctx context.Context) int64 {
 	}
 	return 0
 }
+func getUserRole(ctx context.Context) string {
+	if md, ok := metadata.FromIncomingContext(ctx); ok {
+		if vals := md.Get("x-user-role"); len(vals) > 0 {
+			return vals[0]
+		}
+	}
+	return ""
+}
+
+func getUniversityID(ctx context.Context) int64 {
+	if md, ok := metadata.FromIncomingContext(ctx); ok {
+		if vals := md.Get("x-university-id"); len(vals) > 0 {
+			id, _ := strconv.ParseInt(vals[0], 10, 64)
+			return id
+		}
+	}
+	return 0
+}
+
+func getDepartmentID(ctx context.Context) int64 {
+	if md, ok := metadata.FromIncomingContext(ctx); ok {
+		if vals := md.Get("x-department-id"); len(vals) > 0 {
+			id, _ := strconv.ParseInt(vals[0], 10, 64)
+			return id
+		}
+	}
+	return 0
+}
 
 func (h *Handler) CreateTeam(ctx context.Context, req *teamv1.CreateTeamRequest) (*teamv1.CreateTeamResponse, error) {
 	if req.Name == "" {
@@ -43,8 +71,13 @@ func (h *Handler) CreateTeam(ctx context.Context, req *teamv1.CreateTeamRequest)
 	if req.LeaderId == 0 {
 		return nil, status.Error(codes.InvalidArgument, "leader_id is required")
 	}
+	departmentID := getDepartmentID(ctx)
+	universityID := getUniversityID(ctx)
+	if departmentID == 0 || universityID == 0 {
+		return nil, status.Error(codes.InvalidArgument, "department_id and university_id are required")
+	}
 
-	teamID, err := h.service.CreateTeam(ctx, req.Name, req.LeaderId, req.MemberIds, 0)
+	teamID, err := h.service.CreateTeam(ctx, req.Name, req.LeaderId, req.MemberIds, departmentID, universityID)
 	if err != nil {
 		h.logger.Error("CreateTeam failed", zap.Error(err))
 		return nil, mapError(err)
@@ -101,6 +134,8 @@ func (h *Handler) GetMyTeam(ctx context.Context, req *teamv1.GetMyTeamRequest) (
 			Members:             pbMembers,
 			MemberCount:         int32(len(members)),
 			PendingInvitesCount: int32(pendingCount),
+			InviteCode:          team.InviteCode,
+			CompositionLocked:   team.CompositionLocked,
 		},
 	}, nil
 }
@@ -216,7 +251,12 @@ func (h *Handler) TransferLeadership(ctx context.Context, req *teamv1.TransferLe
 }
 
 func (h *Handler) AddMember(ctx context.Context, req *teamv1.AddMemberRequest) (*teamv1.AddMemberResponse, error) {
-	if err := h.service.AddMember(ctx, req.TeamId, req.UserId, req.Role); err != nil {
+	requesterID := getRequesterID(ctx)
+	if requesterID == 0 {
+		return nil, status.Error(codes.Unauthenticated, "user not authenticated")
+	}
+
+	if err := h.service.AddMember(ctx, req.TeamId, req.UserId, req.Role, requesterID); err != nil {
 		return nil, mapError(err)
 	}
 	return &teamv1.AddMemberResponse{
@@ -347,7 +387,65 @@ func mapError(err error) error {
 		return status.Error(codes.InvalidArgument, "new leader must be a team member")
 	case ErrUnauthorized:
 		return status.Error(codes.PermissionDenied, "unauthorized")
+	case ErrInvalidInviteCode:
+		return status.Error(codes.InvalidArgument, "invalid invite code")
+	case ErrTeamCompositionLocked:
+		return status.Error(codes.FailedPrecondition, "team composition is locked")
+	case ErrTeamFull:
+		return status.Error(codes.FailedPrecondition, "team is full")
+	case ErrForbiddenDepartment, ErrForbiddenRole:
+		return status.Error(codes.PermissionDenied, "forbidden")
+
 	default:
 		return status.Errorf(codes.Internal, "internal error: %v", err)
 	}
+}
+func (h *Handler) JoinTeamByCode(ctx context.Context, req *teamv1.JoinTeamByCodeRequest) (*teamv1.JoinTeamByCodeResponse, error) {
+	userID := getRequesterID(ctx)
+	if userID == 0 {
+		return nil, status.Error(codes.Unauthenticated, "unauthorized")
+	}
+
+	role := getUserRole(ctx)
+	universityID := getUniversityID(ctx)
+	departmentID := getDepartmentID(ctx)
+
+	teamID, err := h.service.JoinTeamByCode(ctx, req.InviteCode, userID, universityID, departmentID, role)
+	if err != nil {
+		return nil, mapError(err)
+	}
+
+	return &teamv1.JoinTeamByCodeResponse{Success: true, Message: "joined", TeamId: teamID}, nil
+}
+
+func (h *Handler) RegenerateInviteCode(ctx context.Context, req *teamv1.RegenerateInviteCodeRequest) (*teamv1.RegenerateInviteCodeResponse, error) {
+	requesterID := getRequesterID(ctx)
+	if requesterID == 0 {
+		return nil, status.Error(codes.Unauthenticated, "unauthorized")
+	}
+
+	code, err := h.service.RegenerateInviteCode(ctx, req.TeamId, requesterID)
+	if err != nil {
+		return nil, mapError(err)
+	}
+	return &teamv1.RegenerateInviteCodeResponse{InviteCode: code}, nil
+}
+
+func (h *Handler) LockTeamComposition(ctx context.Context, req *teamv1.LockTeamCompositionRequest) (*teamv1.LockTeamCompositionResponse, error) {
+	if getInternalService(ctx) != "admin_service" {
+		return nil, status.Error(codes.PermissionDenied, "forbidden")
+	}
+
+	if err := h.service.LockTeamComposition(ctx, req.TeamId); err != nil {
+		return nil, mapError(err)
+	}
+	return &teamv1.LockTeamCompositionResponse{Success: true}, nil
+}
+func getInternalService(ctx context.Context) string {
+	if md, ok := metadata.FromIncomingContext(ctx); ok {
+		if vals := md.Get("x-internal-service"); len(vals) > 0 {
+			return vals[0]
+		}
+	}
+	return ""
 }

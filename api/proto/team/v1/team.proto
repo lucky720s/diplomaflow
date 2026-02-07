@@ -22,7 +22,9 @@ service TeamService {
   rpc RemoveMember (RemoveMemberRequest) returns (google.protobuf.Empty);
   rpc LeaveTeam (LeaveTeamRequest) returns (LeaveTeamResponse);
   rpc TransferLeadership (TransferLeadershipRequest) returns (TransferLeadershipResponse);
-
+  rpc JoinTeamByCode (JoinTeamByCodeRequest) returns (JoinTeamByCodeResponse);
+  rpc RegenerateInviteCode (RegenerateInviteCodeRequest) returns (RegenerateInviteCodeResponse);
+  rpc LockTeamComposition (LockTeamCompositionRequest) returns (LockTeamCompositionResponse);
 }
 message CreateTeamRequest {
   string name = 1;
@@ -112,6 +114,8 @@ message TeamInfo {
   repeated TeamMember members = 4;
   int32 member_count = 5;
   int32 pending_invites_count = 6;
+  string invite_code = 7;
+  bool composition_locked = 8;
 }
 message UpdateTeamRequest {
   Team team = 1;
@@ -185,4 +189,27 @@ message TransferLeadershipResponse {
   bool success = 1;
   string message = 2;
   TeamInfo updated_team = 3;
+}
+message JoinTeamByCodeRequest {
+  string invite_code = 1 [(validate.rules).string.min_len = 6, (validate.rules).string.max_len = 6];
+}
+message JoinTeamByCodeResponse {
+  bool success = 1;
+  string message = 2;
+  int64 team_id = 3;
+}
+
+message RegenerateInviteCodeRequest {
+  int64 team_id = 1 [(validate.rules).int64.gt = 0];
+}
+message RegenerateInviteCodeResponse {
+  string invite_code = 1;
+}
+
+message LockTeamCompositionRequest {
+  int64 team_id = 1 [(validate.rules).int64.gt = 0];
+  string reason = 2;
+}
+message LockTeamCompositionResponse {
+  bool success = 1;
 }
