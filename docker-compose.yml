@@ -12,8 +12,8 @@ services:
       POSTGRES_USER: ${POSTGRES_USER:-diplomaflow}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?POSTGRES_PASSWORD is required}
       POSTGRES_DB: ${POSTGRES_DB:-diplomaflow}
-      PGPORT: "5433"    # <-- ИЗМЕНЕНО
-    command: -p 5433     # <-- ДОБАВЛЕНО
+      PGPORT: "5433"
+    command: -p 5433
     volumes:
       - pg_data:/var/lib/postgresql/data
     healthcheck:
@@ -26,7 +26,7 @@ services:
   redis:
     image: redis:7-alpine
     network_mode: host
-    command: redis-server --port 6380    # <-- Тоже на другой порт (6379 может быть занят)
+    command: redis-server --port 6380
     healthcheck:
       test: ["CMD", "redis-cli", "-h", "127.0.0.1", "-p", "6380", "ping"]
       interval: 5s
@@ -35,6 +35,7 @@ services:
     restart: unless-stopped
 
   migrate:
+    image: ${IMAGE_BASE:?IMAGE_BASE is required}/migrate:${IMAGE_TAG:-dev}
     build:
       context: .
       dockerfile: cmd/migrate/Dockerfile
@@ -48,6 +49,7 @@ services:
     restart: "no"
 
   api_gateway:
+    image: ${IMAGE_BASE:?IMAGE_BASE is required}/api_gateway:${IMAGE_TAG:-dev}
     build:
       context: .
       dockerfile: cmd/api_gateway/Dockerfile
@@ -80,6 +82,7 @@ services:
     restart: unless-stopped
 
   university_service:
+    image: ${IMAGE_BASE:?IMAGE_BASE is required}/university_service:${IMAGE_TAG:-dev}
     build:
       context: .
       dockerfile: cmd/university_service/Dockerfile
@@ -99,6 +102,7 @@ services:
     restart: unless-stopped
 
   auth_service:
+    image: ${IMAGE_BASE:?IMAGE_BASE is required}/auth_service:${IMAGE_TAG:-dev}
     build:
       context: .
       dockerfile: cmd/auth_service/Dockerfile
@@ -126,6 +130,7 @@ services:
     restart: unless-stopped
 
   project_service:
+    image: ${IMAGE_BASE:?IMAGE_BASE is required}/project_service:${IMAGE_TAG:-dev}
     build:
       context: .
       dockerfile: cmd/project_service/Dockerfile
@@ -136,7 +141,6 @@ services:
     depends_on:
       migrate:
         condition: service_completed_successfully
-
     healthcheck:
       test: ["CMD", "grpc_health_probe", "-addr=127.0.0.1:8083", "-service=project.v1.ProjectService"]
       interval: 10s
@@ -146,6 +150,7 @@ services:
     restart: unless-stopped
 
   team_service:
+    image: ${IMAGE_BASE:?IMAGE_BASE is required}/team_service:${IMAGE_TAG:-dev}
     build:
       context: .
       dockerfile: cmd/team_service/Dockerfile
@@ -165,6 +170,7 @@ services:
     restart: unless-stopped
 
   workflow_service:
+    image: ${IMAGE_BASE:?IMAGE_BASE is required}/workflow_service:${IMAGE_TAG:-dev}
     build:
       context: .
       dockerfile: cmd/workflow_service/Dockerfile
@@ -177,7 +183,6 @@ services:
     depends_on:
       migrate:
         condition: service_completed_successfully
-
     healthcheck:
       test: ["CMD", "grpc_health_probe", "-addr=127.0.0.1:8085", "-service=workflow.v1.WorkflowService"]
       interval: 10s
@@ -187,6 +192,7 @@ services:
     restart: unless-stopped
 
   role_service:
+    image: ${IMAGE_BASE:?IMAGE_BASE is required}/role_service:${IMAGE_TAG:-dev}
     build:
       context: .
       dockerfile: cmd/role_service/Dockerfile
@@ -206,6 +212,7 @@ services:
     restart: unless-stopped
 
   notification_service:
+    image: ${IMAGE_BASE:?IMAGE_BASE is required}/notification_service:${IMAGE_TAG:-dev}
     build:
       context: .
       dockerfile: cmd/notification_service/Dockerfile
@@ -225,6 +232,7 @@ services:
     restart: unless-stopped
 
   file_service:
+    image: ${IMAGE_BASE:?IMAGE_BASE is required}/file_service:${IMAGE_TAG:-dev}
     build:
       context: .
       dockerfile: cmd/file_service/Dockerfile
@@ -247,6 +255,7 @@ services:
     restart: unless-stopped
 
   form_service:
+    image: ${IMAGE_BASE:?IMAGE_BASE is required}/form_service:${IMAGE_TAG:-dev}
     build:
       context: .
       dockerfile: cmd/form_service/Dockerfile
@@ -266,6 +275,7 @@ services:
     restart: unless-stopped
 
   admin_service:
+    image: ${IMAGE_BASE:?IMAGE_BASE is required}/admin_service:${IMAGE_TAG:-dev}
     build:
       context: .
       dockerfile: cmd/admin_service/Dockerfile
@@ -285,6 +295,7 @@ services:
     restart: unless-stopped
 
   task_service:
+    image: ${IMAGE_BASE:?IMAGE_BASE is required}/task_service:${IMAGE_TAG:-dev}
     build:
       context: .
       dockerfile: cmd/task_service/Dockerfile
