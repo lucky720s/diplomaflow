@@ -13,8 +13,7 @@ import (
 )
 
 type App struct {
-	Handler      *Handler
-	EventHandler *EventHandler
+	Handler *Handler
 }
 
 func InitializeApp(
@@ -29,7 +28,6 @@ func InitializeApp(
 		NewRepository,
 		NewService,
 		NewHandler,
-		NewEventHandler,
 		wire.Struct(new(App), "*"),
 	)
 	return nil, nil, nil

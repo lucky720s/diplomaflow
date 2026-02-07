@@ -6,7 +6,6 @@ package project
 
 import (
 	"github.com/google/wire"
-	"github.com/lucky720s/diplomaflow/pkg/broker"
 	workflowv1 "github.com/lucky720s/diplomaflow/pkg/protobuf/workflow/v1"
 	"go.uber.org/zap"
 	"gorm.io/gorm"
@@ -20,7 +19,6 @@ func InitializeApp(
 	cfg *Config,
 	db *gorm.DB,
 	log *zap.Logger,
-	kafkaProducer *broker.Producer,
 	wfClient workflowv1.WorkflowServiceClient,
 ) (*App, func(), error) {
 	wire.Build(
@@ -33,7 +31,6 @@ func InitializeApp(
 		NewHandler,
 
 		NewDeadlineScheduler,
-		NewOutboxProcessor,
 
 		NewApp,
 	)

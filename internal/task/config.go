@@ -9,11 +9,6 @@ type Config struct {
 		DSN string `mapstructure:"dsn"`
 	} `mapstructure:"database"`
 
-	Kafka struct {
-		Brokers string `mapstructure:"brokers"`
-		GroupID string `mapstructure:"group_id"`
-	} `mapstructure:"kafka"`
-
 	Services struct {
 		AuthAddr         string `mapstructure:"auth_addr"`
 		TeamAddr         string `mapstructure:"team_addr"`

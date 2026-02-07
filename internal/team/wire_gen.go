@@ -20,10 +20,8 @@ func InitializeApp(cfg *Config, db *gorm.DB, logger *zap.Logger, authClient v1.A
 	teamRepository := NewRepository(db)
 	service := NewService(teamRepository, authClient, workflowClient, logger)
 	handler := NewHandler(service, logger)
-	eventHandler := NewEventHandler(service, workflowClient, notificationClient, logger)
 	app := &App{
-		Handler:      handler,
-		EventHandler: eventHandler,
+		Handler: handler,
 	}
 	return app, func() {
 	}, nil
@@ -32,6 +30,5 @@ func InitializeApp(cfg *Config, db *gorm.DB, logger *zap.Logger, authClient v1.A
 // wire.go:
 
 type App struct {
-	Handler      *Handler
-	EventHandler *EventHandler
+	Handler *Handler
 }

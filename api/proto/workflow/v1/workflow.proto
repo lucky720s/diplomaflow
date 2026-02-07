@@ -1,9 +1,12 @@
 syntax = "proto3";
 package workflow.v1;
+
 import "google/protobuf/struct.proto";
 import "google/protobuf/empty.proto";
 import "google/protobuf/timestamp.proto";
+
 option go_package = "github.com/lucky720s/diplomaflow/pkg/protobuf/workflow/v1";
+
 // ==================== ENUMS ====================
 enum StateType {
   STATE_TYPE_UNSPECIFIED = 0;
@@ -20,6 +23,7 @@ enum StateType {
   GRADING = 11;
   COMPLETED = 12;
 }
+
 enum ActionType {
   ACTION_TYPE_UNSPECIFIED = 0;
   SEND_NOTIFICATION = 1;
@@ -34,6 +38,7 @@ enum ActionType {
   GENERATE_DOCUMENT = 10;
   EXTERNAL_API = 11;
 }
+
 enum ActionTrigger {
   TRIGGER_UNSPECIFIED = 0;
   ON_ENTER = 1;
@@ -43,6 +48,7 @@ enum ActionTrigger {
   ON_CONDITION = 5;
   SCHEDULED = 6;
 }
+
 // ==================== MESSAGES ====================
 message Workflow {
   int64 id = 1;
@@ -59,6 +65,7 @@ message Workflow {
   google.protobuf.Timestamp created_at = 12;
   google.protobuf.Timestamp updated_at = 13;
 }
+
 message WorkflowSettings {
   bool team_required = 1;
   int32 min_team_size = 2;
@@ -72,6 +79,7 @@ message WorkflowSettings {
   repeated string required_roles = 10;
   repeated string allowed_file_types = 11;
 }
+
 message State {
   int64 id = 1;
   int64 workflow_id = 2;
@@ -92,6 +100,7 @@ message State {
   repeated StateAction actions = 17;
   repeated Transition outgoing_transitions = 18;
 }
+
 message Transition {
   int64 id = 1;
   int64 workflow_id = 2;
@@ -104,12 +113,14 @@ message Transition {
   string button_color = 9;
   string confirm_text = 10;
 }
+
 message TransitionCondition {
   string type = 1;
   string field = 2;
   string operator = 3;
   google.protobuf.Value value = 4;
 }
+
 message StateAction {
   int64 id = 1;
   int64 state_id = 2;
@@ -121,6 +132,7 @@ message StateAction {
   bool is_enabled = 8;
   repeated TransitionCondition conditions = 9;
 }
+
 // ==================== SERVICE ====================
 service WorkflowService {
   // === WORKFLOW CRUD ===
@@ -130,12 +142,14 @@ service WorkflowService {
   rpc ListWorkflows(ListWorkflowsRequest) returns (ListWorkflowsResponse);
   rpc UpdateWorkflow(UpdateWorkflowRequest) returns (Workflow);
   rpc DeleteWorkflow(DeleteWorkflowRequest) returns (google.protobuf.Empty);
+
   // === WORKFLOW MANAGEMENT ===
   rpc SetActiveWorkflow(SetActiveWorkflowRequest) returns (Workflow);
   rpc GetActiveWorkflowByDepartment(GetActiveWorkflowByDepartmentRequest) returns (Workflow);
   rpc CloneWorkflow(CloneWorkflowRequest) returns (Workflow);
   rpc CreateNewVersion(CreateNewVersionRequest) returns (Workflow);
   rpc ValidateWorkflow(ValidateWorkflowRequest) returns (ValidateWorkflowResponse);
+
   // === STATE CRUD ===
   rpc CreateState(CreateStateRequest) returns (State);
   rpc GetState(GetStateRequest) returns (State);
@@ -143,21 +157,25 @@ service WorkflowService {
   rpc UpdateState(UpdateStateRequest) returns (State);
   rpc DeleteState(DeleteStateRequest) returns (google.protobuf.Empty);
   rpc ReorderStates(ReorderStatesRequest) returns (ListStatesResponse);
+
   // === TRANSITION CRUD ===
   rpc CreateTransition(CreateTransitionRequest) returns (Transition);
   rpc UpdateTransition(UpdateTransitionRequest) returns (Transition);
   rpc DeleteTransition(DeleteTransitionRequest) returns (google.protobuf.Empty);
   rpc ListTransitions(ListTransitionsRequest) returns (ListTransitionsResponse);
+
   // === ACTION CRUD ===
   rpc CreateStateAction(CreateStateActionRequest) returns (StateAction);
   rpc UpdateStateAction(UpdateStateActionRequest) returns (StateAction);
   rpc DeleteStateAction(DeleteStateActionRequest) returns (google.protobuf.Empty);
   rpc ListStateActions(ListStateActionsRequest) returns (ListStateActionsResponse);
+
   // === RUNTIME ===
   rpc GetNextState(GetNextStateRequest) returns (State);
   rpc GetAvailableTransitions(GetAvailableTransitionsRequest) returns (GetAvailableTransitionsResponse);
   rpc GetStepConfiguration(GetStepConfigurationRequest) returns (StepConfiguration);
   rpc ExecuteTransition(ExecuteTransitionRequest) returns (ExecuteTransitionResponse);
+
   // === TEMPLATES ===
   rpc ListTemplates(ListTemplatesRequest) returns (ListTemplatesResponse);
   rpc CreateFromTemplate(CreateFromTemplateRequest) returns (Workflow);
@@ -165,6 +183,25 @@ service WorkflowService {
   rpc CanExecuteTransition(CanExecuteTransitionRequest) returns (CanExecuteTransitionResponse);
   rpc GetDepartmentWorkflowConfig(GetDepartmentWorkflowConfigRequest) returns (DepartmentWorkflowConfigResponse);
 }
+
+// ==================== POST-COMMIT ACTIONS (NO KAFKA) ====================
+service WorkflowActionsService {
+  // Принимает событие (обычно из outbox topic="workflow-actions") и выполняет post-commit/deadline actions.
+  rpc ProcessWorkflowActionEvent(ProcessWorkflowActionEventRequest) returns (ProcessWorkflowActionEventResponse);
+}
+
+message ProcessWorkflowActionEventRequest {
+  string event_type = 1;   // "WorkflowPostCommitActions" | "WorkflowDeadlineReached"
+  string topic = 2;        // "workflow-actions" (опционально, для логов/валидации)
+  bytes  payload_json = 3; // JSON payload как в outbox
+  string dedup_hint = 4;   // опционально
+  int64  outbox_id = 5;    // опционально
+}
+
+message ProcessWorkflowActionEventResponse {
+  bool accepted = 1;
+}
+
 // ==================== REQUEST/RESPONSE ====================
 message CloneWorkflowRequest {
   int64 source_workflow_id = 1;
@@ -172,53 +209,64 @@ message CloneWorkflowRequest {
   string new_name = 3;
   bool clone_as_template = 4;
 }
+
 message CreateNewVersionRequest {
   int64 workflow_id = 1;
   string changelog = 2;
 }
+
 message ValidateWorkflowRequest {
   int64 workflow_id = 1;
 }
+
 message ValidateWorkflowResponse {
   bool is_valid = 1;
   repeated ValidationError errors = 2;
   repeated ValidationWarning warnings = 3;
 }
+
 message ValidationError {
   string code = 1;
   string message = 2;
   string path = 3;  // "states[0].transitions[1]"
 }
+
 message ValidationWarning {
   string code = 1;
   string message = 2;
   string path = 3;
 }
+
 message ReorderStatesRequest {
   int64 workflow_id = 1;
   repeated int64 state_ids = 2;  // Новый порядок ID
 }
+
 message GetAvailableTransitionsRequest {
   int64 project_id = 1;
   int64 current_state_id = 2;
   int64 user_id = 3;
   string user_role = 4;
 }
+
 message GetAvailableTransitionsResponse {
   repeated AvailableTransition transitions = 1;
 }
+
 message AvailableTransition {
   Transition transition = 1;
   bool can_execute = 2;
   string blocked_reason = 3;
   repeated string missing_requirements = 4;
 }
+
 message ExecuteTransitionRequest {
   int64 project_id = 1;
   int64 transition_id = 2;
   int64 user_id = 3;
   google.protobuf.Struct payload = 4;
 }
+
 message ExecuteTransitionResponse {
   bool success = 1;
   int64 new_state_id = 2;
@@ -226,18 +274,21 @@ message ExecuteTransitionResponse {
   repeated string executed_actions = 4;
   string error_message = 5;
 }
+
 message WorkflowFull {
   Workflow workflow = 1;
   repeated State states = 2;
   repeated Transition transitions = 3;
   WorkflowStats stats = 4;
 }
+
 message WorkflowStats {
   int32 total_projects = 1;
   int32 active_projects = 2;
   int32 completed_projects = 3;
   map<string, int32> projects_by_state = 4;
 }
+
 message CreateStateRequest {
   int64 workflow_id = 1;
   string name = 2;
@@ -251,6 +302,7 @@ message CreateStateRequest {
   bool is_optional = 10;
   int32 order_index = 11;
 }
+
 message UpdateStateRequest {
   int64 id = 1;
   string name = 2;
@@ -261,6 +313,7 @@ message UpdateStateRequest {
   bool is_optional = 7;
   int32 order_index = 8;
 }
+
 // ... (остальные request/response messages)
 message GetWorkflowRequest {
   oneof criteria {
@@ -268,50 +321,63 @@ message GetWorkflowRequest {
     string workflow_name = 2;
   }
 }
+
 message ListWorkflowsRequest {
   int64 department_id = 1;
   bool only_active = 2;
   bool include_templates = 3;
 }
+
 message ListWorkflowsResponse {
   repeated Workflow workflows = 1;
 }
+
 message CreateWorkflowRequest {
   string name = 1;
   string description = 2;
   int64 department_id = 3;
   google.protobuf.Struct settings = 4;
 }
+
 message GetWorkflowFullRequest {
   int64 workflow_id = 1;
 }
+
 message UpdateWorkflowRequest {
   int64 id = 1;
   string name = 2;
   string description = 3;
   google.protobuf.Struct settings = 4;
 }
+
 message DeleteWorkflowRequest {
   int64 workflow_id = 1;
 }
+
 message SetActiveWorkflowRequest {
   int64 workflow_id = 1;
 }
+
 message GetActiveWorkflowByDepartmentRequest {
   int64 department_id = 1;
 }
+
 message GetStateRequest {
   int64 state_id = 1;
 }
+
 message ListStatesRequest {
   int64 workflow_id = 1;
 }
+
 message ListStatesResponse {
   repeated State states = 1;
 }
+
 message DeleteStateRequest {
   int64 state_id = 1;
 }
+
 message CreateTransitionRequest {
   int64 workflow_id = 1;
   string event_name = 2;
@@ -322,6 +388,7 @@ message CreateTransitionRequest {
   string button_color = 7;
   string confirm_text = 8;
 }
+
 message UpdateTransitionRequest {
   int64 id = 1;
   string display_name = 2;
@@ -329,15 +396,19 @@ message UpdateTransitionRequest {
   string button_color = 4;
   string confirm_text = 5;
 }
+
 message DeleteTransitionRequest {
   int64 transition_id = 1;
 }
+
 message ListTransitionsRequest {
   int64 workflow_id = 1;
 }
+
 message ListTransitionsResponse {
   repeated Transition transitions = 1;
 }
+
 message CreateStateActionRequest {
   int64 state_id = 1;
   string name = 2;
@@ -347,6 +418,7 @@ message CreateStateActionRequest {
   google.protobuf.Struct config = 6;
   bool is_enabled = 7;
 }
+
 message UpdateStateActionRequest {
   int64 id = 1;
   string name = 2;
@@ -354,23 +426,29 @@ message UpdateStateActionRequest {
   int32 order_index = 4;
   bool is_enabled = 5;
 }
+
 message DeleteStateActionRequest {
   int64 action_id = 1;
 }
+
 message ListStateActionsRequest {
   int64 state_id = 1;
 }
+
 message ListStateActionsResponse {
   repeated StateAction actions = 1;
 }
+
 message GetNextStateRequest {
   int64 current_state_id = 1;
   string event_name = 2;
 }
+
 message GetStepConfigurationRequest {
   int64 state_id = 1;
   int64 project_id = 2;
 }
+
 message StepConfiguration {
   int64 state_id = 1;
   string state_name = 2;
@@ -381,32 +459,39 @@ message StepConfiguration {
   FormConfig form_config = 7;
   ReviewConfig review_config = 8;
 }
+
 message TeamConfig {
   int32 min_size = 1;
   int32 max_size = 2;
   bool allow_solo = 3;
   bool require_leader = 4;
 }
+
 message FileConfig {
   int32 max_files = 1;
   int64 max_size_bytes = 2;
   repeated string allowed_extensions = 3;
 }
+
 message FormConfig {
   string form_id = 1;
   google.protobuf.Struct json_schema = 2;
 }
+
 message ReviewConfig {
   repeated string reviewer_roles = 1;
   int32 min_reviewers = 2;
   bool require_comment = 3;
 }
+
 message ListTemplatesRequest {
   string category = 1;
 }
+
 message ListTemplatesResponse {
   repeated WorkflowTemplate templates = 1;
 }
+
 message WorkflowTemplate {
   int64 id = 1;
   string name = 2;
@@ -414,19 +499,23 @@ message WorkflowTemplate {
   string category = 4;
   bool is_system = 5;
 }
+
 message CreateFromTemplateRequest {
   int64 template_id = 1;
   int64 department_id = 2;
   string name = 3;
 }
+
 // Visualization messages
 message GetWorkflowVisualizationRequest {
   int64 workflow_id = 1;
 }
+
 message WorkflowVisualization {
   repeated VisualizationNode nodes = 1;
   repeated VisualizationEdge edges = 2;
 }
+
 message VisualizationNode {
   string id = 1;
   string label = 2;
@@ -435,6 +524,7 @@ message VisualizationNode {
   Position position = 5;
   map<string, string> data = 6;
 }
+
 message VisualizationEdge {
   string id = 1;
   string source = 2;
@@ -443,15 +533,18 @@ message VisualizationEdge {
   string type = 5;
   bool animated = 6;
 }
+
 message Position {
   float x = 1;
   float y = 2;
 }
+
 message GetTeamConfigurationRequest {
   int64 department_id = 1;
   int64 workflow_id = 2;        // optional, if 0 - use active workflow
   int64 state_id = 3;           // optional, if 0 - use initial state
 }
+
 message TeamConfigurationResponse {
   TeamConfig team_config = 1;
   int64 workflow_id = 2;
@@ -460,6 +553,7 @@ message TeamConfigurationResponse {
   int32 invite_expire_days = 5;
   bool team_step_required = 6;  // Требуется ли этап формирования команды
 }
+
 message CanExecuteTransitionRequest {
   int64 project_id = 1;
   int64 current_state_id = 2;
@@ -468,21 +562,25 @@ message CanExecuteTransitionRequest {
   string user_role = 5;
   google.protobuf.Struct project_data = 6;
 }
+
 message CanExecuteTransitionResponse {
   bool can_execute = 1;
   string blocked_reason = 2;
   repeated string missing_requirements = 3;
   repeated RequiredAction required_actions = 4;
 }
+
 message RequiredAction {
   string action_type = 1;
   string description = 2;
   string link = 3;
 }
+
 message GetDepartmentWorkflowConfigRequest {
   int64 department_id = 1;
   string academic_year = 2;     // optional, default current year
 }
+
 message DepartmentWorkflowConfigResponse {
   int64 workflow_id = 1;
   string workflow_name = 2;
@@ -491,6 +589,7 @@ message DepartmentWorkflowConfigResponse {
   repeated DeadlineConfig deadlines = 5;
   google.protobuf.Struct settings = 6;
 }
+
 message StateConfig {
   int64 id = 1;
   string name = 2;
@@ -501,6 +600,7 @@ message StateConfig {
   google.protobuf.Timestamp deadline = 7;
   int32 duration_days = 8;
 }
+
 message DeadlineConfig {
   int64 state_id = 1;
   string state_name = 2;

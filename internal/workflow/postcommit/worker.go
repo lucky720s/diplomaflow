@@ -11,11 +11,14 @@ import (
 
 	"github.com/lucky720s/diplomaflow/internal/workflow"
 	"github.com/lucky720s/diplomaflow/internal/workflow/plugins"
-	"github.com/lucky720s/diplomaflow/pkg/broker"
 	projectv1 "github.com/lucky720s/diplomaflow/pkg/protobuf/project/v1"
 	"go.uber.org/zap"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 	"gorm.io/gorm"
 )
+
+const workflowActionsTopic = "workflow-actions"
 
 type Worker struct {
 	db            *gorm.DB
@@ -45,43 +48,44 @@ type deadlinePayload struct {
 	DeadlineAt   string `json:"deadline_at"`
 }
 
-// HandleEvent — обработчик Kafka события из топика workflow-actions.
-func (w *Worker) HandleEvent(ctx context.Context, ev broker.Event) error {
-	switch ev.Type {
+// Handle — обработчик события (без Kafka).
+// eventType ожидается: "WorkflowPostCommitActions" | "WorkflowDeadlineReached"
+// payload — JSON (как раньше было ev.Payload).
+func (w *Worker) Handle(ctx context.Context, eventType string, payload []byte) error {
+	switch eventType {
 	case "WorkflowPostCommitActions":
 		var p postCommitPayload
-		if err := json.Unmarshal(ev.Payload, &p); err != nil {
-			// битое сообщение лучше ack+skip (Permanent)
-			return broker.Permanent(err)
+		if err := json.Unmarshal(payload, &p); err != nil {
+			return status.Errorf(codes.InvalidArgument, "bad payload: %v", err)
 		}
-		return w.handlePostCommit(ctx, ev, p)
+		return w.handlePostCommit(ctx, eventType, p)
 
 	case "WorkflowDeadlineReached":
 		var p deadlinePayload
-		if err := json.Unmarshal(ev.Payload, &p); err != nil {
-			return broker.Permanent(err)
+		if err := json.Unmarshal(payload, &p); err != nil {
+			return status.Errorf(codes.InvalidArgument, "bad payload: %v", err)
 		}
-		return w.handleDeadline(ctx, ev, p)
+		return w.handleDeadline(ctx, eventType, p)
 
 	default:
-		return broker.ErrSkip
+		return status.Errorf(codes.InvalidArgument, "unknown event_type: %s", eventType)
 	}
 }
 
-func (w *Worker) handlePostCommit(ctx context.Context, ev broker.Event, p postCommitPayload) error {
+func (w *Worker) handlePostCommit(ctx context.Context, eventType string, p postCommitPayload) error {
 	if p.ProjectID == 0 || p.Trigger == "" || len(p.ActionIDs) == 0 {
-		return broker.Permanent(fmt.Errorf("invalid payload: project_id/trigger/action_ids required"))
+		return status.Error(codes.InvalidArgument, "invalid payload: project_id/trigger/action_ids required")
 	}
 
 	actions, err := w.loadActionsByIDs(ctx, p.ActionIDs)
 	if err != nil {
-		return err
+		return status.Errorf(codes.Internal, "load actions: %v", err)
 	}
 
 	// тянем актуальные данные проекта ПОСЛЕ commit
 	snap, err := w.projectClient.GetProjectRuntime(ctx, &projectv1.GetProjectRuntimeRequest{ProjectId: p.ProjectID})
 	if err != nil {
-		return err
+		return status.Errorf(codes.Unavailable, "get project runtime: %v", err)
 	}
 
 	projectData := map[string]interface{}{}
@@ -95,12 +99,12 @@ func (w *Worker) handlePostCommit(ctx context.Context, ev broker.Event, p postCo
 		}
 
 		dedup := dedupKey("postcommit", p.ProjectID, p.TransitionID, p.Trigger, a.ID, "")
-		started, err := w.tryStartRun(ctx, dedup, ev.Type, "workflow-actions", p.ProjectID, p.StateID, p.TransitionID, p.Trigger, a.ID)
+		started, err := w.tryStartRun(ctx, dedup, eventType, workflowActionsTopic, p.ProjectID, p.StateID, p.TransitionID, p.Trigger, a.ID)
 		if err != nil {
-			return err
+			return status.Errorf(codes.Internal, "tryStartRun: %v", err)
 		}
 		if !started {
-			continue // уже выполняли
+			continue // уже выполняли/выполняем
 		}
 
 		actx := &plugins.ActionContext{
@@ -119,26 +123,26 @@ func (w *Worker) handlePostCommit(ctx context.Context, ev broker.Event, p postCo
 		}
 
 		if err := w.executeOne(ctx, dedup, &a, actx); err != nil {
-			return err // retryable -> Kafka retry
+			return err
 		}
 	}
 
 	return nil
 }
 
-func (w *Worker) handleDeadline(ctx context.Context, ev broker.Event, p deadlinePayload) error {
+func (w *Worker) handleDeadline(ctx context.Context, eventType string, p deadlinePayload) error {
 	if p.ProjectID == 0 || p.StateID == 0 || p.Trigger == "" {
-		return broker.Permanent(fmt.Errorf("invalid payload: project_id/state_id/trigger required"))
+		return status.Error(codes.InvalidArgument, "invalid payload: project_id/state_id/trigger required")
 	}
 
 	actions, err := w.loadActionsByStateTrigger(ctx, p.StateID, p.Trigger)
 	if err != nil {
-		return err
+		return status.Errorf(codes.Internal, "load actions: %v", err)
 	}
 
 	snap, err := w.projectClient.GetProjectRuntime(ctx, &projectv1.GetProjectRuntimeRequest{ProjectId: p.ProjectID})
 	if err != nil {
-		return err
+		return status.Errorf(codes.Unavailable, "get project runtime: %v", err)
 	}
 
 	projectData := map[string]interface{}{}
@@ -153,9 +157,9 @@ func (w *Worker) handleDeadline(ctx context.Context, ev broker.Event, p deadline
 
 		// deadline_at включаем в дедуп (если есть)
 		dedup := dedupKey("deadline", p.ProjectID, 0, p.Trigger, a.ID, p.DeadlineAt)
-		started, err := w.tryStartRun(ctx, dedup, ev.Type, "workflow-actions", p.ProjectID, p.StateID, 0, p.Trigger, a.ID)
+		started, err := w.tryStartRun(ctx, dedup, eventType, workflowActionsTopic, p.ProjectID, p.StateID, 0, p.Trigger, a.ID)
 		if err != nil {
-			return err
+			return status.Errorf(codes.Internal, "tryStartRun: %v", err)
 		}
 		if !started {
 			continue
@@ -264,12 +268,10 @@ func (w *Worker) tryStartRun(
 		UpdatedAt:    now,
 	}
 
-	// INSERT ... ON CONFLICT DO NOTHING
 	err := w.db.WithContext(ctx).Create(run).Error
 	if err == nil {
 		return true, nil
 	}
-	// если конфликт по unique dedup_key — значит уже выполняли/выполняем
 	if isUniqueViolation(err) {
 		return false, nil
 	}
@@ -280,7 +282,7 @@ func (w *Worker) executeOne(ctx context.Context, dedupKey string, action *workfl
 	pl, err := plugins.Get(action.Type)
 	if err != nil {
 		_ = w.markFailed(ctx, dedupKey, fmt.Sprintf("plugin not found: %v", err))
-		return broker.Permanent(err)
+		return status.Errorf(codes.InvalidArgument, "plugin not found: %v", err)
 	}
 
 	res := pl.Execute(ctx, actx)
@@ -289,9 +291,18 @@ func (w *Worker) executeOne(ctx context.Context, dedupKey string, action *workfl
 		return nil
 	}
 
-	_ = w.markFailed(ctx, dedupKey, res.Error.Error())
-	// retryable: пусть Kafka ретраит (offset не будет ack)
-	return res.Error
+	errMsg := "action failed"
+	if res.Error != nil {
+		errMsg = res.Error.Error()
+	}
+	_ = w.markFailed(ctx, dedupKey, errMsg)
+
+	// ретраи теперь должны делаться “снаружи” (outbox-dispatcher).
+	// если плагин пометил ShouldRetry — отдаём Unavailable, иначе Internal.
+	if res.ShouldRetry {
+		return status.Errorf(codes.Unavailable, "action retryable: %s", errMsg)
+	}
+	return status.Errorf(codes.Internal, "action failed: %s", errMsg)
 }
 
 func (w *Worker) markSucceeded(ctx context.Context, dedupKey string) error {
@@ -333,12 +344,13 @@ func dedupKey(kind string, projectID, transitionID int64, trigger string, action
 	return hex.EncodeToString(sum[:])
 }
 
-// isUniqueViolation — максимально безопасный вариант без привязки к конкретному драйверу:
-// оставляем простую проверку текста. В идеале — errors.As на pgconn.PgError.
+// isUniqueViolation — простой вариант без привязки к драйверу.
 func isUniqueViolation(err error) bool {
 	if err == nil {
 		return false
 	}
 	msg := err.Error()
-	return strings.Contains(msg, "duplicate key") || strings.Contains(msg, "unique constraint") || strings.Contains(msg, "UNIQUE constraint")
+	return strings.Contains(msg, "duplicate key") ||
+		strings.Contains(msg, "unique constraint") ||
+		strings.Contains(msg, "UNIQUE constraint")
 }

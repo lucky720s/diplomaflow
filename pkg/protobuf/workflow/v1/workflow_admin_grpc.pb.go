@@ -20,23 +20,24 @@ import (
 const _ = grpc.SupportPackageIsVersion9
 
 const (
-	WorkflowAdminService_CreateDepartmentConfig_FullMethodName   = "/workflow.v1.WorkflowAdminService/CreateDepartmentConfig"
-	WorkflowAdminService_GetDepartmentConfig_FullMethodName      = "/workflow.v1.WorkflowAdminService/GetDepartmentConfig"
-	WorkflowAdminService_ListDepartmentConfigs_FullMethodName    = "/workflow.v1.WorkflowAdminService/ListDepartmentConfigs"
-	WorkflowAdminService_UpdateDepartmentConfig_FullMethodName   = "/workflow.v1.WorkflowAdminService/UpdateDepartmentConfig"
-	WorkflowAdminService_ActivateDepartmentConfig_FullMethodName = "/workflow.v1.WorkflowAdminService/ActivateDepartmentConfig"
-	WorkflowAdminService_DeleteDepartmentConfig_FullMethodName   = "/workflow.v1.WorkflowAdminService/DeleteDepartmentConfig"
-	WorkflowAdminService_AddCustomStep_FullMethodName            = "/workflow.v1.WorkflowAdminService/AddCustomStep"
-	WorkflowAdminService_UpdateCustomStep_FullMethodName         = "/workflow.v1.WorkflowAdminService/UpdateCustomStep"
-	WorkflowAdminService_DeleteCustomStep_FullMethodName         = "/workflow.v1.WorkflowAdminService/DeleteCustomStep"
-	WorkflowAdminService_ReorderCustomSteps_FullMethodName       = "/workflow.v1.WorkflowAdminService/ReorderCustomSteps"
-	WorkflowAdminService_ListAvailableActions_FullMethodName     = "/workflow.v1.WorkflowAdminService/ListAvailableActions"
-	WorkflowAdminService_GetActionSchema_FullMethodName          = "/workflow.v1.WorkflowAdminService/GetActionSchema"
-	WorkflowAdminService_GetWorkflowBuilder_FullMethodName       = "/workflow.v1.WorkflowAdminService/GetWorkflowBuilder"
-	WorkflowAdminService_SaveWorkflowDraft_FullMethodName        = "/workflow.v1.WorkflowAdminService/SaveWorkflowDraft"
-	WorkflowAdminService_PublishWorkflow_FullMethodName          = "/workflow.v1.WorkflowAdminService/PublishWorkflow"
-	WorkflowAdminService_PreviewWorkflow_FullMethodName          = "/workflow.v1.WorkflowAdminService/PreviewWorkflow"
-	WorkflowAdminService_SimulateTransition_FullMethodName       = "/workflow.v1.WorkflowAdminService/SimulateTransition"
+	WorkflowAdminService_CreateDepartmentConfig_FullMethodName     = "/workflow.v1.WorkflowAdminService/CreateDepartmentConfig"
+	WorkflowAdminService_GetDepartmentConfig_FullMethodName        = "/workflow.v1.WorkflowAdminService/GetDepartmentConfig"
+	WorkflowAdminService_ListDepartmentConfigs_FullMethodName      = "/workflow.v1.WorkflowAdminService/ListDepartmentConfigs"
+	WorkflowAdminService_UpdateDepartmentConfig_FullMethodName     = "/workflow.v1.WorkflowAdminService/UpdateDepartmentConfig"
+	WorkflowAdminService_ActivateDepartmentConfig_FullMethodName   = "/workflow.v1.WorkflowAdminService/ActivateDepartmentConfig"
+	WorkflowAdminService_DeleteDepartmentConfig_FullMethodName     = "/workflow.v1.WorkflowAdminService/DeleteDepartmentConfig"
+	WorkflowAdminService_AddCustomStep_FullMethodName              = "/workflow.v1.WorkflowAdminService/AddCustomStep"
+	WorkflowAdminService_UpdateCustomStep_FullMethodName           = "/workflow.v1.WorkflowAdminService/UpdateCustomStep"
+	WorkflowAdminService_DeleteCustomStep_FullMethodName           = "/workflow.v1.WorkflowAdminService/DeleteCustomStep"
+	WorkflowAdminService_ReorderCustomSteps_FullMethodName         = "/workflow.v1.WorkflowAdminService/ReorderCustomSteps"
+	WorkflowAdminService_ListAvailableActions_FullMethodName       = "/workflow.v1.WorkflowAdminService/ListAvailableActions"
+	WorkflowAdminService_GetActionSchema_FullMethodName            = "/workflow.v1.WorkflowAdminService/GetActionSchema"
+	WorkflowAdminService_GetWorkflowBuilder_FullMethodName         = "/workflow.v1.WorkflowAdminService/GetWorkflowBuilder"
+	WorkflowAdminService_SaveWorkflowDraft_FullMethodName          = "/workflow.v1.WorkflowAdminService/SaveWorkflowDraft"
+	WorkflowAdminService_PublishWorkflow_FullMethodName            = "/workflow.v1.WorkflowAdminService/PublishWorkflow"
+	WorkflowAdminService_PreviewWorkflow_FullMethodName            = "/workflow.v1.WorkflowAdminService/PreviewWorkflow"
+	WorkflowAdminService_SimulateTransition_FullMethodName         = "/workflow.v1.WorkflowAdminService/SimulateTransition"
+	WorkflowAdminService_ProcessWorkflowActionEvent_FullMethodName = "/workflow.v1.WorkflowAdminService/ProcessWorkflowActionEvent"
 )
 
 // WorkflowAdminServiceClient is the client API for WorkflowAdminService service.
@@ -67,6 +68,8 @@ type WorkflowAdminServiceClient interface {
 	// Preview & Test
 	PreviewWorkflow(ctx context.Context, in *PreviewWorkflowRequest, opts ...grpc.CallOption) (*WorkflowPreview, error)
 	SimulateTransition(ctx context.Context, in *SimulateTransitionRequest, opts ...grpc.CallOption) (*SimulateTransitionResponse, error)
+	// NOTE: использует сообщения из workflow.proto (ProcessWorkflowActionEventRequest/Response)
+	ProcessWorkflowActionEvent(ctx context.Context, in *ProcessWorkflowActionEventRequest, opts ...grpc.CallOption) (*ProcessWorkflowActionEventResponse, error)
 }
 
 type workflowAdminServiceClient struct {
@@ -247,6 +250,16 @@ func (c *workflowAdminServiceClient) SimulateTransition(ctx context.Context, in 
 	return out, nil
 }
 
+func (c *workflowAdminServiceClient) ProcessWorkflowActionEvent(ctx context.Context, in *ProcessWorkflowActionEventRequest, opts ...grpc.CallOption) (*ProcessWorkflowActionEventResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(ProcessWorkflowActionEventResponse)
+	err := c.cc.Invoke(ctx, WorkflowAdminService_ProcessWorkflowActionEvent_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // WorkflowAdminServiceServer is the server API for WorkflowAdminService service.
 // All implementations must embed UnimplementedWorkflowAdminServiceServer
 // for forward compatibility.
@@ -275,6 +288,8 @@ type WorkflowAdminServiceServer interface {
 	// Preview & Test
 	PreviewWorkflow(context.Context, *PreviewWorkflowRequest) (*WorkflowPreview, error)
 	SimulateTransition(context.Context, *SimulateTransitionRequest) (*SimulateTransitionResponse, error)
+	// NOTE: использует сообщения из workflow.proto (ProcessWorkflowActionEventRequest/Response)
+	ProcessWorkflowActionEvent(context.Context, *ProcessWorkflowActionEventRequest) (*ProcessWorkflowActionEventResponse, error)
 	mustEmbedUnimplementedWorkflowAdminServiceServer()
 }
 
@@ -335,6 +350,9 @@ func (UnimplementedWorkflowAdminServiceServer) PreviewWorkflow(context.Context, 
 }
 func (UnimplementedWorkflowAdminServiceServer) SimulateTransition(context.Context, *SimulateTransitionRequest) (*SimulateTransitionResponse, error) {
 	return nil, status.Error(codes.Unimplemented, "method SimulateTransition not implemented")
+}
+func (UnimplementedWorkflowAdminServiceServer) ProcessWorkflowActionEvent(context.Context, *ProcessWorkflowActionEventRequest) (*ProcessWorkflowActionEventResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method ProcessWorkflowActionEvent not implemented")
 }
 func (UnimplementedWorkflowAdminServiceServer) mustEmbedUnimplementedWorkflowAdminServiceServer() {}
 func (UnimplementedWorkflowAdminServiceServer) testEmbeddedByValue()                              {}
@@ -663,6 +681,24 @@ func _WorkflowAdminService_SimulateTransition_Handler(srv interface{}, ctx conte
 	return interceptor(ctx, in, info, handler)
 }
 
+func _WorkflowAdminService_ProcessWorkflowActionEvent_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(ProcessWorkflowActionEventRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(WorkflowAdminServiceServer).ProcessWorkflowActionEvent(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: WorkflowAdminService_ProcessWorkflowActionEvent_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(WorkflowAdminServiceServer).ProcessWorkflowActionEvent(ctx, req.(*ProcessWorkflowActionEventRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // WorkflowAdminService_ServiceDesc is the grpc.ServiceDesc for WorkflowAdminService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -737,6 +773,10 @@ var WorkflowAdminService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "SimulateTransition",
 			Handler:    _WorkflowAdminService_SimulateTransition_Handler,
+		},
+		{
+			MethodName: "ProcessWorkflowActionEvent",
+			Handler:    _WorkflowAdminService_ProcessWorkflowActionEvent_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

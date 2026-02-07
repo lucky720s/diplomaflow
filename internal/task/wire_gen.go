@@ -7,7 +7,10 @@
 package task
 
 import (
+	"github.com/lucky720s/diplomaflow/pkg/protobuf/team/v1"
 	"go.uber.org/zap"
+	"google.golang.org/grpc"
+	"google.golang.org/grpc/credentials/insecure"
 	"gorm.io/gorm"
 )
 
@@ -16,8 +19,30 @@ import (
 // InitializeApp инициализирует приложение task_service
 func InitializeApp(cfg *Config, db *gorm.DB, logger *zap.Logger) (*Handler, func(), error) {
 	taskRepository := NewRepository(db)
-	service := NewService(taskRepository, logger)
+	teamServiceClient, cleanup, err := ProvideTeamClient(cfg)
+	if err != nil {
+		return nil, nil, err
+	}
+	service := NewService(taskRepository, teamServiceClient, logger)
 	handler := NewHandler(service, logger)
 	return handler, func() {
+		cleanup()
 	}, nil
+}
+
+// wire.go:
+
+// ProvideTeamClient - создаёт клиент для team_service
+func ProvideTeamClient(cfg *Config) (v1.TeamServiceClient, func(), error) {
+	conn, err := grpc.NewClient(
+		cfg.Services.TeamAddr, grpc.WithTransportCredentials(insecure.NewCredentials()),
+	)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	client := v1.NewTeamServiceClient(conn)
+	cleanup := func() { conn.Close() }
+
+	return client, cleanup, nil
 }

@@ -1392,3 +1392,112 @@ var WorkflowService_ServiceDesc = grpc.ServiceDesc{
 	Streams:  []grpc.StreamDesc{},
 	Metadata: "workflow/v1/workflow.proto",
 }
+
+const (
+	WorkflowActionsService_ProcessWorkflowActionEvent_FullMethodName = "/workflow.v1.WorkflowActionsService/ProcessWorkflowActionEvent"
+)
+
+// WorkflowActionsServiceClient is the client API for WorkflowActionsService service.
+//
+// For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
+//
+// ==================== POST-COMMIT ACTIONS (NO KAFKA) ====================
+type WorkflowActionsServiceClient interface {
+	// Принимает событие (обычно из outbox topic="workflow-actions") и выполняет post-commit/deadline actions.
+	ProcessWorkflowActionEvent(ctx context.Context, in *ProcessWorkflowActionEventRequest, opts ...grpc.CallOption) (*ProcessWorkflowActionEventResponse, error)
+}
+
+type workflowActionsServiceClient struct {
+	cc grpc.ClientConnInterface
+}
+
+func NewWorkflowActionsServiceClient(cc grpc.ClientConnInterface) WorkflowActionsServiceClient {
+	return &workflowActionsServiceClient{cc}
+}
+
+func (c *workflowActionsServiceClient) ProcessWorkflowActionEvent(ctx context.Context, in *ProcessWorkflowActionEventRequest, opts ...grpc.CallOption) (*ProcessWorkflowActionEventResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(ProcessWorkflowActionEventResponse)
+	err := c.cc.Invoke(ctx, WorkflowActionsService_ProcessWorkflowActionEvent_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+// WorkflowActionsServiceServer is the server API for WorkflowActionsService service.
+// All implementations must embed UnimplementedWorkflowActionsServiceServer
+// for forward compatibility.
+//
+// ==================== POST-COMMIT ACTIONS (NO KAFKA) ====================
+type WorkflowActionsServiceServer interface {
+	// Принимает событие (обычно из outbox topic="workflow-actions") и выполняет post-commit/deadline actions.
+	ProcessWorkflowActionEvent(context.Context, *ProcessWorkflowActionEventRequest) (*ProcessWorkflowActionEventResponse, error)
+	mustEmbedUnimplementedWorkflowActionsServiceServer()
+}
+
+// UnimplementedWorkflowActionsServiceServer must be embedded to have
+// forward compatible implementations.
+//
+// NOTE: this should be embedded by value instead of pointer to avoid a nil
+// pointer dereference when methods are called.
+type UnimplementedWorkflowActionsServiceServer struct{}
+
+func (UnimplementedWorkflowActionsServiceServer) ProcessWorkflowActionEvent(context.Context, *ProcessWorkflowActionEventRequest) (*ProcessWorkflowActionEventResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method ProcessWorkflowActionEvent not implemented")
+}
+func (UnimplementedWorkflowActionsServiceServer) mustEmbedUnimplementedWorkflowActionsServiceServer() {
+}
+func (UnimplementedWorkflowActionsServiceServer) testEmbeddedByValue() {}
+
+// UnsafeWorkflowActionsServiceServer may be embedded to opt out of forward compatibility for this service.
+// Use of this interface is not recommended, as added methods to WorkflowActionsServiceServer will
+// result in compilation errors.
+type UnsafeWorkflowActionsServiceServer interface {
+	mustEmbedUnimplementedWorkflowActionsServiceServer()
+}
+
+func RegisterWorkflowActionsServiceServer(s grpc.ServiceRegistrar, srv WorkflowActionsServiceServer) {
+	// If the following call panics, it indicates UnimplementedWorkflowActionsServiceServer was
+	// embedded by pointer and is nil.  This will cause panics if an
+	// unimplemented method is ever invoked, so we test this at initialization
+	// time to prevent it from happening at runtime later due to I/O.
+	if t, ok := srv.(interface{ testEmbeddedByValue() }); ok {
+		t.testEmbeddedByValue()
+	}
+	s.RegisterService(&WorkflowActionsService_ServiceDesc, srv)
+}
+
+func _WorkflowActionsService_ProcessWorkflowActionEvent_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(ProcessWorkflowActionEventRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(WorkflowActionsServiceServer).ProcessWorkflowActionEvent(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: WorkflowActionsService_ProcessWorkflowActionEvent_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(WorkflowActionsServiceServer).ProcessWorkflowActionEvent(ctx, req.(*ProcessWorkflowActionEventRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+// WorkflowActionsService_ServiceDesc is the grpc.ServiceDesc for WorkflowActionsService service.
+// It's only intended for direct use with grpc.RegisterService,
+// and not to be introspected or modified (even as a copy)
+var WorkflowActionsService_ServiceDesc = grpc.ServiceDesc{
+	ServiceName: "workflow.v1.WorkflowActionsService",
+	HandlerType: (*WorkflowActionsServiceServer)(nil),
+	Methods: []grpc.MethodDesc{
+		{
+			MethodName: "ProcessWorkflowActionEvent",
+			Handler:    _WorkflowActionsService_ProcessWorkflowActionEvent_Handler,
+		},
+	},
+	Streams:  []grpc.StreamDesc{},
+	Metadata: "workflow/v1/workflow.proto",
+}

@@ -50,9 +50,6 @@ POSTGRES_DB=diplomaflow
 DATABASE_DSN=host=127.0.0.1 user=diplomaflow password=${POSTGRES_PASSWORD} dbname=diplomaflow port=5433 sslmode=disable TimeZone=UTC
 DATABASE_URL=postgres://diplomaflow:${POSTGRES_PASSWORD}@127.0.0.1:5433/diplomaflow?sslmode=disable
 REDIS_ADDR=127.0.0.1:6380
-KAFKA_BROKERS=127.0.0.1:29092
-KAFKA_GROUP_ID=diplomaflow-group
-KAFKA_KRAFT_CLUSTER_ID=MkU3OEVBNTcwNTJENDM2Qk
 ACCESS_TOKEN_TTL=15m
 REFRESH_TOKEN_TTL=720h
 EOF
@@ -96,7 +93,7 @@ echo "==> Build images"
 dc build
 
 echo "==> Start infra"
-dc up -d main_postgres redis kafka
+dc up -d main_postgres redis
 
 echo "==> Wait for postgres (via docker exec)"
 for i in $(seq 1 60); do
@@ -117,8 +114,6 @@ for i in $(seq 1 30); do
   sleep 1
 done
 
-echo "==> Wait for kafka"
-sleep 30
 
 echo "==> Run migrations"
 dc run --rm migrate
