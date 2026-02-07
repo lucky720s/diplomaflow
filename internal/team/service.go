@@ -162,19 +162,6 @@ func (s *Service) DeleteTeam(ctx context.Context, teamID int64, requesterID int6
 	if err := s.validateLeader(ctx, teamID, requesterID); err != nil {
 		return err
 	}
-
-	team, err := s.repo.GetByID(ctx, teamID)
-	if err != nil {
-		return err
-	}
-
-	// Проверяем, нет ли активного проекта
-	if team.ProjectID > 0 {
-		s.logger.Warn("Deleting team with project",
-			zap.Int64("team_id", teamID),
-			zap.Int64("project_id", team.ProjectID))
-	}
-
 	if err := s.repo.Delete(ctx, teamID); err != nil {
 		return fmt.Errorf("delete team: %w", err)
 	}
@@ -454,38 +441,5 @@ func (s *Service) validateLeader(ctx context.Context, teamID int64, userID int64
 	if member.Role != RoleLeader {
 		return ErrNotLeader
 	}
-	return nil
-}
-
-// CreateTeamForProject - создаёт команду для проекта (вызывается из Kafka consumer)
-func (s *Service) CreateTeamForProject(ctx context.Context, event ProjectCreatedEvent) error {
-	s.logger.Info("Processing ProjectCreatedEvent",
-		zap.Int64("project_id", event.ProjectID),
-		zap.Int64("student_id", event.StudentID),
-		zap.Int64("team_id", event.TeamID)) // Нужно поле TeamID в структуре!
-
-	// Создаём новую команду
-	team := &Team{
-		Name:      fmt.Sprintf("Team for Project %d", event.ProjectID),
-		ProjectID: event.ProjectID,
-	}
-	if err := s.repo.Create(ctx, team); err != nil {
-		return fmt.Errorf("create team: %w", err)
-	}
-
-	// Добавляем студента как лидера
-	member := &TeamMember{
-		TeamID: team.ID,
-		UserID: event.StudentID,
-		Role:   RoleLeader,
-	}
-	if err := s.repo.AddMember(ctx, member); err != nil {
-		return fmt.Errorf("add leader: %w", err)
-	}
-
-	s.logger.Info("Team created for project",
-		zap.Int64("team_id", team.ID),
-		zap.Int64("project_id", event.ProjectID))
-
 	return nil
 }

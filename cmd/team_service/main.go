@@ -1,17 +1,13 @@
 package main
 
 import (
-	"context"
-	"encoding/json"
 	"net"
 	"os"
 	"os/signal"
-	"strings"
 	"syscall"
 	"time"
 
 	"github.com/lucky720s/diplomaflow/internal/team"
-	"github.com/lucky720s/diplomaflow/pkg/broker"
 	"github.com/lucky720s/diplomaflow/pkg/config"
 	"github.com/lucky720s/diplomaflow/pkg/logger"
 	authv1 "github.com/lucky720s/diplomaflow/pkg/protobuf/auth/v1"
@@ -81,43 +77,6 @@ func main() {
 	defer cleanup()
 
 	h := app.Handler
-	eventHandler := app.EventHandler
-
-	ctx, cancel := context.WithCancel(context.Background())
-
-	if cfg.Kafka.Enabled {
-		log.Info("Kafka ENABLED - starting consumer...")
-
-		brokers := strings.Split(cfg.Kafka.Brokers, ",")
-		groupID := cfg.Kafka.GroupID
-		if groupID == "" {
-			groupID = "team-service-group"
-		}
-
-		kafkaConsumer, consumerErr := broker.NewConsumerWithRetry(brokers, groupID, log.Logger, broker.DefaultRetryConfig())
-		if consumerErr != nil {
-			log.Fatal("Failed to create kafka consumer", zap.Error(consumerErr))
-		}
-		defer kafkaConsumer.Close()
-
-		handlerFn := func(ctx context.Context, event broker.Event) error {
-			var payload team.ProjectCreatedEvent
-			if unmarshalErr := json.Unmarshal(event.Payload, &payload); unmarshalErr != nil {
-				return broker.Permanent(unmarshalErr)
-			}
-			return eventHandler.HandleProjectCreated(ctx, payload)
-		}
-
-		go func() {
-			log.Info("Starting Kafka consumer",
-				zap.Strings("topics", []string{"project-events"}),
-				zap.String("group_id", groupID))
-			kafkaConsumer.Start(ctx, []string{"project-events"}, handlerFn)
-		}()
-	} else {
-		log.Warn("Kafka DISABLED - team_service will NOT receive project events automatically")
-		log.Warn("Projects must be assigned to teams manually via AssignProject RPC")
-	}
 
 	// gRPC server
 	lis, err := net.Listen("tcp", ":"+cfg.GRPCPort)
@@ -155,7 +114,6 @@ func main() {
 	healthServer.SetServingStatus("", grpc_health_v1.HealthCheckResponse_NOT_SERVING)
 	healthServer.SetServingStatus("team.v1.TeamService", grpc_health_v1.HealthCheckResponse_NOT_SERVING)
 
-	cancel()
 	grpcServer.GracefulStop()
 	time.Sleep(300 * time.Millisecond)
 
