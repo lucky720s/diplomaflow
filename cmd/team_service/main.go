@@ -96,8 +96,7 @@ func main() {
 
 	go func() {
 		log.Info("Team Service starting",
-			zap.String("port", cfg.GRPCPort),
-			zap.Bool("kafka_enabled", cfg.Kafka.Enabled))
+			zap.String("port", cfg.GRPCPort))
 		if err := grpcServer.Serve(lis); err != nil {
 			log.Fatal("failed to serve", zap.Error(err))
 		}

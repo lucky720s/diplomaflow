@@ -1137,6 +1137,228 @@ var _ interface {
 	ErrorName() string
 } = StateActionValidationError{}
 
+// Validate checks the field values on ProcessWorkflowActionEventRequest with
+// the rules defined in the proto definition for this message. If any rules
+// are violated, the first error encountered is returned, or nil if there are
+// no violations.
+func (m *ProcessWorkflowActionEventRequest) Validate() error {
+	return m.validate(false)
+}
+
+// ValidateAll checks the field values on ProcessWorkflowActionEventRequest
+// with the rules defined in the proto definition for this message. If any
+// rules are violated, the result is a list of violation errors wrapped in
+// ProcessWorkflowActionEventRequestMultiError, or nil if none found.
+func (m *ProcessWorkflowActionEventRequest) ValidateAll() error {
+	return m.validate(true)
+}
+
+func (m *ProcessWorkflowActionEventRequest) validate(all bool) error {
+	if m == nil {
+		return nil
+	}
+
+	var errors []error
+
+	// no validation rules for EventType
+
+	// no validation rules for Topic
+
+	// no validation rules for PayloadJson
+
+	// no validation rules for DedupHint
+
+	// no validation rules for OutboxId
+
+	if len(errors) > 0 {
+		return ProcessWorkflowActionEventRequestMultiError(errors)
+	}
+
+	return nil
+}
+
+// ProcessWorkflowActionEventRequestMultiError is an error wrapping multiple
+// validation errors returned by
+// ProcessWorkflowActionEventRequest.ValidateAll() if the designated
+// constraints aren't met.
+type ProcessWorkflowActionEventRequestMultiError []error
+
+// Error returns a concatenation of all the error messages it wraps.
+func (m ProcessWorkflowActionEventRequestMultiError) Error() string {
+	msgs := make([]string, 0, len(m))
+	for _, err := range m {
+		msgs = append(msgs, err.Error())
+	}
+	return strings.Join(msgs, "; ")
+}
+
+// AllErrors returns a list of validation violation errors.
+func (m ProcessWorkflowActionEventRequestMultiError) AllErrors() []error { return m }
+
+// ProcessWorkflowActionEventRequestValidationError is the validation error
+// returned by ProcessWorkflowActionEventRequest.Validate if the designated
+// constraints aren't met.
+type ProcessWorkflowActionEventRequestValidationError struct {
+	field  string
+	reason string
+	cause  error
+	key    bool
+}
+
+// Field function returns field value.
+func (e ProcessWorkflowActionEventRequestValidationError) Field() string { return e.field }
+
+// Reason function returns reason value.
+func (e ProcessWorkflowActionEventRequestValidationError) Reason() string { return e.reason }
+
+// Cause function returns cause value.
+func (e ProcessWorkflowActionEventRequestValidationError) Cause() error { return e.cause }
+
+// Key function returns key value.
+func (e ProcessWorkflowActionEventRequestValidationError) Key() bool { return e.key }
+
+// ErrorName returns error name.
+func (e ProcessWorkflowActionEventRequestValidationError) ErrorName() string {
+	return "ProcessWorkflowActionEventRequestValidationError"
+}
+
+// Error satisfies the builtin error interface
+func (e ProcessWorkflowActionEventRequestValidationError) Error() string {
+	cause := ""
+	if e.cause != nil {
+		cause = fmt.Sprintf(" | caused by: %v", e.cause)
+	}
+
+	key := ""
+	if e.key {
+		key = "key for "
+	}
+
+	return fmt.Sprintf(
+		"invalid %sProcessWorkflowActionEventRequest.%s: %s%s",
+		key,
+		e.field,
+		e.reason,
+		cause)
+}
+
+var _ error = ProcessWorkflowActionEventRequestValidationError{}
+
+var _ interface {
+	Field() string
+	Reason() string
+	Key() bool
+	Cause() error
+	ErrorName() string
+} = ProcessWorkflowActionEventRequestValidationError{}
+
+// Validate checks the field values on ProcessWorkflowActionEventResponse with
+// the rules defined in the proto definition for this message. If any rules
+// are violated, the first error encountered is returned, or nil if there are
+// no violations.
+func (m *ProcessWorkflowActionEventResponse) Validate() error {
+	return m.validate(false)
+}
+
+// ValidateAll checks the field values on ProcessWorkflowActionEventResponse
+// with the rules defined in the proto definition for this message. If any
+// rules are violated, the result is a list of violation errors wrapped in
+// ProcessWorkflowActionEventResponseMultiError, or nil if none found.
+func (m *ProcessWorkflowActionEventResponse) ValidateAll() error {
+	return m.validate(true)
+}
+
+func (m *ProcessWorkflowActionEventResponse) validate(all bool) error {
+	if m == nil {
+		return nil
+	}
+
+	var errors []error
+
+	// no validation rules for Accepted
+
+	if len(errors) > 0 {
+		return ProcessWorkflowActionEventResponseMultiError(errors)
+	}
+
+	return nil
+}
+
+// ProcessWorkflowActionEventResponseMultiError is an error wrapping multiple
+// validation errors returned by
+// ProcessWorkflowActionEventResponse.ValidateAll() if the designated
+// constraints aren't met.
+type ProcessWorkflowActionEventResponseMultiError []error
+
+// Error returns a concatenation of all the error messages it wraps.
+func (m ProcessWorkflowActionEventResponseMultiError) Error() string {
+	msgs := make([]string, 0, len(m))
+	for _, err := range m {
+		msgs = append(msgs, err.Error())
+	}
+	return strings.Join(msgs, "; ")
+}
+
+// AllErrors returns a list of validation violation errors.
+func (m ProcessWorkflowActionEventResponseMultiError) AllErrors() []error { return m }
+
+// ProcessWorkflowActionEventResponseValidationError is the validation error
+// returned by ProcessWorkflowActionEventResponse.Validate if the designated
+// constraints aren't met.
+type ProcessWorkflowActionEventResponseValidationError struct {
+	field  string
+	reason string
+	cause  error
+	key    bool
+}
+
+// Field function returns field value.
+func (e ProcessWorkflowActionEventResponseValidationError) Field() string { return e.field }
+
+// Reason function returns reason value.
+func (e ProcessWorkflowActionEventResponseValidationError) Reason() string { return e.reason }
+
+// Cause function returns cause value.
+func (e ProcessWorkflowActionEventResponseValidationError) Cause() error { return e.cause }
+
+// Key function returns key value.
+func (e ProcessWorkflowActionEventResponseValidationError) Key() bool { return e.key }
+
+// ErrorName returns error name.
+func (e ProcessWorkflowActionEventResponseValidationError) ErrorName() string {
+	return "ProcessWorkflowActionEventResponseValidationError"
+}
+
+// Error satisfies the builtin error interface
+func (e ProcessWorkflowActionEventResponseValidationError) Error() string {
+	cause := ""
+	if e.cause != nil {
+		cause = fmt.Sprintf(" | caused by: %v", e.cause)
+	}
+
+	key := ""
+	if e.key {
+		key = "key for "
+	}
+
+	return fmt.Sprintf(
+		"invalid %sProcessWorkflowActionEventResponse.%s: %s%s",
+		key,
+		e.field,
+		e.reason,
+		cause)
+}
+
+var _ error = ProcessWorkflowActionEventResponseValidationError{}
+
+var _ interface {
+	Field() string
+	Reason() string
+	Key() bool
+	Cause() error
+	ErrorName() string
+} = ProcessWorkflowActionEventResponseValidationError{}
+
 // Validate checks the field values on CloneWorkflowRequest with the rules
 // defined in the proto definition for this message. If any rules are
 // violated, the first error encountered is returned, or nil if there are no violations.

@@ -7,21 +7,24 @@ import (
 	"fmt"
 	"time"
 
+	teamv1 "github.com/lucky720s/diplomaflow/pkg/protobuf/team/v1"
 	"go.uber.org/zap"
 	"gorm.io/gorm"
 )
 
 // Service - бизнес-логика для task_service
 type Service struct {
-	repo   Repository
-	logger *zap.Logger
+	repo       Repository
+	teamClient teamv1.TeamServiceClient
+	logger     *zap.Logger
 }
 
 // NewService создает новый сервис
-func NewService(repo Repository, logger *zap.Logger) *Service {
+func NewService(repo Repository, teamClient teamv1.TeamServiceClient, logger *zap.Logger) *Service {
 	return &Service{
-		repo:   repo,
-		logger: logger,
+		repo:       repo,
+		teamClient: teamClient,
+		logger:     logger,
 	}
 }
 
@@ -100,7 +103,6 @@ func (s *Service) GetBoard(ctx context.Context, boardID int64, includeColumns, i
 	if includeColumns {
 		columns, err := s.repo.ListColumns(ctx, boardID)
 		if err == nil {
-			// Добавляем счётчики задач
 			counts, _ := s.repo.GetColumnTaskCounts(ctx, boardID)
 			for _, col := range columns {
 				if count, ok := counts[col.ID]; ok {
@@ -166,6 +168,26 @@ func (s *Service) UpdateBoard(ctx context.Context, boardID int64, name, descript
 	return board, nil
 }
 
+// GetOrCreateBoardForTeam - получает или создаёт доску для команды
+func (s *Service) GetOrCreateBoardForTeam(ctx context.Context, teamID, projectID, createdBy int64) (*Board, error) {
+	board, err := s.repo.GetBoardByTeam(ctx, teamID)
+	if err == nil {
+		return board, nil
+	}
+
+	if errors.Is(err, gorm.ErrRecordNotFound) {
+		return s.CreateBoard(ctx, &CreateBoardInput{
+			TeamID:               teamID,
+			ProjectID:            projectID,
+			Name:                 "Задачи команды",
+			CreatedBy:            createdBy,
+			CreateDefaultColumns: true,
+		})
+	}
+
+	return nil, err
+}
+
 // ==================== Columns ====================
 
 // CreateColumnInput - входные данные для создания колонки
@@ -177,28 +199,48 @@ type CreateColumnInput struct {
 	Color        string
 	WIPLimit     int32
 	IsDoneColumn bool
+	IsDefault    bool
 }
 
 // CreateColumn - создает колонку
 func (s *Service) CreateColumn(ctx context.Context, input *CreateColumnInput) (*Column, error) {
-	// Проверяем существование доски
 	_, err := s.repo.GetBoard(ctx, input.BoardID)
 	if err != nil {
 		return nil, fmt.Errorf("board not found: %w", err)
 	}
 
-	// Проверяем уникальность slug
 	existing, _ := s.repo.GetColumnBySlug(ctx, input.BoardID, input.Slug)
 	if existing != nil {
 		return nil, errors.New("column with this slug already exists")
 	}
 
-	// Получаем максимальный order_index
 	maxOrder, _ := s.repo.GetMaxColumnOrder(ctx, input.BoardID)
 
 	color := input.Color
 	if color == "" {
 		color = "#6B7280"
+	}
+
+	// Если новая колонка is_default - снимаем флаг со старой
+	if input.IsDefault {
+		columns, _ := s.repo.ListColumns(ctx, input.BoardID)
+		for _, col := range columns {
+			if col.IsDefault {
+				col.IsDefault = false
+				_ = s.repo.UpdateColumn(ctx, col)
+			}
+		}
+	}
+
+	// Если новая колонка is_done_column - снимаем флаг со старых
+	if input.IsDoneColumn {
+		columns, _ := s.repo.ListColumns(ctx, input.BoardID)
+		for _, col := range columns {
+			if col.IsDoneColumn {
+				col.IsDoneColumn = false
+				_ = s.repo.UpdateColumn(ctx, col)
+			}
+		}
 	}
 
 	column := &Column{
@@ -210,6 +252,7 @@ func (s *Service) CreateColumn(ctx context.Context, input *CreateColumnInput) (*
 		OrderIndex:   maxOrder + 1,
 		WIPLimit:     input.WIPLimit,
 		IsDoneColumn: input.IsDoneColumn,
+		IsDefault:    input.IsDefault,
 	}
 
 	if err := s.repo.CreateColumn(ctx, column); err != nil {
@@ -227,7 +270,6 @@ func (s *Service) ListColumns(ctx context.Context, boardID int64) ([]*Column, er
 		return nil, fmt.Errorf("failed to list columns: %w", err)
 	}
 
-	// Добавляем счётчики
 	counts, _ := s.repo.GetColumnTaskCounts(ctx, boardID)
 	for _, col := range columns {
 		if count, ok := counts[col.ID]; ok {
@@ -238,7 +280,7 @@ func (s *Service) ListColumns(ctx context.Context, boardID int64) ([]*Column, er
 	return columns, nil
 }
 
-// UpdateColumn - обновляет колонку
+// UpdateColumn - обновляет колонку (без isDoneColumn для совместимости с handler)
 func (s *Service) UpdateColumn(ctx context.Context, columnID int64, name, description, color string, wipLimit int32) (*Column, error) {
 	column, err := s.repo.GetColumn(ctx, columnID)
 	if err != nil {
@@ -254,32 +296,89 @@ func (s *Service) UpdateColumn(ctx context.Context, columnID int64, name, descri
 	if color != "" {
 		column.Color = color
 	}
-	column.WIPLimit = wipLimit
+	if wipLimit >= 0 {
+		column.WIPLimit = wipLimit
+	}
 
 	if err := s.repo.UpdateColumn(ctx, column); err != nil {
 		return nil, fmt.Errorf("failed to update column: %w", err)
 	}
 
+	s.logger.Info("Column updated", zap.Int64("column_id", columnID))
 	return column, nil
 }
 
-// DeleteColumn - удаляет колонку
+// DeleteColumn - удаляет колонку с корректным перемещением задач
 func (s *Service) DeleteColumn(ctx context.Context, columnID, moveTasksToColumnID int64) error {
 	column, err := s.repo.GetColumn(ctx, columnID)
 	if err != nil {
 		return fmt.Errorf("column not found: %w", err)
 	}
 
-	// Проверяем, есть ли задачи в колонке
-	tasks, _, err := s.repo.ListTasks(ctx, TaskFilter{ColumnID: columnID, Limit: 1})
-	if err == nil && len(tasks) > 0 {
+	if column.IsDefault {
+		return errors.New("cannot delete default column")
+	}
+
+	tasks, totalTasks, err := s.repo.ListTasks(ctx, TaskFilter{
+		ColumnID: columnID,
+		Limit:    0,
+	})
+	if err != nil {
+		return fmt.Errorf("failed to check tasks in column: %w", err)
+	}
+
+	if totalTasks > 0 {
 		if moveTasksToColumnID == 0 {
-			return errors.New("column has tasks, specify move_tasks_to_column_id")
+			return fmt.Errorf("column has %d tasks, specify move_tasks_to_column_id", totalTasks)
 		}
+
+		targetColumn, err := s.repo.GetColumn(ctx, moveTasksToColumnID)
+		if err != nil {
+			return fmt.Errorf("target column not found: %w", err)
+		}
+
+		if targetColumn.BoardID != column.BoardID {
+			return errors.New("target column must be on the same board")
+		}
+
+		if moveTasksToColumnID == columnID {
+			return errors.New("cannot move tasks to the same column being deleted")
+		}
+
+		if targetColumn.WIPLimit > 0 {
+			currentCount, _ := s.repo.GetColumnTaskCounts(ctx, column.BoardID)
+			targetCurrentTasks := currentCount[moveTasksToColumnID]
+			if int32(totalTasks)+targetCurrentTasks > targetColumn.WIPLimit {
+				return fmt.Errorf("moving %d tasks would exceed WIP limit (%d) of target column '%s'",
+					totalTasks, targetColumn.WIPLimit, targetColumn.Name)
+			}
+		}
+
+		// Собираем ID задач
+		taskIDs := make([]int64, 0, len(tasks))
+		for _, task := range tasks {
+			taskIDs = append(taskIDs, task.ID)
+		}
+
+		maxPos, _ := s.repo.GetMaxPosition(ctx, moveTasksToColumnID)
+
 		// Перемещаем задачи
-		if err := s.repo.BulkUpdateTasks(ctx, []int64{}, map[string]interface{}{"column_id": moveTasksToColumnID}); err != nil {
+		if err := s.repo.BulkUpdateTasks(ctx, taskIDs, map[string]interface{}{
+			"column_id": moveTasksToColumnID,
+		}); err != nil {
 			return fmt.Errorf("failed to move tasks: %w", err)
 		}
+
+		for i, taskID := range taskIDs {
+			_ = s.repo.BulkUpdateTasks(ctx, []int64{taskID}, map[string]interface{}{
+				"position": maxPos + int32(i) + 1,
+			})
+		}
+
+		s.logger.Info("Tasks moved before column deletion",
+			zap.Int64("from_column", columnID),
+			zap.Int64("to_column", moveTasksToColumnID),
+			zap.Int("tasks_count", len(taskIDs)))
 	}
 
 	if err := s.repo.DeleteColumn(ctx, columnID); err != nil {
@@ -312,33 +411,55 @@ type CreateTaskInput struct {
 	WorkflowStepID   int64
 }
 
-// CreateTask - создает задачу
+// CreateTask - создает задачу с проверкой WIP-лимита
 func (s *Service) CreateTask(ctx context.Context, input *CreateTaskInput) (*Task, error) {
 	board, err := s.repo.GetBoard(ctx, input.BoardID)
 	if err != nil {
 		return nil, fmt.Errorf("board not found: %w", err)
 	}
 
-	// Определяем колонку
 	columnID := input.ColumnID
+	var targetColumn *Column
+
 	if columnID == 0 {
 		defaultColumn, err := s.repo.GetDefaultColumn(ctx, board.ID)
 		if err != nil {
 			return nil, fmt.Errorf("no default column found: %w", err)
 		}
 		columnID = defaultColumn.ID
+		targetColumn = defaultColumn
+	} else {
+		col, err := s.repo.GetColumn(ctx, columnID)
+		if err != nil {
+			return nil, fmt.Errorf("column not found: %w", err)
+		}
+		if col.BoardID != board.ID {
+			return nil, errors.New("column does not belong to this board")
+		}
+		targetColumn = col
 	}
 
-	// Получаем позицию
+	// Проверка WIP-лимита
+	if targetColumn.WIPLimit > 0 {
+		counts, err := s.repo.GetColumnTaskCounts(ctx, board.ID)
+		if err != nil {
+			return nil, fmt.Errorf("failed to check column task count: %w", err)
+		}
+
+		currentTasks := counts[columnID]
+		if currentTasks >= targetColumn.WIPLimit {
+			return nil, fmt.Errorf("WIP limit reached: column '%s' already has %d/%d tasks",
+				targetColumn.Name, currentTasks, targetColumn.WIPLimit)
+		}
+	}
+
 	maxPos, _ := s.repo.GetMaxPosition(ctx, columnID)
 
-	// Приоритет по умолчанию
 	priority := input.Priority
 	if priority == "" {
 		priority = TaskPriorityMedium
 	}
 
-	// Labels
 	labelsJSON, _ := json.Marshal(input.Labels)
 
 	task := &Task{
@@ -366,10 +487,7 @@ func (s *Service) CreateTask(ctx context.Context, input *CreateTaskInput) (*Task
 		return nil, fmt.Errorf("failed to create task: %w", err)
 	}
 
-	// Логируем активность
 	s.logTaskActivity(ctx, task.ID, input.CreatedBy, ActionCreated, "", "", "")
-
-	// Автоматически добавляем создателя как watcher
 	_ = s.repo.AddWatcher(ctx, &Watcher{TaskID: task.ID, UserID: input.CreatedBy})
 
 	s.logger.Info("Task created", zap.Int64("task_id", task.ID), zap.String("title", input.Title))
@@ -383,7 +501,6 @@ func (s *Service) GetTask(ctx context.Context, taskID int64) (*Task, []*Comment,
 		return nil, nil, nil, nil, nil, fmt.Errorf("task not found: %w", err)
 	}
 
-	// Загружаем счётчики и флаг просрочки
 	comments, attachments, watchers, _ := s.repo.GetTaskCounts(ctx, taskID)
 	task.CommentsCount = comments
 	task.AttachmentsCount = attachments
@@ -393,7 +510,6 @@ func (s *Service) GetTask(ctx context.Context, taskID int64) (*Task, []*Comment,
 		task.IsOverdue = task.DueDate.Before(time.Now())
 	}
 
-	// Загружаем связанные данные
 	recentComments, _, _ := s.repo.ListComments(ctx, taskID, 5, 0)
 	attachmentsList, _ := s.repo.ListAttachments(ctx, taskID)
 	activityList, _, _ := s.repo.ListActivity(ctx, taskID, 10, 0)
@@ -423,7 +539,6 @@ func (s *Service) UpdateTask(ctx context.Context, input *UpdateTaskInput) (*Task
 		return nil, fmt.Errorf("task not found: %w", err)
 	}
 
-	// Трекаем изменения для activity log
 	changes := make(map[string][2]string)
 
 	if input.Title != "" && input.Title != task.Title {
@@ -467,7 +582,6 @@ func (s *Service) UpdateTask(ctx context.Context, input *UpdateTaskInput) (*Task
 		return nil, fmt.Errorf("failed to update task: %w", err)
 	}
 
-	// Логируем изменения
 	for field, vals := range changes {
 		s.logTaskActivity(ctx, task.ID, input.UpdatedBy, ActionUpdated, field, vals[0], vals[1])
 	}
@@ -476,11 +590,55 @@ func (s *Service) UpdateTask(ctx context.Context, input *UpdateTaskInput) (*Task
 	return task, nil
 }
 
-// DeleteTask - удаляет задачу (soft delete)
+// DeleteTask - удаляет задачу с проверкой прав через team_service
 func (s *Service) DeleteTask(ctx context.Context, taskID, deletedBy int64) error {
 	task, err := s.repo.GetTask(ctx, taskID)
 	if err != nil {
 		return fmt.Errorf("task not found: %w", err)
+	}
+
+	canDelete := false
+	reason := ""
+
+	// 1. Создатель задачи
+	if task.CreatedBy == deletedBy {
+		canDelete = true
+		reason = "creator"
+	}
+
+	// 2. Assignee
+	if !canDelete && task.AssigneeID != nil && *task.AssigneeID == deletedBy {
+		canDelete = true
+		reason = "assignee"
+	}
+
+	// 3. Лидер команды (через team_service)
+	if !canDelete && s.teamClient != nil {
+		board, _ := s.repo.GetBoard(ctx, task.BoardID)
+		if board != nil {
+			teamResp, err := s.teamClient.GetTeam(ctx, &teamv1.GetTeamRequest{TeamId: board.TeamID})
+			if err == nil {
+				for _, member := range teamResp.Members {
+					if member.UserId == deletedBy && member.Role == "leader" {
+						canDelete = true
+						reason = "team_leader"
+						break
+					}
+				}
+			} else {
+				s.logger.Warn("Failed to get team for delete permission check",
+					zap.Error(err),
+					zap.Int64("team_id", board.TeamID))
+			}
+		}
+	}
+
+	if !canDelete {
+		s.logger.Warn("Unauthorized task deletion attempt",
+			zap.Int64("task_id", taskID),
+			zap.Int64("user_id", deletedBy),
+			zap.Int64("created_by", task.CreatedBy))
+		return errors.New("you don't have permission to delete this task")
 	}
 
 	if err := s.repo.DeleteTask(ctx, taskID); err != nil {
@@ -488,23 +646,41 @@ func (s *Service) DeleteTask(ctx context.Context, taskID, deletedBy int64) error
 	}
 
 	s.logTaskActivity(ctx, taskID, deletedBy, ActionDeleted, "", "", "")
-	s.logger.Info("Task deleted", zap.Int64("task_id", taskID), zap.Int64("board_id", task.BoardID))
+	s.logger.Info("Task deleted",
+		zap.Int64("task_id", taskID),
+		zap.Int64("deleted_by", deletedBy),
+		zap.String("reason", reason))
 	return nil
 }
 
-// ListTasks - список задач с фильтрацией
+// ListTasks - список задач с фильтрацией (batch-оптимизация)
 func (s *Service) ListTasks(ctx context.Context, filter TaskFilter) ([]*Task, int64, error) {
 	tasks, total, err := s.repo.ListTasks(ctx, filter)
 	if err != nil {
 		return nil, 0, fmt.Errorf("failed to list tasks: %w", err)
 	}
 
-	// Обогащаем задачи счётчиками и флагами
+	if len(tasks) == 0 {
+		return tasks, total, nil
+	}
+
+	taskIDs := make([]int64, len(tasks))
+	for i, task := range tasks {
+		taskIDs[i] = task.ID
+	}
+
+	counts, err := s.repo.GetTasksCountsBatch(ctx, taskIDs)
+	if err != nil {
+		s.logger.Warn("Failed to get task counts batch", zap.Error(err))
+		counts = make(map[int64]TaskCounts)
+	}
+
 	for _, task := range tasks {
-		comments, attachments, watchers, _ := s.repo.GetTaskCounts(ctx, task.ID)
-		task.CommentsCount = comments
-		task.AttachmentsCount = attachments
-		task.WatchersCount = watchers
+		if c, ok := counts[task.ID]; ok {
+			task.CommentsCount = c.Comments
+			task.AttachmentsCount = c.Attachments
+			task.WatchersCount = c.Watchers
+		}
 
 		if task.DueDate != nil && task.Status != TaskStatusDone {
 			task.IsOverdue = task.DueDate.Before(time.Now())
@@ -514,7 +690,7 @@ func (s *Service) ListTasks(ctx context.Context, filter TaskFilter) ([]*Task, in
 	return tasks, total, nil
 }
 
-// MoveTask - перемещает задачу в другую колонку
+// MoveTask - перемещает задачу с проверкой WIP-лимита
 func (s *Service) MoveTask(ctx context.Context, taskID, toColumnID int64, position int32, movedBy int64) (*Task, error) {
 	task, err := s.repo.GetTask(ctx, taskID)
 	if err != nil {
@@ -523,38 +699,142 @@ func (s *Service) MoveTask(ctx context.Context, taskID, toColumnID int64, positi
 
 	oldColumnID := task.ColumnID
 
-	// Получаем имена колонок для лога
 	oldColumn, _ := s.repo.GetColumn(ctx, oldColumnID)
 	newColumn, err := s.repo.GetColumn(ctx, toColumnID)
 	if err != nil {
 		return nil, fmt.Errorf("target column not found: %w", err)
 	}
 
+	if newColumn.BoardID != task.BoardID {
+		return nil, errors.New("cannot move task to column on different board")
+	}
+
+	// Проверка WIP-лимита
+	if oldColumnID != toColumnID && newColumn.WIPLimit > 0 {
+		counts, err := s.repo.GetColumnTaskCounts(ctx, newColumn.BoardID)
+		if err != nil {
+			return nil, fmt.Errorf("failed to check column task count: %w", err)
+		}
+
+		currentTasksInTarget := counts[toColumnID]
+		if currentTasksInTarget >= newColumn.WIPLimit {
+			return nil, fmt.Errorf("WIP limit reached: column '%s' already has %d/%d tasks",
+				newColumn.Name, currentTasksInTarget, newColumn.WIPLimit)
+		}
+	}
+
 	if err := s.repo.MoveTask(ctx, taskID, toColumnID, position); err != nil {
 		return nil, fmt.Errorf("failed to move task: %w", err)
 	}
 
-	// Логируем перемещение
 	oldVal := ""
 	if oldColumn != nil {
 		oldVal = oldColumn.Name
 	}
 	s.logTaskActivity(ctx, taskID, movedBy, ActionMoved, "column", oldVal, newColumn.Name)
 
-	// Возвращаем обновлённую задачу
+	s.logger.Info("Task moved",
+		zap.Int64("task_id", taskID),
+		zap.Int64("from_column", oldColumnID),
+		zap.Int64("to_column", toColumnID))
+
 	return s.repo.GetTask(ctx, taskID)
 }
 
-// ReorderTasks - изменяет порядок задач в колонке
+// ReorderTasks - изменяет порядок задач с валидацией
 func (s *Service) ReorderTasks(ctx context.Context, columnID int64, taskIDs []int64) error {
+	if len(taskIDs) == 0 {
+		return nil
+	}
+
+	column, err := s.repo.GetColumn(ctx, columnID)
+	if err != nil {
+		return fmt.Errorf("column not found: %w", err)
+	}
+
+	existingTasks, _, err := s.repo.ListTasks(ctx, TaskFilter{
+		ColumnID: columnID,
+		Limit:    0,
+	})
+	if err != nil {
+		return fmt.Errorf("failed to get column tasks: %w", err)
+	}
+
+	existingTaskIDs := make(map[int64]bool)
+	for _, task := range existingTasks {
+		existingTaskIDs[task.ID] = true
+	}
+
+	for _, taskID := range taskIDs {
+		if !existingTaskIDs[taskID] {
+			return fmt.Errorf("task %d does not belong to column %d", taskID, columnID)
+		}
+	}
+
+	if len(taskIDs) != len(existingTasks) {
+		return fmt.Errorf("task_ids count (%d) does not match column tasks count (%d)",
+			len(taskIDs), len(existingTasks))
+	}
+
+	seen := make(map[int64]bool)
+	for _, taskID := range taskIDs {
+		if seen[taskID] {
+			return fmt.Errorf("duplicate task_id: %d", taskID)
+		}
+		seen[taskID] = true
+	}
+
+	s.logger.Debug("Reordering tasks",
+		zap.Int64("column_id", columnID),
+		zap.Int64("board_id", column.BoardID),
+		zap.Int("tasks_count", len(taskIDs)))
+
 	return s.repo.ReorderTasks(ctx, columnID, taskIDs)
 }
 
-// AssignTask - назначает задачу на исполнителя
+// AssignTask - назначает задачу с проверкой членства через team_service
 func (s *Service) AssignTask(ctx context.Context, taskID, assigneeID, assignedBy int64) (*Task, error) {
 	task, err := s.repo.GetTask(ctx, taskID)
 	if err != nil {
 		return nil, fmt.Errorf("task not found: %w", err)
+	}
+
+	board, err := s.repo.GetBoard(ctx, task.BoardID)
+	if err != nil {
+		return nil, fmt.Errorf("board not found: %w", err)
+	}
+
+	// Проверка членства в команде через team_service
+	if s.teamClient != nil {
+		teamResp, err := s.teamClient.GetTeam(ctx, &teamv1.GetTeamRequest{
+			TeamId: board.TeamID,
+		})
+		if err != nil {
+			s.logger.Warn("Failed to get team for membership check",
+				zap.Error(err),
+				zap.Int64("team_id", board.TeamID))
+			// Продолжаем без проверки если team_service недоступен
+		} else {
+			isMember := false
+			for _, member := range teamResp.Members {
+				if member.UserId == assigneeID {
+					isMember = true
+					break
+				}
+			}
+
+			if !isMember {
+				return nil, fmt.Errorf("user %d is not a member of team %d", assigneeID, board.TeamID)
+			}
+
+			s.logger.Debug("Team membership verified",
+				zap.Int64("user_id", assigneeID),
+				zap.Int64("team_id", board.TeamID))
+		}
+	} else {
+		s.logger.Warn("Team client is nil, skipping membership check",
+			zap.Int64("task_id", taskID),
+			zap.Int64("assignee_id", assigneeID))
 	}
 
 	oldAssignee := ""
@@ -569,11 +849,13 @@ func (s *Service) AssignTask(ctx context.Context, taskID, assigneeID, assignedBy
 	}
 
 	s.logTaskActivity(ctx, taskID, assignedBy, ActionAssigned, "assignee", oldAssignee, fmt.Sprintf("%d", assigneeID))
-
-	// Добавляем assignee как watcher
 	_ = s.repo.AddWatcher(ctx, &Watcher{TaskID: taskID, UserID: assigneeID})
 
-	s.logger.Info("Task assigned", zap.Int64("task_id", taskID), zap.Int64("assignee_id", assigneeID))
+	s.logger.Info("Task assigned",
+		zap.Int64("task_id", taskID),
+		zap.Int64("assignee_id", assigneeID),
+		zap.Int64("assigned_by", assignedBy))
+
 	return task, nil
 }
 
@@ -612,13 +894,11 @@ type CreateCommentInput struct {
 
 // CreateComment - создает комментарий
 func (s *Service) CreateComment(ctx context.Context, input *CreateCommentInput) (*Comment, error) {
-	// Проверяем существование задачи
 	_, err := s.repo.GetTask(ctx, input.TaskID)
 	if err != nil {
 		return nil, fmt.Errorf("task not found: %w", err)
 	}
 
-	// Формируем mentions
 	var mentions []UserMention
 	for _, userID := range input.MentionUserIDs {
 		mentions = append(mentions, UserMention{UserID: userID})
@@ -636,10 +916,7 @@ func (s *Service) CreateComment(ctx context.Context, input *CreateCommentInput) 
 		return nil, fmt.Errorf("failed to create comment: %w", err)
 	}
 
-	// Логируем активность
 	s.logTaskActivity(ctx, input.TaskID, input.AuthorID, ActionCommented, "", "", "")
-
-	// Добавляем автора как watcher
 	_ = s.repo.AddWatcher(ctx, &Watcher{TaskID: input.TaskID, UserID: input.AuthorID})
 
 	return comment, nil
@@ -652,7 +929,6 @@ func (s *Service) UpdateComment(ctx context.Context, commentID int64, content st
 		return nil, fmt.Errorf("comment not found: %w", err)
 	}
 
-	// Проверяем авторство
 	if comment.AuthorID != updatedBy {
 		return nil, errors.New("only author can edit comment")
 	}
@@ -673,8 +949,6 @@ func (s *Service) DeleteComment(ctx context.Context, commentID, deletedBy int64)
 		return fmt.Errorf("comment not found: %w", err)
 	}
 
-	// Проверяем авторство - только автор может удалить свой комментарий
-	// TODO: добавить проверку роли админа когда будет интеграция с auth_service
 	if comment.AuthorID != deletedBy {
 		return fmt.Errorf("only author can delete comment")
 	}
@@ -709,7 +983,6 @@ type AddAttachmentInput struct {
 
 // AddAttachment - добавляет вложение
 func (s *Service) AddAttachment(ctx context.Context, input *AddAttachmentInput) (*Attachment, error) {
-	// Проверяем существование задачи
 	_, err := s.repo.GetTask(ctx, input.TaskID)
 	if err != nil {
 		return nil, fmt.Errorf("task not found: %w", err)
@@ -738,8 +1011,6 @@ func (s *Service) RemoveAttachment(ctx context.Context, attachmentID, removedBy 
 		return fmt.Errorf("attachment not found: %w", err)
 	}
 
-	// Проверяем права - только загрузивший может удалить вложение
-	// TODO: добавить проверку роли админа когда будет интеграция с auth_service
 	if attachment.UploadedBy != removedBy {
 		return fmt.Errorf("only uploader can remove attachment")
 	}
@@ -786,10 +1057,9 @@ func (s *Service) logTaskActivity(ctx context.Context, taskID, actorID int64, ac
 
 // AddWatcher - добавляет наблюдателя
 func (s *Service) AddWatcher(ctx context.Context, taskID, userID int64) error {
-	// Проверяем, не является ли уже watcher
 	isWatching, _ := s.repo.IsWatching(ctx, taskID, userID)
 	if isWatching {
-		return nil // уже наблюдает
+		return nil
 	}
 
 	return s.repo.AddWatcher(ctx, &Watcher{TaskID: taskID, UserID: userID})
@@ -866,7 +1136,7 @@ func (s *Service) GetUpcomingDeadlines(ctx context.Context, boardID int64, userI
 // BulkUpdateTasksInput - входные данные для массового обновления
 type BulkUpdateTasksInput struct {
 	TaskIDs      []int64
-	AssigneeID   int64 // 0 = не менять, -1 = убрать
+	AssigneeID   int64
 	Priority     string
 	ColumnID     int64
 	AddLabels    []string
@@ -874,8 +1144,12 @@ type BulkUpdateTasksInput struct {
 	UpdatedBy    int64
 }
 
-// BulkUpdateTasks - массовое обновление задач
+// BulkUpdateTasks - массовое обновление с проверкой WIP-лимита
 func (s *Service) BulkUpdateTasks(ctx context.Context, input *BulkUpdateTasksInput) ([]*Task, error) {
+	if len(input.TaskIDs) == 0 {
+		return nil, errors.New("task_ids cannot be empty")
+	}
+
 	updates := make(map[string]interface{})
 
 	if input.AssigneeID == -1 {
@@ -889,6 +1163,31 @@ func (s *Service) BulkUpdateTasks(ctx context.Context, input *BulkUpdateTasksInp
 	}
 
 	if input.ColumnID > 0 {
+		targetColumn, err := s.repo.GetColumn(ctx, input.ColumnID)
+		if err != nil {
+			return nil, fmt.Errorf("target column not found: %w", err)
+		}
+
+		if targetColumn.WIPLimit > 0 {
+			counts, _ := s.repo.GetColumnTaskCounts(ctx, targetColumn.BoardID)
+			currentTasks := counts[input.ColumnID]
+
+			tasksAlreadyInTarget := 0
+			for _, taskID := range input.TaskIDs {
+				task, err := s.repo.GetTask(ctx, taskID)
+				if err == nil && task.ColumnID == input.ColumnID {
+					tasksAlreadyInTarget++
+				}
+			}
+
+			newTasksCount := len(input.TaskIDs) - tasksAlreadyInTarget
+
+			if currentTasks+int32(newTasksCount) > targetColumn.WIPLimit {
+				return nil, fmt.Errorf("WIP limit exceeded: moving %d tasks would result in %d/%d tasks in column '%s'",
+					newTasksCount, currentTasks+int32(newTasksCount), targetColumn.WIPLimit, targetColumn.Name)
+			}
+		}
+
 		updates["column_id"] = input.ColumnID
 	}
 
@@ -898,7 +1197,6 @@ func (s *Service) BulkUpdateTasks(ctx context.Context, input *BulkUpdateTasksInp
 		}
 	}
 
-	// Возвращаем обновлённые задачи
 	var result []*Task
 	for _, id := range input.TaskIDs {
 		task, err := s.repo.GetTask(ctx, id)
@@ -907,33 +1205,17 @@ func (s *Service) BulkUpdateTasks(ctx context.Context, input *BulkUpdateTasksInp
 		}
 	}
 
+	s.logger.Info("Bulk update completed",
+		zap.Int("tasks_count", len(input.TaskIDs)),
+		zap.Int64("updated_by", input.UpdatedBy))
+
 	return result, nil
 }
 
 // BulkDeleteTasks - массовое удаление задач
 func (s *Service) BulkDeleteTasks(ctx context.Context, taskIDs []int64, deletedBy int64) error {
+	if len(taskIDs) == 0 {
+		return errors.New("task_ids cannot be empty")
+	}
 	return s.repo.BulkDeleteTasks(ctx, taskIDs)
-}
-
-// ==================== Board Existence Check ====================
-
-// GetOrCreateBoardForTeam - получает или создаёт доску для команды
-func (s *Service) GetOrCreateBoardForTeam(ctx context.Context, teamID, projectID, createdBy int64) (*Board, error) {
-	board, err := s.repo.GetBoardByTeam(ctx, teamID)
-	if err == nil {
-		return board, nil
-	}
-
-	if errors.Is(err, gorm.ErrRecordNotFound) {
-		// Создаём новую доску
-		return s.CreateBoard(ctx, &CreateBoardInput{
-			TeamID:               teamID,
-			ProjectID:            projectID,
-			Name:                 "Задачи команды",
-			CreatedBy:            createdBy,
-			CreateDefaultColumns: true,
-		})
-	}
-
-	return nil, err
 }

@@ -1,14 +1,15 @@
-env: "local"
-grpc_port: 8085
-
-database:
-  dsn: ""
-
-services:
-  notification_addr: "notification_service:8087"
-  project_addr: "project_service:8083"
-
-kafka:
-  enabled: false  # <-- переключатель, если надо включить кафку
-  brokers: "kafka:29092"
-  group_id: "diplomaflow-group"
+  package workflow
+    
+    type Config struct {
+    Env      string `mapstructure:"env"`
+    GRPCPort string `mapstructure:"grpc_port"`
+    
+    Database struct {
+    DSN string `mapstructure:"dsn"`
+    } `mapstructure:"database"`
+    
+    Services struct {
+    NotificationAddr string `mapstructure:"notification_addr"`
+    ProjectAddr      string `mapstructure:"project_addr"`
+    } `mapstructure:"services"`
+  }

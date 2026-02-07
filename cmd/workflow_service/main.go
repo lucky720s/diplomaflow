@@ -1,12 +1,10 @@
 package main
 
 import (
-	"context"
 	"fmt"
 	"net"
 	"os"
 	"os/signal"
-	"strings"
 	"syscall"
 	"time"
 
@@ -15,7 +13,6 @@ import (
 	"github.com/lucky720s/diplomaflow/internal/workflow/plugins/builtin"
 	"github.com/lucky720s/diplomaflow/internal/workflow/postcommit"
 	"github.com/lucky720s/diplomaflow/internal/workflow/runtimegrpc"
-	"github.com/lucky720s/diplomaflow/pkg/broker"
 	"github.com/lucky720s/diplomaflow/pkg/config"
 	"github.com/lucky720s/diplomaflow/pkg/logger"
 	notificationv1 "github.com/lucky720s/diplomaflow/pkg/protobuf/notification/v1"
@@ -71,36 +68,9 @@ func main() {
 	eng := engine.NewWorkflowEngine(repo, log.Logger)
 	h := runtimegrpc.New(base, eng, projectClient, log.Logger)
 
-	ctx, cancel := context.WithCancel(context.Background())
-	defer cancel()
-
-	if cfg.Kafka.Enabled {
-		log.Info("Kafka ENABLED - starting workflow-actions consumer...")
-
-		brokers := strings.Split(cfg.Kafka.Brokers, ",")
-		groupID := cfg.Kafka.GroupID
-		if groupID == "" {
-			groupID = "workflow-service-group"
-		}
-
-		consumer, consumerErr := broker.NewConsumerWithRetry(brokers, groupID, log.Logger, broker.DefaultRetryConfig())
-		if consumerErr != nil {
-			log.Fatal("failed to create kafka consumer", zap.Error(consumerErr))
-		}
-		defer consumer.Close()
-
-		worker := postcommit.NewWorker(db, projectClient, log.Logger)
-
-		go func() {
-			log.Info("Starting Kafka consumer",
-				zap.Strings("topics", []string{"workflow-actions"}),
-				zap.String("group_id", groupID))
-			consumer.Start(ctx, []string{"workflow-actions"}, worker.HandleEvent)
-		}()
-	} else {
-		log.Warn("Kafka DISABLED - post-commit actions will NOT be processed asynchronously")
-		log.Warn("workflow-actions events will be skipped")
-	}
+	// Post-commit worker (was Kafka consumer ранее)
+	pcWorker := postcommit.NewWorker(db, projectClient, log.Logger)
+	pcGRPC := postcommit.NewGRPCServer(pcWorker, log.Logger)
 
 	// gRPC server
 	lis, err := net.Listen("tcp", ":"+cfg.GRPCPort)
@@ -110,18 +80,17 @@ func main() {
 
 	grpcServer := grpc.NewServer()
 	workflowv1.RegisterWorkflowServiceServer(grpcServer, h)
+	workflowv1.RegisterWorkflowActionsServiceServer(grpcServer, pcGRPC)
 
 	healthServer := health.NewServer()
 	grpc_health_v1.RegisterHealthServer(grpcServer, healthServer)
 	healthServer.SetServingStatus("", grpc_health_v1.HealthCheckResponse_SERVING)
 	healthServer.SetServingStatus("workflow.v1.WorkflowService", grpc_health_v1.HealthCheckResponse_SERVING)
+	healthServer.SetServingStatus("workflow.v1.WorkflowActionsService", grpc_health_v1.HealthCheckResponse_SERVING)
 
 	reflection.Register(grpcServer)
 
 	go func() {
-		log.Info("Workflow Service starting",
-			zap.String("port", cfg.GRPCPort),
-			zap.Bool("kafka_enabled", cfg.Kafka.Enabled))
 		if err := grpcServer.Serve(lis); err != nil {
 			log.Fatal("failed to serve", zap.Error(err))
 		}
@@ -135,8 +104,8 @@ func main() {
 	log.Info("Shutdown signal received")
 	healthServer.SetServingStatus("", grpc_health_v1.HealthCheckResponse_NOT_SERVING)
 	healthServer.SetServingStatus("workflow.v1.WorkflowService", grpc_health_v1.HealthCheckResponse_NOT_SERVING)
+	healthServer.SetServingStatus("workflow.v1.WorkflowActionsService", grpc_health_v1.HealthCheckResponse_NOT_SERVING)
 
-	cancel()
 	time.Sleep(300 * time.Millisecond)
 	grpcServer.GracefulStop()
 

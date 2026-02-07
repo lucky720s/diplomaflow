@@ -7,7 +7,6 @@
 package project
 
 import (
-	"github.com/lucky720s/diplomaflow/pkg/broker"
 	"github.com/lucky720s/diplomaflow/pkg/protobuf/workflow/v1"
 	"go.uber.org/zap"
 	"gorm.io/gorm"
@@ -15,14 +14,13 @@ import (
 
 // Injectors from wire.go:
 
-func InitializeApp(cfg *Config, db *gorm.DB, log *zap.Logger, kafkaProducer *broker.Producer, wfClient v1.WorkflowServiceClient) (*App, func(), error) {
+func InitializeApp(cfg *Config, db *gorm.DB, log *zap.Logger, wfClient v1.WorkflowServiceClient) (*App, func(), error) {
 	projectRepository := NewRepository(db)
 	workflowClient := ProvideWorkflowClient(wfClient)
 	service := NewService(projectRepository, workflowClient, log)
 	handler := NewHandler(service)
 	deadlineScheduler := NewDeadlineScheduler(projectRepository, log)
-	outboxProcessor := NewOutboxProcessor(projectRepository, kafkaProducer, log)
-	app := NewApp(handler, deadlineScheduler, outboxProcessor)
+	app := NewApp(handler, deadlineScheduler)
 	return app, func() {
 	}, nil
 }

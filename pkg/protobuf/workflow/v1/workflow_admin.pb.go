@@ -2253,7 +2253,7 @@ const file_workflow_v1_workflow_admin_proto_rawDesc = "" +
 	"\vto_state_id\x18\x02 \x01(\x03R\ttoStateId\x12\"\n" +
 	"\rto_state_name\x18\x03 \x01(\tR\vtoStateName\x12)\n" +
 	"\x10executed_actions\x18\x04 \x03(\tR\x0fexecutedActions\x12'\n" +
-	"\x0fblocked_reasons\x18\x05 \x03(\tR\x0eblockedReasons2\xcf\f\n" +
+	"\x0fblocked_reasons\x18\x05 \x03(\tR\x0eblockedReasons2\xce\r\n" +
 	"\x14WorkflowAdminService\x12c\n" +
 	"\x16CreateDepartmentConfig\x12*.workflow.v1.CreateDepartmentConfigRequest\x1a\x1d.workflow.v1.DepartmentConfig\x12]\n" +
 	"\x13GetDepartmentConfig\x12'.workflow.v1.GetDepartmentConfigRequest\x1a\x1d.workflow.v1.DepartmentConfig\x12n\n" +
@@ -2271,7 +2271,8 @@ const file_workflow_v1_workflow_admin_proto_rawDesc = "" +
 	"\x11SaveWorkflowDraft\x12%.workflow.v1.SaveWorkflowDraftRequest\x1a\x15.workflow.v1.Workflow\x12M\n" +
 	"\x0fPublishWorkflow\x12#.workflow.v1.PublishWorkflowRequest\x1a\x15.workflow.v1.Workflow\x12T\n" +
 	"\x0fPreviewWorkflow\x12#.workflow.v1.PreviewWorkflowRequest\x1a\x1c.workflow.v1.WorkflowPreview\x12e\n" +
-	"\x12SimulateTransition\x12&.workflow.v1.SimulateTransitionRequest\x1a'.workflow.v1.SimulateTransitionResponseB;Z9github.com/lucky720s/diplomaflow/pkg/protobuf/workflow/v1b\x06proto3"
+	"\x12SimulateTransition\x12&.workflow.v1.SimulateTransitionRequest\x1a'.workflow.v1.SimulateTransitionResponse\x12}\n" +
+	"\x1aProcessWorkflowActionEvent\x12..workflow.v1.ProcessWorkflowActionEventRequest\x1a/.workflow.v1.ProcessWorkflowActionEventResponseB;Z9github.com/lucky720s/diplomaflow/pkg/protobuf/workflow/v1b\x06proto3"
 
 var (
 	file_workflow_v1_workflow_admin_proto_rawDescOnce sync.Once
@@ -2287,43 +2288,45 @@ func file_workflow_v1_workflow_admin_proto_rawDescGZIP() []byte {
 
 var file_workflow_v1_workflow_admin_proto_msgTypes = make([]protoimpl.MessageInfo, 31)
 var file_workflow_v1_workflow_admin_proto_goTypes = []any{
-	(*DepartmentConfig)(nil),                // 0: workflow.v1.DepartmentConfig
-	(*TeamSettings)(nil),                    // 1: workflow.v1.TeamSettings
-	(*DeadlineOverride)(nil),                // 2: workflow.v1.DeadlineOverride
-	(*CustomStep)(nil),                      // 3: workflow.v1.CustomStep
-	(*ActionSchema)(nil),                    // 4: workflow.v1.ActionSchema
-	(*WorkflowBuilderResponse)(nil),         // 5: workflow.v1.WorkflowBuilderResponse
-	(*StateTypeInfo)(nil),                   // 6: workflow.v1.StateTypeInfo
-	(*WorkflowPreview)(nil),                 // 7: workflow.v1.WorkflowPreview
-	(*PreviewState)(nil),                    // 8: workflow.v1.PreviewState
-	(*PreviewTransition)(nil),               // 9: workflow.v1.PreviewTransition
-	(*CreateDepartmentConfigRequest)(nil),   // 10: workflow.v1.CreateDepartmentConfigRequest
-	(*GetDepartmentConfigRequest)(nil),      // 11: workflow.v1.GetDepartmentConfigRequest
-	(*ListDepartmentConfigsRequest)(nil),    // 12: workflow.v1.ListDepartmentConfigsRequest
-	(*ListDepartmentConfigsResponse)(nil),   // 13: workflow.v1.ListDepartmentConfigsResponse
-	(*UpdateDepartmentConfigRequest)(nil),   // 14: workflow.v1.UpdateDepartmentConfigRequest
-	(*ActivateDepartmentConfigRequest)(nil), // 15: workflow.v1.ActivateDepartmentConfigRequest
-	(*DeleteDepartmentConfigRequest)(nil),   // 16: workflow.v1.DeleteDepartmentConfigRequest
-	(*AddCustomStepRequest)(nil),            // 17: workflow.v1.AddCustomStepRequest
-	(*UpdateCustomStepRequest)(nil),         // 18: workflow.v1.UpdateCustomStepRequest
-	(*DeleteCustomStepRequest)(nil),         // 19: workflow.v1.DeleteCustomStepRequest
-	(*ReorderCustomStepsRequest)(nil),       // 20: workflow.v1.ReorderCustomStepsRequest
-	(*ListCustomStepsResponse)(nil),         // 21: workflow.v1.ListCustomStepsResponse
-	(*ListAvailableActionsRequest)(nil),     // 22: workflow.v1.ListAvailableActionsRequest
-	(*ListAvailableActionsResponse)(nil),    // 23: workflow.v1.ListAvailableActionsResponse
-	(*GetActionSchemaRequest)(nil),          // 24: workflow.v1.GetActionSchemaRequest
-	(*GetWorkflowBuilderRequest)(nil),       // 25: workflow.v1.GetWorkflowBuilderRequest
-	(*SaveWorkflowDraftRequest)(nil),        // 26: workflow.v1.SaveWorkflowDraftRequest
-	(*PublishWorkflowRequest)(nil),          // 27: workflow.v1.PublishWorkflowRequest
-	(*PreviewWorkflowRequest)(nil),          // 28: workflow.v1.PreviewWorkflowRequest
-	(*SimulateTransitionRequest)(nil),       // 29: workflow.v1.SimulateTransitionRequest
-	(*SimulateTransitionResponse)(nil),      // 30: workflow.v1.SimulateTransitionResponse
-	(*structpb.Struct)(nil),                 // 31: google.protobuf.Struct
-	(*timestamppb.Timestamp)(nil),           // 32: google.protobuf.Timestamp
-	(*Workflow)(nil),                        // 33: workflow.v1.Workflow
-	(*State)(nil),                           // 34: workflow.v1.State
-	(*Transition)(nil),                      // 35: workflow.v1.Transition
-	(*emptypb.Empty)(nil),                   // 36: google.protobuf.Empty
+	(*DepartmentConfig)(nil),                   // 0: workflow.v1.DepartmentConfig
+	(*TeamSettings)(nil),                       // 1: workflow.v1.TeamSettings
+	(*DeadlineOverride)(nil),                   // 2: workflow.v1.DeadlineOverride
+	(*CustomStep)(nil),                         // 3: workflow.v1.CustomStep
+	(*ActionSchema)(nil),                       // 4: workflow.v1.ActionSchema
+	(*WorkflowBuilderResponse)(nil),            // 5: workflow.v1.WorkflowBuilderResponse
+	(*StateTypeInfo)(nil),                      // 6: workflow.v1.StateTypeInfo
+	(*WorkflowPreview)(nil),                    // 7: workflow.v1.WorkflowPreview
+	(*PreviewState)(nil),                       // 8: workflow.v1.PreviewState
+	(*PreviewTransition)(nil),                  // 9: workflow.v1.PreviewTransition
+	(*CreateDepartmentConfigRequest)(nil),      // 10: workflow.v1.CreateDepartmentConfigRequest
+	(*GetDepartmentConfigRequest)(nil),         // 11: workflow.v1.GetDepartmentConfigRequest
+	(*ListDepartmentConfigsRequest)(nil),       // 12: workflow.v1.ListDepartmentConfigsRequest
+	(*ListDepartmentConfigsResponse)(nil),      // 13: workflow.v1.ListDepartmentConfigsResponse
+	(*UpdateDepartmentConfigRequest)(nil),      // 14: workflow.v1.UpdateDepartmentConfigRequest
+	(*ActivateDepartmentConfigRequest)(nil),    // 15: workflow.v1.ActivateDepartmentConfigRequest
+	(*DeleteDepartmentConfigRequest)(nil),      // 16: workflow.v1.DeleteDepartmentConfigRequest
+	(*AddCustomStepRequest)(nil),               // 17: workflow.v1.AddCustomStepRequest
+	(*UpdateCustomStepRequest)(nil),            // 18: workflow.v1.UpdateCustomStepRequest
+	(*DeleteCustomStepRequest)(nil),            // 19: workflow.v1.DeleteCustomStepRequest
+	(*ReorderCustomStepsRequest)(nil),          // 20: workflow.v1.ReorderCustomStepsRequest
+	(*ListCustomStepsResponse)(nil),            // 21: workflow.v1.ListCustomStepsResponse
+	(*ListAvailableActionsRequest)(nil),        // 22: workflow.v1.ListAvailableActionsRequest
+	(*ListAvailableActionsResponse)(nil),       // 23: workflow.v1.ListAvailableActionsResponse
+	(*GetActionSchemaRequest)(nil),             // 24: workflow.v1.GetActionSchemaRequest
+	(*GetWorkflowBuilderRequest)(nil),          // 25: workflow.v1.GetWorkflowBuilderRequest
+	(*SaveWorkflowDraftRequest)(nil),           // 26: workflow.v1.SaveWorkflowDraftRequest
+	(*PublishWorkflowRequest)(nil),             // 27: workflow.v1.PublishWorkflowRequest
+	(*PreviewWorkflowRequest)(nil),             // 28: workflow.v1.PreviewWorkflowRequest
+	(*SimulateTransitionRequest)(nil),          // 29: workflow.v1.SimulateTransitionRequest
+	(*SimulateTransitionResponse)(nil),         // 30: workflow.v1.SimulateTransitionResponse
+	(*structpb.Struct)(nil),                    // 31: google.protobuf.Struct
+	(*timestamppb.Timestamp)(nil),              // 32: google.protobuf.Timestamp
+	(*Workflow)(nil),                           // 33: workflow.v1.Workflow
+	(*State)(nil),                              // 34: workflow.v1.State
+	(*Transition)(nil),                         // 35: workflow.v1.Transition
+	(*ProcessWorkflowActionEventRequest)(nil),  // 36: workflow.v1.ProcessWorkflowActionEventRequest
+	(*emptypb.Empty)(nil),                      // 37: google.protobuf.Empty
+	(*ProcessWorkflowActionEventResponse)(nil), // 38: workflow.v1.ProcessWorkflowActionEventResponse
 }
 var file_workflow_v1_workflow_admin_proto_depIdxs = []int32{
 	1,  // 0: workflow.v1.DepartmentConfig.team_settings:type_name -> workflow.v1.TeamSettings
@@ -2376,25 +2379,27 @@ var file_workflow_v1_workflow_admin_proto_depIdxs = []int32{
 	27, // 47: workflow.v1.WorkflowAdminService.PublishWorkflow:input_type -> workflow.v1.PublishWorkflowRequest
 	28, // 48: workflow.v1.WorkflowAdminService.PreviewWorkflow:input_type -> workflow.v1.PreviewWorkflowRequest
 	29, // 49: workflow.v1.WorkflowAdminService.SimulateTransition:input_type -> workflow.v1.SimulateTransitionRequest
-	0,  // 50: workflow.v1.WorkflowAdminService.CreateDepartmentConfig:output_type -> workflow.v1.DepartmentConfig
-	0,  // 51: workflow.v1.WorkflowAdminService.GetDepartmentConfig:output_type -> workflow.v1.DepartmentConfig
-	13, // 52: workflow.v1.WorkflowAdminService.ListDepartmentConfigs:output_type -> workflow.v1.ListDepartmentConfigsResponse
-	0,  // 53: workflow.v1.WorkflowAdminService.UpdateDepartmentConfig:output_type -> workflow.v1.DepartmentConfig
-	0,  // 54: workflow.v1.WorkflowAdminService.ActivateDepartmentConfig:output_type -> workflow.v1.DepartmentConfig
-	36, // 55: workflow.v1.WorkflowAdminService.DeleteDepartmentConfig:output_type -> google.protobuf.Empty
-	3,  // 56: workflow.v1.WorkflowAdminService.AddCustomStep:output_type -> workflow.v1.CustomStep
-	3,  // 57: workflow.v1.WorkflowAdminService.UpdateCustomStep:output_type -> workflow.v1.CustomStep
-	36, // 58: workflow.v1.WorkflowAdminService.DeleteCustomStep:output_type -> google.protobuf.Empty
-	21, // 59: workflow.v1.WorkflowAdminService.ReorderCustomSteps:output_type -> workflow.v1.ListCustomStepsResponse
-	23, // 60: workflow.v1.WorkflowAdminService.ListAvailableActions:output_type -> workflow.v1.ListAvailableActionsResponse
-	4,  // 61: workflow.v1.WorkflowAdminService.GetActionSchema:output_type -> workflow.v1.ActionSchema
-	5,  // 62: workflow.v1.WorkflowAdminService.GetWorkflowBuilder:output_type -> workflow.v1.WorkflowBuilderResponse
-	33, // 63: workflow.v1.WorkflowAdminService.SaveWorkflowDraft:output_type -> workflow.v1.Workflow
-	33, // 64: workflow.v1.WorkflowAdminService.PublishWorkflow:output_type -> workflow.v1.Workflow
-	7,  // 65: workflow.v1.WorkflowAdminService.PreviewWorkflow:output_type -> workflow.v1.WorkflowPreview
-	30, // 66: workflow.v1.WorkflowAdminService.SimulateTransition:output_type -> workflow.v1.SimulateTransitionResponse
-	50, // [50:67] is the sub-list for method output_type
-	33, // [33:50] is the sub-list for method input_type
+	36, // 50: workflow.v1.WorkflowAdminService.ProcessWorkflowActionEvent:input_type -> workflow.v1.ProcessWorkflowActionEventRequest
+	0,  // 51: workflow.v1.WorkflowAdminService.CreateDepartmentConfig:output_type -> workflow.v1.DepartmentConfig
+	0,  // 52: workflow.v1.WorkflowAdminService.GetDepartmentConfig:output_type -> workflow.v1.DepartmentConfig
+	13, // 53: workflow.v1.WorkflowAdminService.ListDepartmentConfigs:output_type -> workflow.v1.ListDepartmentConfigsResponse
+	0,  // 54: workflow.v1.WorkflowAdminService.UpdateDepartmentConfig:output_type -> workflow.v1.DepartmentConfig
+	0,  // 55: workflow.v1.WorkflowAdminService.ActivateDepartmentConfig:output_type -> workflow.v1.DepartmentConfig
+	37, // 56: workflow.v1.WorkflowAdminService.DeleteDepartmentConfig:output_type -> google.protobuf.Empty
+	3,  // 57: workflow.v1.WorkflowAdminService.AddCustomStep:output_type -> workflow.v1.CustomStep
+	3,  // 58: workflow.v1.WorkflowAdminService.UpdateCustomStep:output_type -> workflow.v1.CustomStep
+	37, // 59: workflow.v1.WorkflowAdminService.DeleteCustomStep:output_type -> google.protobuf.Empty
+	21, // 60: workflow.v1.WorkflowAdminService.ReorderCustomSteps:output_type -> workflow.v1.ListCustomStepsResponse
+	23, // 61: workflow.v1.WorkflowAdminService.ListAvailableActions:output_type -> workflow.v1.ListAvailableActionsResponse
+	4,  // 62: workflow.v1.WorkflowAdminService.GetActionSchema:output_type -> workflow.v1.ActionSchema
+	5,  // 63: workflow.v1.WorkflowAdminService.GetWorkflowBuilder:output_type -> workflow.v1.WorkflowBuilderResponse
+	33, // 64: workflow.v1.WorkflowAdminService.SaveWorkflowDraft:output_type -> workflow.v1.Workflow
+	33, // 65: workflow.v1.WorkflowAdminService.PublishWorkflow:output_type -> workflow.v1.Workflow
+	7,  // 66: workflow.v1.WorkflowAdminService.PreviewWorkflow:output_type -> workflow.v1.WorkflowPreview
+	30, // 67: workflow.v1.WorkflowAdminService.SimulateTransition:output_type -> workflow.v1.SimulateTransitionResponse
+	38, // 68: workflow.v1.WorkflowAdminService.ProcessWorkflowActionEvent:output_type -> workflow.v1.ProcessWorkflowActionEventResponse
+	51, // [51:69] is the sub-list for method output_type
+	33, // [33:51] is the sub-list for method input_type
 	33, // [33:33] is the sub-list for extension type_name
 	33, // [33:33] is the sub-list for extension extendee
 	0,  // [0:33] is the sub-list for field type_name

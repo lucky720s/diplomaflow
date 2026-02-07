@@ -4,10 +4,6 @@ grpc_port: 8091
 database:
   dsn: ""
 
-kafka:
-  brokers: "kafka:29092"
-  group_id: "task-service-group"
-
 services:
   auth_addr: "auth_service:8082"
   team_addr: "team_service:8084"

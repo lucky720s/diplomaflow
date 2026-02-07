@@ -10,8 +10,4 @@ type Config struct {
 		WorkflowAddr     string `mapstructure:"workflow_addr"`
 		NotificationAddr string `mapstructure:"notification_addr"`
 	} `mapstructure:"services"`
-	Kafka struct {
-		Enabled bool   `mapstructure:"enabled"`
-		Brokers string `mapstructure:"brokers"`
-	} `mapstructure:"kafka"`
 }
