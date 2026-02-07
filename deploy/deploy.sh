@@ -97,7 +97,7 @@ for i in $(seq 1 30); do
 done
 
 echo "==> Run migrations"
-dc run --rm --no-build migrate
+dc run --rm migrate
 
 echo "==> Start/update all services (no build)"
 dc up -d --no-build --remove-orphans
