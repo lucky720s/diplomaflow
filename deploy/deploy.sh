@@ -71,7 +71,8 @@ if [ -n "$GHCR_USERNAME" ] && [ -n "$GHCR_TOKEN" ]; then
 fi
 
 echo "==> Pull images"
-dc pull
+dc dc pull --quiet || dc pull
+
 
 echo "==> Start infra"
 dc up -d --no-build main_postgres redis
