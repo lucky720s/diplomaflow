@@ -12,7 +12,6 @@ service TeamService {
   rpc CreateTeam (CreateTeamRequest) returns (CreateTeamResponse);
   rpc GetTeam (GetTeamRequest) returns (GetTeamResponse);
   rpc GetAvailableStudents (GetAvailableStudentsRequest) returns (GetAvailableStudentsResponse);
-  rpc AssignProject (AssignProjectRequest) returns (AssignProjectResponse);
   rpc GetMyInvites (GetMyInvitesRequest) returns (GetMyInvitesResponse);
   rpc RespondToInvite (RespondToInviteRequest) returns (RespondToInviteResponse);
   rpc GetMyTeam (GetMyTeamRequest) returns (GetMyTeamResponse);
@@ -27,9 +26,8 @@ service TeamService {
 }
 message CreateTeamRequest {
   string name = 1;
-  int64 project_id = 2;
-  repeated int64 member_ids = 3;
-  int64 leader_id = 4;
+  repeated int64 member_ids = 2;
+  int64 leader_id = 3;
 }
 
 message CreateTeamResponse {
@@ -48,8 +46,7 @@ message TeamMember {
 message GetTeamResponse {
   int64 team_id = 1;
   string name = 2;
-  int64 project_id = 3;
-  repeated TeamMember members = 4;
+  repeated TeamMember members = 3;
 }
 
 message GetAvailableStudentsRequest {
@@ -69,14 +66,7 @@ message StudentPreview {
 message GetAvailableStudentsResponse {
   repeated StudentPreview students = 1;
 }
-message AssignProjectRequest {
-  int64 team_id = 1;
-  int64 project_id = 2;
-}
 
-message AssignProjectResponse {
-  bool success = 1;
-}
 
 
 
@@ -118,11 +108,10 @@ message GetMyTeamResponse {
 message TeamInfo {
   int64 team_id = 1;
   string name = 2;
-  int64 project_id = 3;
-  string role = 4;
-  repeated TeamMember members = 5;
-  int32 member_count = 6;
-  int32 pending_invites_count = 7;
+  string role = 3;
+  repeated TeamMember members = 4;
+  int32 member_count = 5;
+  int32 pending_invites_count = 6;
 }
 message UpdateTeamRequest {
   Team team = 1;
@@ -159,16 +148,14 @@ message RemoveMemberRequest {
 message Team {
   int64 id = 1;
   string name = 2;
-  int64 project_id = 3;
-  repeated TeamMember members = 4;
-  string created_at = 5;
+  repeated TeamMember members = 3;
+  string created_at = 4;
 }
 
 message ListTeamsRequest {
   int64 department_id = 1;
-  int64 project_id = 2;
-  int32 page = 3;
-  int32 page_size = 4;
+  int32 page = 2;
+  int32 page_size = 3;
 }
 
 message ListTeamsResponse {

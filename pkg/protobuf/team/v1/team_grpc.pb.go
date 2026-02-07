@@ -23,7 +23,6 @@ const (
 	TeamService_CreateTeam_FullMethodName           = "/team.v1.TeamService/CreateTeam"
 	TeamService_GetTeam_FullMethodName              = "/team.v1.TeamService/GetTeam"
 	TeamService_GetAvailableStudents_FullMethodName = "/team.v1.TeamService/GetAvailableStudents"
-	TeamService_AssignProject_FullMethodName        = "/team.v1.TeamService/AssignProject"
 	TeamService_GetMyInvites_FullMethodName         = "/team.v1.TeamService/GetMyInvites"
 	TeamService_RespondToInvite_FullMethodName      = "/team.v1.TeamService/RespondToInvite"
 	TeamService_GetMyTeam_FullMethodName            = "/team.v1.TeamService/GetMyTeam"
@@ -43,7 +42,6 @@ type TeamServiceClient interface {
 	CreateTeam(ctx context.Context, in *CreateTeamRequest, opts ...grpc.CallOption) (*CreateTeamResponse, error)
 	GetTeam(ctx context.Context, in *GetTeamRequest, opts ...grpc.CallOption) (*GetTeamResponse, error)
 	GetAvailableStudents(ctx context.Context, in *GetAvailableStudentsRequest, opts ...grpc.CallOption) (*GetAvailableStudentsResponse, error)
-	AssignProject(ctx context.Context, in *AssignProjectRequest, opts ...grpc.CallOption) (*AssignProjectResponse, error)
 	GetMyInvites(ctx context.Context, in *GetMyInvitesRequest, opts ...grpc.CallOption) (*GetMyInvitesResponse, error)
 	RespondToInvite(ctx context.Context, in *RespondToInviteRequest, opts ...grpc.CallOption) (*RespondToInviteResponse, error)
 	GetMyTeam(ctx context.Context, in *GetMyTeamRequest, opts ...grpc.CallOption) (*GetMyTeamResponse, error)
@@ -88,16 +86,6 @@ func (c *teamServiceClient) GetAvailableStudents(ctx context.Context, in *GetAva
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
 	out := new(GetAvailableStudentsResponse)
 	err := c.cc.Invoke(ctx, TeamService_GetAvailableStudents_FullMethodName, in, out, cOpts...)
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
-}
-
-func (c *teamServiceClient) AssignProject(ctx context.Context, in *AssignProjectRequest, opts ...grpc.CallOption) (*AssignProjectResponse, error) {
-	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
-	out := new(AssignProjectResponse)
-	err := c.cc.Invoke(ctx, TeamService_AssignProject_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
 	}
@@ -211,7 +199,6 @@ type TeamServiceServer interface {
 	CreateTeam(context.Context, *CreateTeamRequest) (*CreateTeamResponse, error)
 	GetTeam(context.Context, *GetTeamRequest) (*GetTeamResponse, error)
 	GetAvailableStudents(context.Context, *GetAvailableStudentsRequest) (*GetAvailableStudentsResponse, error)
-	AssignProject(context.Context, *AssignProjectRequest) (*AssignProjectResponse, error)
 	GetMyInvites(context.Context, *GetMyInvitesRequest) (*GetMyInvitesResponse, error)
 	RespondToInvite(context.Context, *RespondToInviteRequest) (*RespondToInviteResponse, error)
 	GetMyTeam(context.Context, *GetMyTeamRequest) (*GetMyTeamResponse, error)
@@ -240,9 +227,6 @@ func (UnimplementedTeamServiceServer) GetTeam(context.Context, *GetTeamRequest) 
 }
 func (UnimplementedTeamServiceServer) GetAvailableStudents(context.Context, *GetAvailableStudentsRequest) (*GetAvailableStudentsResponse, error) {
 	return nil, status.Error(codes.Unimplemented, "method GetAvailableStudents not implemented")
-}
-func (UnimplementedTeamServiceServer) AssignProject(context.Context, *AssignProjectRequest) (*AssignProjectResponse, error) {
-	return nil, status.Error(codes.Unimplemented, "method AssignProject not implemented")
 }
 func (UnimplementedTeamServiceServer) GetMyInvites(context.Context, *GetMyInvitesRequest) (*GetMyInvitesResponse, error) {
 	return nil, status.Error(codes.Unimplemented, "method GetMyInvites not implemented")
@@ -345,24 +329,6 @@ func _TeamService_GetAvailableStudents_Handler(srv interface{}, ctx context.Cont
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return srv.(TeamServiceServer).GetAvailableStudents(ctx, req.(*GetAvailableStudentsRequest))
-	}
-	return interceptor(ctx, in, info, handler)
-}
-
-func _TeamService_AssignProject_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(AssignProjectRequest)
-	if err := dec(in); err != nil {
-		return nil, err
-	}
-	if interceptor == nil {
-		return srv.(TeamServiceServer).AssignProject(ctx, in)
-	}
-	info := &grpc.UnaryServerInfo{
-		Server:     srv,
-		FullMethod: TeamService_AssignProject_FullMethodName,
-	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(TeamServiceServer).AssignProject(ctx, req.(*AssignProjectRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -565,10 +531,6 @@ var TeamService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "GetAvailableStudents",
 			Handler:    _TeamService_GetAvailableStudents_Handler,
-		},
-		{
-			MethodName: "AssignProject",
-			Handler:    _TeamService_AssignProject_Handler,
 		},
 		{
 			MethodName: "GetMyInvites",

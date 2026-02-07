@@ -1732,11 +1732,10 @@ func (x *GetStudentResponse) GetSubmissions() []*SubmissionPreview {
 type ListAllTeamsRequest struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	DepartmentId  int64                  `protobuf:"varint,1,opt,name=department_id,json=departmentId,proto3" json:"department_id,omitempty"`
-	ProjectId     int64                  `protobuf:"varint,2,opt,name=project_id,json=projectId,proto3" json:"project_id,omitempty"`
-	Status        string                 `protobuf:"bytes,3,opt,name=status,proto3" json:"status,omitempty"` // active, completed, etc.
-	Search        string                 `protobuf:"bytes,4,opt,name=search,proto3" json:"search,omitempty"`
-	Page          int32                  `protobuf:"varint,5,opt,name=page,proto3" json:"page,omitempty"`
-	PageSize      int32                  `protobuf:"varint,6,opt,name=page_size,json=pageSize,proto3" json:"page_size,omitempty"`
+	Status        string                 `protobuf:"bytes,2,opt,name=status,proto3" json:"status,omitempty"`
+	Search        string                 `protobuf:"bytes,3,opt,name=search,proto3" json:"search,omitempty"`
+	Page          int32                  `protobuf:"varint,4,opt,name=page,proto3" json:"page,omitempty"`
+	PageSize      int32                  `protobuf:"varint,5,opt,name=page_size,json=pageSize,proto3" json:"page_size,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -1774,13 +1773,6 @@ func (*ListAllTeamsRequest) Descriptor() ([]byte, []int) {
 func (x *ListAllTeamsRequest) GetDepartmentId() int64 {
 	if x != nil {
 		return x.DepartmentId
-	}
-	return 0
-}
-
-func (x *ListAllTeamsRequest) GetProjectId() int64 {
-	if x != nil {
-		return x.ProjectId
 	}
 	return 0
 }
@@ -1869,15 +1861,14 @@ type TeamAdminInfo struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	Id            int64                  `protobuf:"varint,1,opt,name=id,proto3" json:"id,omitempty"`
 	Name          string                 `protobuf:"bytes,2,opt,name=name,proto3" json:"name,omitempty"`
-	ProjectId     int64                  `protobuf:"varint,3,opt,name=project_id,json=projectId,proto3" json:"project_id,omitempty"`
-	ProjectTitle  string                 `protobuf:"bytes,4,opt,name=project_title,json=projectTitle,proto3" json:"project_title,omitempty"`
-	CurrentStep   string                 `protobuf:"bytes,5,opt,name=current_step,json=currentStep,proto3" json:"current_step,omitempty"`
-	MemberCount   int32                  `protobuf:"varint,6,opt,name=member_count,json=memberCount,proto3" json:"member_count,omitempty"`
-	Members       []*TeamMemberInfo      `protobuf:"bytes,7,rep,name=members,proto3" json:"members,omitempty"`
-	Supervisor    *SupervisorInfo        `protobuf:"bytes,8,opt,name=supervisor,proto3" json:"supervisor,omitempty"`
-	Status        string                 `protobuf:"bytes,9,opt,name=status,proto3" json:"status,omitempty"`
-	CreatedAt     *timestamppb.Timestamp `protobuf:"bytes,10,opt,name=created_at,json=createdAt,proto3" json:"created_at,omitempty"`
-	UpdatedAt     *timestamppb.Timestamp `protobuf:"bytes,11,opt,name=updated_at,json=updatedAt,proto3" json:"updated_at,omitempty"`
+	ProjectTitle  string                 `protobuf:"bytes,3,opt,name=project_title,json=projectTitle,proto3" json:"project_title,omitempty"`
+	CurrentStep   string                 `protobuf:"bytes,4,opt,name=current_step,json=currentStep,proto3" json:"current_step,omitempty"`
+	MemberCount   int32                  `protobuf:"varint,5,opt,name=member_count,json=memberCount,proto3" json:"member_count,omitempty"`
+	Members       []*TeamMemberInfo      `protobuf:"bytes,6,rep,name=members,proto3" json:"members,omitempty"`
+	Supervisor    *SupervisorInfo        `protobuf:"bytes,7,opt,name=supervisor,proto3" json:"supervisor,omitempty"`
+	Status        string                 `protobuf:"bytes,8,opt,name=status,proto3" json:"status,omitempty"`
+	CreatedAt     *timestamppb.Timestamp `protobuf:"bytes,9,opt,name=created_at,json=createdAt,proto3" json:"created_at,omitempty"`
+	UpdatedAt     *timestamppb.Timestamp `protobuf:"bytes,10,opt,name=updated_at,json=updatedAt,proto3" json:"updated_at,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -1924,13 +1915,6 @@ func (x *TeamAdminInfo) GetName() string {
 		return x.Name
 	}
 	return ""
-}
-
-func (x *TeamAdminInfo) GetProjectId() int64 {
-	if x != nil {
-		return x.ProjectId
-	}
-	return 0
 }
 
 func (x *TeamAdminInfo) GetProjectTitle() string {
@@ -8162,37 +8146,33 @@ const file_admin_v1_admin_proto_rawDesc = "" +
 	"\x12GetStudentResponse\x12/\n" +
 	"\astudent\x18\x01 \x01(\v2\x15.admin.v1.StudentInfoR\astudent\x12+\n" +
 	"\x06grades\x18\x02 \x03(\v2\x13.admin.v1.GradeInfoR\x06grades\x12=\n" +
-	"\vsubmissions\x18\x03 \x03(\v2\x1b.admin.v1.SubmissionPreviewR\vsubmissions\"\xba\x01\n" +
+	"\vsubmissions\x18\x03 \x03(\v2\x1b.admin.v1.SubmissionPreviewR\vsubmissions\"\x9b\x01\n" +
 	"\x13ListAllTeamsRequest\x12#\n" +
-	"\rdepartment_id\x18\x01 \x01(\x03R\fdepartmentId\x12\x1d\n" +
-	"\n" +
-	"project_id\x18\x02 \x01(\x03R\tprojectId\x12\x16\n" +
-	"\x06status\x18\x03 \x01(\tR\x06status\x12\x16\n" +
-	"\x06search\x18\x04 \x01(\tR\x06search\x12\x12\n" +
-	"\x04page\x18\x05 \x01(\x05R\x04page\x12\x1b\n" +
-	"\tpage_size\x18\x06 \x01(\x05R\bpageSize\"f\n" +
+	"\rdepartment_id\x18\x01 \x01(\x03R\fdepartmentId\x12\x16\n" +
+	"\x06status\x18\x02 \x01(\tR\x06status\x12\x16\n" +
+	"\x06search\x18\x03 \x01(\tR\x06search\x12\x12\n" +
+	"\x04page\x18\x04 \x01(\x05R\x04page\x12\x1b\n" +
+	"\tpage_size\x18\x05 \x01(\x05R\bpageSize\"f\n" +
 	"\x14ListAllTeamsResponse\x12-\n" +
 	"\x05teams\x18\x01 \x03(\v2\x17.admin.v1.TeamAdminInfoR\x05teams\x12\x1f\n" +
 	"\vtotal_count\x18\x02 \x01(\x03R\n" +
-	"totalCount\"\xb9\x03\n" +
+	"totalCount\"\x9a\x03\n" +
 	"\rTeamAdminInfo\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\x03R\x02id\x12\x12\n" +
-	"\x04name\x18\x02 \x01(\tR\x04name\x12\x1d\n" +
+	"\x04name\x18\x02 \x01(\tR\x04name\x12#\n" +
+	"\rproject_title\x18\x03 \x01(\tR\fprojectTitle\x12!\n" +
+	"\fcurrent_step\x18\x04 \x01(\tR\vcurrentStep\x12!\n" +
+	"\fmember_count\x18\x05 \x01(\x05R\vmemberCount\x122\n" +
+	"\amembers\x18\x06 \x03(\v2\x18.admin.v1.TeamMemberInfoR\amembers\x128\n" +
 	"\n" +
-	"project_id\x18\x03 \x01(\x03R\tprojectId\x12#\n" +
-	"\rproject_title\x18\x04 \x01(\tR\fprojectTitle\x12!\n" +
-	"\fcurrent_step\x18\x05 \x01(\tR\vcurrentStep\x12!\n" +
-	"\fmember_count\x18\x06 \x01(\x05R\vmemberCount\x122\n" +
-	"\amembers\x18\a \x03(\v2\x18.admin.v1.TeamMemberInfoR\amembers\x128\n" +
-	"\n" +
-	"supervisor\x18\b \x01(\v2\x18.admin.v1.SupervisorInfoR\n" +
+	"supervisor\x18\a \x01(\v2\x18.admin.v1.SupervisorInfoR\n" +
 	"supervisor\x12\x16\n" +
-	"\x06status\x18\t \x01(\tR\x06status\x129\n" +
+	"\x06status\x18\b \x01(\tR\x06status\x129\n" +
 	"\n" +
-	"created_at\x18\n" +
-	" \x01(\v2\x1a.google.protobuf.TimestampR\tcreatedAt\x129\n" +
+	"created_at\x18\t \x01(\v2\x1a.google.protobuf.TimestampR\tcreatedAt\x129\n" +
 	"\n" +
-	"updated_at\x18\v \x01(\v2\x1a.google.protobuf.TimestampR\tupdatedAt\"p\n" +
+	"updated_at\x18\n" +
+	" \x01(\v2\x1a.google.protobuf.TimestampR\tupdatedAt\"p\n" +
 	"\x0eTeamMemberInfo\x12\x17\n" +
 	"\auser_id\x18\x01 \x01(\x03R\x06userId\x12\x1b\n" +
 	"\tfull_name\x18\x02 \x01(\tR\bfullName\x12\x14\n" +

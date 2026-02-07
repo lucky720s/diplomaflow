@@ -167,7 +167,7 @@ func TestGetProjectRuntime_MapsFields(t *testing.T) {
 		StudentID:        2,
 		UniversityID:     3,
 		DepartmentID:     4,
-		TeamID:           &teamID,
+		TeamID:           teamID,
 		WorkflowID:       10,
 		WorkflowVersion:  1,
 		WorkflowName:     "WF",

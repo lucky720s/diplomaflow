@@ -145,7 +145,6 @@ func main() {
 			teams.DELETE("/:id", handler.DeleteTeam)
 			teams.GET("/my", handler.GetMyTeam)
 			teams.GET("/available-students", handler.GetAvailableStudents)
-			teams.POST("/:id/assign-project", handler.AssignProjectToTeam)
 			teams.POST("/:id/members", handler.AddMember)
 			teams.DELETE("/:id/members", handler.RemoveMember)
 			teams.POST("/:id/topic-registration", handler.SubmitTopicRegistration)

@@ -69,6 +69,8 @@ func (m *CreateProjectRequest) validate(all bool) error {
 
 	// no validation rules for DepartmentId
 
+	// no validation rules for TeamId
+
 	if len(errors) > 0 {
 		return CreateProjectRequestMultiError(errors)
 	}

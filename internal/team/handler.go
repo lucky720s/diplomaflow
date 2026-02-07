@@ -68,10 +68,9 @@ func (h *Handler) GetTeam(ctx context.Context, req *teamv1.GetTeamRequest) (*tea
 	}
 
 	return &teamv1.GetTeamResponse{
-		TeamId:    team.ID,
-		Name:      team.Name,
-		ProjectId: team.ProjectID,
-		Members:   pbMembers,
+		TeamId:  team.ID,
+		Name:    team.Name,
+		Members: pbMembers,
 	}, nil
 }
 
@@ -98,7 +97,6 @@ func (h *Handler) GetMyTeam(ctx context.Context, req *teamv1.GetMyTeamRequest) (
 		Team: &teamv1.TeamInfo{
 			TeamId:              team.ID,
 			Name:                team.Name,
-			ProjectId:           team.ProjectID,
 			Role:                membership.Role,
 			Members:             pbMembers,
 			MemberCount:         int32(len(members)),
@@ -137,7 +135,6 @@ func (h *Handler) UpdateTeam(ctx context.Context, req *teamv1.UpdateTeamRequest)
 		Team: &teamv1.Team{
 			Id:        team.ID,
 			Name:      team.Name,
-			ProjectId: team.ProjectID,
 			Members:   pbMembers,
 			CreatedAt: team.CreatedAt.Format("2006-01-02T15:04:05Z"),
 		},
@@ -212,7 +209,6 @@ func (h *Handler) TransferLeadership(ctx context.Context, req *teamv1.TransferLe
 		UpdatedTeam: &teamv1.TeamInfo{
 			TeamId:      team.ID,
 			Name:        team.Name,
-			ProjectId:   team.ProjectID,
 			Members:     pbMembers,
 			MemberCount: int32(len(members)),
 		},
@@ -302,15 +298,8 @@ func (h *Handler) GetAvailableStudents(ctx context.Context, req *teamv1.GetAvail
 	return &teamv1.GetAvailableStudentsResponse{Students: students}, nil
 }
 
-func (h *Handler) AssignProject(ctx context.Context, req *teamv1.AssignProjectRequest) (*teamv1.AssignProjectResponse, error) {
-	if err := h.service.AssignProject(ctx, req.TeamId, req.ProjectId); err != nil {
-		return nil, mapError(err)
-	}
-	return &teamv1.AssignProjectResponse{Success: true}, nil
-}
-
 func (h *Handler) ListTeams(ctx context.Context, req *teamv1.ListTeamsRequest) (*teamv1.ListTeamsResponse, error) {
-	teams, total, err := h.service.ListTeams(ctx, req.DepartmentId, req.ProjectId, req.Page, req.PageSize)
+	teams, total, err := h.service.ListTeams(ctx, req.DepartmentId, req.Page, req.PageSize)
 	if err != nil {
 		return nil, mapError(err)
 	}
@@ -329,7 +318,6 @@ func (h *Handler) ListTeams(ctx context.Context, req *teamv1.ListTeamsRequest) (
 		pbTeams = append(pbTeams, &teamv1.Team{
 			Id:        t.ID,
 			Name:      t.Name,
-			ProjectId: t.ProjectID,
 			Members:   pbMembers,
 			CreatedAt: t.CreatedAt.Format("2006-01-02T15:04:05Z"),
 		})

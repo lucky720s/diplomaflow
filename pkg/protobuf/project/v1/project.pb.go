@@ -31,6 +31,7 @@ type CreateProjectRequest struct {
 	WorkflowName  string                 `protobuf:"bytes,4,opt,name=workflow_name,json=workflowName,proto3" json:"workflow_name,omitempty"`
 	UniversityId  int64                  `protobuf:"varint,5,opt,name=university_id,json=universityId,proto3" json:"university_id,omitempty"`
 	DepartmentId  int64                  `protobuf:"varint,6,opt,name=department_id,json=departmentId,proto3" json:"department_id,omitempty"`
+	TeamId        int64                  `protobuf:"varint,7,opt,name=team_id,json=teamId,proto3" json:"team_id,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -103,6 +104,13 @@ func (x *CreateProjectRequest) GetUniversityId() int64 {
 func (x *CreateProjectRequest) GetDepartmentId() int64 {
 	if x != nil {
 		return x.DepartmentId
+	}
+	return 0
+}
+
+func (x *CreateProjectRequest) GetTeamId() int64 {
+	if x != nil {
+		return x.TeamId
 	}
 	return 0
 }
@@ -1152,7 +1160,7 @@ var File_project_v1_project_proto protoreflect.FileDescriptor
 const file_project_v1_project_proto_rawDesc = "" +
 	"\n" +
 	"\x18project/v1/project.proto\x12\n" +
-	"project.v1\x1a\x1cgoogle/protobuf/struct.proto\x1a\x1fgoogle/protobuf/timestamp.proto\"\xdc\x01\n" +
+	"project.v1\x1a\x1cgoogle/protobuf/struct.proto\x1a\x1fgoogle/protobuf/timestamp.proto\"\xf5\x01\n" +
 	"\x14CreateProjectRequest\x12\x14\n" +
 	"\x05title\x18\x01 \x01(\tR\x05title\x12 \n" +
 	"\vdescription\x18\x02 \x01(\tR\vdescription\x12\x1d\n" +
@@ -1160,7 +1168,8 @@ const file_project_v1_project_proto_rawDesc = "" +
 	"student_id\x18\x03 \x01(\x03R\tstudentId\x12#\n" +
 	"\rworkflow_name\x18\x04 \x01(\tR\fworkflowName\x12#\n" +
 	"\runiversity_id\x18\x05 \x01(\x03R\funiversityId\x12#\n" +
-	"\rdepartment_id\x18\x06 \x01(\x03R\fdepartmentId\"N\n" +
+	"\rdepartment_id\x18\x06 \x01(\x03R\fdepartmentId\x12\x17\n" +
+	"\ateam_id\x18\a \x01(\x03R\x06teamId\"N\n" +
 	"\x15CreateProjectResponse\x12\x1d\n" +
 	"\n" +
 	"project_id\x18\x01 \x01(\x03R\tprojectId\x12\x16\n" +

@@ -63,6 +63,7 @@ func (s *Service) CreateProject(ctx context.Context, req *projectv1.CreateProjec
 		StudentID:        req.StudentId,
 		UniversityID:     req.UniversityId,
 		DepartmentID:     req.DepartmentId,
+		TeamID:           req.TeamId,
 		WorkflowID:       wf.Id,
 		WorkflowVersion:  wf.Version,
 		WorkflowName:     wf.Name,
@@ -178,7 +179,7 @@ func (s *Service) GetProjectRuntime(ctx context.Context, projectID int64) (*proj
 		StudentId:        p.StudentID,
 		UniversityId:     p.UniversityID,
 		DepartmentId:     p.DepartmentID,
-		TeamId:           0,
+		TeamId:           p.TeamID,
 		WorkflowId:       p.WorkflowID,
 		WorkflowVersion:  p.WorkflowVersion,
 		WorkflowName:     p.WorkflowName,
@@ -188,9 +189,6 @@ func (s *Service) GetProjectRuntime(ctx context.Context, projectID int64) (*proj
 		Data:             dataStruct,
 	}
 
-	if p.TeamID != nil {
-		resp.TeamId = *p.TeamID
-	}
 	if p.DeadlineAt != nil {
 		resp.DeadlineAt = timestamppb.New(*p.DeadlineAt)
 	}

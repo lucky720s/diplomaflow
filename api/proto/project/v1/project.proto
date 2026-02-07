@@ -27,6 +27,7 @@ message CreateProjectRequest {
   string workflow_name = 4;
   int64 university_id = 5;
   int64 department_id = 6;
+  int64 team_id = 7;
 }
 
 message CreateProjectResponse {
@@ -34,7 +35,7 @@ message CreateProjectResponse {
   string status = 2;
 }
 
-message GetProjectRequest { int64 project_id = 1; }
+message GetProjectRequest {int64 project_id = 1;}
 
 message StateHistory {
   string state_name = 1;
@@ -56,7 +57,7 @@ message GetProjectResponse {
   repeated StateHistory history = 9;
 }
 
-message GetStudentProjectsRequest { int64 student_id = 1; }
+message GetStudentProjectsRequest {int64 student_id = 1;}
 
 message ProjectPreview {
   int64 project_id = 1;
@@ -72,7 +73,7 @@ message ProjectPreview {
   google.protobuf.Timestamp deadline_at = 10;
 }
 
-message GetStudentProjectsResponse { repeated ProjectPreview projects = 1; }
+message GetStudentProjectsResponse {repeated ProjectPreview projects = 1;}
 
 message PerformActionRequest {
   int64 project_id = 1;
@@ -87,7 +88,7 @@ message PerformActionResponse {
 
 // ================= INTERNAL =================
 
-message GetProjectRuntimeRequest { int64 project_id = 1; }
+message GetProjectRuntimeRequest {int64 project_id = 1;}
 
 message GetProjectRuntimeResponse {
   int64 project_id = 1;
