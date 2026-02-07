@@ -16,10 +16,41 @@ permissions:
 jobs:
   build_and_push:
     runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - image: migrate
+            dockerfile: cmd/migrate/Dockerfile
+          - image: api_gateway
+            dockerfile: cmd/api_gateway/Dockerfile
+          - image: university_service
+            dockerfile: cmd/university_service/Dockerfile
+          - image: auth_service
+            dockerfile: cmd/auth_service/Dockerfile
+          - image: project_service
+            dockerfile: cmd/project_service/Dockerfile
+          - image: team_service
+            dockerfile: cmd/team_service/Dockerfile
+          - image: workflow_service
+            dockerfile: cmd/workflow_service/Dockerfile
+          - image: role_service
+            dockerfile: cmd/role_service/Dockerfile
+          - image: notification_service
+            dockerfile: cmd/notification_service/Dockerfile
+          - image: file_service
+            dockerfile: cmd/file_service/Dockerfile
+          - image: form_service
+            dockerfile: cmd/form_service/Dockerfile
+          - image: admin_service
+            dockerfile: cmd/admin_service/Dockerfile
+          - image: task_service
+            dockerfile: cmd/task_service/Dockerfile
+
     steps:
       - uses: actions/checkout@v4
 
-      - name: Set image base
+      - name: Set image vars
         run: |
           echo "IMAGE_BASE=ghcr.io/${GITHUB_REPOSITORY,,}" >> $GITHUB_ENV
           echo "IMAGE_TAG=dev" >> $GITHUB_ENV
@@ -34,7 +65,7 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Build & push images (matrix)
+      - name: Build & push ${{ matrix.image }}
         uses: docker/build-push-action@v6
         with:
           context: .
@@ -45,36 +76,6 @@ jobs:
             ${{ env.IMAGE_BASE }}/${{ matrix.image }}:${{ env.IMAGE_TAG }}-${{ github.sha }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
-        strategy:
-          fail-fast: false
-          matrix:
-            include:
-              - image: migrate
-                dockerfile: cmd/migrate/Dockerfile
-              - image: api_gateway
-                dockerfile: cmd/api_gateway/Dockerfile
-              - image: university_service
-                dockerfile: cmd/university_service/Dockerfile
-              - image: auth_service
-                dockerfile: cmd/auth_service/Dockerfile
-              - image: project_service
-                dockerfile: cmd/project_service/Dockerfile
-              - image: team_service
-                dockerfile: cmd/team_service/Dockerfile
-              - image: workflow_service
-                dockerfile: cmd/workflow_service/Dockerfile
-              - image: role_service
-                dockerfile: cmd/role_service/Dockerfile
-              - image: notification_service
-                dockerfile: cmd/notification_service/Dockerfile
-              - image: file_service
-                dockerfile: cmd/file_service/Dockerfile
-              - image: form_service
-                dockerfile: cmd/form_service/Dockerfile
-              - image: admin_service
-                dockerfile: cmd/admin_service/Dockerfile
-              - image: task_service
-                dockerfile: cmd/task_service/Dockerfile
 
   deploy:
     needs: build_and_push
