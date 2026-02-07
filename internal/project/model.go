@@ -11,10 +11,10 @@ type Project struct {
 	Title       string `gorm:"column:title;not null"`
 	Description string `gorm:"column:description"`
 
-	StudentID    int64  `gorm:"column:student_id;not null;index"`
-	UniversityID int64  `gorm:"column:university_id;not null"`
-	DepartmentID int64  `gorm:"column:department_id;not null;index"`
-	TeamID       *int64 `gorm:"column:team_id"`
+	StudentID    int64 `gorm:"column:student_id;not null;index"`
+	UniversityID int64 `gorm:"column:university_id;not null"`
+	DepartmentID int64 `gorm:"column:department_id;not null;index"`
+	TeamID       int64 `gorm:"column:team_id"`
 
 	WorkflowID      int64  `gorm:"column:workflow_id;not null;index"`
 	WorkflowVersion int32  `gorm:"column:workflow_version;default:1"`

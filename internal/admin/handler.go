@@ -204,7 +204,6 @@ func (h *Handler) GetStudent(ctx context.Context, req *adminv1.GetStudentRequest
 func (h *Handler) ListAllTeams(ctx context.Context, req *adminv1.ListAllTeamsRequest) (*adminv1.ListAllTeamsResponse, error) {
 	teams, total, err := h.service.ListAllTeams(ctx, &ListAllTeamsRequest{
 		DepartmentID: req.DepartmentId,
-		ProjectID:    req.ProjectId,
 		Status:       req.Status,
 		Search:       req.Search,
 		Page:         req.Page,
@@ -219,7 +218,6 @@ func (h *Handler) ListAllTeams(ctx context.Context, req *adminv1.ListAllTeamsReq
 		pbTeams = append(pbTeams, &adminv1.TeamAdminInfo{
 			Id:           t.ID,
 			Name:         t.Name,
-			ProjectId:    t.ProjectID,
 			ProjectTitle: t.ProjectTitle,
 			CurrentStep:  t.CurrentStep,
 			MemberCount:  t.MemberCount,
@@ -259,7 +257,6 @@ func (h *Handler) GetTeamDetails(ctx context.Context, req *adminv1.GetTeamDetail
 	pbTeam := &adminv1.TeamAdminInfo{
 		Id:           resp.Team.ID,
 		Name:         resp.Team.Name,
-		ProjectId:    resp.Team.ProjectID,
 		ProjectTitle: resp.Team.ProjectTitle,
 		CurrentStep:  resp.Team.CurrentStep,
 		MemberCount:  int32(len(resp.Team.Members)),
@@ -355,7 +352,6 @@ func (h *Handler) UpdateTeamAdmin(ctx context.Context, req *adminv1.UpdateTeamAd
 		Team: &adminv1.TeamAdminInfo{
 			Id:           team.ID,
 			Name:         team.Name,
-			ProjectId:    team.ProjectID,
 			ProjectTitle: team.ProjectTitle,
 			CurrentStep:  team.CurrentStep,
 			MemberCount:  int32(len(team.Members)),

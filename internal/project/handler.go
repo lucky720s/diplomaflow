@@ -47,11 +47,6 @@ func (h *Handler) GetProject(ctx context.Context, req *projectv1.GetProjectReque
 		return nil, status.Errorf(codes.NotFound, "project not found: %v", err)
 	}
 
-	teamID := int64(0)
-	if p.TeamID != nil {
-		teamID = *p.TeamID
-	}
-
 	var hist []*projectv1.StateHistory
 	for _, hh := range p.History {
 		changedBy := int64(0)
@@ -72,7 +67,7 @@ func (h *Handler) GetProject(ctx context.Context, req *projectv1.GetProjectReque
 		Title:        p.Title,
 		Description:  p.Description,
 		StudentId:    p.StudentID,
-		TeamId:       teamID,
+		TeamId:       p.TeamID,
 		WorkflowName: p.WorkflowName,
 		CurrentState: p.CurrentStateName,
 		Status:       p.Status,
@@ -90,16 +85,13 @@ func (h *Handler) GetStudentProjects(ctx context.Context, req *projectv1.GetStud
 	}
 	resp := &projectv1.GetStudentProjectsResponse{}
 	for _, p := range list {
-		teamID := int64(0)
-		if p.TeamID != nil {
-			teamID = *p.TeamID
-		}
+
 		pp := &projectv1.ProjectPreview{
 			ProjectId:        p.ID,
 			Title:            p.Title,
 			Status:           p.Status,
 			CurrentState:     p.CurrentStateName,
-			TeamId:           teamID,
+			TeamId:           p.TeamID,
 			WorkflowId:       p.WorkflowID,
 			WorkflowName:     p.WorkflowName,
 			CurrentStateId:   p.CurrentStateID,

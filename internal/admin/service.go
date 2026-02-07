@@ -250,7 +250,6 @@ func (s *Service) ListStudents(ctx context.Context, req *ListStudentsRequest) ([
 		if err == nil && teamResp.HasTeam {
 			student.TeamID = teamResp.Team.TeamId
 			student.TeamName = teamResp.Team.Name
-			student.ProjectID = teamResp.Team.ProjectId
 		}
 
 		students = append(students, student)
@@ -285,7 +284,6 @@ type StudentData struct {
 func (s *Service) ListAllTeams(ctx context.Context, req *ListAllTeamsRequest) ([]*TeamData, int64, error) {
 	resp, err := s.teamClient.ListTeams(ctx, &teamv1.ListTeamsRequest{
 		DepartmentId: req.DepartmentID,
-		ProjectId:    req.ProjectID,
 		Page:         req.Page,
 		PageSize:     req.PageSize,
 	})
@@ -298,18 +296,8 @@ func (s *Service) ListAllTeams(ctx context.Context, req *ListAllTeamsRequest) ([
 		team := &TeamData{
 			ID:          t.Id,
 			Name:        t.Name,
-			ProjectID:   t.ProjectId,
 			MemberCount: int32(len(t.Members)),
 			Status:      "active",
-		}
-
-		// Get project info
-		if t.ProjectId > 0 {
-			projResp, err := s.projectClient.GetProject(ctx, &projectv1.GetProjectRequest{ProjectId: t.ProjectId})
-			if err == nil {
-				team.ProjectTitle = projResp.Title
-				team.CurrentStep = projResp.CurrentState
-			}
 		}
 
 		teams = append(teams, team)

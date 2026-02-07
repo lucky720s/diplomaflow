@@ -3216,8 +3216,6 @@ func (m *ListAllTeamsRequest) validate(all bool) error {
 
 	// no validation rules for DepartmentId
 
-	// no validation rules for ProjectId
-
 	// no validation rules for Status
 
 	// no validation rules for Search
@@ -3469,8 +3467,6 @@ func (m *TeamAdminInfo) validate(all bool) error {
 	// no validation rules for Id
 
 	// no validation rules for Name
-
-	// no validation rules for ProjectId
 
 	// no validation rules for ProjectTitle
 

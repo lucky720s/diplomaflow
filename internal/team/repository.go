@@ -44,11 +44,8 @@ type Repository interface {
 	UpdateInvite(ctx context.Context, invite *TeamInvite) error
 	GetPendingInvitesCount(ctx context.Context, teamID int64) (int64, error)
 
-	// Project
-	AssignProject(ctx context.Context, teamID, projectID int64) error
-
 	// List
-	ListTeams(ctx context.Context, departmentID, projectID int64, limit, offset int) ([]*Team, int64, error)
+	ListTeams(ctx context.Context, departmentID int64, limit, offset int) ([]*Team, int64, error)
 }
 
 type repository struct {
@@ -234,21 +231,15 @@ func (r *repository) GetPendingInvitesCount(ctx context.Context, teamID int64) (
 	return count, err
 }
 
-func (r *repository) AssignProject(ctx context.Context, teamID, projectID int64) error {
-	return r.db.WithContext(ctx).
-		Model(&Team{}).
-		Where("id = ?", teamID).
-		Update("project_id", projectID).Error
-}
-
-func (r *repository) ListTeams(ctx context.Context, departmentID, projectID int64, limit, offset int) ([]*Team, int64, error) {
+func (r *repository) ListTeams(ctx context.Context, departmentID int64, limit, offset int) ([]*Team, int64, error) {
 	var teams []*Team
 	var total int64
 
 	query := r.db.WithContext(ctx).Model(&Team{})
 
-	if projectID > 0 {
-		query = query.Where("project_id = ?", projectID)
+	if departmentID > 0 {
+		query = query.Joins("JOIN projects p ON p.id = teams.project_id").
+			Where("p.department_id = ?", departmentID)
 	}
 
 	if err := query.Count(&total).Error; err != nil {
@@ -256,7 +247,7 @@ func (r *repository) ListTeams(ctx context.Context, departmentID, projectID int6
 	}
 
 	err := query.
-		Order("created_at DESC").
+		Order("teams.created_at DESC").
 		Limit(limit).
 		Offset(offset).
 		Find(&teams).Error

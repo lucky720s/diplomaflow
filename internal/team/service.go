@@ -430,11 +430,7 @@ func (s *Service) GetAvailableStudents(ctx context.Context, universityID int64, 
 	return available, nil
 }
 
-func (s *Service) AssignProject(ctx context.Context, teamID int64, projectID int64) error {
-	return s.repo.AssignProject(ctx, teamID, projectID)
-}
-
-func (s *Service) ListTeams(ctx context.Context, departmentID, projectID int64, page, pageSize int32) ([]*Team, int64, error) {
+func (s *Service) ListTeams(ctx context.Context, departmentID int64, page, pageSize int32) ([]*Team, int64, error) {
 	if pageSize <= 0 {
 		pageSize = 20
 	}
@@ -443,7 +439,7 @@ func (s *Service) ListTeams(ctx context.Context, departmentID, projectID int64, 
 	}
 	offset := (page - 1) * pageSize
 
-	return s.repo.ListTeams(ctx, departmentID, projectID, int(pageSize), int(offset))
+	return s.repo.ListTeams(ctx, departmentID, int(pageSize), int(offset))
 }
 
 func (s *Service) validateLeader(ctx context.Context, teamID int64, userID int64) error {
@@ -467,11 +463,6 @@ func (s *Service) CreateTeamForProject(ctx context.Context, event ProjectCreated
 		zap.Int64("project_id", event.ProjectID),
 		zap.Int64("student_id", event.StudentID),
 		zap.Int64("team_id", event.TeamID)) // Нужно поле TeamID в структуре!
-
-	// Если team_id уже указан — привязываем проект к команде
-	if event.TeamID > 0 {
-		return s.repo.AssignProject(ctx, event.TeamID, event.ProjectID)
-	}
 
 	// Создаём новую команду
 	team := &Team{

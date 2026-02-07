@@ -13,7 +13,6 @@ import (
 func (h *Handler) CreateTeam(c *gin.Context) {
 	var reqBody struct {
 		Name      string  `json:"name" binding:"required"`
-		ProjectID int64   `json:"project_id"`
 		MemberIDs []int64 `json:"member_ids"`
 	}
 
@@ -50,7 +49,6 @@ func (h *Handler) CreateTeam(c *gin.Context) {
 
 	req := &teamv1.CreateTeamRequest{
 		Name:      reqBody.Name,
-		ProjectId: reqBody.ProjectID,
 		MemberIds: cleanMemberIDs,
 		LeaderId:  leaderID,
 	}
@@ -95,33 +93,6 @@ func (h *Handler) GetAvailableStudents(c *gin.Context) {
 		return
 	}
 	c.JSON(http.StatusOK, res)
-}
-
-func (h *Handler) AssignProjectToTeam(c *gin.Context) {
-	teamIDStr := c.Param("id")
-	teamID, err := strconv.ParseInt(teamIDStr, 10, 64)
-	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid team id"})
-		return
-	}
-
-	var req struct {
-		ProjectID int64 `json:"project_id" binding:"required"`
-	}
-	if bindErr := c.ShouldBindJSON(&req); bindErr != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": bindErr.Error()})
-		return
-	}
-
-	_, err = h.teamClient.AssignProject(c.Request.Context(), &teamv1.AssignProjectRequest{
-		TeamId:    teamID,
-		ProjectId: req.ProjectID,
-	})
-	if err != nil {
-		MapGRPCError(c, err)
-		return
-	}
-	c.JSON(http.StatusOK, gin.H{"success": true})
 }
 
 func (h *Handler) GetMyInvites(c *gin.Context) {
@@ -177,10 +148,6 @@ func (h *Handler) GetMyTeam(c *gin.Context) {
 
 func (h *Handler) ListTeams(c *gin.Context) {
 	departmentID := c.GetInt64("departmentId")
-	var projectID int64
-	if pid := c.Query("project_id"); pid != "" {
-		projectID, _ = strconv.ParseInt(pid, 10, 64)
-	}
 
 	page := int32(1)
 	pageSize := int32(20)
@@ -197,7 +164,6 @@ func (h *Handler) ListTeams(c *gin.Context) {
 
 	res, err := h.teamClient.ListTeams(c.Request.Context(), &teamv1.ListTeamsRequest{
 		DepartmentId: departmentID,
-		ProjectId:    projectID,
 		Page:         page,
 		PageSize:     pageSize,
 	})
