@@ -380,6 +380,11 @@ func (s *Service) AddMember(ctx context.Context, teamID int64, userID int64, rol
 		return err
 	}
 
+	// NEW: лимит из workflow
+	if err := s.ensureTeamNotFull(ctx, teamID); err != nil {
+		return err
+	}
+
 	// Проверяем, не в команде ли уже
 	inTeam, err := s.repo.IsUserInTeam(ctx, userID)
 	if err != nil {
@@ -443,11 +448,9 @@ func (s *Service) RespondToInvite(ctx context.Context, inviteID int64, userID in
 	if invite.UserID != userID {
 		return ErrUnauthorized
 	}
-
 	if invite.Status != InviteStatusPending {
 		return errors.New("invite already processed")
 	}
-
 	if time.Now().After(invite.ExpiresAt) {
 		invite.Status = InviteStatusExpired
 		_ = s.repo.UpdateInvite(ctx, invite)
@@ -458,6 +461,12 @@ func (s *Service) RespondToInvite(ctx context.Context, inviteID int64, userID in
 		if err := s.ensureCompositionUnlocked(ctx, invite.TeamID); err != nil {
 			return err
 		}
+
+		// NEW: лимит из workflow
+		if err := s.ensureTeamNotFull(ctx, invite.TeamID); err != nil {
+			return err
+		}
+
 		// Проверяем, не в команде ли уже
 		inTeam, _ := s.repo.IsUserInTeam(ctx, userID)
 		if inTeam {
@@ -636,6 +645,46 @@ func (s *Service) ensureCompositionUnlocked(ctx context.Context, teamID int64) e
 	}
 	if team.CompositionLocked {
 		return ErrTeamCompositionLocked
+	}
+	return nil
+}
+func (s *Service) getMaxTeamSizeFromWorkflow(ctx context.Context, departmentID int64) (int32, error) {
+	cfg, err := s.workflowClient.GetTeamConfiguration(ctx, &workflowv1.GetTeamConfigurationRequest{
+		DepartmentId: departmentID,
+		WorkflowId:   0,
+		StateId:      0,
+	})
+	if err != nil {
+		return 0, err
+	}
+	if cfg == nil || cfg.TeamConfig == nil {
+		return 0, nil
+	}
+	return cfg.TeamConfig.MaxSize, nil
+}
+
+func (s *Service) ensureTeamNotFull(ctx context.Context, teamID int64) error {
+	team, err := s.repo.GetByID(ctx, teamID)
+	if err != nil {
+		return err
+	}
+
+	maxSize, err := s.getMaxTeamSizeFromWorkflow(ctx, team.DepartmentID)
+	if err != nil {
+		// Политика как у тебя в других местах: fail-open
+		// (если хочешь fail-closed — скажи, поменяю)
+		return nil
+	}
+	if maxSize <= 0 {
+		return nil
+	}
+
+	cnt, err := s.repo.GetMemberCount(ctx, teamID)
+	if err != nil {
+		return err
+	}
+	if int32(cnt) >= maxSize {
+		return ErrTeamFull
 	}
 	return nil
 }
