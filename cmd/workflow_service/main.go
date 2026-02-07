@@ -68,7 +68,6 @@ func main() {
 	eng := engine.NewWorkflowEngine(repo, log.Logger)
 	h := runtimegrpc.New(base, eng, projectClient, log.Logger)
 
-	// Post-commit worker (was Kafka consumer ранее)
 	pcWorker := postcommit.NewWorker(db, projectClient, log.Logger)
 	pcGRPC := postcommit.NewGRPCServer(pcWorker, log.Logger)
 

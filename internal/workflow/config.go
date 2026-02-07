@@ -12,10 +12,4 @@ type Config struct {
 		NotificationAddr string `mapstructure:"notification_addr"`
 		ProjectAddr      string `mapstructure:"project_addr"`
 	} `mapstructure:"services"`
-
-	Kafka struct {
-		Enabled bool   `mapstructure:"enabled"`
-		Brokers string `mapstructure:"brokers"`
-		GroupID string `mapstructure:"group_id"`
-	} `mapstructure:"kafka"`
 }
