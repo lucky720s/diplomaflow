@@ -4,6 +4,20 @@ x-common-env: &common_env
   ENV: ${ENV:-production}
   DATABASE_DSN: ${DATABASE_DSN:?DATABASE_DSN is required}
 
+# Для network_mode: host — все межсервисные вызовы только через 127.0.0.1:<port>
+x-service-addrs-host: &svc_addrs_host
+  SERVICES_AUTH_ADDR: 127.0.0.1:8082
+  SERVICES_UNIVERSITY_ADDR: 127.0.0.1:8081
+  SERVICES_PROJECT_ADDR: 127.0.0.1:8083
+  SERVICES_TEAM_ADDR: 127.0.0.1:8084
+  SERVICES_WORKFLOW_ADDR: 127.0.0.1:8085
+  SERVICES_ROLE_ADDR: 127.0.0.1:8086
+  SERVICES_NOTIFICATION_ADDR: 127.0.0.1:8087
+  SERVICES_FILE_ADDR: 127.0.0.1:8088
+  SERVICES_FORM_ADDR: 127.0.0.1:8089
+  SERVICES_ADMIN_ADDR: 127.0.0.1:8090
+  SERVICES_TASK_ADDR: 127.0.0.1:8091
+
 services:
   main_postgres:
     image: postgres:16-alpine
@@ -12,8 +26,8 @@ services:
       POSTGRES_USER: ${POSTGRES_USER:-diplomaflow}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?POSTGRES_PASSWORD is required}
       POSTGRES_DB: ${POSTGRES_DB:-diplomaflow}
-      PGPORT: "5433"    # <-- ИЗМЕНЕНО
-    command: -p 5433     # <-- ДОБАВЛЕНО
+      PGPORT: "5433"          # НЕ ТРОГАЕМ
+    command: -p 5433          # НЕ ТРОГАЕМ
     volumes:
       - pg_data:/var/lib/postgresql/data
     healthcheck:
@@ -26,7 +40,7 @@ services:
   redis:
     image: redis:7-alpine
     network_mode: host
-    command: redis-server --port 6380    # <-- Тоже на другой порт (6379 может быть занят)
+    command: redis-server --port 6380
     healthcheck:
       test: ["CMD", "redis-cli", "-h", "127.0.0.1", "-p", "6380", "ping"]
       interval: 5s
@@ -57,20 +71,12 @@ services:
       PORT: "8080"
       REDIS_ADDR: 127.0.0.1:6380
       JWT_SECRET: ${JWT_SECRET:?JWT_SECRET is required}
-      SERVICES_AUTH_ADDR: 127.0.0.1:8082
-      SERVICES_UNIVERSITY_ADDR: 127.0.0.1:8081
-      SERVICES_PROJECT_ADDR: 127.0.0.1:8083
-      SERVICES_TEAM_ADDR: 127.0.0.1:8084
-      SERVICES_WORKFLOW_ADDR: 127.0.0.1:8085
-      SERVICES_ROLE_ADDR: 127.0.0.1:8086
-      SERVICES_NOTIFICATION_ADDR: 127.0.0.1:8087
-      SERVICES_FILE_ADDR: 127.0.0.1:8088
-      SERVICES_FORM_ADDR: 127.0.0.1:8089
-      SERVICES_ADMIN_ADDR: 127.0.0.1:8090
-      SERVICES_TASK_ADDR: 127.0.0.1:8091
+      <<: *svc_addrs_host
     depends_on:
       redis:
         condition: service_healthy
+      auth_service:
+        condition: service_started
     healthcheck:
       test: ["CMD-SHELL", "wget -qO- http://127.0.0.1:8080/healthz >/dev/null 2>&1"]
       interval: 10s
@@ -98,94 +104,6 @@ services:
       start_period: 20s
     restart: unless-stopped
 
-  auth_service:
-    build:
-      context: .
-      dockerfile: cmd/auth_service/Dockerfile
-    network_mode: host
-    environment:
-      <<: *common_env
-      GRPC_PORT: "8082"
-      REDIS_ADDR: 127.0.0.1:6380
-      JWT_SECRET: ${JWT_SECRET:?JWT_SECRET is required}
-      ACCESS_TOKEN_TTL: ${ACCESS_TOKEN_TTL:-15m}
-      REFRESH_TOKEN_TTL: ${REFRESH_TOKEN_TTL:-720h}
-      SERVICES_UNIVERSITY_ADDR: 127.0.0.1:8081
-      SERVICES_ROLE_ADDR: 127.0.0.1:8086
-    depends_on:
-      migrate:
-        condition: service_completed_successfully
-      redis:
-        condition: service_healthy
-    healthcheck:
-      test: ["CMD", "grpc_health_probe", "-addr=127.0.0.1:8082", "-service=auth.v1.AuthService"]
-      interval: 10s
-      timeout: 3s
-      retries: 15
-      start_period: 20s
-    restart: unless-stopped
-
-  project_service:
-    build:
-      context: .
-      dockerfile: cmd/project_service/Dockerfile
-    network_mode: host
-    environment:
-      <<: *common_env
-      GRPC_PORT: "8083"
-    depends_on:
-      migrate:
-        condition: service_completed_successfully
-
-    healthcheck:
-      test: ["CMD", "grpc_health_probe", "-addr=127.0.0.1:8083", "-service=project.v1.ProjectService"]
-      interval: 10s
-      timeout: 3s
-      retries: 15
-      start_period: 20s
-    restart: unless-stopped
-
-  team_service:
-    build:
-      context: .
-      dockerfile: cmd/team_service/Dockerfile
-    network_mode: host
-    environment:
-      <<: *common_env
-      GRPC_PORT: "8084"
-    depends_on:
-      migrate:
-        condition: service_completed_successfully
-    healthcheck:
-      test: ["CMD", "grpc_health_probe", "-addr=127.0.0.1:8084", "-service=team.v1.TeamService"]
-      interval: 10s
-      timeout: 3s
-      retries: 15
-      start_period: 20s
-    restart: unless-stopped
-
-  workflow_service:
-    build:
-      context: .
-      dockerfile: cmd/workflow_service/Dockerfile
-    network_mode: host
-    environment:
-      <<: *common_env
-      GRPC_PORT: "8085"
-      SERVICES_NOTIFICATION_ADDR: 127.0.0.1:8087
-      SERVICES_PROJECT_ADDR: 127.0.0.1:8083
-    depends_on:
-      migrate:
-        condition: service_completed_successfully
-
-    healthcheck:
-      test: ["CMD", "grpc_health_probe", "-addr=127.0.0.1:8085", "-service=workflow.v1.WorkflowService"]
-      interval: 10s
-      timeout: 3s
-      retries: 15
-      start_period: 20s
-    restart: unless-stopped
-
   role_service:
     build:
       context: .
@@ -205,6 +123,38 @@ services:
       start_period: 20s
     restart: unless-stopped
 
+  auth_service:
+    build:
+      context: .
+      dockerfile: cmd/auth_service/Dockerfile
+    network_mode: host
+    environment:
+      <<: *common_env
+      GRPC_PORT: "8082"
+      REDIS_ADDR: 127.0.0.1:6380
+      JWT_SECRET: ${JWT_SECRET:?JWT_SECRET is required}
+      ACCESS_TOKEN_TTL: ${ACCESS_TOKEN_TTL:-15m}
+      REFRESH_TOKEN_TTL: ${REFRESH_TOKEN_TTL:-720h}
+      # Важно: auth_service читает services.university_addr / services.role_addr -> env сработает как override
+      SERVICES_UNIVERSITY_ADDR: 127.0.0.1:8081
+      SERVICES_ROLE_ADDR: 127.0.0.1:8086
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
+      redis:
+        condition: service_healthy
+      university_service:
+        condition: service_started
+      role_service:
+        condition: service_started
+    healthcheck:
+      test: ["CMD", "grpc_health_probe", "-addr=127.0.0.1:8082", "-service=auth.v1.AuthService"]
+      interval: 10s
+      timeout: 3s
+      retries: 15
+      start_period: 20s
+    restart: unless-stopped
+
   notification_service:
     build:
       context: .
@@ -218,6 +168,85 @@ services:
         condition: service_completed_successfully
     healthcheck:
       test: ["CMD", "grpc_health_probe", "-addr=127.0.0.1:8087", "-service=notification.v1.NotificationService"]
+      interval: 10s
+      timeout: 3s
+      retries: 15
+      start_period: 20s
+    restart: unless-stopped
+
+  workflow_service:
+    build:
+      context: .
+      dockerfile: cmd/workflow_service/Dockerfile
+    network_mode: host
+    environment:
+      <<: *common_env
+      GRPC_PORT: "8085"
+      # workflow_service читает services.notification_addr / services.project_addr
+      SERVICES_NOTIFICATION_ADDR: 127.0.0.1:8087
+      SERVICES_PROJECT_ADDR: 127.0.0.1:8083
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
+      notification_service:
+        condition: service_started
+    healthcheck:
+      test: ["CMD", "grpc_health_probe", "-addr=127.0.0.1:8085", "-service=workflow.v1.WorkflowService"]
+      interval: 10s
+      timeout: 3s
+      retries: 15
+      start_period: 20s
+    restart: unless-stopped
+
+  project_service:
+    build:
+      context: .
+      dockerfile: cmd/project_service/Dockerfile
+    network_mode: host
+    environment:
+      <<: *common_env
+      GRPC_PORT: "8083"
+      # project_service читает services.workflow_addr / services.notification_addr
+      SERVICES_WORKFLOW_ADDR: 127.0.0.1:8085
+      SERVICES_NOTIFICATION_ADDR: 127.0.0.1:8087
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
+      workflow_service:
+        condition: service_started
+      notification_service:
+        condition: service_started
+    healthcheck:
+      test: ["CMD", "grpc_health_probe", "-addr=127.0.0.1:8083", "-service=project.v1.ProjectService"]
+      interval: 10s
+      timeout: 3s
+      retries: 15
+      start_period: 20s
+    restart: unless-stopped
+
+  team_service:
+    build:
+      context: .
+      dockerfile: cmd/team_service/Dockerfile
+    network_mode: host
+    environment:
+      <<: *common_env
+      GRPC_PORT: "8084"
+      # team_service читает services.auth_addr / services.workflow_addr / services.notification_addr
+      SERVICES_AUTH_ADDR: 127.0.0.1:8082
+      SERVICES_WORKFLOW_ADDR: 127.0.0.1:8085
+      SERVICES_NOTIFICATION_ADDR: 127.0.0.1:8087
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
+      auth_service:
+        condition: service_started
+      workflow_service:
+        condition: service_started
+      notification_service:
+        condition: service_started
+    healthcheck:
+      test: ["CMD", "grpc_health_probe", "-addr=127.0.0.1:8084", "-service=team.v1.TeamService"]
       interval: 10s
       timeout: 3s
       retries: 15
@@ -273,9 +302,22 @@ services:
     environment:
       <<: *common_env
       GRPC_PORT: "8090"
+      # admin_service читает services.auth_addr / services.project_addr / services.team_addr / services.workflow_addr
+      SERVICES_AUTH_ADDR: 127.0.0.1:8082
+      SERVICES_PROJECT_ADDR: 127.0.0.1:8083
+      SERVICES_TEAM_ADDR: 127.0.0.1:8084
+      SERVICES_WORKFLOW_ADDR: 127.0.0.1:8085
     depends_on:
       migrate:
         condition: service_completed_successfully
+      auth_service:
+        condition: service_started
+      project_service:
+        condition: service_started
+      team_service:
+        condition: service_started
+      workflow_service:
+        condition: service_started
     healthcheck:
       test: ["CMD", "grpc_health_probe", "-addr=127.0.0.1:8090", "-service=admin.v1.AdminService"]
       interval: 10s
@@ -292,9 +334,22 @@ services:
     environment:
       <<: *common_env
       GRPC_PORT: "8091"
+      # task_service читает services.auth_addr / services.team_addr / services.notification_addr / services.file_addr
+      SERVICES_AUTH_ADDR: 127.0.0.1:8082
+      SERVICES_TEAM_ADDR: 127.0.0.1:8084
+      SERVICES_NOTIFICATION_ADDR: 127.0.0.1:8087
+      SERVICES_FILE_ADDR: 127.0.0.1:8088
     depends_on:
       migrate:
         condition: service_completed_successfully
+      auth_service:
+        condition: service_started
+      team_service:
+        condition: service_started
+      notification_service:
+        condition: service_started
+      file_service:
+        condition: service_started
     healthcheck:
       test: ["CMD", "grpc_health_probe", "-addr=127.0.0.1:8091", "-service=task.v1.TaskService"]
       interval: 10s
