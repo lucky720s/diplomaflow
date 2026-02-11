@@ -373,6 +373,12 @@ func (m *TeamMember) validate(all bool) error {
 
 	// no validation rules for Role
 
+	// no validation rules for FirstName
+
+	// no validation rules for LastName
+
+	// no validation rules for Email
+
 	if len(errors) > 0 {
 		return TeamMemberMultiError(errors)
 	}

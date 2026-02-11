@@ -96,3 +96,20 @@ func (m *MockService) AssignRole(ctx context.Context, userID int64, role string)
 	args := m.Called(ctx, userID, role)
 	return args.Error(0)
 }
+
+// tests/unit/tests_auth/mock_service.go (или где у тебя MockService)
+
+func (m *MockService) BatchGetUserPreviews(ctx context.Context, ids []int64) ([]*auth.User, error) {
+	args := m.Called(ctx, ids)
+
+	var users []*auth.User
+	if v := args.Get(0); v != nil {
+		var ok bool
+		users, ok = v.([]*auth.User)
+		if !ok {
+			panic("args.Get(0) is not []*auth.User")
+		}
+	}
+
+	return users, args.Error(1)
+}

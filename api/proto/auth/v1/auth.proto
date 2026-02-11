@@ -13,6 +13,7 @@ service AuthService {
   rpc ListSessions (ListSessionsRequest) returns (ListSessionsResponse);
   rpc RevokeSession (RevokeSessionRequest) returns (RevokeSessionResponse);
   rpc AssignRole (AssignRoleRequest) returns (AssignRoleResponse);
+  rpc BatchGetUserPreviews(BatchGetUserPreviewsRequest) returns (BatchGetUserPreviewsResponse);
 }
 
 message RegisterRequest {
@@ -120,3 +121,6 @@ message AssignRoleResponse {
   bool success = 1;
   string message = 2;
 }
+
+message BatchGetUserPreviewsRequest { repeated int64 ids = 1; }
+message BatchGetUserPreviewsResponse { repeated UserPreview users = 1; }

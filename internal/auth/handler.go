@@ -112,6 +112,7 @@ type AuthService interface {
 	Validate(ctx context.Context, token string) (*JwtClaims, error)
 	ListUsers(ctx context.Context, universityID int64, departmentID int64, role string, page, pageSize int32, excludeUserID int64) ([]*User, int64, error)
 	AssignRole(ctx context.Context, userID int64, role string) error
+	BatchGetUserPreviews(ctx context.Context, ids []int64) ([]*User, error)
 }
 
 type Handler struct {
@@ -247,4 +248,41 @@ func (h *Handler) AssignRole(ctx context.Context, req *authv1.AssignRoleRequest)
 		Success: true,
 		Message: "Role assigned successfully",
 	}, nil
+}
+func (h *Handler) BatchGetUserPreviews(
+	ctx context.Context,
+	req *authv1.BatchGetUserPreviewsRequest,
+) (*authv1.BatchGetUserPreviewsResponse, error) {
+
+	// ВАЖНО: ограничить метод только внутренним сервисам
+	md, _ := metadata.FromIncomingContext(ctx)
+	internal := ""
+	if md != nil {
+		if v := md.Get("x-internal-service"); len(v) > 0 {
+			internal = v[0]
+		}
+	}
+	if internal != "team_service" {
+		return nil, status.Error(codes.PermissionDenied, "forbidden")
+	}
+
+	users, err := h.service.BatchGetUserPreviews(ctx, req.Ids)
+	if err != nil {
+		return nil, status.Errorf(codes.Internal, "failed to get users: %v", err)
+	}
+
+	pb := make([]*authv1.UserPreview, 0, len(users))
+	for _, u := range users {
+		pb = append(pb, &authv1.UserPreview{
+			Id:           u.ID,
+			Email:        u.Email,
+			FirstName:    u.FirstName,
+			LastName:     u.LastName,
+			Role:         u.Role,
+			UniversityId: u.UniversityID,
+			DepartmentId: u.DepartmentID,
+		})
+	}
+
+	return &authv1.BatchGetUserPreviewsResponse{Users: pb}, nil
 }

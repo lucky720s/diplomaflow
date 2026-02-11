@@ -21,6 +21,7 @@ type Repository interface {
 	ListActiveSessions(ctx context.Context, userID int64) ([]*RefreshToken, error)
 
 	Update(ctx context.Context, user *User) error
+	GetByIDs(ctx context.Context, ids []int64) ([]*User, error)
 }
 
 type UserFilter struct {
@@ -125,4 +126,11 @@ func (r *repository) ListActiveSessions(ctx context.Context, userID int64) ([]*R
 
 func (r *repository) Update(ctx context.Context, user *User) error {
 	return r.db.WithContext(ctx).Save(user).Error
+}
+func (r *repository) GetByIDs(ctx context.Context, ids []int64) ([]*User, error) {
+	var users []*User
+	err := r.db.WithContext(ctx).
+		Where("id IN ?", ids).
+		Find(&users).Error
+	return users, err
 }

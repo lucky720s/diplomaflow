@@ -2097,3 +2097,243 @@ var _ interface {
 	Cause() error
 	ErrorName() string
 } = AssignRoleResponseValidationError{}
+
+// Validate checks the field values on BatchGetUserPreviewsRequest with the
+// rules defined in the proto definition for this message. If any rules are
+// violated, the first error encountered is returned, or nil if there are no violations.
+func (m *BatchGetUserPreviewsRequest) Validate() error {
+	return m.validate(false)
+}
+
+// ValidateAll checks the field values on BatchGetUserPreviewsRequest with the
+// rules defined in the proto definition for this message. If any rules are
+// violated, the result is a list of violation errors wrapped in
+// BatchGetUserPreviewsRequestMultiError, or nil if none found.
+func (m *BatchGetUserPreviewsRequest) ValidateAll() error {
+	return m.validate(true)
+}
+
+func (m *BatchGetUserPreviewsRequest) validate(all bool) error {
+	if m == nil {
+		return nil
+	}
+
+	var errors []error
+
+	if len(errors) > 0 {
+		return BatchGetUserPreviewsRequestMultiError(errors)
+	}
+
+	return nil
+}
+
+// BatchGetUserPreviewsRequestMultiError is an error wrapping multiple
+// validation errors returned by BatchGetUserPreviewsRequest.ValidateAll() if
+// the designated constraints aren't met.
+type BatchGetUserPreviewsRequestMultiError []error
+
+// Error returns a concatenation of all the error messages it wraps.
+func (m BatchGetUserPreviewsRequestMultiError) Error() string {
+	msgs := make([]string, 0, len(m))
+	for _, err := range m {
+		msgs = append(msgs, err.Error())
+	}
+	return strings.Join(msgs, "; ")
+}
+
+// AllErrors returns a list of validation violation errors.
+func (m BatchGetUserPreviewsRequestMultiError) AllErrors() []error { return m }
+
+// BatchGetUserPreviewsRequestValidationError is the validation error returned
+// by BatchGetUserPreviewsRequest.Validate if the designated constraints
+// aren't met.
+type BatchGetUserPreviewsRequestValidationError struct {
+	field  string
+	reason string
+	cause  error
+	key    bool
+}
+
+// Field function returns field value.
+func (e BatchGetUserPreviewsRequestValidationError) Field() string { return e.field }
+
+// Reason function returns reason value.
+func (e BatchGetUserPreviewsRequestValidationError) Reason() string { return e.reason }
+
+// Cause function returns cause value.
+func (e BatchGetUserPreviewsRequestValidationError) Cause() error { return e.cause }
+
+// Key function returns key value.
+func (e BatchGetUserPreviewsRequestValidationError) Key() bool { return e.key }
+
+// ErrorName returns error name.
+func (e BatchGetUserPreviewsRequestValidationError) ErrorName() string {
+	return "BatchGetUserPreviewsRequestValidationError"
+}
+
+// Error satisfies the builtin error interface
+func (e BatchGetUserPreviewsRequestValidationError) Error() string {
+	cause := ""
+	if e.cause != nil {
+		cause = fmt.Sprintf(" | caused by: %v", e.cause)
+	}
+
+	key := ""
+	if e.key {
+		key = "key for "
+	}
+
+	return fmt.Sprintf(
+		"invalid %sBatchGetUserPreviewsRequest.%s: %s%s",
+		key,
+		e.field,
+		e.reason,
+		cause)
+}
+
+var _ error = BatchGetUserPreviewsRequestValidationError{}
+
+var _ interface {
+	Field() string
+	Reason() string
+	Key() bool
+	Cause() error
+	ErrorName() string
+} = BatchGetUserPreviewsRequestValidationError{}
+
+// Validate checks the field values on BatchGetUserPreviewsResponse with the
+// rules defined in the proto definition for this message. If any rules are
+// violated, the first error encountered is returned, or nil if there are no violations.
+func (m *BatchGetUserPreviewsResponse) Validate() error {
+	return m.validate(false)
+}
+
+// ValidateAll checks the field values on BatchGetUserPreviewsResponse with the
+// rules defined in the proto definition for this message. If any rules are
+// violated, the result is a list of violation errors wrapped in
+// BatchGetUserPreviewsResponseMultiError, or nil if none found.
+func (m *BatchGetUserPreviewsResponse) ValidateAll() error {
+	return m.validate(true)
+}
+
+func (m *BatchGetUserPreviewsResponse) validate(all bool) error {
+	if m == nil {
+		return nil
+	}
+
+	var errors []error
+
+	for idx, item := range m.GetUsers() {
+		_, _ = idx, item
+
+		if all {
+			switch v := interface{}(item).(type) {
+			case interface{ ValidateAll() error }:
+				if err := v.ValidateAll(); err != nil {
+					errors = append(errors, BatchGetUserPreviewsResponseValidationError{
+						field:  fmt.Sprintf("Users[%v]", idx),
+						reason: "embedded message failed validation",
+						cause:  err,
+					})
+				}
+			case interface{ Validate() error }:
+				if err := v.Validate(); err != nil {
+					errors = append(errors, BatchGetUserPreviewsResponseValidationError{
+						field:  fmt.Sprintf("Users[%v]", idx),
+						reason: "embedded message failed validation",
+						cause:  err,
+					})
+				}
+			}
+		} else if v, ok := interface{}(item).(interface{ Validate() error }); ok {
+			if err := v.Validate(); err != nil {
+				return BatchGetUserPreviewsResponseValidationError{
+					field:  fmt.Sprintf("Users[%v]", idx),
+					reason: "embedded message failed validation",
+					cause:  err,
+				}
+			}
+		}
+
+	}
+
+	if len(errors) > 0 {
+		return BatchGetUserPreviewsResponseMultiError(errors)
+	}
+
+	return nil
+}
+
+// BatchGetUserPreviewsResponseMultiError is an error wrapping multiple
+// validation errors returned by BatchGetUserPreviewsResponse.ValidateAll() if
+// the designated constraints aren't met.
+type BatchGetUserPreviewsResponseMultiError []error
+
+// Error returns a concatenation of all the error messages it wraps.
+func (m BatchGetUserPreviewsResponseMultiError) Error() string {
+	msgs := make([]string, 0, len(m))
+	for _, err := range m {
+		msgs = append(msgs, err.Error())
+	}
+	return strings.Join(msgs, "; ")
+}
+
+// AllErrors returns a list of validation violation errors.
+func (m BatchGetUserPreviewsResponseMultiError) AllErrors() []error { return m }
+
+// BatchGetUserPreviewsResponseValidationError is the validation error returned
+// by BatchGetUserPreviewsResponse.Validate if the designated constraints
+// aren't met.
+type BatchGetUserPreviewsResponseValidationError struct {
+	field  string
+	reason string
+	cause  error
+	key    bool
+}
+
+// Field function returns field value.
+func (e BatchGetUserPreviewsResponseValidationError) Field() string { return e.field }
+
+// Reason function returns reason value.
+func (e BatchGetUserPreviewsResponseValidationError) Reason() string { return e.reason }
+
+// Cause function returns cause value.
+func (e BatchGetUserPreviewsResponseValidationError) Cause() error { return e.cause }
+
+// Key function returns key value.
+func (e BatchGetUserPreviewsResponseValidationError) Key() bool { return e.key }
+
+// ErrorName returns error name.
+func (e BatchGetUserPreviewsResponseValidationError) ErrorName() string {
+	return "BatchGetUserPreviewsResponseValidationError"
+}
+
+// Error satisfies the builtin error interface
+func (e BatchGetUserPreviewsResponseValidationError) Error() string {
+	cause := ""
+	if e.cause != nil {
+		cause = fmt.Sprintf(" | caused by: %v", e.cause)
+	}
+
+	key := ""
+	if e.key {
+		key = "key for "
+	}
+
+	return fmt.Sprintf(
+		"invalid %sBatchGetUserPreviewsResponse.%s: %s%s",
+		key,
+		e.field,
+		e.reason,
+		cause)
+}
+
+var _ error = BatchGetUserPreviewsResponseValidationError{}
+
+var _ interface {
+	Field() string
+	Reason() string
+	Key() bool
+	Cause() error
+	ErrorName() string
+} = BatchGetUserPreviewsResponseValidationError{}

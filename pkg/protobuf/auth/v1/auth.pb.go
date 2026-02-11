@@ -1118,6 +1118,94 @@ func (x *AssignRoleResponse) GetMessage() string {
 	return ""
 }
 
+type BatchGetUserPreviewsRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Ids           []int64                `protobuf:"varint,1,rep,packed,name=ids,proto3" json:"ids,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *BatchGetUserPreviewsRequest) Reset() {
+	*x = BatchGetUserPreviewsRequest{}
+	mi := &file_auth_v1_auth_proto_msgTypes[18]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *BatchGetUserPreviewsRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*BatchGetUserPreviewsRequest) ProtoMessage() {}
+
+func (x *BatchGetUserPreviewsRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_auth_v1_auth_proto_msgTypes[18]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use BatchGetUserPreviewsRequest.ProtoReflect.Descriptor instead.
+func (*BatchGetUserPreviewsRequest) Descriptor() ([]byte, []int) {
+	return file_auth_v1_auth_proto_rawDescGZIP(), []int{18}
+}
+
+func (x *BatchGetUserPreviewsRequest) GetIds() []int64 {
+	if x != nil {
+		return x.Ids
+	}
+	return nil
+}
+
+type BatchGetUserPreviewsResponse struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Users         []*UserPreview         `protobuf:"bytes,1,rep,name=users,proto3" json:"users,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *BatchGetUserPreviewsResponse) Reset() {
+	*x = BatchGetUserPreviewsResponse{}
+	mi := &file_auth_v1_auth_proto_msgTypes[19]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *BatchGetUserPreviewsResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*BatchGetUserPreviewsResponse) ProtoMessage() {}
+
+func (x *BatchGetUserPreviewsResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_auth_v1_auth_proto_msgTypes[19]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use BatchGetUserPreviewsResponse.ProtoReflect.Descriptor instead.
+func (*BatchGetUserPreviewsResponse) Descriptor() ([]byte, []int) {
+	return file_auth_v1_auth_proto_rawDescGZIP(), []int{19}
+}
+
+func (x *BatchGetUserPreviewsResponse) GetUsers() []*UserPreview {
+	if x != nil {
+		return x.Users
+	}
+	return nil
+}
+
 var File_auth_v1_auth_proto protoreflect.FileDescriptor
 
 const file_auth_v1_auth_proto_rawDesc = "" +
@@ -1209,7 +1297,11 @@ const file_auth_v1_auth_proto_rawDesc = "" +
 	"\x04role\x18\x02 \x01(\tR\x04role\"H\n" +
 	"\x12AssignRoleResponse\x12\x18\n" +
 	"\asuccess\x18\x01 \x01(\bR\asuccess\x12\x18\n" +
-	"\amessage\x18\x02 \x01(\tR\amessage2\xcb\x04\n" +
+	"\amessage\x18\x02 \x01(\tR\amessage\"/\n" +
+	"\x1bBatchGetUserPreviewsRequest\x12\x10\n" +
+	"\x03ids\x18\x01 \x03(\x03R\x03ids\"J\n" +
+	"\x1cBatchGetUserPreviewsResponse\x12*\n" +
+	"\x05users\x18\x01 \x03(\v2\x14.auth.v1.UserPreviewR\x05users2\xb0\x05\n" +
 	"\vAuthService\x12?\n" +
 	"\bRegister\x12\x18.auth.v1.RegisterRequest\x1a\x19.auth.v1.RegisterResponse\x126\n" +
 	"\x05Login\x12\x15.auth.v1.LoginRequest\x1a\x16.auth.v1.LoginResponse\x12N\n" +
@@ -1219,7 +1311,8 @@ const file_auth_v1_auth_proto_rawDesc = "" +
 	"\fListSessions\x12\x1c.auth.v1.ListSessionsRequest\x1a\x1d.auth.v1.ListSessionsResponse\x12N\n" +
 	"\rRevokeSession\x12\x1d.auth.v1.RevokeSessionRequest\x1a\x1e.auth.v1.RevokeSessionResponse\x12E\n" +
 	"\n" +
-	"AssignRole\x12\x1a.auth.v1.AssignRoleRequest\x1a\x1b.auth.v1.AssignRoleResponseB7Z5github.com/lucky720s/diplomaflow/pkg/protobuf/auth/v1b\x06proto3"
+	"AssignRole\x12\x1a.auth.v1.AssignRoleRequest\x1a\x1b.auth.v1.AssignRoleResponse\x12c\n" +
+	"\x14BatchGetUserPreviews\x12$.auth.v1.BatchGetUserPreviewsRequest\x1a%.auth.v1.BatchGetUserPreviewsResponseB7Z5github.com/lucky720s/diplomaflow/pkg/protobuf/auth/v1b\x06proto3"
 
 var (
 	file_auth_v1_auth_proto_rawDescOnce sync.Once
@@ -1233,51 +1326,56 @@ func file_auth_v1_auth_proto_rawDescGZIP() []byte {
 	return file_auth_v1_auth_proto_rawDescData
 }
 
-var file_auth_v1_auth_proto_msgTypes = make([]protoimpl.MessageInfo, 18)
+var file_auth_v1_auth_proto_msgTypes = make([]protoimpl.MessageInfo, 20)
 var file_auth_v1_auth_proto_goTypes = []any{
-	(*RegisterRequest)(nil),       // 0: auth.v1.RegisterRequest
-	(*RegisterResponse)(nil),      // 1: auth.v1.RegisterResponse
-	(*LoginRequest)(nil),          // 2: auth.v1.LoginRequest
-	(*LoginResponse)(nil),         // 3: auth.v1.LoginResponse
-	(*ValidateTokenRequest)(nil),  // 4: auth.v1.ValidateTokenRequest
-	(*ValidateTokenResponse)(nil), // 5: auth.v1.ValidateTokenResponse
-	(*ListUsersRequest)(nil),      // 6: auth.v1.ListUsersRequest
-	(*UserPreview)(nil),           // 7: auth.v1.UserPreview
-	(*ListUsersResponse)(nil),     // 8: auth.v1.ListUsersResponse
-	(*RefreshTokenRequest)(nil),   // 9: auth.v1.RefreshTokenRequest
-	(*RefreshTokenResponse)(nil),  // 10: auth.v1.RefreshTokenResponse
-	(*ListSessionsRequest)(nil),   // 11: auth.v1.ListSessionsRequest
-	(*Session)(nil),               // 12: auth.v1.Session
-	(*ListSessionsResponse)(nil),  // 13: auth.v1.ListSessionsResponse
-	(*RevokeSessionRequest)(nil),  // 14: auth.v1.RevokeSessionRequest
-	(*RevokeSessionResponse)(nil), // 15: auth.v1.RevokeSessionResponse
-	(*AssignRoleRequest)(nil),     // 16: auth.v1.AssignRoleRequest
-	(*AssignRoleResponse)(nil),    // 17: auth.v1.AssignRoleResponse
+	(*RegisterRequest)(nil),              // 0: auth.v1.RegisterRequest
+	(*RegisterResponse)(nil),             // 1: auth.v1.RegisterResponse
+	(*LoginRequest)(nil),                 // 2: auth.v1.LoginRequest
+	(*LoginResponse)(nil),                // 3: auth.v1.LoginResponse
+	(*ValidateTokenRequest)(nil),         // 4: auth.v1.ValidateTokenRequest
+	(*ValidateTokenResponse)(nil),        // 5: auth.v1.ValidateTokenResponse
+	(*ListUsersRequest)(nil),             // 6: auth.v1.ListUsersRequest
+	(*UserPreview)(nil),                  // 7: auth.v1.UserPreview
+	(*ListUsersResponse)(nil),            // 8: auth.v1.ListUsersResponse
+	(*RefreshTokenRequest)(nil),          // 9: auth.v1.RefreshTokenRequest
+	(*RefreshTokenResponse)(nil),         // 10: auth.v1.RefreshTokenResponse
+	(*ListSessionsRequest)(nil),          // 11: auth.v1.ListSessionsRequest
+	(*Session)(nil),                      // 12: auth.v1.Session
+	(*ListSessionsResponse)(nil),         // 13: auth.v1.ListSessionsResponse
+	(*RevokeSessionRequest)(nil),         // 14: auth.v1.RevokeSessionRequest
+	(*RevokeSessionResponse)(nil),        // 15: auth.v1.RevokeSessionResponse
+	(*AssignRoleRequest)(nil),            // 16: auth.v1.AssignRoleRequest
+	(*AssignRoleResponse)(nil),           // 17: auth.v1.AssignRoleResponse
+	(*BatchGetUserPreviewsRequest)(nil),  // 18: auth.v1.BatchGetUserPreviewsRequest
+	(*BatchGetUserPreviewsResponse)(nil), // 19: auth.v1.BatchGetUserPreviewsResponse
 }
 var file_auth_v1_auth_proto_depIdxs = []int32{
 	7,  // 0: auth.v1.ListUsersResponse.users:type_name -> auth.v1.UserPreview
 	12, // 1: auth.v1.ListSessionsResponse.sessions:type_name -> auth.v1.Session
-	0,  // 2: auth.v1.AuthService.Register:input_type -> auth.v1.RegisterRequest
-	2,  // 3: auth.v1.AuthService.Login:input_type -> auth.v1.LoginRequest
-	4,  // 4: auth.v1.AuthService.ValidateToken:input_type -> auth.v1.ValidateTokenRequest
-	6,  // 5: auth.v1.AuthService.ListUsers:input_type -> auth.v1.ListUsersRequest
-	9,  // 6: auth.v1.AuthService.RefreshToken:input_type -> auth.v1.RefreshTokenRequest
-	11, // 7: auth.v1.AuthService.ListSessions:input_type -> auth.v1.ListSessionsRequest
-	14, // 8: auth.v1.AuthService.RevokeSession:input_type -> auth.v1.RevokeSessionRequest
-	16, // 9: auth.v1.AuthService.AssignRole:input_type -> auth.v1.AssignRoleRequest
-	1,  // 10: auth.v1.AuthService.Register:output_type -> auth.v1.RegisterResponse
-	3,  // 11: auth.v1.AuthService.Login:output_type -> auth.v1.LoginResponse
-	5,  // 12: auth.v1.AuthService.ValidateToken:output_type -> auth.v1.ValidateTokenResponse
-	8,  // 13: auth.v1.AuthService.ListUsers:output_type -> auth.v1.ListUsersResponse
-	10, // 14: auth.v1.AuthService.RefreshToken:output_type -> auth.v1.RefreshTokenResponse
-	13, // 15: auth.v1.AuthService.ListSessions:output_type -> auth.v1.ListSessionsResponse
-	15, // 16: auth.v1.AuthService.RevokeSession:output_type -> auth.v1.RevokeSessionResponse
-	17, // 17: auth.v1.AuthService.AssignRole:output_type -> auth.v1.AssignRoleResponse
-	10, // [10:18] is the sub-list for method output_type
-	2,  // [2:10] is the sub-list for method input_type
-	2,  // [2:2] is the sub-list for extension type_name
-	2,  // [2:2] is the sub-list for extension extendee
-	0,  // [0:2] is the sub-list for field type_name
+	7,  // 2: auth.v1.BatchGetUserPreviewsResponse.users:type_name -> auth.v1.UserPreview
+	0,  // 3: auth.v1.AuthService.Register:input_type -> auth.v1.RegisterRequest
+	2,  // 4: auth.v1.AuthService.Login:input_type -> auth.v1.LoginRequest
+	4,  // 5: auth.v1.AuthService.ValidateToken:input_type -> auth.v1.ValidateTokenRequest
+	6,  // 6: auth.v1.AuthService.ListUsers:input_type -> auth.v1.ListUsersRequest
+	9,  // 7: auth.v1.AuthService.RefreshToken:input_type -> auth.v1.RefreshTokenRequest
+	11, // 8: auth.v1.AuthService.ListSessions:input_type -> auth.v1.ListSessionsRequest
+	14, // 9: auth.v1.AuthService.RevokeSession:input_type -> auth.v1.RevokeSessionRequest
+	16, // 10: auth.v1.AuthService.AssignRole:input_type -> auth.v1.AssignRoleRequest
+	18, // 11: auth.v1.AuthService.BatchGetUserPreviews:input_type -> auth.v1.BatchGetUserPreviewsRequest
+	1,  // 12: auth.v1.AuthService.Register:output_type -> auth.v1.RegisterResponse
+	3,  // 13: auth.v1.AuthService.Login:output_type -> auth.v1.LoginResponse
+	5,  // 14: auth.v1.AuthService.ValidateToken:output_type -> auth.v1.ValidateTokenResponse
+	8,  // 15: auth.v1.AuthService.ListUsers:output_type -> auth.v1.ListUsersResponse
+	10, // 16: auth.v1.AuthService.RefreshToken:output_type -> auth.v1.RefreshTokenResponse
+	13, // 17: auth.v1.AuthService.ListSessions:output_type -> auth.v1.ListSessionsResponse
+	15, // 18: auth.v1.AuthService.RevokeSession:output_type -> auth.v1.RevokeSessionResponse
+	17, // 19: auth.v1.AuthService.AssignRole:output_type -> auth.v1.AssignRoleResponse
+	19, // 20: auth.v1.AuthService.BatchGetUserPreviews:output_type -> auth.v1.BatchGetUserPreviewsResponse
+	12, // [12:21] is the sub-list for method output_type
+	3,  // [3:12] is the sub-list for method input_type
+	3,  // [3:3] is the sub-list for extension type_name
+	3,  // [3:3] is the sub-list for extension extendee
+	0,  // [0:3] is the sub-list for field type_name
 }
 
 func init() { file_auth_v1_auth_proto_init() }
@@ -1291,7 +1389,7 @@ func file_auth_v1_auth_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_auth_v1_auth_proto_rawDesc), len(file_auth_v1_auth_proto_rawDesc)),
 			NumEnums:      0,
-			NumMessages:   18,
+			NumMessages:   20,
 			NumExtensions: 0,
 			NumServices:   1,
 		},

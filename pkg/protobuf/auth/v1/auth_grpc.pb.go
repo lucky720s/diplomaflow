@@ -19,14 +19,15 @@ import (
 const _ = grpc.SupportPackageIsVersion9
 
 const (
-	AuthService_Register_FullMethodName      = "/auth.v1.AuthService/Register"
-	AuthService_Login_FullMethodName         = "/auth.v1.AuthService/Login"
-	AuthService_ValidateToken_FullMethodName = "/auth.v1.AuthService/ValidateToken"
-	AuthService_ListUsers_FullMethodName     = "/auth.v1.AuthService/ListUsers"
-	AuthService_RefreshToken_FullMethodName  = "/auth.v1.AuthService/RefreshToken"
-	AuthService_ListSessions_FullMethodName  = "/auth.v1.AuthService/ListSessions"
-	AuthService_RevokeSession_FullMethodName = "/auth.v1.AuthService/RevokeSession"
-	AuthService_AssignRole_FullMethodName    = "/auth.v1.AuthService/AssignRole"
+	AuthService_Register_FullMethodName             = "/auth.v1.AuthService/Register"
+	AuthService_Login_FullMethodName                = "/auth.v1.AuthService/Login"
+	AuthService_ValidateToken_FullMethodName        = "/auth.v1.AuthService/ValidateToken"
+	AuthService_ListUsers_FullMethodName            = "/auth.v1.AuthService/ListUsers"
+	AuthService_RefreshToken_FullMethodName         = "/auth.v1.AuthService/RefreshToken"
+	AuthService_ListSessions_FullMethodName         = "/auth.v1.AuthService/ListSessions"
+	AuthService_RevokeSession_FullMethodName        = "/auth.v1.AuthService/RevokeSession"
+	AuthService_AssignRole_FullMethodName           = "/auth.v1.AuthService/AssignRole"
+	AuthService_BatchGetUserPreviews_FullMethodName = "/auth.v1.AuthService/BatchGetUserPreviews"
 )
 
 // AuthServiceClient is the client API for AuthService service.
@@ -41,6 +42,7 @@ type AuthServiceClient interface {
 	ListSessions(ctx context.Context, in *ListSessionsRequest, opts ...grpc.CallOption) (*ListSessionsResponse, error)
 	RevokeSession(ctx context.Context, in *RevokeSessionRequest, opts ...grpc.CallOption) (*RevokeSessionResponse, error)
 	AssignRole(ctx context.Context, in *AssignRoleRequest, opts ...grpc.CallOption) (*AssignRoleResponse, error)
+	BatchGetUserPreviews(ctx context.Context, in *BatchGetUserPreviewsRequest, opts ...grpc.CallOption) (*BatchGetUserPreviewsResponse, error)
 }
 
 type authServiceClient struct {
@@ -131,6 +133,16 @@ func (c *authServiceClient) AssignRole(ctx context.Context, in *AssignRoleReques
 	return out, nil
 }
 
+func (c *authServiceClient) BatchGetUserPreviews(ctx context.Context, in *BatchGetUserPreviewsRequest, opts ...grpc.CallOption) (*BatchGetUserPreviewsResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(BatchGetUserPreviewsResponse)
+	err := c.cc.Invoke(ctx, AuthService_BatchGetUserPreviews_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // AuthServiceServer is the server API for AuthService service.
 // All implementations must embed UnimplementedAuthServiceServer
 // for forward compatibility.
@@ -143,6 +155,7 @@ type AuthServiceServer interface {
 	ListSessions(context.Context, *ListSessionsRequest) (*ListSessionsResponse, error)
 	RevokeSession(context.Context, *RevokeSessionRequest) (*RevokeSessionResponse, error)
 	AssignRole(context.Context, *AssignRoleRequest) (*AssignRoleResponse, error)
+	BatchGetUserPreviews(context.Context, *BatchGetUserPreviewsRequest) (*BatchGetUserPreviewsResponse, error)
 	mustEmbedUnimplementedAuthServiceServer()
 }
 
@@ -176,6 +189,9 @@ func (UnimplementedAuthServiceServer) RevokeSession(context.Context, *RevokeSess
 }
 func (UnimplementedAuthServiceServer) AssignRole(context.Context, *AssignRoleRequest) (*AssignRoleResponse, error) {
 	return nil, status.Error(codes.Unimplemented, "method AssignRole not implemented")
+}
+func (UnimplementedAuthServiceServer) BatchGetUserPreviews(context.Context, *BatchGetUserPreviewsRequest) (*BatchGetUserPreviewsResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method BatchGetUserPreviews not implemented")
 }
 func (UnimplementedAuthServiceServer) mustEmbedUnimplementedAuthServiceServer() {}
 func (UnimplementedAuthServiceServer) testEmbeddedByValue()                     {}
@@ -342,6 +358,24 @@ func _AuthService_AssignRole_Handler(srv interface{}, ctx context.Context, dec f
 	return interceptor(ctx, in, info, handler)
 }
 
+func _AuthService_BatchGetUserPreviews_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(BatchGetUserPreviewsRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(AuthServiceServer).BatchGetUserPreviews(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: AuthService_BatchGetUserPreviews_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(AuthServiceServer).BatchGetUserPreviews(ctx, req.(*BatchGetUserPreviewsRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // AuthService_ServiceDesc is the grpc.ServiceDesc for AuthService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -380,6 +414,10 @@ var AuthService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "AssignRole",
 			Handler:    _AuthService_AssignRole_Handler,
+		},
+		{
+			MethodName: "BatchGetUserPreviews",
+			Handler:    _AuthService_BatchGetUserPreviews_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

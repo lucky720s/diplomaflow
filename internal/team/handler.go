@@ -4,6 +4,7 @@ import (
 	"context"
 	"strconv"
 
+	authv1 "github.com/lucky720s/diplomaflow/pkg/protobuf/auth/v1"
 	teamv1 "github.com/lucky720s/diplomaflow/pkg/protobuf/team/v1"
 	"go.uber.org/zap"
 	"google.golang.org/grpc/codes"
@@ -112,17 +113,51 @@ func (h *Handler) GetMyTeam(ctx context.Context, req *teamv1.GetMyTeamRequest) (
 	if err != nil {
 		return nil, mapError(err)
 	}
-
 	if team == nil {
 		return &teamv1.GetMyTeamResponse{HasTeam: false}, nil
 	}
 
-	var pbMembers []*teamv1.TeamMember
+	// 1) собрать ids
+	ids := make([]int64, 0, len(members))
+	seen := map[int64]struct{}{}
 	for _, m := range members {
-		pbMembers = append(pbMembers, &teamv1.TeamMember{
+		if _, ok := seen[m.UserID]; ok {
+			continue
+		}
+		seen[m.UserID] = struct{}{}
+		ids = append(ids, m.UserID)
+	}
+
+	// 2) вызвать auth_service.BatchGetUserPreviews как внутренний сервис
+	authCtx := metadata.AppendToOutgoingContext(ctx, "x-internal-service", "team_service")
+	au, err := h.service.authClient.BatchGetUserPreviews(authCtx, &authv1.BatchGetUserPreviewsRequest{
+		Ids: ids,
+	})
+	if err != nil {
+		// можно fail-open (вернуть без ФИО) или fail-closed
+		// сделаю fail-open, чтобы /teams/my не падал полностью
+		h.logger.Warn("BatchGetUserPreviews failed", zap.Error(err))
+	}
+
+	users := map[int64]*authv1.UserPreview{}
+	if au != nil {
+		for _, u := range au.Users {
+			users[u.Id] = u
+		}
+	}
+
+	pbMembers := make([]*teamv1.TeamMember, 0, len(members))
+	for _, m := range members {
+		tm := &teamv1.TeamMember{
 			UserId: m.UserID,
 			Role:   m.Role,
-		})
+		}
+		if u := users[m.UserID]; u != nil {
+			tm.FirstName = u.FirstName
+			tm.LastName = u.LastName
+			tm.Email = u.Email
+		}
+		pbMembers = append(pbMembers, tm)
 	}
 
 	return &teamv1.GetMyTeamResponse{

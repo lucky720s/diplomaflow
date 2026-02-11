@@ -210,3 +210,26 @@ func (s *Service) AssignRole(ctx context.Context, userID int64, role string) err
 	user.Role = role
 	return s.repo.Update(ctx, user)
 }
+func (s *Service) BatchGetUserPreviews(ctx context.Context, ids []int64) ([]*User, error) {
+	// дедуп + лимит
+	uniq := make([]int64, 0, len(ids))
+	seen := make(map[int64]struct{}, len(ids))
+	for _, id := range ids {
+		if id <= 0 {
+			continue
+		}
+		if _, ok := seen[id]; ok {
+			continue
+		}
+		seen[id] = struct{}{}
+		uniq = append(uniq, id)
+	}
+	if len(uniq) == 0 {
+		return []*User{}, nil
+	}
+	if len(uniq) > 200 {
+		return nil, fmt.Errorf("too many ids (max 200)")
+	}
+
+	return s.repo.GetByIDs(ctx, uniq)
+}
