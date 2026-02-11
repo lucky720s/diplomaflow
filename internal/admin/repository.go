@@ -108,6 +108,10 @@ type DashboardStatsData struct {
 	PendingReviews            int32
 	ActiveSupervisors         int32
 	PendingTopicRegistrations int32
+	PendingSupervisorRequests int32
+	PendingPreDefenses        int32
+	ScheduledPreDefenses      int32
+	PreDefensesThisWeek       int32
 }
 
 type StepProgressData struct {
