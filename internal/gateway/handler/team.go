@@ -275,29 +275,30 @@ func (h *Handler) RemoveMember(c *gin.Context) {
 		return
 	}
 
-	userID := c.GetInt64("userId")
-
-	var reqBody struct {
-		UserID int64 `json:"user_id" binding:"required"`
-	}
-	if bindErr := c.ShouldBindJSON(&reqBody); bindErr != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": bindErr.Error()})
+	memberID, err := strconv.ParseInt(c.Param("user_id"), 10, 64)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid user id"})
 		return
 	}
+
+	requesterID := c.GetInt64("userId")
+
 	ctx := metadata.AppendToOutgoingContext(
 		c.Request.Context(),
-		"x-user-id", strconv.FormatInt(userID, 10),
+		"x-user-id", strconv.FormatInt(requesterID, 10),
 	)
+
 	_, err = h.teamClient.RemoveMember(ctx, &teamv1.RemoveMemberRequest{
 		TeamId:      teamID,
-		UserId:      reqBody.UserID,
-		RequesterId: userID,
+		UserId:      memberID,
+		RequesterId: requesterID,
 	})
 	if err != nil {
 		MapGRPCError(c, err)
 		return
 	}
-	c.JSON(http.StatusNoContent, nil)
+
+	c.Status(http.StatusNoContent)
 }
 
 // LeaveTeam - студент выходит из команды
