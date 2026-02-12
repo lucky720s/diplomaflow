@@ -11,5 +11,26 @@ type Config struct {
 	Services struct {
 		NotificationAddr string `mapstructure:"notification_addr"`
 		ProjectAddr      string `mapstructure:"project_addr"`
+		TeamAddr         string `mapstructure:"team_addr"`
 	} `mapstructure:"services"`
+
+	OutboxPoller struct {
+		Enabled bool   `mapstructure:"enabled"`
+		Topic   string `mapstructure:"topic"`
+
+		IntervalSeconds int `mapstructure:"interval_seconds"`
+		BatchSize       int `mapstructure:"batch_size"`
+
+		// DB mapping (чтобы не гадать схему)
+		Table             string `mapstructure:"table"`
+		IDColumn          string `mapstructure:"id_column"`
+		TopicColumn       string `mapstructure:"topic_column"`
+		StatusColumn      string `mapstructure:"status_column"`
+		EventTypeColumn   string `mapstructure:"event_type_column"`
+		PayloadColumn     string `mapstructure:"payload_column"`
+		ProcessedAtColumn string `mapstructure:"processed_at_column"` // optional, can be empty
+
+		PendingStatus   string `mapstructure:"pending_status"`
+		ProcessedStatus string `mapstructure:"processed_status"`
+	} `mapstructure:"outbox_poller"`
 }

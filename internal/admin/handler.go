@@ -30,7 +30,6 @@ func NewHandler(service *Service, logger *zap.Logger) *Handler {
 }
 
 // ==================== Dashboard ====================
-
 func (h *Handler) GetDashboard(ctx context.Context, req *adminv1.GetDashboardRequest) (*adminv1.GetDashboardResponse, error) {
 	if req.DepartmentId == 0 {
 		return nil, status.Error(codes.InvalidArgument, "department_id is required")
@@ -59,6 +58,7 @@ func (h *Handler) GetDashboard(ctx context.Context, req *adminv1.GetDashboardReq
 		if sp.TotalTeams > 0 {
 			completionPct = float32(sp.CompletedTeams) / float32(sp.TotalTeams) * 100
 		}
+
 		pbResp.StepProgress = append(pbResp.StepProgress, &adminv1.StepProgress{
 			StepId:               sp.StepID,
 			StepName:             sp.StepName,
@@ -108,7 +108,6 @@ func (h *Handler) GetDepartmentStats(ctx context.Context, req *adminv1.GetDepart
 }
 
 // ==================== Students ====================
-
 func (h *Handler) ListStudents(ctx context.Context, req *adminv1.ListStudentsRequest) (*adminv1.ListStudentsResponse, error) {
 	students, total, err := h.service.ListStudents(ctx, &ListStudentsRequest{
 		UniversityID:    req.UniversityId,
@@ -154,7 +153,6 @@ func (h *Handler) GetStudent(ctx context.Context, req *adminv1.GetStudentRequest
 		return nil, status.Errorf(codes.NotFound, "student not found: %v", err)
 	}
 
-	// Конвертируем в protobuf
 	pbStudent := &adminv1.StudentInfo{
 		Id:           resp.Student.ID,
 		Email:        resp.Student.Email,
@@ -168,7 +166,6 @@ func (h *Handler) GetStudent(ctx context.Context, req *adminv1.GetStudentRequest
 		CreatedAt:    timestamppb.New(resp.Student.CreatedAt),
 	}
 
-	// Конвертируем оценки
 	var pbGrades []*adminv1.GradeInfo
 	for _, g := range resp.Grades {
 		pbGrades = append(pbGrades, &adminv1.GradeInfo{
@@ -182,7 +179,6 @@ func (h *Handler) GetStudent(ctx context.Context, req *adminv1.GetStudentRequest
 		})
 	}
 
-	// Конвертируем submissions
 	var pbSubmissions []*adminv1.SubmissionPreview
 	for _, s := range resp.Submissions {
 		pbSubmissions = append(pbSubmissions, &adminv1.SubmissionPreview{
@@ -200,7 +196,6 @@ func (h *Handler) GetStudent(ctx context.Context, req *adminv1.GetStudentRequest
 }
 
 // ==================== Teams ====================
-
 func (h *Handler) ListAllTeams(ctx context.Context, req *adminv1.ListAllTeamsRequest) (*adminv1.ListAllTeamsResponse, error) {
 	teams, total, err := h.service.ListAllTeams(ctx, &ListAllTeamsRequest{
 		DepartmentID: req.DepartmentId,
@@ -242,7 +237,6 @@ func (h *Handler) GetTeamDetails(ctx context.Context, req *adminv1.GetTeamDetail
 		return nil, status.Errorf(codes.NotFound, "team not found: %v", err)
 	}
 
-	// Конвертируем участников
 	var pbMembers []*adminv1.TeamMemberInfo
 	for _, m := range resp.Team.Members {
 		pbMembers = append(pbMembers, &adminv1.TeamMemberInfo{
@@ -253,7 +247,6 @@ func (h *Handler) GetTeamDetails(ctx context.Context, req *adminv1.GetTeamDetail
 		})
 	}
 
-	// Основная информация о команде
 	pbTeam := &adminv1.TeamAdminInfo{
 		Id:           resp.Team.ID,
 		Name:         resp.Team.Name,
@@ -266,7 +259,6 @@ func (h *Handler) GetTeamDetails(ctx context.Context, req *adminv1.GetTeamDetail
 		UpdatedAt:    timestamppb.New(resp.Team.UpdatedAt),
 	}
 
-	// Информация о супервайзере
 	if resp.Supervisor != nil {
 		pbTeam.Supervisor = &adminv1.SupervisorInfo{
 			Id:       resp.Supervisor.ID,
@@ -275,12 +267,10 @@ func (h *Handler) GetTeamDetails(ctx context.Context, req *adminv1.GetTeamDetail
 		}
 	}
 
-	// Формируем ответ
 	pbResp := &adminv1.GetTeamDetailsResponse{
 		Team: pbTeam,
 	}
 
-	// Оценки
 	for _, g := range resp.Grades {
 		pbResp.Grades = append(pbResp.Grades, &adminv1.GradeInfo{
 			Id:        g.ID,
@@ -293,7 +283,6 @@ func (h *Handler) GetTeamDetails(ctx context.Context, req *adminv1.GetTeamDetail
 		})
 	}
 
-	// Submissions
 	for _, s := range resp.Submissions {
 		pbResp.Submissions = append(pbResp.Submissions, &adminv1.SubmissionPreview{
 			Id:          s.ID,
@@ -322,7 +311,6 @@ func (h *Handler) UpdateTeamAdmin(ctx context.Context, req *adminv1.UpdateTeamAd
 		return nil, status.Error(codes.InvalidArgument, "team_id is required")
 	}
 
-	// TODO: Получить actor_id из контекста аутентификации
 	actorID := getActorIDFromContext(ctx)
 
 	team, err := h.service.UpdateTeamByAdmin(ctx, &UpdateTeamByAdminRequest{
@@ -337,7 +325,6 @@ func (h *Handler) UpdateTeamAdmin(ctx context.Context, req *adminv1.UpdateTeamAd
 		return nil, status.Errorf(codes.Internal, "failed to update team: %v", err)
 	}
 
-	// Конвертируем участников
 	var pbMembers []*adminv1.TeamMemberInfo
 	for _, m := range team.Members {
 		pbMembers = append(pbMembers, &adminv1.TeamMemberInfo{
@@ -368,9 +355,7 @@ func (h *Handler) DeleteTeamAdmin(ctx context.Context, req *adminv1.DeleteTeamAd
 		return nil, status.Error(codes.InvalidArgument, "team_id is required")
 	}
 
-	// TODO: Получить actor_id из контекста аутентификации
 	actorID := getActorIDFromContext(ctx)
-
 	reason := req.Reason
 	if reason == "" {
 		reason = "Deleted by admin"
@@ -386,7 +371,6 @@ func (h *Handler) DeleteTeamAdmin(ctx context.Context, req *adminv1.DeleteTeamAd
 }
 
 // ==================== Supervisors ====================
-
 func (h *Handler) ListSupervisors(ctx context.Context, req *adminv1.ListSupervisorsRequest) (*adminv1.ListSupervisorsResponse, error) {
 	supervisors, total, err := h.service.ListSupervisors(ctx, req.DepartmentId, req.UniversityId, req.Page, req.PageSize)
 	if err != nil {
@@ -416,9 +400,7 @@ func (h *Handler) AssignSupervisor(ctx context.Context, req *adminv1.AssignSuper
 		return nil, status.Error(codes.InvalidArgument, "team_id and supervisor_id are required")
 	}
 
-	// TODO: Get actual actor ID from context
-	actorID := int64(1)
-
+	actorID := int64(1) // TODO: read from context
 	err := h.service.AssignSupervisor(ctx, req.TeamId, req.SupervisorId, actorID)
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, "failed to assign supervisor: %v", err)
@@ -431,10 +413,10 @@ func (h *Handler) AssignSupervisor(ctx context.Context, req *adminv1.AssignSuper
 }
 
 // ==================== Topic Registration ====================
-
 func (h *Handler) SubmitTopicRegistration(ctx context.Context, req *adminv1.SubmitTopicRegistrationRequest) (*adminv1.SubmitTopicRegistrationResponse, error) {
-	if req.TeamId == 0 {
-		return nil, status.Error(codes.InvalidArgument, "team_id is required")
+	// Variant B: project-first
+	if req.ProjectId == 0 {
+		return nil, status.Error(codes.InvalidArgument, "project_id is required")
 	}
 	if req.ProposedTopic == "" {
 		return nil, status.Error(codes.InvalidArgument, "proposed_topic is required")
@@ -442,9 +424,13 @@ func (h *Handler) SubmitTopicRegistration(ctx context.Context, req *adminv1.Subm
 	if req.SupervisorId == 0 {
 		return nil, status.Error(codes.InvalidArgument, "supervisor_id is required")
 	}
+	if req.SubmittedBy == 0 {
+		return nil, status.Error(codes.InvalidArgument, "submitted_by is required")
+	}
 
 	reg, err := h.service.SubmitTopicRegistration(ctx, &SubmitTopicRegistrationRequest{
-		TeamID:           req.TeamId,
+		ProjectID:        req.ProjectId,
+		TeamID:           req.TeamId, // optional (0 allowed)
 		ProposedTopic:    req.ProposedTopic,
 		TopicDescription: req.TopicDescription,
 		SupervisorID:     req.SupervisorId,
@@ -585,6 +571,7 @@ func (h *Handler) ReviewTopicRegistration(ctx context.Context, req *adminv1.Revi
 	pbReg := &adminv1.TopicRegistrationInfo{
 		Id:               reg.ID,
 		TeamId:           reg.TeamID,
+		ProjectId:        reg.ProjectID,
 		ProposedTopic:    reg.ProposedTopic,
 		TopicDescription: reg.TopicDescription,
 		SupervisorId:     reg.SupervisorID,
@@ -608,7 +595,6 @@ func (h *Handler) ReviewTopicRegistration(ctx context.Context, req *adminv1.Revi
 }
 
 // ==================== Submissions ====================
-
 func (h *Handler) ListSubmissions(ctx context.Context, req *adminv1.ListSubmissionsRequest) (*adminv1.ListSubmissionsResponse, error) {
 	pageSize := int(req.PageSize)
 	if pageSize <= 0 {
@@ -748,7 +734,6 @@ func (h *Handler) ReviewSubmission(ctx context.Context, req *adminv1.ReviewSubmi
 }
 
 // ==================== Grading (только баллы, без буквенных оценок) ====================
-
 func (h *Handler) GetProjectGrades(ctx context.Context, req *adminv1.GetProjectGradesRequest) (*adminv1.GetProjectGradesResponse, error) {
 	grades, avg, err := h.service.GetProjectGrades(ctx, req.ProjectId)
 	if err != nil {
@@ -772,7 +757,7 @@ func (h *Handler) GetProjectGrades(ctx context.Context, req *adminv1.GetProjectG
 		ProjectId:    req.ProjectId,
 		StepGrades:   pbGrades,
 		AverageGrade: avg,
-		TotalScore:   avg, // Итоговый балл = средний балл
+		TotalScore:   avg,
 	}, nil
 }
 
@@ -839,7 +824,6 @@ func (h *Handler) GetGradingHistory(ctx context.Context, req *adminv1.GetGrading
 }
 
 // ==================== Workflow Progress ====================
-
 func (h *Handler) GetWorkflowProgress(ctx context.Context, req *adminv1.GetWorkflowProgressRequest) (*adminv1.GetWorkflowProgressResponse, error) {
 	progress, err := h.service.GetWorkflowProgress(ctx, req.DepartmentId, req.WorkflowId)
 	if err != nil {
@@ -852,6 +836,7 @@ func (h *Handler) GetWorkflowProgress(ctx context.Context, req *adminv1.GetWorkf
 		if sp.TotalTeams > 0 {
 			completionPct = float32(sp.CompletedTeams) / float32(sp.TotalTeams) * 100
 		}
+
 		pbSteps = append(pbSteps, &adminv1.StepProgress{
 			StepId:               sp.StepID,
 			StepName:             sp.StepName,
@@ -919,10 +904,10 @@ func (h *Handler) ListPendingReviews(ctx context.Context, req *adminv1.ListPendi
 }
 
 // ==================== Supervisor Request Handlers ====================
-
 func (h *Handler) CreateSupervisorRequest(ctx context.Context, req *adminv1.CreateSupervisorRequestReq) (*adminv1.CreateSupervisorRequestResp, error) {
-	if req.TeamId == 0 {
-		return nil, status.Error(codes.InvalidArgument, "team_id is required")
+	// Variant B: project-first
+	if req.ProjectId == 0 {
+		return nil, status.Error(codes.InvalidArgument, "project_id is required")
 	}
 	if req.SupervisorId == 0 {
 		return nil, status.Error(codes.InvalidArgument, "supervisor_id is required")
@@ -932,7 +917,8 @@ func (h *Handler) CreateSupervisorRequest(ctx context.Context, req *adminv1.Crea
 	}
 
 	result, err := h.service.CreateSupervisorRequest(ctx, &CreateSupervisorRequestInput{
-		TeamID:        req.TeamId,
+		ProjectID:     req.ProjectId,
+		TeamID:        req.TeamId, // optional (0 allowed)
 		SupervisorID:  req.SupervisorId,
 		RequestedBy:   req.RequestedBy,
 		Message:       req.Message,
@@ -1125,7 +1111,6 @@ func (h *Handler) convertSupervisorRequestToProto(req *SupervisorRequestWithDeta
 	if req.RespondedAt != nil {
 		pbReq.RespondedAt = timestamppb.New(*req.RespondedAt)
 	}
-
 	if req.ExpiresAt != nil {
 		pbReq.ExpiresAt = timestamppb.New(*req.ExpiresAt)
 	}

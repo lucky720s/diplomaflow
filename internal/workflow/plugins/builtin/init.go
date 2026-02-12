@@ -3,49 +3,41 @@ package builtin
 import (
 	"github.com/lucky720s/diplomaflow/internal/workflow/plugins"
 	notificationv1 "github.com/lucky720s/diplomaflow/pkg/protobuf/notification/v1"
+	teamv1 "github.com/lucky720s/diplomaflow/pkg/protobuf/team/v1"
 )
 
 // RegisterAll регистрирует все встроенные плагины
-func RegisterAll(notifClient notificationv1.NotificationServiceClient) {
-	// Уведомления
+func RegisterAll(notifClient notificationv1.NotificationServiceClient, teamClient teamv1.TeamServiceClient) {
+	// Notifications
 	if notifClient != nil {
 		plugins.Register(NewNotificationPlugin(notifClient))
 	}
 	plugins.Register(NewEmailPlugin())
 	plugins.Register(NewReminderPlugin())
 
-	// Внешние проверки
+	// Team
+	if teamClient != nil {
+		plugins.Register(NewTeamLockPlugin(teamClient))
+	}
+
+	// External checks
 	plugins.Register(NewAntiplagiatPlugin())
 	plugins.Register(NewTurnitinPlugin())
 
-	// Валидация
+	// Validation
 	plugins.Register(NewFileValidationPlugin())
 	plugins.Register(NewFormValidationPlugin())
 
-	// Оценивание
+	// Grading
 	plugins.Register(NewGradeCalculationPlugin())
 
-	// Документы
+	// Documents
 	plugins.Register(NewDocumentGeneratorPlugin())
 
 	// Webhooks
 	plugins.Register(NewWebhookPlugin())
 }
 
-// RegisterWithoutNotification регистрирует плагины без notification client
-func RegisterWithoutNotification() {
-	plugins.Register(NewEmailPlugin())
-	plugins.Register(NewReminderPlugin())
-	plugins.Register(NewAntiplagiatPlugin())
-	plugins.Register(NewTurnitinPlugin())
-	plugins.Register(NewFileValidationPlugin())
-	plugins.Register(NewFormValidationPlugin())
-	plugins.Register(NewGradeCalculationPlugin())
-	plugins.Register(NewDocumentGeneratorPlugin())
-	plugins.Register(NewWebhookPlugin())
-}
-
-// RegisteredPlugins возвращает список ID зарегистрированных плагинов
 func RegisteredPlugins() []string {
 	list := plugins.List()
 	ids := make([]string, len(list))

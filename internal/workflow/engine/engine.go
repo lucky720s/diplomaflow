@@ -10,6 +10,7 @@ import (
 
 	"github.com/lucky720s/diplomaflow/internal/workflow"
 	"github.com/lucky720s/diplomaflow/internal/workflow/plugins"
+	teamv1 "github.com/lucky720s/diplomaflow/pkg/protobuf/team/v1"
 	"go.uber.org/zap"
 )
 
@@ -22,12 +23,13 @@ var (
 )
 
 type WorkflowEngine struct {
-	repo   workflow.Repository
-	logger *zap.Logger
+	repo       workflow.Repository
+	teamClient teamv1.TeamServiceClient
+	logger     *zap.Logger
 }
 
-func NewWorkflowEngine(repo workflow.Repository, logger *zap.Logger) *WorkflowEngine {
-	return &WorkflowEngine{repo: repo, logger: logger}
+func NewWorkflowEngine(repo workflow.Repository, teamClient teamv1.TeamServiceClient, logger *zap.Logger) *WorkflowEngine {
+	return &WorkflowEngine{repo: repo, teamClient: teamClient, logger: logger}
 }
 
 func (e *WorkflowEngine) GetAvailableTransitions(
@@ -94,6 +96,13 @@ func (e *WorkflowEngine) ExecuteTransition(ctx context.Context, req *ExecuteTran
 		return nil, err
 	}
 
+	// ===== STRICT domain validation for TEAM_FORMED =====
+	if strings.EqualFold(strings.TrimSpace(transition.EventName), "TEAM_FORMED") {
+		if err := e.validateTeamFormed(ctx, req, fromState); err != nil {
+			return nil, err
+		}
+	}
+
 	result := &ExecuteTransitionResult{
 		Success:             true,
 		EventName:           transition.EventName,
@@ -121,6 +130,8 @@ func (e *WorkflowEngine) ExecuteTransition(ctx context.Context, req *ExecuteTran
 		ProjectID:     req.ProjectID,
 		UserID:        req.UserID,
 		DepartmentID:  req.DepartmentID,
+		UniversityID:  req.UniversityID,
+		TeamID:        req.TeamID,
 		ProjectData:   req.ProjectData,
 		PreviousState: fromState.Name,
 		NewState:      toState.Name,
@@ -156,6 +167,71 @@ func (e *WorkflowEngine) ExecuteTransition(ctx context.Context, req *ExecuteTran
 	return result, nil
 }
 
+func (e *WorkflowEngine) validateTeamFormed(ctx context.Context, req *ExecuteTransitionRequest, fromState *workflow.State) error {
+	// применяем правила только если исходное состояние — этап формирования команды
+	if fromState == nil || strings.ToUpper(strings.TrimSpace(fromState.Type)) != "TEAM_FORMATION" {
+		return nil
+	}
+	if e.teamClient == nil {
+		return errors.New("team validation required but team_client is not configured in workflow_service")
+	}
+	if req.TeamID <= 0 {
+		return errors.New("team_id is required to perform TEAM_FORMED transition")
+	}
+
+	// парсим team_config из fromState.Config
+	var sc workflow.StateConfig
+	_ = json.Unmarshal(fromState.Config, &sc)
+
+	tc := sc.TeamConfig
+	if tc == nil {
+		// если team_config не задан — не блокируем (но лучше задать в state.config)
+		e.logger.Warn("TEAM_FORMATION state has no team_config; skipping validation", zap.Int64("state_id", fromState.ID))
+		return nil
+	}
+
+	teamResp, err := e.teamClient.GetTeam(ctx, &teamv1.GetTeamRequest{TeamId: req.TeamID})
+	if err != nil {
+		return fmt.Errorf("failed to fetch team for validation: %w", err)
+	}
+
+	size := int32(len(teamResp.Members))
+
+	// allow_solo logic
+	if size == 1 && !tc.AllowSolo {
+		return fmt.Errorf("team size=1 (solo) is not allowed by workflow config")
+	}
+
+	// min/max
+	min := tc.MinSize
+	max := tc.MaxSize
+
+	// Если allow_solo=true, то size=1 допускаем даже если min=2
+	if size != 1 || !tc.AllowSolo {
+		if min > 0 && size < min {
+			return fmt.Errorf("team size %d is below minimum %d", size, min)
+		}
+	}
+	if max > 0 && size > max {
+		return fmt.Errorf("team size %d exceeds maximum %d", size, max)
+	}
+
+	if tc.RequireLeader {
+		hasLeader := false
+		for _, m := range teamResp.Members {
+			if strings.EqualFold(m.Role, "leader") {
+				hasLeader = true
+				break
+			}
+		}
+		if !hasLeader {
+			return errors.New("team has no leader but workflow requires leader")
+		}
+	}
+
+	return nil
+}
+
 // runPhase:
 // - PRE actions: выполняем синхронно (должны быть pure/validation/grading)
 // - POST actions: НЕ выполняем здесь, только возвращаем их IDs в result.PostActions
@@ -170,7 +246,6 @@ func (e *WorkflowEngine) runPhase(
 	var postIDs []int64
 
 	for _, action := range actions {
-		// Заполняем контекст
 		actx.StateID = stateID
 		actx.Trigger = trigger
 		actx.Config = e.parseConfig(action.Config)
@@ -180,19 +255,16 @@ func (e *WorkflowEngine) runPhase(
 			continue
 		}
 
-		// PRE: выполняем
 		ar := e.executeAction(ctx, &action, actx)
 		if ar != nil && ar.Data != nil {
 			e.mergeActionData(result.DataPatch, action.Name, ar.Data)
 		}
 
-		// ошибки PRE-экшнов — блокируют переход, если action не optional
 		if ar == nil || ar.Success {
 			result.ExecutedActionNames = append(result.ExecutedActionNames, action.Name)
 			continue
 		}
 
-		// optional -> логируем, но не блокируем
 		if action.IsOptional {
 			e.logger.Warn("PRE action failed but optional",
 				zap.Int64("action_id", action.ID),
@@ -217,21 +289,12 @@ func (e *WorkflowEngine) runPhase(
 	return nil
 }
 
-// isPostActionType — policy:
-// всё, что потенциально имеет внешние сайд-эффекты, считаем POST.
-// PRE делаем строго allowlist’ом.
 func (e *WorkflowEngine) isPostActionType(actionType string) bool {
 	t := strings.ToUpper(strings.TrimSpace(actionType))
 
-	// PRE allowlist (без внешних эффектов):
-	// - VALIDATE_* / VALIDATE_DATA
-	// - CALCULATE_GRADE
-	// - UPDATE_PROJECT (если ваш plugin действительно только пишет patch)
 	if t == "CALCULATE_GRADE" || t == "VALIDATE_DATA" || strings.HasPrefix(t, "VALIDATE_") || t == "UPDATE_PROJECT" {
 		return false
 	}
-
-	// Всё остальное — POST (notification/webhook/external/etc)
 	return true
 }
 
@@ -401,6 +464,8 @@ type ExecuteTransitionRequest struct {
 	UserID         int64
 	UserRole       string
 	DepartmentID   int64
+	UniversityID   int64
+	TeamID         int64
 	ProjectData    map[string]interface{}
 	Payload        map[string]interface{}
 }
@@ -419,11 +484,8 @@ type ExecuteTransitionResult struct {
 	SetStatus           string
 	DataPatch           map[string]interface{}
 	ExecutedActionNames []string
-
-	// POST actions — выполнить после commit асинхронно
-	PostActions []PostCommitActionGroup
-
-	Error string
+	PostActions         []PostCommitActionGroup
+	Error               string
 }
 
 type TransitionCondition struct {

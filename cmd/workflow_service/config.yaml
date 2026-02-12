@@ -7,3 +7,21 @@ database:
 services:
   notification_addr: "127.0.0.1:8087"
   project_addr: "127.0.0.1:8083"
+  team_addr: "127.0.0.1:8084"
+
+outbox_poller:
+  enabled: true
+  topic: "workflow-actions"
+  interval_seconds: 2
+  batch_size: 20
+
+  table: "outbox_events"
+  id_column: "id"
+  topic_column: "topic"
+  status_column: "status"
+  event_type_column: "event_type"
+  payload_column: "payload"          # либо "payload_json" — поставь как в БД
+  processed_at_column: "processed_at" # если колонки нет, оставь пустым ""
+
+  pending_status: "pending"
+  processed_status: "processed"

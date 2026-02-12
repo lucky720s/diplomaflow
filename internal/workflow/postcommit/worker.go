@@ -14,6 +14,7 @@ import (
 	projectv1 "github.com/lucky720s/diplomaflow/pkg/protobuf/project/v1"
 	"go.uber.org/zap"
 	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/metadata"
 	"google.golang.org/grpc/status"
 	"gorm.io/gorm"
 )
@@ -50,7 +51,7 @@ type deadlinePayload struct {
 
 // Handle — обработчик события (без Kafka).
 // eventType ожидается: "WorkflowPostCommitActions" | "WorkflowDeadlineReached"
-// payload — JSON (как раньше было ev.Payload).
+// payload — JSON (как в outbox payload).
 func (w *Worker) Handle(ctx context.Context, eventType string, payload []byte) error {
 	switch eventType {
 	case "WorkflowPostCommitActions":
@@ -82,8 +83,11 @@ func (w *Worker) handlePostCommit(ctx context.Context, eventType string, p postC
 		return status.Errorf(codes.Internal, "load actions: %v", err)
 	}
 
+	// internal call to project_service
+	internalCtx := metadata.AppendToOutgoingContext(ctx, "x-internal-service", "workflow_service")
+
 	// тянем актуальные данные проекта ПОСЛЕ commit
-	snap, err := w.projectClient.GetProjectRuntime(ctx, &projectv1.GetProjectRuntimeRequest{ProjectId: p.ProjectID})
+	snap, err := w.projectClient.GetProjectRuntime(internalCtx, &projectv1.GetProjectRuntimeRequest{ProjectId: p.ProjectID})
 	if err != nil {
 		return status.Errorf(codes.Unavailable, "get project runtime: %v", err)
 	}
@@ -104,22 +108,24 @@ func (w *Worker) handlePostCommit(ctx context.Context, eventType string, p postC
 			return status.Errorf(codes.Internal, "tryStartRun: %v", err)
 		}
 		if !started {
-			continue // уже выполняли/выполняем
+			continue
 		}
 
 		actx := &plugins.ActionContext{
 			ProjectID:     p.ProjectID,
+			StateID:       p.StateID,
 			UserID:        p.UserID,
+			TeamID:        snap.TeamId,
 			DepartmentID:  snap.DepartmentId,
+			UniversityID:  snap.UniversityId,
+			Trigger:       p.Trigger,
+			Config:        parseConfig(a.Config),
 			ProjectData:   projectData,
 			PreviousState: "",
 			NewState:      snap.CurrentStateName,
 			TransitionID:  p.TransitionID,
-			Payload:       map[string]interface{}{},
 			Metadata:      map[string]interface{}{},
-			StateID:       p.StateID,
-			Trigger:       p.Trigger,
-			Config:        parseConfig(a.Config),
+			Payload:       map[string]interface{}{},
 		}
 
 		if err := w.executeOne(ctx, dedup, &a, actx); err != nil {
@@ -140,7 +146,9 @@ func (w *Worker) handleDeadline(ctx context.Context, eventType string, p deadlin
 		return status.Errorf(codes.Internal, "load actions: %v", err)
 	}
 
-	snap, err := w.projectClient.GetProjectRuntime(ctx, &projectv1.GetProjectRuntimeRequest{ProjectId: p.ProjectID})
+	internalCtx := metadata.AppendToOutgoingContext(ctx, "x-internal-service", "workflow_service")
+
+	snap, err := w.projectClient.GetProjectRuntime(internalCtx, &projectv1.GetProjectRuntimeRequest{ProjectId: p.ProjectID})
 	if err != nil {
 		return status.Errorf(codes.Unavailable, "get project runtime: %v", err)
 	}
@@ -155,7 +163,6 @@ func (w *Worker) handleDeadline(ctx context.Context, eventType string, p deadlin
 			continue
 		}
 
-		// deadline_at включаем в дедуп (если есть)
 		dedup := dedupKey("deadline", p.ProjectID, 0, p.Trigger, a.ID, p.DeadlineAt)
 		started, err := w.tryStartRun(ctx, dedup, eventType, workflowActionsTopic, p.ProjectID, p.StateID, 0, p.Trigger, a.ID)
 		if err != nil {
@@ -167,19 +174,21 @@ func (w *Worker) handleDeadline(ctx context.Context, eventType string, p deadlin
 
 		actx := &plugins.ActionContext{
 			ProjectID:     p.ProjectID,
+			StateID:       p.StateID,
 			UserID:        0,
+			TeamID:        snap.TeamId,
 			DepartmentID:  snap.DepartmentId,
+			UniversityID:  snap.UniversityId,
+			Trigger:       p.Trigger,
+			Config:        parseConfig(a.Config),
 			ProjectData:   projectData,
 			PreviousState: "",
 			NewState:      snap.CurrentStateName,
 			TransitionID:  0,
-			Payload:       map[string]interface{}{},
 			Metadata: map[string]interface{}{
 				"deadline_at": p.DeadlineAt,
 			},
-			StateID: p.StateID,
-			Trigger: p.Trigger,
-			Config:  parseConfig(a.Config),
+			Payload: map[string]interface{}{},
 		}
 
 		if err := w.executeOne(ctx, dedup, &a, actx); err != nil {
@@ -297,8 +306,6 @@ func (w *Worker) executeOne(ctx context.Context, dedupKey string, action *workfl
 	}
 	_ = w.markFailed(ctx, dedupKey, errMsg)
 
-	// ретраи теперь должны делаться “снаружи” (outbox-dispatcher).
-	// если плагин пометил ShouldRetry — отдаём Unavailable, иначе Internal.
 	if res.ShouldRetry {
 		return status.Errorf(codes.Unavailable, "action retryable: %s", errMsg)
 	}
@@ -344,7 +351,6 @@ func dedupKey(kind string, projectID, transitionID int64, trigger string, action
 	return hex.EncodeToString(sum[:])
 }
 
-// isUniqueViolation — простой вариант без привязки к драйверу.
 func isUniqueViolation(err error) bool {
 	if err == nil {
 		return false

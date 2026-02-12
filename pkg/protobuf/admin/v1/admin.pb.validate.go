@@ -247,9 +247,9 @@ func (m *SubmitTopicRegistrationRequest) validate(all bool) error {
 
 	var errors []error
 
-	if m.GetTeamId() <= 0 {
+	if m.GetProjectId() <= 0 {
 		err := SubmitTopicRegistrationRequestValidationError{
-			field:  "TeamId",
+			field:  "ProjectId",
 			reason: "value must be greater than 0",
 		}
 		if !all {
@@ -257,6 +257,8 @@ func (m *SubmitTopicRegistrationRequest) validate(all bool) error {
 		}
 		errors = append(errors, err)
 	}
+
+	// no validation rules for TeamId
 
 	if utf8.RuneCountInString(m.GetProposedTopic()) < 5 {
 		err := SubmitTopicRegistrationRequestValidationError{
@@ -5967,9 +5969,9 @@ func (m *CreateSupervisorRequestReq) validate(all bool) error {
 
 	var errors []error
 
-	if m.GetTeamId() <= 0 {
+	if m.GetProjectId() <= 0 {
 		err := CreateSupervisorRequestReqValidationError{
-			field:  "TeamId",
+			field:  "ProjectId",
 			reason: "value must be greater than 0",
 		}
 		if !all {
@@ -5977,6 +5979,8 @@ func (m *CreateSupervisorRequestReq) validate(all bool) error {
 		}
 		errors = append(errors, err)
 	}
+
+	// no validation rules for TeamId
 
 	if m.GetSupervisorId() <= 0 {
 		err := CreateSupervisorRequestReqValidationError{

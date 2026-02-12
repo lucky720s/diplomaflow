@@ -37,6 +37,7 @@ enum ActionType {
   CALCULATE_GRADE = 9;
   GENERATE_DOCUMENT = 10;
   EXTERNAL_API = 11;
+  LOCK_TEAM_COMPOSITION = 12;
 }
 
 enum ActionTrigger {

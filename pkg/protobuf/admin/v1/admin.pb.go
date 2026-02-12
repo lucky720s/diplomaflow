@@ -25,13 +25,12 @@ const (
 	_ = protoimpl.EnforceVersion(protoimpl.MaxVersion - 20)
 )
 
-// ==================== Topic Registration Messages ====================
 type TopicRegistrationInfo struct {
 	state            protoimpl.MessageState `protogen:"open.v1"`
 	Id               string                 `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
-	TeamId           int64                  `protobuf:"varint,2,opt,name=team_id,json=teamId,proto3" json:"team_id,omitempty"`
+	TeamId           int64                  `protobuf:"varint,2,opt,name=team_id,json=teamId,proto3" json:"team_id,omitempty"` // optional (0 если не известен/не нужен)
 	TeamName         string                 `protobuf:"bytes,3,opt,name=team_name,json=teamName,proto3" json:"team_name,omitempty"`
-	ProjectId        int64                  `protobuf:"varint,4,opt,name=project_id,json=projectId,proto3" json:"project_id,omitempty"`
+	ProjectId        int64                  `protobuf:"varint,4,opt,name=project_id,json=projectId,proto3" json:"project_id,omitempty"` // canonical
 	ProposedTopic    string                 `protobuf:"bytes,5,opt,name=proposed_topic,json=proposedTopic,proto3" json:"proposed_topic,omitempty"`
 	TopicDescription string                 `protobuf:"bytes,6,opt,name=topic_description,json=topicDescription,proto3" json:"topic_description,omitempty"`
 	SupervisorId     int64                  `protobuf:"varint,7,opt,name=supervisor_id,json=supervisorId,proto3" json:"supervisor_id,omitempty"`
@@ -199,12 +198,15 @@ func (x *TopicRegistrationInfo) GetReviewerName() string {
 }
 
 type SubmitTopicRegistrationRequest struct {
-	state            protoimpl.MessageState `protogen:"open.v1"`
-	TeamId           int64                  `protobuf:"varint,1,opt,name=team_id,json=teamId,proto3" json:"team_id,omitempty"`
-	ProposedTopic    string                 `protobuf:"bytes,2,opt,name=proposed_topic,json=proposedTopic,proto3" json:"proposed_topic,omitempty"`
-	TopicDescription string                 `protobuf:"bytes,3,opt,name=topic_description,json=topicDescription,proto3" json:"topic_description,omitempty"`
-	SupervisorId     int64                  `protobuf:"varint,4,opt,name=supervisor_id,json=supervisorId,proto3" json:"supervisor_id,omitempty"`
-	SubmittedBy      int64                  `protobuf:"varint,5,opt,name=submitted_by,json=submittedBy,proto3" json:"submitted_by,omitempty"`
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// NEW: project-first
+	ProjectId int64 `protobuf:"varint,1,opt,name=project_id,json=projectId,proto3" json:"project_id,omitempty"`
+	// team_id optional: если 0 — admin_service сам получит team_id из project runtime
+	TeamId           int64  `protobuf:"varint,2,opt,name=team_id,json=teamId,proto3" json:"team_id,omitempty"`
+	ProposedTopic    string `protobuf:"bytes,3,opt,name=proposed_topic,json=proposedTopic,proto3" json:"proposed_topic,omitempty"`
+	TopicDescription string `protobuf:"bytes,4,opt,name=topic_description,json=topicDescription,proto3" json:"topic_description,omitempty"`
+	SupervisorId     int64  `protobuf:"varint,5,opt,name=supervisor_id,json=supervisorId,proto3" json:"supervisor_id,omitempty"`
+	SubmittedBy      int64  `protobuf:"varint,6,opt,name=submitted_by,json=submittedBy,proto3" json:"submitted_by,omitempty"`
 	unknownFields    protoimpl.UnknownFields
 	sizeCache        protoimpl.SizeCache
 }
@@ -237,6 +239,13 @@ func (x *SubmitTopicRegistrationRequest) ProtoReflect() protoreflect.Message {
 // Deprecated: Use SubmitTopicRegistrationRequest.ProtoReflect.Descriptor instead.
 func (*SubmitTopicRegistrationRequest) Descriptor() ([]byte, []int) {
 	return file_admin_v1_admin_proto_rawDescGZIP(), []int{1}
+}
+
+func (x *SubmitTopicRegistrationRequest) GetProjectId() int64 {
+	if x != nil {
+		return x.ProjectId
+	}
+	return 0
 }
 
 func (x *SubmitTopicRegistrationRequest) GetTeamId() int64 {
@@ -770,7 +779,6 @@ func (x *TopicRegistrationHistory) GetCreatedAt() *timestamppb.Timestamp {
 	return nil
 }
 
-// ==================== Dashboard Messages ====================
 type GetDashboardRequest struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	DepartmentId  int64                  `protobuf:"varint,1,opt,name=department_id,json=departmentId,proto3" json:"department_id,omitempty"`
@@ -1371,7 +1379,6 @@ func (x *WorkflowStepStats) GetRejectedCount() int32 {
 	return 0
 }
 
-// ==================== Students Messages ====================
 type ListStudentsRequest struct {
 	state           protoimpl.MessageState `protogen:"open.v1"`
 	DepartmentId    int64                  `protobuf:"varint,1,opt,name=department_id,json=departmentId,proto3" json:"department_id,omitempty"`
@@ -1728,7 +1735,6 @@ func (x *GetStudentResponse) GetSubmissions() []*SubmissionPreview {
 	return nil
 }
 
-// ==================== Teams Messages ====================
 type ListAllTeamsRequest struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	DepartmentId  int64                  `protobuf:"varint,1,opt,name=department_id,json=departmentId,proto3" json:"department_id,omitempty"`
@@ -2537,7 +2543,6 @@ func (x *DeleteTeamAdminRequest) GetReason() string {
 	return ""
 }
 
-// ==================== Supervisors Messages ====================
 type ListSupervisorsRequest struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	DepartmentId  int64                  `protobuf:"varint,1,opt,name=department_id,json=departmentId,proto3" json:"department_id,omitempty"`
@@ -2914,13 +2919,12 @@ func (x *AssignSupervisorResponse) GetMessage() string {
 	return ""
 }
 
-// SupervisorRequest - заявка команды на научного руководителя
 type SupervisorRequest struct {
 	state           protoimpl.MessageState `protogen:"open.v1"`
 	Id              string                 `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
-	TeamId          int64                  `protobuf:"varint,2,opt,name=team_id,json=teamId,proto3" json:"team_id,omitempty"`
+	TeamId          int64                  `protobuf:"varint,2,opt,name=team_id,json=teamId,proto3" json:"team_id,omitempty"` // optional (0 если не передан)
 	TeamName        string                 `protobuf:"bytes,3,opt,name=team_name,json=teamName,proto3" json:"team_name,omitempty"`
-	ProjectId       int64                  `protobuf:"varint,4,opt,name=project_id,json=projectId,proto3" json:"project_id,omitempty"`
+	ProjectId       int64                  `protobuf:"varint,4,opt,name=project_id,json=projectId,proto3" json:"project_id,omitempty"` // canonical (обязателен в CreateSupervisorRequestReq)
 	SupervisorId    int64                  `protobuf:"varint,5,opt,name=supervisor_id,json=supervisorId,proto3" json:"supervisor_id,omitempty"`
 	SupervisorName  string                 `protobuf:"bytes,6,opt,name=supervisor_name,json=supervisorName,proto3" json:"supervisor_name,omitempty"`
 	SupervisorEmail string                 `protobuf:"bytes,7,opt,name=supervisor_email,json=supervisorEmail,proto3" json:"supervisor_email,omitempty"`
@@ -3087,7 +3091,6 @@ func (x *SupervisorRequest) GetTeamMembers() []*TeamMemberPreview {
 	return nil
 }
 
-// TeamMemberPreview - краткая информация об участнике команды
 type TeamMemberPreview struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	UserId        int64                  `protobuf:"varint,1,opt,name=user_id,json=userId,proto3" json:"user_id,omitempty"`
@@ -3156,14 +3159,16 @@ func (x *TeamMemberPreview) GetRole() string {
 	return ""
 }
 
-// CreateSupervisorRequestReq - создание запроса команды к супервайзеру
 type CreateSupervisorRequestReq struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	TeamId        int64                  `protobuf:"varint,1,opt,name=team_id,json=teamId,proto3" json:"team_id,omitempty"`
-	SupervisorId  int64                  `protobuf:"varint,2,opt,name=supervisor_id,json=supervisorId,proto3" json:"supervisor_id,omitempty"`
-	RequestedBy   int64                  `protobuf:"varint,3,opt,name=requested_by,json=requestedBy,proto3" json:"requested_by,omitempty"`
-	Message       string                 `protobuf:"bytes,4,opt,name=message,proto3" json:"message,omitempty"`
-	ProposedTopic string                 `protobuf:"bytes,5,opt,name=proposed_topic,json=proposedTopic,proto3" json:"proposed_topic,omitempty"`
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// NEW: project-first
+	ProjectId int64 `protobuf:"varint,1,opt,name=project_id,json=projectId,proto3" json:"project_id,omitempty"`
+	// team_id optional: если 0 — admin_service сам получит team_id из project runtime
+	TeamId        int64  `protobuf:"varint,2,opt,name=team_id,json=teamId,proto3" json:"team_id,omitempty"`
+	SupervisorId  int64  `protobuf:"varint,3,opt,name=supervisor_id,json=supervisorId,proto3" json:"supervisor_id,omitempty"`
+	RequestedBy   int64  `protobuf:"varint,4,opt,name=requested_by,json=requestedBy,proto3" json:"requested_by,omitempty"`
+	Message       string `protobuf:"bytes,5,opt,name=message,proto3" json:"message,omitempty"`
+	ProposedTopic string `protobuf:"bytes,6,opt,name=proposed_topic,json=proposedTopic,proto3" json:"proposed_topic,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -3196,6 +3201,13 @@ func (x *CreateSupervisorRequestReq) ProtoReflect() protoreflect.Message {
 // Deprecated: Use CreateSupervisorRequestReq.ProtoReflect.Descriptor instead.
 func (*CreateSupervisorRequestReq) Descriptor() ([]byte, []int) {
 	return file_admin_v1_admin_proto_rawDescGZIP(), []int{43}
+}
+
+func (x *CreateSupervisorRequestReq) GetProjectId() int64 {
+	if x != nil {
+		return x.ProjectId
+	}
+	return 0
 }
 
 func (x *CreateSupervisorRequestReq) GetTeamId() int64 {
@@ -3301,7 +3313,6 @@ func (x *CreateSupervisorRequestResp) GetRequest() *SupervisorRequest {
 	return nil
 }
 
-// ListSupervisorRequestsReq - список запросов (для админки)
 type ListSupervisorRequestsReq struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	DepartmentId  int64                  `protobuf:"varint,1,opt,name=department_id,json=departmentId,proto3" json:"department_id,omitempty"`
@@ -3438,7 +3449,6 @@ func (x *ListSupervisorRequestsResp) GetTotalCount() int64 {
 	return 0
 }
 
-// GetSupervisorRequestReq - получение детального запроса
 type GetSupervisorRequestReq struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	RequestId     string                 `protobuf:"bytes,1,opt,name=request_id,json=requestId,proto3" json:"request_id,omitempty"`
@@ -3535,7 +3545,6 @@ func (x *GetSupervisorRequestResp) GetHistory() []*SupervisorRequestHistory {
 	return nil
 }
 
-// SupervisorRequestHistory - история изменений запроса
 type SupervisorRequestHistory struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	Id            int64                  `protobuf:"varint,1,opt,name=id,proto3" json:"id,omitempty"`
@@ -3620,7 +3629,6 @@ func (x *SupervisorRequestHistory) GetCreatedAt() *timestamppb.Timestamp {
 	return nil
 }
 
-// RespondToSupervisorRequestReq - ответ супервайзера на запрос
 type RespondToSupervisorRequestReq struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	RequestId     string                 `protobuf:"bytes,1,opt,name=request_id,json=requestId,proto3" json:"request_id,omitempty"`
@@ -3757,7 +3765,6 @@ func (x *RespondToSupervisorRequestResp) GetUpdatedRequest() *SupervisorRequest 
 	return nil
 }
 
-// ListMySupervisorRequestsReq - список входящих запросов для супервайзера
 type ListMySupervisorRequestsReq struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	SupervisorId  int64                  `protobuf:"varint,1,opt,name=supervisor_id,json=supervisorId,proto3" json:"supervisor_id,omitempty"`
@@ -3886,7 +3893,6 @@ func (x *ListMySupervisorRequestsResp) GetPendingCount() int32 {
 	return 0
 }
 
-// CancelSupervisorRequestReq - отмена запроса командой
 type CancelSupervisorRequestReq struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	RequestId     string                 `protobuf:"bytes,1,opt,name=request_id,json=requestId,proto3" json:"request_id,omitempty"`
@@ -3999,47 +4005,39 @@ func (x *CancelSupervisorRequestResp) GetMessage() string {
 	return ""
 }
 
-// PreDefenseSubmission - заявление на предзащиту
 type PreDefenseSubmission struct {
-	state          protoimpl.MessageState `protogen:"open.v1"`
-	Id             string                 `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`                                               // UUID заявления
-	TeamId         int64                  `protobuf:"varint,2,opt,name=team_id,json=teamId,proto3" json:"team_id,omitempty"`                        // ID команды
-	TeamName       string                 `protobuf:"bytes,3,opt,name=team_name,json=teamName,proto3" json:"team_name,omitempty"`                   // Название команды
-	ProjectId      int64                  `protobuf:"varint,4,opt,name=project_id,json=projectId,proto3" json:"project_id,omitempty"`               // ID проекта
-	ProjectTitle   string                 `protobuf:"bytes,5,opt,name=project_title,json=projectTitle,proto3" json:"project_title,omitempty"`       // Название проекта
-	SupervisorId   int64                  `protobuf:"varint,6,opt,name=supervisor_id,json=supervisorId,proto3" json:"supervisor_id,omitempty"`      // ID научного руководителя
-	SupervisorName string                 `protobuf:"bytes,7,opt,name=supervisor_name,json=supervisorName,proto3" json:"supervisor_name,omitempty"` // ФИО руководителя
-	SubmittedBy    int64                  `protobuf:"varint,8,opt,name=submitted_by,json=submittedBy,proto3" json:"submitted_by,omitempty"`         // Кто подал заявление
-	SubmitterName  string                 `protobuf:"bytes,9,opt,name=submitter_name,json=submitterName,proto3" json:"submitter_name,omitempty"`    // ФИО подавшего
-	// Статусы: pending, scheduled, in_progress, completed, passed, failed, cancelled
-	Status string `protobuf:"bytes,10,opt,name=status,proto3" json:"status,omitempty"`
-	// Информация о предзащите
-	ScheduledDate   *timestamppb.Timestamp `protobuf:"bytes,11,opt,name=scheduled_date,json=scheduledDate,proto3" json:"scheduled_date,omitempty"`        // Назначенная дата
-	ScheduledTime   string                 `protobuf:"bytes,12,opt,name=scheduled_time,json=scheduledTime,proto3" json:"scheduled_time,omitempty"`        // Время (HH:MM)
-	Location        string                 `protobuf:"bytes,13,opt,name=location,proto3" json:"location,omitempty"`                                       // Место проведения (аудитория/онлайн)
-	MeetingLink     string                 `protobuf:"bytes,14,opt,name=meeting_link,json=meetingLink,proto3" json:"meeting_link,omitempty"`              // Ссылка на онлайн-встречу (если онлайн)
-	DurationMinutes int32                  `protobuf:"varint,15,opt,name=duration_minutes,json=durationMinutes,proto3" json:"duration_minutes,omitempty"` // Длительность в минутах
-	// Оценивание (выставляет комиссия)
-	Grade        int32                  `protobuf:"varint,16,opt,name=grade,proto3" json:"grade,omitempty"`                                  // Оценка 0-100 баллов
-	GradeComment string                 `protobuf:"bytes,17,opt,name=grade_comment,json=gradeComment,proto3" json:"grade_comment,omitempty"` // Комментарий к оценке
-	GradedBy     int64                  `protobuf:"varint,18,opt,name=graded_by,json=gradedBy,proto3" json:"graded_by,omitempty"`            // Кто выставил оценку
-	GraderName   string                 `protobuf:"bytes,19,opt,name=grader_name,json=graderName,proto3" json:"grader_name,omitempty"`       // ФИО оценивающего
-	GradedAt     *timestamppb.Timestamp `protobuf:"bytes,20,opt,name=graded_at,json=gradedAt,proto3" json:"graded_at,omitempty"`             // Когда выставлена оценка
-	// Результат предзащиты
-	Result          string   `protobuf:"bytes,21,opt,name=result,proto3" json:"result,omitempty"`                                    // passed, failed, conditional
-	ResultComment   string   `protobuf:"bytes,22,opt,name=result_comment,json=resultComment,proto3" json:"result_comment,omitempty"` // Комментарий к результату
-	Recommendations []string `protobuf:"bytes,23,rep,name=recommendations,proto3" json:"recommendations,omitempty"`                  // Рекомендации комиссии
-	// Комиссия
-	Commission []*PreDefenseCommissionMember `protobuf:"bytes,24,rep,name=commission,proto3" json:"commission,omitempty"`
-	// Документы
-	Documents []*PreDefenseDocument `protobuf:"bytes,25,rep,name=documents,proto3" json:"documents,omitempty"` // Прикреплённые документы
-	// Временные метки
-	SubmittedAt   *timestamppb.Timestamp `protobuf:"bytes,26,opt,name=submitted_at,json=submittedAt,proto3" json:"submitted_at,omitempty"` // Дата подачи заявления
-	CompletedAt   *timestamppb.Timestamp `protobuf:"bytes,27,opt,name=completed_at,json=completedAt,proto3" json:"completed_at,omitempty"` // Дата завершения
-	CreatedAt     *timestamppb.Timestamp `protobuf:"bytes,28,opt,name=created_at,json=createdAt,proto3" json:"created_at,omitempty"`
-	UpdatedAt     *timestamppb.Timestamp `protobuf:"bytes,29,opt,name=updated_at,json=updatedAt,proto3" json:"updated_at,omitempty"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
+	state           protoimpl.MessageState        `protogen:"open.v1"`
+	Id              string                        `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`                                               // UUID заявления
+	TeamId          int64                         `protobuf:"varint,2,opt,name=team_id,json=teamId,proto3" json:"team_id,omitempty"`                        // ID команды
+	TeamName        string                        `protobuf:"bytes,3,opt,name=team_name,json=teamName,proto3" json:"team_name,omitempty"`                   // Название команды
+	ProjectId       int64                         `protobuf:"varint,4,opt,name=project_id,json=projectId,proto3" json:"project_id,omitempty"`               // ID проекта
+	ProjectTitle    string                        `protobuf:"bytes,5,opt,name=project_title,json=projectTitle,proto3" json:"project_title,omitempty"`       // Название проекта
+	SupervisorId    int64                         `protobuf:"varint,6,opt,name=supervisor_id,json=supervisorId,proto3" json:"supervisor_id,omitempty"`      // ID научного руководителя
+	SupervisorName  string                        `protobuf:"bytes,7,opt,name=supervisor_name,json=supervisorName,proto3" json:"supervisor_name,omitempty"` // ФИО руководителя
+	SubmittedBy     int64                         `protobuf:"varint,8,opt,name=submitted_by,json=submittedBy,proto3" json:"submitted_by,omitempty"`         // Кто подал заявление
+	SubmitterName   string                        `protobuf:"bytes,9,opt,name=submitter_name,json=submitterName,proto3" json:"submitter_name,omitempty"`    // ФИО подавшего
+	Status          string                        `protobuf:"bytes,10,opt,name=status,proto3" json:"status,omitempty"`
+	ScheduledDate   *timestamppb.Timestamp        `protobuf:"bytes,11,opt,name=scheduled_date,json=scheduledDate,proto3" json:"scheduled_date,omitempty"`
+	ScheduledTime   string                        `protobuf:"bytes,12,opt,name=scheduled_time,json=scheduledTime,proto3" json:"scheduled_time,omitempty"`
+	Location        string                        `protobuf:"bytes,13,opt,name=location,proto3" json:"location,omitempty"`
+	MeetingLink     string                        `protobuf:"bytes,14,opt,name=meeting_link,json=meetingLink,proto3" json:"meeting_link,omitempty"`
+	DurationMinutes int32                         `protobuf:"varint,15,opt,name=duration_minutes,json=durationMinutes,proto3" json:"duration_minutes,omitempty"`
+	Grade           int32                         `protobuf:"varint,16,opt,name=grade,proto3" json:"grade,omitempty"`
+	GradeComment    string                        `protobuf:"bytes,17,opt,name=grade_comment,json=gradeComment,proto3" json:"grade_comment,omitempty"`
+	GradedBy        int64                         `protobuf:"varint,18,opt,name=graded_by,json=gradedBy,proto3" json:"graded_by,omitempty"`
+	GraderName      string                        `protobuf:"bytes,19,opt,name=grader_name,json=graderName,proto3" json:"grader_name,omitempty"`
+	GradedAt        *timestamppb.Timestamp        `protobuf:"bytes,20,opt,name=graded_at,json=gradedAt,proto3" json:"graded_at,omitempty"`
+	Result          string                        `protobuf:"bytes,21,opt,name=result,proto3" json:"result,omitempty"`
+	ResultComment   string                        `protobuf:"bytes,22,opt,name=result_comment,json=resultComment,proto3" json:"result_comment,omitempty"`
+	Recommendations []string                      `protobuf:"bytes,23,rep,name=recommendations,proto3" json:"recommendations,omitempty"`
+	Commission      []*PreDefenseCommissionMember `protobuf:"bytes,24,rep,name=commission,proto3" json:"commission,omitempty"`
+	Documents       []*PreDefenseDocument         `protobuf:"bytes,25,rep,name=documents,proto3" json:"documents,omitempty"`
+	SubmittedAt     *timestamppb.Timestamp        `protobuf:"bytes,26,opt,name=submitted_at,json=submittedAt,proto3" json:"submitted_at,omitempty"`
+	CompletedAt     *timestamppb.Timestamp        `protobuf:"bytes,27,opt,name=completed_at,json=completedAt,proto3" json:"completed_at,omitempty"`
+	CreatedAt       *timestamppb.Timestamp        `protobuf:"bytes,28,opt,name=created_at,json=createdAt,proto3" json:"created_at,omitempty"`
+	UpdatedAt       *timestamppb.Timestamp        `protobuf:"bytes,29,opt,name=updated_at,json=updatedAt,proto3" json:"updated_at,omitempty"`
+	unknownFields   protoimpl.UnknownFields
+	sizeCache       protoimpl.SizeCache
 }
 
 func (x *PreDefenseSubmission) Reset() {
@@ -4275,18 +4273,17 @@ func (x *PreDefenseSubmission) GetUpdatedAt() *timestamppb.Timestamp {
 	return nil
 }
 
-// PreDefenseCommissionMember - член комиссии предзащиты
 type PreDefenseCommissionMember struct {
 	state           protoimpl.MessageState `protogen:"open.v1"`
 	Id              int64                  `protobuf:"varint,1,opt,name=id,proto3" json:"id,omitempty"`
 	UserId          int64                  `protobuf:"varint,2,opt,name=user_id,json=userId,proto3" json:"user_id,omitempty"`
 	FullName        string                 `protobuf:"bytes,3,opt,name=full_name,json=fullName,proto3" json:"full_name,omitempty"`
 	Email           string                 `protobuf:"bytes,4,opt,name=email,proto3" json:"email,omitempty"`
-	Role            string                 `protobuf:"bytes,5,opt,name=role,proto3" json:"role,omitempty"`                                               // chairman, member, secretary
-	Position        string                 `protobuf:"bytes,6,opt,name=position,proto3" json:"position,omitempty"`                                       // Должность (Professor, etc.)
-	IsPresent       bool                   `protobuf:"varint,7,opt,name=is_present,json=isPresent,proto3" json:"is_present,omitempty"`                   // Присутствовал ли
-	IndividualGrade int32                  `protobuf:"varint,8,opt,name=individual_grade,json=individualGrade,proto3" json:"individual_grade,omitempty"` // Индивидуальная оценка члена комиссии
-	Comment         string                 `protobuf:"bytes,9,opt,name=comment,proto3" json:"comment,omitempty"`                                         // Комментарий члена комиссии
+	Role            string                 `protobuf:"bytes,5,opt,name=role,proto3" json:"role,omitempty"`
+	Position        string                 `protobuf:"bytes,6,opt,name=position,proto3" json:"position,omitempty"`
+	IsPresent       bool                   `protobuf:"varint,7,opt,name=is_present,json=isPresent,proto3" json:"is_present,omitempty"`
+	IndividualGrade int32                  `protobuf:"varint,8,opt,name=individual_grade,json=individualGrade,proto3" json:"individual_grade,omitempty"`
+	Comment         string                 `protobuf:"bytes,9,opt,name=comment,proto3" json:"comment,omitempty"`
 	unknownFields   protoimpl.UnknownFields
 	sizeCache       protoimpl.SizeCache
 }
@@ -4384,13 +4381,12 @@ func (x *PreDefenseCommissionMember) GetComment() string {
 	return ""
 }
 
-// PreDefenseDocument - документ для предзащиты
 type PreDefenseDocument struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	Id            string                 `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
 	FileName      string                 `protobuf:"bytes,2,opt,name=file_name,json=fileName,proto3" json:"file_name,omitempty"`
-	FileType      string                 `protobuf:"bytes,3,opt,name=file_type,json=fileType,proto3" json:"file_type,omitempty"`          // presentation, report, abstract, other
-	DisplayName   string                 `protobuf:"bytes,4,opt,name=display_name,json=displayName,proto3" json:"display_name,omitempty"` // Отображаемое название
+	FileType      string                 `protobuf:"bytes,3,opt,name=file_type,json=fileType,proto3" json:"file_type,omitempty"`
+	DisplayName   string                 `protobuf:"bytes,4,opt,name=display_name,json=displayName,proto3" json:"display_name,omitempty"`
 	Size          int64                  `protobuf:"varint,5,opt,name=size,proto3" json:"size,omitempty"`
 	DownloadUrl   string                 `protobuf:"bytes,6,opt,name=download_url,json=downloadUrl,proto3" json:"download_url,omitempty"`
 	UploadedBy    int64                  `protobuf:"varint,7,opt,name=uploaded_by,json=uploadedBy,proto3" json:"uploaded_by,omitempty"`
@@ -4485,11 +4481,10 @@ func (x *PreDefenseDocument) GetUploadedAt() *timestamppb.Timestamp {
 	return nil
 }
 
-// PreDefenseHistory - история изменений предзащиты
 type PreDefenseHistory struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	Id            int64                  `protobuf:"varint,1,opt,name=id,proto3" json:"id,omitempty"`
-	Action        string                 `protobuf:"bytes,2,opt,name=action,proto3" json:"action,omitempty"` // submitted, scheduled, rescheduled, graded, completed, cancelled
+	Action        string                 `protobuf:"bytes,2,opt,name=action,proto3" json:"action,omitempty"`
 	ActorId       int64                  `protobuf:"varint,3,opt,name=actor_id,json=actorId,proto3" json:"actor_id,omitempty"`
 	ActorName     string                 `protobuf:"bytes,4,opt,name=actor_name,json=actorName,proto3" json:"actor_name,omitempty"`
 	OldValue      string                 `protobuf:"bytes,5,opt,name=old_value,json=oldValue,proto3" json:"old_value,omitempty"`
@@ -4586,15 +4581,14 @@ func (x *PreDefenseHistory) GetCreatedAt() *timestamppb.Timestamp {
 	return nil
 }
 
-// SubmitPreDefenseRequest - подача заявления на предзащиту
 type SubmitPreDefenseRequest struct {
 	state          protoimpl.MessageState `protogen:"open.v1"`
 	TeamId         int64                  `protobuf:"varint,1,opt,name=team_id,json=teamId,proto3" json:"team_id,omitempty"`
 	ProjectId      int64                  `protobuf:"varint,2,opt,name=project_id,json=projectId,proto3" json:"project_id,omitempty"`
 	SubmittedBy    int64                  `protobuf:"varint,3,opt,name=submitted_by,json=submittedBy,proto3" json:"submitted_by,omitempty"`
-	Message        string                 `protobuf:"bytes,4,opt,name=message,proto3" json:"message,omitempty"`                                     // Сообщение от команды
-	PreferredDates []string               `protobuf:"bytes,5,rep,name=preferred_dates,json=preferredDates,proto3" json:"preferred_dates,omitempty"` // Предпочтительные даты (ISO format)
-	DocumentIds    []string               `protobuf:"bytes,6,rep,name=document_ids,json=documentIds,proto3" json:"document_ids,omitempty"`          // ID прикреплённых документов
+	Message        string                 `protobuf:"bytes,4,opt,name=message,proto3" json:"message,omitempty"`
+	PreferredDates []string               `protobuf:"bytes,5,rep,name=preferred_dates,json=preferredDates,proto3" json:"preferred_dates,omitempty"`
+	DocumentIds    []string               `protobuf:"bytes,6,rep,name=document_ids,json=documentIds,proto3" json:"document_ids,omitempty"`
 	unknownFields  protoimpl.UnknownFields
 	sizeCache      protoimpl.SizeCache
 }
@@ -4739,7 +4733,6 @@ func (x *SubmitPreDefenseResponse) GetSubmission() *PreDefenseSubmission {
 	return nil
 }
 
-// ListPreDefenseSubmissionsRequest - список заявлений на предзащиту
 type ListPreDefenseSubmissionsRequest struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	DepartmentId  int64                  `protobuf:"varint,1,opt,name=department_id,json=departmentId,proto3" json:"department_id,omitempty"`
@@ -4900,7 +4893,6 @@ func (x *ListPreDefenseSubmissionsResponse) GetStats() *PreDefenseStats {
 	return nil
 }
 
-// PreDefenseStats - статистика по предзащитам
 type PreDefenseStats struct {
 	state          protoimpl.MessageState `protogen:"open.v1"`
 	PendingCount   int32                  `protobuf:"varint,1,opt,name=pending_count,json=pendingCount,proto3" json:"pending_count,omitempty"`
@@ -4977,7 +4969,6 @@ func (x *PreDefenseStats) GetFailedCount() int32 {
 	return 0
 }
 
-// GetPreDefenseSubmissionRequest - получение детальной информации
 type GetPreDefenseSubmissionRequest struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	SubmissionId  string                 `protobuf:"bytes,1,opt,name=submission_id,json=submissionId,proto3" json:"submission_id,omitempty"`
@@ -5090,7 +5081,6 @@ func (x *GetPreDefenseSubmissionResponse) GetPreviousAttempts() []*PreDefenseSub
 	return nil
 }
 
-// SchedulePreDefenseRequest - назначение даты предзащиты
 type SchedulePreDefenseRequest struct {
 	state               protoimpl.MessageState `protogen:"open.v1"`
 	SubmissionId        string                 `protobuf:"bytes,1,opt,name=submission_id,json=submissionId,proto3" json:"submission_id,omitempty"`
@@ -5259,7 +5249,6 @@ func (x *SchedulePreDefenseResponse) GetUpdatedSubmission() *PreDefenseSubmissio
 	return nil
 }
 
-// GradePreDefenseRequest - выставление оценки за предзащиту (комиссия)
 type GradePreDefenseRequest struct {
 	state         protoimpl.MessageState   `protogen:"open.v1"`
 	SubmissionId  string                   `protobuf:"bytes,1,opt,name=submission_id,json=submissionId,proto3" json:"submission_id,omitempty"`
@@ -5336,7 +5325,6 @@ func (x *GradePreDefenseRequest) GetMemberGrades() []*CommissionMemberGrade {
 	return nil
 }
 
-// CommissionMemberGrade - оценка от конкретного члена комиссии
 type CommissionMemberGrade struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	MemberId      int64                  `protobuf:"varint,1,opt,name=member_id,json=memberId,proto3" json:"member_id,omitempty"`
@@ -5457,7 +5445,6 @@ func (x *GradePreDefenseResponse) GetUpdatedSubmission() *PreDefenseSubmission {
 	return nil
 }
 
-// CompletePreDefenseRequest - завершение предзащиты с результатом
 type CompletePreDefenseRequest struct {
 	state             protoimpl.MessageState `protogen:"open.v1"`
 	SubmissionId      string                 `protobuf:"bytes,1,opt,name=submission_id,json=submissionId,proto3" json:"submission_id,omitempty"`
@@ -5602,7 +5589,6 @@ func (x *CompletePreDefenseResponse) GetUpdatedSubmission() *PreDefenseSubmissio
 	return nil
 }
 
-// ReschedulePreDefenseRequest - перенос предзащиты
 type ReschedulePreDefenseRequest struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	SubmissionId  string                 `protobuf:"bytes,1,opt,name=submission_id,json=submissionId,proto3" json:"submission_id,omitempty"`
@@ -5747,7 +5733,6 @@ func (x *ReschedulePreDefenseResponse) GetUpdatedSubmission() *PreDefenseSubmiss
 	return nil
 }
 
-// ListScheduledPreDefensesRequest - список назначенных предзащит (для календаря)
 type ListScheduledPreDefensesRequest struct {
 	state              protoimpl.MessageState `protogen:"open.v1"`
 	DepartmentId       int64                  `protobuf:"varint,1,opt,name=department_id,json=departmentId,proto3" json:"department_id,omitempty"`
@@ -5876,7 +5861,6 @@ func (x *ListScheduledPreDefensesResponse) GetTotalCount() int32 {
 	return 0
 }
 
-// PreDefenseScheduleItem - элемент расписания
 type PreDefenseScheduleItem struct {
 	state                 protoimpl.MessageState `protogen:"open.v1"`
 	SubmissionId          string                 `protobuf:"bytes,1,opt,name=submission_id,json=submissionId,proto3" json:"submission_id,omitempty"`
@@ -6001,7 +5985,6 @@ func (x *PreDefenseScheduleItem) GetCommissionMemberNames() []string {
 	return nil
 }
 
-// AddPreDefenseCommissionMemberRequest - добавление члена комиссии
 type AddPreDefenseCommissionMemberRequest struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	SubmissionId  string                 `protobuf:"bytes,1,opt,name=submission_id,json=submissionId,proto3" json:"submission_id,omitempty"`
@@ -6130,7 +6113,6 @@ func (x *AddPreDefenseCommissionMemberResponse) GetMember() *PreDefenseCommissio
 	return nil
 }
 
-// RemovePreDefenseCommissionMemberRequest - удаление члена комиссии
 type RemovePreDefenseCommissionMemberRequest struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	SubmissionId  string                 `protobuf:"bytes,1,opt,name=submission_id,json=submissionId,proto3" json:"submission_id,omitempty"`
@@ -6251,7 +6233,6 @@ func (x *RemovePreDefenseCommissionMemberResponse) GetMessage() string {
 	return ""
 }
 
-// ==================== Submissions Messages ====================
 type ListSubmissionsRequest struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	DepartmentId  int64                  `protobuf:"varint,1,opt,name=department_id,json=departmentId,proto3" json:"department_id,omitempty"`
@@ -7072,7 +7053,6 @@ func (x *ReviewSubmissionResponse) GetUpdatedSubmission() *SubmissionInfo {
 	return nil
 }
 
-// ==================== Grading Messages ====================
 type GradeInfo struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	Id            int64                  `protobuf:"varint,1,opt,name=id,proto3" json:"id,omitempty"`
@@ -7633,7 +7613,6 @@ func (x *GradeHistoryItem) GetChangedAt() *timestamppb.Timestamp {
 	return nil
 }
 
-// ==================== Workflow Progress Messages ====================
 type GetWorkflowProgressRequest struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	DepartmentId  int64                  `protobuf:"varint,1,opt,name=department_id,json=departmentId,proto3" json:"department_id,omitempty"`
@@ -8016,13 +7995,15 @@ const file_admin_v1_admin_proto_rawDesc = "" +
 	"reviewedAt\x12\x1f\n" +
 	"\vreviewed_by\x18\x10 \x01(\x03R\n" +
 	"reviewedBy\x12#\n" +
-	"\rreviewer_name\x18\x11 \x01(\tR\freviewerName\"\xf9\x01\n" +
-	"\x1eSubmitTopicRegistrationRequest\x12 \n" +
-	"\ateam_id\x18\x01 \x01(\x03B\a\xfaB\x04\"\x02 \x00R\x06teamId\x12.\n" +
-	"\x0eproposed_topic\x18\x02 \x01(\tB\a\xfaB\x04r\x02\x10\x05R\rproposedTopic\x12+\n" +
-	"\x11topic_description\x18\x03 \x01(\tR\x10topicDescription\x12,\n" +
-	"\rsupervisor_id\x18\x04 \x01(\x03B\a\xfaB\x04\"\x02 \x00R\fsupervisorId\x12*\n" +
-	"\fsubmitted_by\x18\x05 \x01(\x03B\a\xfaB\x04\"\x02 \x00R\vsubmittedBy\"~\n" +
+	"\rreviewer_name\x18\x11 \x01(\tR\freviewerName\"\x98\x02\n" +
+	"\x1eSubmitTopicRegistrationRequest\x12&\n" +
+	"\n" +
+	"project_id\x18\x01 \x01(\x03B\a\xfaB\x04\"\x02 \x00R\tprojectId\x12\x17\n" +
+	"\ateam_id\x18\x02 \x01(\x03R\x06teamId\x12.\n" +
+	"\x0eproposed_topic\x18\x03 \x01(\tB\a\xfaB\x04r\x02\x10\x05R\rproposedTopic\x12+\n" +
+	"\x11topic_description\x18\x04 \x01(\tR\x10topicDescription\x12,\n" +
+	"\rsupervisor_id\x18\x05 \x01(\x03B\a\xfaB\x04\"\x02 \x00R\fsupervisorId\x12*\n" +
+	"\fsubmitted_by\x18\x06 \x01(\x03B\a\xfaB\x04\"\x02 \x00R\vsubmittedBy\"~\n" +
 	"\x1fSubmitTopicRegistrationResponse\x12\x18\n" +
 	"\asuccess\x18\x01 \x01(\bR\asuccess\x12'\n" +
 	"\x0fregistration_id\x18\x02 \x01(\tR\x0eregistrationId\x12\x18\n" +
@@ -8269,13 +8250,15 @@ const file_admin_v1_admin_proto_rawDesc = "" +
 	"\auser_id\x18\x01 \x01(\x03R\x06userId\x12\x1b\n" +
 	"\tfull_name\x18\x02 \x01(\tR\bfullName\x12\x14\n" +
 	"\x05email\x18\x03 \x01(\tR\x05email\x12\x12\n" +
-	"\x04role\x18\x04 \x01(\tR\x04role\"\xe3\x01\n" +
-	"\x1aCreateSupervisorRequestReq\x12 \n" +
-	"\ateam_id\x18\x01 \x01(\x03B\a\xfaB\x04\"\x02 \x00R\x06teamId\x12,\n" +
-	"\rsupervisor_id\x18\x02 \x01(\x03B\a\xfaB\x04\"\x02 \x00R\fsupervisorId\x12*\n" +
-	"\frequested_by\x18\x03 \x01(\x03B\a\xfaB\x04\"\x02 \x00R\vrequestedBy\x12\"\n" +
-	"\amessage\x18\x04 \x01(\tB\b\xfaB\x05r\x03\x18\xe8\aR\amessage\x12%\n" +
-	"\x0eproposed_topic\x18\x05 \x01(\tR\rproposedTopic\"\xa7\x01\n" +
+	"\x04role\x18\x04 \x01(\tR\x04role\"\x82\x02\n" +
+	"\x1aCreateSupervisorRequestReq\x12&\n" +
+	"\n" +
+	"project_id\x18\x01 \x01(\x03B\a\xfaB\x04\"\x02 \x00R\tprojectId\x12\x17\n" +
+	"\ateam_id\x18\x02 \x01(\x03R\x06teamId\x12,\n" +
+	"\rsupervisor_id\x18\x03 \x01(\x03B\a\xfaB\x04\"\x02 \x00R\fsupervisorId\x12*\n" +
+	"\frequested_by\x18\x04 \x01(\x03B\a\xfaB\x04\"\x02 \x00R\vrequestedBy\x12\"\n" +
+	"\amessage\x18\x05 \x01(\tB\b\xfaB\x05r\x03\x18\xe8\aR\amessage\x12%\n" +
+	"\x0eproposed_topic\x18\x06 \x01(\tR\rproposedTopic\"\xa7\x01\n" +
 	"\x1bCreateSupervisorRequestResp\x12\x18\n" +
 	"\asuccess\x18\x01 \x01(\bR\asuccess\x12\x1d\n" +
 	"\n" +

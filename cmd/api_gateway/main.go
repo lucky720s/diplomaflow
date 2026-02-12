@@ -81,17 +81,22 @@ func main() {
 		{
 			admin.POST("/universities", handler.CreateUniversity)
 			admin.POST("/departments", handler.CreateDepartment)
+
 			admin.POST("/workflows", handler.CreateWorkflow)
 			admin.POST("/workflows/:id/states", handler.CreateState)
 			admin.POST("/workflows/:id/activate", handler.SetActiveWorkflow)
+
 			admin.POST("/roles", handler.CreateRole)
 			admin.POST("/assign-role", handler.AssignRole)
+
 			admin.POST("/workflows/:id/clone", handler.CloneWorkflow)
 			admin.POST("/workflows/:id/version", handler.CreateNewVersion)
 			admin.POST("/workflows/:id/validate", handler.ValidateWorkflow)
+
 			admin.POST("/workflows/:id/transitions", handler.CreateTransition)
 			admin.PUT("/workflows/:id/transitions/:tid", handler.UpdateTransition)
 			admin.DELETE("/workflows/:id/transitions/:tid", handler.DeleteTransition)
+
 			admin.POST("/workflows/:id/states/:sid/actions", handler.CreateStateAction)
 		}
 
@@ -102,24 +107,32 @@ func main() {
 		{
 			adminPanel.GET("/dashboard", handler.GetAdminDashboard)
 			adminPanel.GET("/stats", handler.GetDepartmentStats)
+
 			adminPanel.GET("/students", handler.AdminListStudents)
 			adminPanel.GET("/students/:id", handler.AdminGetStudent)
+
 			adminPanel.GET("/teams", handler.AdminListTeams)
 			adminPanel.GET("/teams/:id", handler.AdminGetTeamDetails)
 			adminPanel.PATCH("/teams/:id", handler.AdminUpdateTeam)
 			adminPanel.DELETE("/teams/:id", handler.AdminDeleteTeam)
+
 			adminPanel.GET("/supervisors", handler.ListSupervisors)
 			adminPanel.POST("/supervisors/assign", handler.AssignSupervisor)
+
 			adminPanel.GET("/submissions", handler.ListSubmissions)
 			adminPanel.GET("/submissions/:id", handler.GetSubmission)
 			adminPanel.POST("/submissions/:id/review", handler.ReviewSubmission)
+
 			adminPanel.GET("/projects/:id/grades", handler.GetProjectGrades)
 			adminPanel.POST("/projects/:id/grades", handler.SetStepGrade)
+
 			adminPanel.GET("/workflow/progress", handler.GetWorkflowProgress)
 			adminPanel.GET("/pending-reviews", handler.ListPendingReviews)
+
 			adminPanel.GET("/topic-registrations", handler.ListTopicRegistrations)
 			adminPanel.GET("/topic-registrations/:id", handler.GetTopicRegistration)
 			adminPanel.POST("/topic-registrations/:id/review", handler.ReviewTopicRegistration)
+
 			adminPanel.GET("/supervisor-requests", handler.ListAllSupervisorRequests)
 			adminPanel.GET("/supervisor-requests/:id", handler.GetSupervisorRequestDetails)
 			adminPanel.POST("/supervisor-requests/:id/respond", handler.RespondToSupervisorRequest)
@@ -132,7 +145,13 @@ func main() {
 			projects.GET("", handler.ListProjects)
 			projects.GET("/:id", handler.GetProject)
 			projects.GET("/:id/details", handler.GetProjectDetails)
+
 			projects.POST("/:id/actions", handler.PerformProjectAction)
+
+			// NEW: project-first topic/supervisor flows
+			projects.POST("/:id/topic-registration", handler.SubmitTopicRegistration)
+			projects.POST("/:id/supervisor-request", handler.CreateSupervisorRequest)
+			projects.DELETE("/:id/supervisor-requests/:request_id", handler.CancelSupervisorRequest)
 		}
 
 		teams := v1.Group("/teams")
@@ -143,21 +162,26 @@ func main() {
 			teams.GET("/:id", handler.GetTeam)
 			teams.PATCH("/:id", handler.UpdateTeam)
 			teams.DELETE("/:id", handler.DeleteTeam)
+
 			teams.GET("/my", handler.GetMyTeam)
 			teams.GET("/available-students", handler.GetAvailableStudents)
+
 			teams.POST("/:id/members", handler.AddMember)
 			teams.DELETE("/:id/members/:user_id", handler.RemoveMember)
-			teams.POST("/:id/topic-registration", handler.SubmitTopicRegistration)
-			teams.POST("/:id/supervisor-request", handler.CreateSupervisorRequest)
-			teams.DELETE("/supervisor-requests/:id", handler.CancelSupervisorRequest)
+
+			// REMOVED (team-first) – intentionally broken by design:
+			// teams.POST("/:id/topic-registration", handler.SubmitTopicRegistration)
+			// teams.POST("/:id/supervisor-request", handler.CreateSupervisorRequest)
+			// teams.DELETE("/supervisor-requests/:id", handler.CancelSupervisorRequest)
+
 			teams.POST("/:id/leave", handler.LeaveTeam)
 			teams.POST("/:id/transfer-leadership", handler.TransferLeadership)
+
 			teams.POST("/join-by-code",
 				middleware.RateLimitByUserMiddleware(rdb, 10, time.Hour),
 				handler.JoinTeamByCode,
 			)
 			teams.POST("/:id/invite-code/regenerate", handler.RegenerateInviteCode)
-
 		}
 
 		invites := v1.Group("/invites")
@@ -173,8 +197,10 @@ func main() {
 			workflows.GET("", handler.ListWorkflows)
 			workflows.GET("/:id", handler.GetWorkflow)
 			workflows.GET("/:id/full", handler.GetWorkflowFull)
+
 			workflows.GET("/:id/states", handler.ListStates)
 			workflows.GET("/:id/transitions", handler.ListTransitions)
+
 			workflows.GET("/transitions/available", handler.GetAvailableTransitions)
 			workflows.GET("/states/:state_id/config", handler.GetStepConfiguration)
 		}
@@ -231,12 +257,12 @@ func main() {
 		boards.Use(middleware.AuthMiddleware(cfg.JWTSecret))
 		{
 			boards.POST("", handler.CreateBoard)
-
 			boards.GET("/:board_id", handler.GetBoard)
 			boards.PATCH("/:board_id", handler.UpdateBoard)
 			boards.GET("/:board_id/stats", handler.GetBoardStats)
 
 			boards.GET("/team/:team_id", handler.GetBoardByTeam)
+
 			boards.GET("/:board_id/columns", handler.ListColumns)
 			boards.POST("/:board_id/columns", handler.CreateColumn)
 			boards.POST("/:board_id/columns/reorder", handler.ReorderColumns)

@@ -1,7 +1,8 @@
 syntax = "proto3";
-package admin.v1;
-import "validate/validate.proto";
 
+package admin.v1;
+
+import "validate/validate.proto";
 import "google/protobuf/timestamp.proto";
 import "google/protobuf/struct.proto";
 import "google/protobuf/empty.proto";
@@ -28,7 +29,7 @@ service AdminService {
   rpc AssignSupervisor(AssignSupervisorRequest) returns (AssignSupervisorResponse);
 
   // ==================== Supervisor Request (Запрос команды к руководителю) ====================
-  // Команда отправляет запрос супервайзеру стать руководителем
+  // Project-first: каноническая привязка к project_id, team_id опционален.
   rpc CreateSupervisorRequest(CreateSupervisorRequestReq) returns (CreateSupervisorRequestResp);
   rpc ListSupervisorRequests(ListSupervisorRequestsReq) returns (ListSupervisorRequestsResp);
   rpc GetSupervisorRequest(GetSupervisorRequestReq) returns (GetSupervisorRequestResp);
@@ -37,6 +38,7 @@ service AdminService {
   rpc CancelSupervisorRequest(CancelSupervisorRequestReq) returns (CancelSupervisorRequestResp);
 
   // ==================== Topic Registration (Заявление на тему) ====================
+  // Project-first: каноническая привязка к project_id, team_id опционален.
   rpc SubmitTopicRegistration(SubmitTopicRegistrationRequest) returns (SubmitTopicRegistrationResponse);
   rpc ListTopicRegistrations(ListTopicRegistrationsRequest) returns (ListTopicRegistrationsResponse);
   rpc ReviewTopicRegistration(ReviewTopicRegistrationRequest) returns (ReviewTopicRegistrationResponse);
@@ -70,11 +72,12 @@ service AdminService {
 }
 
 // ==================== Topic Registration Messages ====================
+
 message TopicRegistrationInfo {
   string id = 1;
-  int64 team_id = 2;
+  int64 team_id = 2;       // optional (0 если не известен/не нужен)
   string team_name = 3;
-  int64 project_id = 4;
+  int64 project_id = 4;    // canonical
   string proposed_topic = 5;
   string topic_description = 6;
   int64 supervisor_id = 7;
@@ -91,11 +94,16 @@ message TopicRegistrationInfo {
 }
 
 message SubmitTopicRegistrationRequest {
-  int64 team_id = 1 [(validate.rules).int64.gt = 0];
-  string proposed_topic = 2 [(validate.rules).string.min_len = 5];
-  string topic_description = 3;
-  int64 supervisor_id = 4 [(validate.rules).int64.gt = 0];
-  int64 submitted_by = 5 [(validate.rules).int64.gt = 0];
+  // NEW: project-first
+  int64 project_id = 1 [(validate.rules).int64.gt = 0];
+
+  // team_id optional: если 0 — admin_service сам получит team_id из project runtime
+  int64 team_id = 2;
+
+  string proposed_topic = 3 [(validate.rules).string.min_len = 5];
+  string topic_description = 4;
+  int64 supervisor_id = 5 [(validate.rules).int64.gt = 0];
+  int64 submitted_by = 6 [(validate.rules).int64.gt = 0];
 }
 
 message SubmitTopicRegistrationResponse {
@@ -149,6 +157,7 @@ message TopicRegistrationHistory {
 }
 
 // ==================== Dashboard Messages ====================
+
 message GetDashboardRequest {
   int64 department_id = 1;
 }
@@ -213,6 +222,7 @@ message WorkflowStepStats {
 }
 
 // ==================== Students Messages ====================
+
 message ListStudentsRequest {
   int64 department_id = 1;
   int64 university_id = 2;
@@ -251,6 +261,7 @@ message GetStudentResponse {
 }
 
 // ==================== Teams Messages ====================
+
 message ListAllTeamsRequest {
   int64 department_id = 1;
   string status = 2;
@@ -335,6 +346,7 @@ message DeleteTeamAdminRequest {
 }
 
 // ==================== Supervisors Messages ====================
+
 message ListSupervisorsRequest {
   int64 department_id = 1;
   int64 university_id = 2;
@@ -375,28 +387,33 @@ message AssignSupervisorResponse {
 
 // ==================== Supervisor Request Messages ====================
 
-// SupervisorRequest - заявка команды на научного руководителя
 message SupervisorRequest {
   string id = 1;
-  int64 team_id = 2;
+
+  int64 team_id = 2;      // optional (0 если не передан)
   string team_name = 3;
-  int64 project_id = 4;
+
+  int64 project_id = 4;   // canonical (обязателен в CreateSupervisorRequestReq)
+
   int64 supervisor_id = 5;
   string supervisor_name = 6;
   string supervisor_email = 7;
+
   int64 requested_by = 8;
   string requester_name = 9;
+
   string status = 10;
   string message = 11;
   string proposed_topic = 12;
   string reject_reason = 13;
+
   google.protobuf.Timestamp created_at = 14;
   google.protobuf.Timestamp responded_at = 15;
   google.protobuf.Timestamp expires_at = 16;
+
   repeated TeamMemberPreview team_members = 17;
 }
 
-// TeamMemberPreview - краткая информация об участнике команды
 message TeamMemberPreview {
   int64 user_id = 1;
   string full_name = 2;
@@ -404,13 +421,17 @@ message TeamMemberPreview {
   string role = 4;
 }
 
-// CreateSupervisorRequestReq - создание запроса команды к супервайзеру
 message CreateSupervisorRequestReq {
-  int64 team_id = 1 [(validate.rules).int64.gt = 0];
-  int64 supervisor_id = 2 [(validate.rules).int64.gt = 0];
-  int64 requested_by = 3 [(validate.rules).int64.gt = 0];
-  string message = 4 [(validate.rules).string.max_len = 1000];
-  string proposed_topic = 5;
+  // NEW: project-first
+  int64 project_id = 1 [(validate.rules).int64.gt = 0];
+
+  // team_id optional: если 0 — admin_service сам получит team_id из project runtime
+  int64 team_id = 2;
+
+  int64 supervisor_id = 3 [(validate.rules).int64.gt = 0];
+  int64 requested_by = 4 [(validate.rules).int64.gt = 0];
+  string message = 5 [(validate.rules).string.max_len = 1000];
+  string proposed_topic = 6;
 }
 
 message CreateSupervisorRequestResp {
@@ -420,7 +441,6 @@ message CreateSupervisorRequestResp {
   SupervisorRequest request = 4;
 }
 
-// ListSupervisorRequestsReq - список запросов (для админки)
 message ListSupervisorRequestsReq {
   int64 department_id = 1;
   string status = 2;
@@ -435,7 +455,6 @@ message ListSupervisorRequestsResp {
   int64 total_count = 2;
 }
 
-// GetSupervisorRequestReq - получение детального запроса
 message GetSupervisorRequestReq {
   string request_id = 1 [(validate.rules).string.min_len = 1];
 }
@@ -445,7 +464,6 @@ message GetSupervisorRequestResp {
   repeated SupervisorRequestHistory history = 2;
 }
 
-// SupervisorRequestHistory - история изменений запроса
 message SupervisorRequestHistory {
   int64 id = 1;
   string action = 2;
@@ -455,7 +473,6 @@ message SupervisorRequestHistory {
   google.protobuf.Timestamp created_at = 6;
 }
 
-// RespondToSupervisorRequestReq - ответ супервайзера на запрос
 message RespondToSupervisorRequestReq {
   string request_id = 1 [(validate.rules).string.min_len = 1];
   int64 supervisor_id = 2 [(validate.rules).int64.gt = 0];
@@ -470,7 +487,6 @@ message RespondToSupervisorRequestResp {
   SupervisorRequest updated_request = 3;
 }
 
-// ListMySupervisorRequestsReq - список входящих запросов для супервайзера
 message ListMySupervisorRequestsReq {
   int64 supervisor_id = 1 [(validate.rules).int64.gt = 0];
   string status = 2;
@@ -484,7 +500,6 @@ message ListMySupervisorRequestsResp {
   int32 pending_count = 3;
 }
 
-// CancelSupervisorRequestReq - отмена запроса командой
 message CancelSupervisorRequestReq {
   string request_id = 1 [(validate.rules).string.min_len = 1];
   int64 cancelled_by = 2 [(validate.rules).int64.gt = 0];
@@ -498,7 +513,6 @@ message CancelSupervisorRequestResp {
 
 // ==================== Pre-Defense Messages ====================
 
-// PreDefenseSubmission - заявление на предзащиту
 message PreDefenseSubmission {
   string id = 1;                                      // UUID заявления
   int64 team_id = 2;                                  // ID команды
@@ -509,71 +523,59 @@ message PreDefenseSubmission {
   string supervisor_name = 7;                         // ФИО руководителя
   int64 submitted_by = 8;                             // Кто подал заявление
   string submitter_name = 9;                          // ФИО подавшего
-
-  // Статусы: pending, scheduled, in_progress, completed, passed, failed, cancelled
   string status = 10;
 
-  // Информация о предзащите
-  google.protobuf.Timestamp scheduled_date = 11;     // Назначенная дата
-  string scheduled_time = 12;                         // Время (HH:MM)
-  string location = 13;                               // Место проведения (аудитория/онлайн)
-  string meeting_link = 14;                           // Ссылка на онлайн-встречу (если онлайн)
-  int32 duration_minutes = 15;                        // Длительность в минутах
+  google.protobuf.Timestamp scheduled_date = 11;
+  string scheduled_time = 12;
+  string location = 13;
+  string meeting_link = 14;
+  int32 duration_minutes = 15;
 
-  // Оценивание (выставляет комиссия)
-  int32 grade = 16;                                   // Оценка 0-100 баллов
-  string grade_comment = 17;                          // Комментарий к оценке
-  int64 graded_by = 18;                               // Кто выставил оценку
-  string grader_name = 19;                            // ФИО оценивающего
-  google.protobuf.Timestamp graded_at = 20;          // Когда выставлена оценка
+  int32 grade = 16;
+  string grade_comment = 17;
+  int64 graded_by = 18;
+  string grader_name = 19;
+  google.protobuf.Timestamp graded_at = 20;
 
-  // Результат предзащиты
-  string result = 21;                                 // passed, failed, conditional
-  string result_comment = 22;                         // Комментарий к результату
-  repeated string recommendations = 23;               // Рекомендации комиссии
+  string result = 21;
+  string result_comment = 22;
+  repeated string recommendations = 23;
 
-  // Комиссия
   repeated PreDefenseCommissionMember commission = 24;
+  repeated PreDefenseDocument documents = 25;
 
-  // Документы
-  repeated PreDefenseDocument documents = 25;         // Прикреплённые документы
-
-  // Временные метки
-  google.protobuf.Timestamp submitted_at = 26;       // Дата подачи заявления
-  google.protobuf.Timestamp completed_at = 27;       // Дата завершения
+  google.protobuf.Timestamp submitted_at = 26;
+  google.protobuf.Timestamp completed_at = 27;
   google.protobuf.Timestamp created_at = 28;
   google.protobuf.Timestamp updated_at = 29;
 }
 
-// PreDefenseCommissionMember - член комиссии предзащиты
 message PreDefenseCommissionMember {
   int64 id = 1;
   int64 user_id = 2;
   string full_name = 3;
   string email = 4;
-  string role = 5;                                    // chairman, member, secretary
-  string position = 6;                                // Должность (Professor, etc.)
-  bool is_present = 7;                                // Присутствовал ли
-  int32 individual_grade = 8;                         // Индивидуальная оценка члена комиссии
-  string comment = 9;                                 // Комментарий члена комиссии
+  string role = 5;
+  string position = 6;
+  bool is_present = 7;
+  int32 individual_grade = 8;
+  string comment = 9;
 }
 
-// PreDefenseDocument - документ для предзащиты
 message PreDefenseDocument {
   string id = 1;
   string file_name = 2;
-  string file_type = 3;                               // presentation, report, abstract, other
-  string display_name = 4;                            // Отображаемое название
+  string file_type = 3;
+  string display_name = 4;
   int64 size = 5;
   string download_url = 6;
   int64 uploaded_by = 7;
   google.protobuf.Timestamp uploaded_at = 8;
 }
 
-// PreDefenseHistory - история изменений предзащиты
 message PreDefenseHistory {
   int64 id = 1;
-  string action = 2;                                  // submitted, scheduled, rescheduled, graded, completed, cancelled
+  string action = 2;
   int64 actor_id = 3;
   string actor_name = 4;
   string old_value = 5;
@@ -584,14 +586,13 @@ message PreDefenseHistory {
 
 // ==================== Request/Response Messages ====================
 
-// SubmitPreDefenseRequest - подача заявления на предзащиту
 message SubmitPreDefenseRequest {
   int64 team_id = 1 [(validate.rules).int64.gt = 0];
   int64 project_id = 2 [(validate.rules).int64.gt = 0];
   int64 submitted_by = 3 [(validate.rules).int64.gt = 0];
-  string message = 4;                                 // Сообщение от команды
-  repeated string preferred_dates = 5;               // Предпочтительные даты (ISO format)
-  repeated string document_ids = 6;                  // ID прикреплённых документов
+  string message = 4;
+  repeated string preferred_dates = 5;
+  repeated string document_ids = 6;
 }
 
 message SubmitPreDefenseResponse {
@@ -601,7 +602,6 @@ message SubmitPreDefenseResponse {
   PreDefenseSubmission submission = 4;
 }
 
-// ListPreDefenseSubmissionsRequest - список заявлений на предзащиту
 message ListPreDefenseSubmissionsRequest {
   int64 department_id = 1;
   string status = 2;
@@ -619,7 +619,6 @@ message ListPreDefenseSubmissionsResponse {
   PreDefenseStats stats = 3;
 }
 
-// PreDefenseStats - статистика по предзащитам
 message PreDefenseStats {
   int32 pending_count = 1;
   int32 scheduled_count = 2;
@@ -628,7 +627,6 @@ message PreDefenseStats {
   int32 failed_count = 5;
 }
 
-// GetPreDefenseSubmissionRequest - получение детальной информации
 message GetPreDefenseSubmissionRequest {
   string submission_id = 1 [(validate.rules).string.min_len = 1];
 }
@@ -640,7 +638,6 @@ message GetPreDefenseSubmissionResponse {
   repeated PreDefenseSubmission previous_attempts = 4;
 }
 
-// SchedulePreDefenseRequest - назначение даты предзащиты
 message SchedulePreDefenseRequest {
   string submission_id = 1 [(validate.rules).string.min_len = 1];
   int64 scheduled_by = 2 [(validate.rules).int64.gt = 0];
@@ -659,7 +656,6 @@ message SchedulePreDefenseResponse {
   PreDefenseSubmission updated_submission = 3;
 }
 
-// GradePreDefenseRequest - выставление оценки за предзащиту (комиссия)
 message GradePreDefenseRequest {
   string submission_id = 1 [(validate.rules).string.min_len = 1];
   int64 graded_by = 2 [(validate.rules).int64.gt = 0];
@@ -668,7 +664,6 @@ message GradePreDefenseRequest {
   repeated CommissionMemberGrade member_grades = 5;
 }
 
-// CommissionMemberGrade - оценка от конкретного члена комиссии
 message CommissionMemberGrade {
   int64 member_id = 1;
   int32 grade = 2;
@@ -681,7 +676,6 @@ message GradePreDefenseResponse {
   PreDefenseSubmission updated_submission = 3;
 }
 
-// CompletePreDefenseRequest - завершение предзащиты с результатом
 message CompletePreDefenseRequest {
   string submission_id = 1 [(validate.rules).string.min_len = 1];
   int64 completed_by = 2 [(validate.rules).int64.gt = 0];
@@ -697,7 +691,6 @@ message CompletePreDefenseResponse {
   PreDefenseSubmission updated_submission = 3;
 }
 
-// ReschedulePreDefenseRequest - перенос предзащиты
 message ReschedulePreDefenseRequest {
   string submission_id = 1 [(validate.rules).string.min_len = 1];
   int64 rescheduled_by = 2 [(validate.rules).int64.gt = 0];
@@ -713,7 +706,6 @@ message ReschedulePreDefenseResponse {
   PreDefenseSubmission updated_submission = 3;
 }
 
-// ListScheduledPreDefensesRequest - список назначенных предзащит (для календаря)
 message ListScheduledPreDefensesRequest {
   int64 department_id = 1;
   google.protobuf.Timestamp date_from = 2;
@@ -727,7 +719,6 @@ message ListScheduledPreDefensesResponse {
   int32 total_count = 2;
 }
 
-// PreDefenseScheduleItem - элемент расписания
 message PreDefenseScheduleItem {
   string submission_id = 1;
   int64 team_id = 2;
@@ -742,7 +733,6 @@ message PreDefenseScheduleItem {
   repeated string commission_member_names = 11;
 }
 
-// AddPreDefenseCommissionMemberRequest - добавление члена комиссии
 message AddPreDefenseCommissionMemberRequest {
   string submission_id = 1 [(validate.rules).string.min_len = 1];
   int64 user_id = 2 [(validate.rules).int64.gt = 0];
@@ -756,7 +746,6 @@ message AddPreDefenseCommissionMemberResponse {
   PreDefenseCommissionMember member = 3;
 }
 
-// RemovePreDefenseCommissionMemberRequest - удаление члена комиссии
 message RemovePreDefenseCommissionMemberRequest {
   string submission_id = 1 [(validate.rules).string.min_len = 1];
   int64 user_id = 2 [(validate.rules).int64.gt = 0];
@@ -769,8 +758,8 @@ message RemovePreDefenseCommissionMemberResponse {
   string message = 2;
 }
 
-
 // ==================== Submissions Messages ====================
+
 message ListSubmissionsRequest {
   int64 department_id = 1;
   int64 step_id = 2;
@@ -858,6 +847,7 @@ message ReviewSubmissionResponse {
 }
 
 // ==================== Grading Messages ====================
+
 message GradeInfo {
   int64 id = 1;
   int64 project_id = 2;
@@ -916,8 +906,8 @@ message GradeHistoryItem {
   google.protobuf.Timestamp changed_at = 7;
 }
 
-
 // ==================== Workflow Progress Messages ====================
+
 message GetWorkflowProgressRequest {
   int64 department_id = 1;
   int64 workflow_id = 2;

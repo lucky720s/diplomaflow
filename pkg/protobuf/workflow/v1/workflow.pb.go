@@ -119,6 +119,7 @@ const (
 	ActionType_CALCULATE_GRADE         ActionType = 9
 	ActionType_GENERATE_DOCUMENT       ActionType = 10
 	ActionType_EXTERNAL_API            ActionType = 11
+	ActionType_LOCK_TEAM_COMPOSITION   ActionType = 12
 )
 
 // Enum value maps for ActionType.
@@ -136,6 +137,7 @@ var (
 		9:  "CALCULATE_GRADE",
 		10: "GENERATE_DOCUMENT",
 		11: "EXTERNAL_API",
+		12: "LOCK_TEAM_COMPOSITION",
 	}
 	ActionType_value = map[string]int32{
 		"ACTION_TYPE_UNSPECIFIED": 0,
@@ -150,6 +152,7 @@ var (
 		"CALCULATE_GRADE":         9,
 		"GENERATE_DOCUMENT":       10,
 		"EXTERNAL_API":            11,
+		"LOCK_TEAM_COMPOSITION":   12,
 	}
 )
 
@@ -5564,7 +5567,7 @@ const file_workflow_v1_workflow_proto_rawDesc = "" +
 	"\tMILESTONE\x10\n" +
 	"\x12\v\n" +
 	"\aGRADING\x10\v\x12\r\n" +
-	"\tCOMPLETED\x10\f*\x86\x02\n" +
+	"\tCOMPLETED\x10\f*\xa1\x02\n" +
 	"\n" +
 	"ActionType\x12\x1b\n" +
 	"\x17ACTION_TYPE_UNSPECIFIED\x10\x00\x12\x15\n" +
@@ -5580,7 +5583,8 @@ const file_workflow_v1_workflow_proto_rawDesc = "" +
 	"\x0fCALCULATE_GRADE\x10\t\x12\x15\n" +
 	"\x11GENERATE_DOCUMENT\x10\n" +
 	"\x12\x10\n" +
-	"\fEXTERNAL_API\x10\v*\x84\x01\n" +
+	"\fEXTERNAL_API\x10\v\x12\x19\n" +
+	"\x15LOCK_TEAM_COMPOSITION\x10\f*\x84\x01\n" +
 	"\rActionTrigger\x12\x17\n" +
 	"\x13TRIGGER_UNSPECIFIED\x10\x00\x12\f\n" +
 	"\bON_ENTER\x10\x01\x12\v\n" +

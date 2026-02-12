@@ -31,7 +31,6 @@ func (h *Handler) GetAdminDashboard(c *gin.Context) {
 
 func (h *Handler) GetDepartmentStats(c *gin.Context) {
 	departmentID := c.GetInt64("departmentId")
-
 	resp, err := h.adminClient.GetDepartmentStats(c.Request.Context(), &adminv1.GetDepartmentStatsRequest{
 		DepartmentId: departmentID,
 	})
@@ -50,6 +49,7 @@ func (h *Handler) AdminListStudents(c *gin.Context) {
 
 	page := int32(1)
 	pageSize := int32(20)
+
 	if p := c.Query("page"); p != "" {
 		if v, err := strconv.ParseInt(p, 10, 32); err == nil {
 			page = int32(v)
@@ -100,6 +100,7 @@ func (h *Handler) AdminListTeams(c *gin.Context) {
 
 	page := int32(1)
 	pageSize := int32(20)
+
 	if p := c.Query("page"); p != "" {
 		if v, _ := strconv.ParseInt(p, 10, 32); v > 0 {
 			page = int32(v)
@@ -192,6 +193,7 @@ func (h *Handler) AdminDeleteTeam(c *gin.Context) {
 		MapGRPCError(c, err)
 		return
 	}
+
 	c.JSON(http.StatusNoContent, nil)
 }
 
@@ -238,25 +240,31 @@ func (h *Handler) AssignSupervisor(c *gin.Context) {
 	c.JSON(http.StatusOK, resp)
 }
 
-// ==================== Topic Registration ====================
+// ==================== Topic Registration (PROJECT-FIRST) ====================
 
+// POST /api/v1/projects/:id/topic-registration
 func (h *Handler) SubmitTopicRegistration(c *gin.Context) {
 	userID := c.GetInt64("userId")
 
+	projectID, err := strconv.ParseInt(c.Param("id"), 10, 64)
+	if err != nil || projectID <= 0 {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid project id"})
+		return
+	}
+
 	var req struct {
-		TeamID           int64  `json:"team_id" binding:"required"`
 		ProposedTopic    string `json:"proposed_topic" binding:"required,min=5"`
 		TopicDescription string `json:"topic_description"`
 		SupervisorID     int64  `json:"supervisor_id" binding:"required"`
 	}
-
-	if err := c.ShouldBindJSON(&req); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+	if bindErr := c.ShouldBindJSON(&req); bindErr != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": bindErr.Error()})
 		return
 	}
 
 	resp, err := h.adminClient.SubmitTopicRegistration(c.Request.Context(), &adminv1.SubmitTopicRegistrationRequest{
-		TeamId:           req.TeamID,
+		ProjectId:        projectID,
+		TeamId:           0, // optional; admin_service resolves via project runtime
 		ProposedTopic:    req.ProposedTopic,
 		TopicDescription: req.TopicDescription,
 		SupervisorId:     req.SupervisorID,
@@ -292,7 +300,6 @@ func (h *Handler) ListTopicRegistrations(c *gin.Context) {
 		MapGRPCError(c, err)
 		return
 	}
-
 	c.JSON(http.StatusOK, resp)
 }
 
@@ -306,7 +313,6 @@ func (h *Handler) GetTopicRegistration(c *gin.Context) {
 		MapGRPCError(c, err)
 		return
 	}
-
 	c.JSON(http.StatusOK, resp)
 }
 
@@ -319,7 +325,6 @@ func (h *Handler) ReviewTopicRegistration(c *gin.Context) {
 		Comment         string `json:"comment"`
 		RejectionReason string `json:"rejection_reason"`
 	}
-
 	if err := c.ShouldBindJSON(&req); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
@@ -332,7 +337,6 @@ func (h *Handler) ReviewTopicRegistration(c *gin.Context) {
 		Comment:         req.Comment,
 		RejectionReason: req.RejectionReason,
 	})
-
 	if err != nil {
 		MapGRPCError(c, err)
 		return
@@ -374,6 +378,7 @@ func (h *Handler) ListSubmissions(c *gin.Context) {
 		MapGRPCError(c, err)
 		return
 	}
+
 	c.JSON(http.StatusOK, resp)
 }
 
@@ -387,6 +392,7 @@ func (h *Handler) GetSubmission(c *gin.Context) {
 		MapGRPCError(c, err)
 		return
 	}
+
 	c.JSON(http.StatusOK, resp)
 }
 
@@ -415,6 +421,7 @@ func (h *Handler) ReviewSubmission(c *gin.Context) {
 		MapGRPCError(c, err)
 		return
 	}
+
 	c.JSON(http.StatusOK, resp)
 }
 
@@ -467,6 +474,7 @@ func (h *Handler) SetStepGrade(c *gin.Context) {
 		MapGRPCError(c, err)
 		return
 	}
+
 	c.JSON(http.StatusOK, resp)
 }
 
@@ -488,6 +496,7 @@ func (h *Handler) GetWorkflowProgress(c *gin.Context) {
 		MapGRPCError(c, err)
 		return
 	}
+
 	c.JSON(http.StatusOK, resp)
 }
 
@@ -511,29 +520,35 @@ func (h *Handler) ListPendingReviews(c *gin.Context) {
 		MapGRPCError(c, err)
 		return
 	}
+
 	c.JSON(http.StatusOK, resp)
 }
 
 // ==================== Supervisor Request Routes ====================
 
-// CreateSupervisorRequest - создание запроса команды к супервайзеру
+// POST /api/v1/projects/:id/supervisor-request
 func (h *Handler) CreateSupervisorRequest(c *gin.Context) {
 	userID := c.GetInt64("userId")
 
+	projectID, err := strconv.ParseInt(c.Param("id"), 10, 64)
+	if err != nil || projectID <= 0 {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid project id"})
+		return
+	}
+
 	var req struct {
-		TeamID        int64  `json:"team_id" binding:"required"`
 		SupervisorID  int64  `json:"supervisor_id" binding:"required"`
 		Message       string `json:"message"`
 		ProposedTopic string `json:"proposed_topic"`
 	}
-
-	if err := c.ShouldBindJSON(&req); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+	if bindErr := c.ShouldBindJSON(&req); bindErr != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": bindErr.Error()})
 		return
 	}
 
 	resp, err := h.adminClient.CreateSupervisorRequest(c.Request.Context(), &adminv1.CreateSupervisorRequestReq{
-		TeamId:        req.TeamID,
+		ProjectId:     projectID,
+		TeamId:        0, // optional; admin_service resolves via project runtime
 		SupervisorId:  req.SupervisorID,
 		RequestedBy:   userID,
 		Message:       req.Message,
@@ -617,7 +632,6 @@ func (h *Handler) RespondToSupervisorRequest(c *gin.Context) {
 		RejectReason string `json:"reject_reason"`
 		Comment      string `json:"comment"`
 	}
-
 	if err := c.ShouldBindJSON(&req); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
@@ -664,10 +678,19 @@ func (h *Handler) ListMySupervisorRequests(c *gin.Context) {
 	c.JSON(http.StatusOK, resp)
 }
 
-// CancelSupervisorRequest - отмена запроса командой
+// DELETE /api/v1/projects/:id/supervisor-requests/:request_id
 func (h *Handler) CancelSupervisorRequest(c *gin.Context) {
-	requestID := c.Param("id")
 	userID := c.GetInt64("userId")
+
+	requestID := c.Param("request_id")
+	if requestID == "" {
+		// fallback (если вдруг кто-то вызвал старый путь)
+		requestID = c.Param("id")
+	}
+	if requestID == "" {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "request_id is required"})
+		return
+	}
 
 	var req struct {
 		Reason string `json:"reason"`
@@ -683,6 +706,5 @@ func (h *Handler) CancelSupervisorRequest(c *gin.Context) {
 		MapGRPCError(c, err)
 		return
 	}
-
 	c.JSON(http.StatusOK, resp)
 }

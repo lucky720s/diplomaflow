@@ -143,7 +143,6 @@ func NewRepository(db *gorm.DB) Repository {
 }
 
 // ==================== Grades ====================
-
 func (r *repository) CreateGrade(ctx context.Context, grade *Grade) error {
 	grade.CreatedAt = time.Now()
 	grade.UpdatedAt = time.Now()
@@ -191,7 +190,6 @@ func (r *repository) GetGradeHistory(ctx context.Context, projectID, stepID int6
 }
 
 // ==================== Topic Registrations ====================
-
 func (r *repository) CreateTopicRegistration(ctx context.Context, reg *TopicRegistration) error {
 	reg.CreatedAt = time.Now()
 	reg.UpdatedAt = time.Now()
@@ -224,7 +222,6 @@ func (r *repository) ListTopicRegistrations(ctx context.Context, filter TopicReg
 	var total int64
 
 	query := r.db.WithContext(ctx).Model(&TopicRegistration{})
-
 	if filter.TeamID > 0 {
 		query = query.Where("team_id = ?", filter.TeamID)
 	}
@@ -274,7 +271,6 @@ func (r *repository) CountPendingTopicRegistrations(ctx context.Context, departm
 }
 
 // ==================== Submissions ====================
-
 func (r *repository) CreateSubmission(ctx context.Context, sub *Submission) error {
 	sub.CreatedAt = time.Now()
 	sub.UpdatedAt = time.Now()
@@ -295,7 +291,6 @@ func (r *repository) ListSubmissions(ctx context.Context, filter SubmissionFilte
 	var total int64
 
 	query := r.db.WithContext(ctx).Model(&Submission{})
-
 	if filter.StepID > 0 {
 		query = query.Where("step_id = ?", filter.StepID)
 	}
@@ -339,7 +334,6 @@ func (r *repository) GetSubmissionReviews(ctx context.Context, submissionID stri
 }
 
 // ==================== Supervisor Request Implementation ====================
-
 // CreateSupervisorRequest - создание запроса к супервайзеру
 func (r *repository) CreateSupervisorRequest(ctx context.Context, req *SupervisorRequest) error {
 	req.CreatedAt = time.Now()
@@ -360,7 +354,6 @@ func (r *repository) GetSupervisorRequest(ctx context.Context, id string) (*Supe
 // GetSupervisorRequestWithDetails - получение запроса с деталями
 func (r *repository) GetSupervisorRequestWithDetails(ctx context.Context, id string) (*SupervisorRequestWithDetails, error) {
 	var result SupervisorRequestWithDetails
-
 	query := `
 		SELECT 
 			sr.*,
@@ -374,16 +367,13 @@ func (r *repository) GetSupervisorRequestWithDetails(ctx context.Context, id str
 		LEFT JOIN users req ON req.id = sr.requested_by
 		WHERE sr.id = ?
 	`
-
 	err := r.db.WithContext(ctx).Raw(query, id).Scan(&result).Error
 	if err != nil {
 		return nil, err
 	}
-
 	if result.ID == "" {
 		return nil, gorm.ErrRecordNotFound
 	}
-
 	return &result, nil
 }
 
@@ -399,19 +389,16 @@ func (r *repository) ListSupervisorRequests(ctx context.Context, filter Supervis
 		LEFT JOIN users req ON req.id = sr.requested_by
 		WHERE 1=1
 	`
-
 	args := []interface{}{}
 
 	if filter.SupervisorID > 0 {
 		baseQuery += " AND sr.supervisor_id = ?"
 		args = append(args, filter.SupervisorID)
 	}
-
 	if filter.TeamID > 0 {
 		baseQuery += " AND sr.team_id = ?"
 		args = append(args, filter.TeamID)
 	}
-
 	if filter.Status != "" && filter.Status != "all" {
 		baseQuery += " AND sr.status = ?"
 		args = append(args, filter.Status)
@@ -513,7 +500,6 @@ func (r *repository) HasApprovedSupervisor(ctx context.Context, teamID int64) (b
 }
 
 // ==================== Supervisor Assignments ====================
-
 func (r *repository) AssignSupervisor(ctx context.Context, assignment *SupervisorAssignment) error {
 	assignment.CreatedAt = time.Now()
 	assignment.UpdatedAt = time.Now()
@@ -553,7 +539,6 @@ func (r *repository) CountTeamsBySupervisor(ctx context.Context, supervisorID in
 }
 
 // ==================== Activities ====================
-
 func (r *repository) LogActivity(ctx context.Context, activity *AdminActivity) error {
 	activity.CreatedAt = time.Now()
 	return r.db.WithContext(ctx).Create(activity).Error
@@ -569,10 +554,8 @@ func (r *repository) GetRecentActivities(ctx context.Context, departmentID int64
 }
 
 // ==================== Dashboard Stats ====================
-
 func (r *repository) GetDashboardStats(ctx context.Context, departmentID int64) (*DashboardStatsData, error) {
 	stats := &DashboardStatsData{}
-
 	var totalStudents, totalTeams, totalProjects, completedProjects, pendingReviews, activeSupervisors, pendingTopicRegs int64
 
 	// Count students
@@ -582,10 +565,10 @@ func (r *repository) GetDashboardStats(ctx context.Context, departmentID int64) 
 		Count(&totalStudents)
 	stats.TotalStudents = int32(totalStudents)
 
-	// Count teams
+	// Count teams (FIX: join via projects.team_id = teams.id)
 	r.db.WithContext(ctx).
 		Table("teams").
-		Joins("JOIN projects ON teams.project_id = projects.id").
+		Joins("JOIN projects ON projects.team_id = teams.id").
 		Where("projects.department_id = ?", departmentID).
 		Count(&totalTeams)
 	stats.TotalTeams = int32(totalTeams)
@@ -630,7 +613,6 @@ func (r *repository) GetDashboardStats(ctx context.Context, departmentID int64) 
 
 func (r *repository) GetStepProgressStats(ctx context.Context, departmentID int64, workflowID int64) ([]*StepProgressData, error) {
 	var stats []*StepProgressData
-
 	query := `
 		SELECT 
 			s.id as step_id,
@@ -647,7 +629,6 @@ func (r *repository) GetStepProgressStats(ctx context.Context, departmentID int6
 		GROUP BY s.id, s.name, s.type
 		ORDER BY s.order_index
 	`
-
 	r.db.WithContext(ctx).Raw(query, departmentID, workflowID).Scan(&stats)
 	return stats, nil
 }
@@ -664,7 +645,6 @@ func (r *repository) GetPendingReviewsCount(ctx context.Context, departmentID in
 // GetStudentByID - получение полной информации о студенте
 func (r *repository) GetStudentByID(ctx context.Context, studentID int64) (*StudentFullInfo, error) {
 	var result StudentFullInfo
-
 	query := `
 		SELECT 
 			u.id,
@@ -676,43 +656,38 @@ func (r *repository) GetStudentByID(ctx context.Context, studentID int64) (*Stud
 			u.department_id,
 			COALESCE(tm.team_id, 0) as team_id,
 			COALESCE(t.name, '') as team_name,
-			COALESCE(t.project_id, 0) as project_id,
+			COALESCE(p.id, 0) as project_id,
 			COALESCE(p.title, '') as project_title,
-			COALESCE(p.current_state, '') as current_step,
+			COALESCE(p.current_state_name, '') as current_step,
 			u.created_at
 		FROM users u
 		LEFT JOIN team_members tm ON tm.user_id = u.id
 		LEFT JOIN teams t ON t.id = tm.team_id AND t.deleted_at IS NULL
-		LEFT JOIN projects p ON p.id = t.project_id
+		LEFT JOIN projects p ON p.team_id = t.id
 		WHERE u.id = ? AND u.deleted_at IS NULL
 	`
-
 	err := r.db.WithContext(ctx).Raw(query, studentID).Scan(&result).Error
 	if err != nil {
 		return nil, err
 	}
-
 	if result.ID == 0 {
 		return nil, gorm.ErrRecordNotFound
 	}
-
 	return &result, nil
 }
 
 // GetStudentGrades - получение оценок студента
 func (r *repository) GetStudentGrades(ctx context.Context, studentID int64) ([]*Grade, error) {
 	var grades []*Grade
-
 	query := `
 		SELECT g.*
 		FROM admin_grades g
 		JOIN projects p ON p.id = g.project_id
-		JOIN teams t ON t.project_id = p.id
+		JOIN teams t ON t.id = p.team_id
 		JOIN team_members tm ON tm.team_id = t.id
 		WHERE tm.user_id = ? AND g.deleted_at IS NULL
 		ORDER BY g.created_at DESC
 	`
-
 	err := r.db.WithContext(ctx).Raw(query, studentID).Scan(&grades).Error
 	return grades, err
 }
@@ -720,18 +695,16 @@ func (r *repository) GetStudentGrades(ctx context.Context, studentID int64) ([]*
 // GetStudentSubmissions - получение submissions студента
 func (r *repository) GetStudentSubmissions(ctx context.Context, studentID int64) ([]*Submission, error) {
 	var submissions []*Submission
-
 	query := `
 		SELECT s.*
 		FROM admin_submissions s
 		JOIN projects p ON p.id = s.project_id
-		JOIN teams t ON t.project_id = p.id
+		JOIN teams t ON t.id = p.team_id
 		JOIN team_members tm ON tm.team_id = t.id
 		WHERE tm.user_id = ? AND s.deleted_at IS NULL
 		ORDER BY s.created_at DESC
 		LIMIT 50
 	`
-
 	err := r.db.WithContext(ctx).Raw(query, studentID).Scan(&submissions).Error
 	return submissions, err
 }
@@ -740,28 +713,25 @@ func (r *repository) GetStudentSubmissions(ctx context.Context, studentID int64)
 func (r *repository) GetTeamFullDetails(ctx context.Context, teamID int64) (*TeamFullDetails, error) {
 	var team TeamFullDetails
 
-	// Основная информация о команде
 	teamQuery := `
 		SELECT 
 			t.id,
 			t.name,
-			COALESCE(t.project_id, 0) as project_id,
+			COALESCE(p.id, 0) as project_id,
 			COALESCE(p.title, '') as project_title,
-			COALESCE(p.current_state, '') as current_step,
+			COALESCE(p.current_state_name, '') as current_step,
 			COALESCE(p.status, 'active') as status,
 			COALESCE(sa.supervisor_id, 0) as supervisor_id,
 			t.created_at,
 			t.updated_at
 		FROM teams t
-		LEFT JOIN projects p ON p.id = t.project_id
+		LEFT JOIN projects p ON p.team_id = t.id
 		LEFT JOIN admin_supervisor_assignments sa ON sa.team_id = t.id
 		WHERE t.id = ? AND t.deleted_at IS NULL
 	`
-
 	if err := r.db.WithContext(ctx).Raw(teamQuery, teamID).Scan(&team).Error; err != nil {
 		return nil, err
 	}
-
 	if team.ID == 0 {
 		return nil, gorm.ErrRecordNotFound
 	}
@@ -779,12 +749,10 @@ func (r *repository) GetTeamFullDetails(ctx context.Context, teamID int64) (*Tea
 		WHERE tm.team_id = ?
 		ORDER BY tm.role DESC, tm.created_at ASC
 	`
-
 	var members []*TeamMemberDetails
 	if err := r.db.WithContext(ctx).Raw(membersQuery, teamID).Scan(&members).Error; err != nil {
 		return nil, err
 	}
-
 	team.Members = members
 	return &team, nil
 }
@@ -804,7 +772,6 @@ func (r *repository) UpdateTeamByAdmin(ctx context.Context, teamID int64, update
 			// Проверяем существует ли запись
 			var count int64
 			tx.Table("admin_supervisor_assignments").Where("team_id = ?", teamID).Count(&count)
-
 			if count > 0 {
 				// Обновляем
 				if err := tx.Table("admin_supervisor_assignments").
@@ -910,7 +877,6 @@ func (r *repository) AddTeamMember(ctx context.Context, teamID, userID int64, ro
 	if role == "" {
 		role = "member"
 	}
-
 	return r.db.WithContext(ctx).Table("team_members").Create(map[string]interface{}{
 		"team_id":    teamID,
 		"user_id":    userID,
@@ -929,7 +895,6 @@ func (r *repository) RemoveTeamMember(ctx context.Context, teamID, userID int64)
 // GetGradingHistoryFull - расширенная история оценок
 func (r *repository) GetGradingHistoryFull(ctx context.Context, projectID, stepID int64) ([]*GradeHistoryFull, error) {
 	var history []*GradeHistoryFull
-
 	query := `
 		SELECT 
 			gh.id,
@@ -947,16 +912,12 @@ func (r *repository) GetGradingHistoryFull(ctx context.Context, projectID, stepI
 		LEFT JOIN users u ON u.id = gh.changed_by
 		WHERE gh.project_id = ?
 	`
-
 	args := []interface{}{projectID}
-
 	if stepID > 0 {
 		query += " AND gh.step_id = ?"
 		args = append(args, stepID)
 	}
-
 	query += " ORDER BY gh.created_at DESC"
-
 	err := r.db.WithContext(ctx).Raw(query, args...).Scan(&history).Error
 	return history, err
 }

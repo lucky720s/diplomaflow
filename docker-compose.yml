@@ -185,6 +185,7 @@ services:
       # workflow_service читает services.notification_addr / services.project_addr
       SERVICES_NOTIFICATION_ADDR: 127.0.0.1:8087
       SERVICES_PROJECT_ADDR: 127.0.0.1:8083
+      SERVICES_TEAM_ADDR: 127.0.0.1:8084
     depends_on:
       migrate:
         condition: service_completed_successfully

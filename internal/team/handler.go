@@ -134,8 +134,6 @@ func (h *Handler) GetMyTeam(ctx context.Context, req *teamv1.GetMyTeamRequest) (
 		Ids: ids,
 	})
 	if err != nil {
-		// можно fail-open (вернуть без ФИО) или fail-closed
-		// сделаю fail-open, чтобы /teams/my не падал полностью
 		h.logger.Warn("BatchGetUserPreviews failed", zap.Error(err))
 	}
 
@@ -180,7 +178,6 @@ func (h *Handler) UpdateTeam(ctx context.Context, req *teamv1.UpdateTeamRequest)
 		return nil, status.Error(codes.InvalidArgument, "team is required")
 	}
 
-	// Получаем requester_id из metadata
 	requesterID := getRequesterID(ctx)
 	if requesterID == 0 {
 		return nil, status.Error(codes.Unauthenticated, "user not authenticated")
@@ -212,7 +209,6 @@ func (h *Handler) UpdateTeam(ctx context.Context, req *teamv1.UpdateTeamRequest)
 }
 
 func (h *Handler) DeleteTeam(ctx context.Context, req *teamv1.DeleteTeamRequest) (*emptypb.Empty, error) {
-	// Получаем requester_id из metadata
 	requesterID := getRequesterID(ctx)
 	if requesterID == 0 {
 		return nil, status.Error(codes.Unauthenticated, "user not authenticated")
@@ -301,7 +297,6 @@ func (h *Handler) AddMember(ctx context.Context, req *teamv1.AddMemberRequest) (
 }
 
 func (h *Handler) RemoveMember(ctx context.Context, req *teamv1.RemoveMemberRequest) (*emptypb.Empty, error) {
-	// Получаем requester_id из metadata
 	requesterID := getRequesterID(ctx)
 	if requesterID == 0 {
 		return nil, status.Error(codes.Unauthenticated, "user not authenticated")
@@ -435,6 +430,7 @@ func mapError(err error) error {
 		return status.Errorf(codes.Internal, "internal error: %v", err)
 	}
 }
+
 func (h *Handler) JoinTeamByCode(ctx context.Context, req *teamv1.JoinTeamByCodeRequest) (*teamv1.JoinTeamByCodeResponse, error) {
 	userID := getRequesterID(ctx)
 	if userID == 0 {
@@ -467,7 +463,11 @@ func (h *Handler) RegenerateInviteCode(ctx context.Context, req *teamv1.Regenera
 }
 
 func (h *Handler) LockTeamComposition(ctx context.Context, req *teamv1.LockTeamCompositionRequest) (*teamv1.LockTeamCompositionResponse, error) {
-	if getInternalService(ctx) != "admin_service" {
+	// Разрешаем внутренние вызовы от admin_service и workflow_service
+	switch getInternalService(ctx) {
+	case "admin_service", "workflow_service":
+		// ok
+	default:
 		return nil, status.Error(codes.PermissionDenied, "forbidden")
 	}
 
@@ -476,6 +476,7 @@ func (h *Handler) LockTeamComposition(ctx context.Context, req *teamv1.LockTeamC
 	}
 	return &teamv1.LockTeamCompositionResponse{Success: true}, nil
 }
+
 func getInternalService(ctx context.Context) string {
 	if md, ok := metadata.FromIncomingContext(ctx); ok {
 		if vals := md.Get("x-internal-service"); len(vals) > 0 {

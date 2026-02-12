@@ -67,7 +67,6 @@ func (h *Handler) GetAvailableTransitions(ctx context.Context, req *workflowv1.G
 }
 
 func (h *Handler) ExecuteTransition(ctx context.Context, req *workflowv1.ExecuteTransitionRequest) (*workflowv1.ExecuteTransitionResponse, error) {
-	// userRole приходит через metadata от project_service.PerformAction (он AppendToOutgoingContext)
 	userRole := ""
 	if md, ok := metadata.FromIncomingContext(ctx); ok {
 		if v := md.Get("x-user-role"); len(v) > 0 {
@@ -97,6 +96,8 @@ func (h *Handler) ExecuteTransition(ctx context.Context, req *workflowv1.Execute
 		UserID:         req.UserId,
 		UserRole:       userRole,
 		DepartmentID:   snap.DepartmentId,
+		UniversityID:   snap.UniversityId,
+		TeamID:         snap.TeamId,
 		ProjectData:    projectData,
 		Payload:        payload,
 	})
@@ -104,10 +105,8 @@ func (h *Handler) ExecuteTransition(ctx context.Context, req *workflowv1.Execute
 		return &workflowv1.ExecuteTransitionResponse{Success: false, ErrorMessage: err.Error()}, nil
 	}
 
-	// DataPatch -> Struct
 	var patchStruct *structpb.Struct
 	if res.DataPatch != nil {
-		// structpb.NewStruct требует map[string]interface{}
 		b, _ := json.Marshal(res.DataPatch)
 		m := map[string]interface{}{}
 		_ = json.Unmarshal(b, &m)
@@ -119,7 +118,6 @@ func (h *Handler) ExecuteTransition(ctx context.Context, req *workflowv1.Execute
 		deadline = timestamppb.New(*res.NewDeadline)
 	}
 
-	// IMPORTANT: пробрасываем post-actions в project_service, чтобы он записал outbox
 	var postGroups []*projectv1.PostCommitActionGroup
 	for _, g := range res.PostActions {
 		if g.Trigger == "" || len(g.ActionIDs) == 0 {

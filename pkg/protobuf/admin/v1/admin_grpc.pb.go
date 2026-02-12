@@ -79,7 +79,7 @@ type AdminServiceClient interface {
 	ListSupervisors(ctx context.Context, in *ListSupervisorsRequest, opts ...grpc.CallOption) (*ListSupervisorsResponse, error)
 	AssignSupervisor(ctx context.Context, in *AssignSupervisorRequest, opts ...grpc.CallOption) (*AssignSupervisorResponse, error)
 	// ==================== Supervisor Request (Запрос команды к руководителю) ====================
-	// Команда отправляет запрос супервайзеру стать руководителем
+	// Project-first: каноническая привязка к project_id, team_id опционален.
 	CreateSupervisorRequest(ctx context.Context, in *CreateSupervisorRequestReq, opts ...grpc.CallOption) (*CreateSupervisorRequestResp, error)
 	ListSupervisorRequests(ctx context.Context, in *ListSupervisorRequestsReq, opts ...grpc.CallOption) (*ListSupervisorRequestsResp, error)
 	GetSupervisorRequest(ctx context.Context, in *GetSupervisorRequestReq, opts ...grpc.CallOption) (*GetSupervisorRequestResp, error)
@@ -87,6 +87,7 @@ type AdminServiceClient interface {
 	ListMySupervisorRequests(ctx context.Context, in *ListMySupervisorRequestsReq, opts ...grpc.CallOption) (*ListMySupervisorRequestsResp, error)
 	CancelSupervisorRequest(ctx context.Context, in *CancelSupervisorRequestReq, opts ...grpc.CallOption) (*CancelSupervisorRequestResp, error)
 	// ==================== Topic Registration (Заявление на тему) ====================
+	// Project-first: каноническая привязка к project_id, team_id опционален.
 	SubmitTopicRegistration(ctx context.Context, in *SubmitTopicRegistrationRequest, opts ...grpc.CallOption) (*SubmitTopicRegistrationResponse, error)
 	ListTopicRegistrations(ctx context.Context, in *ListTopicRegistrationsRequest, opts ...grpc.CallOption) (*ListTopicRegistrationsResponse, error)
 	ReviewTopicRegistration(ctx context.Context, in *ReviewTopicRegistrationRequest, opts ...grpc.CallOption) (*ReviewTopicRegistrationResponse, error)
@@ -522,7 +523,7 @@ type AdminServiceServer interface {
 	ListSupervisors(context.Context, *ListSupervisorsRequest) (*ListSupervisorsResponse, error)
 	AssignSupervisor(context.Context, *AssignSupervisorRequest) (*AssignSupervisorResponse, error)
 	// ==================== Supervisor Request (Запрос команды к руководителю) ====================
-	// Команда отправляет запрос супервайзеру стать руководителем
+	// Project-first: каноническая привязка к project_id, team_id опционален.
 	CreateSupervisorRequest(context.Context, *CreateSupervisorRequestReq) (*CreateSupervisorRequestResp, error)
 	ListSupervisorRequests(context.Context, *ListSupervisorRequestsReq) (*ListSupervisorRequestsResp, error)
 	GetSupervisorRequest(context.Context, *GetSupervisorRequestReq) (*GetSupervisorRequestResp, error)
@@ -530,6 +531,7 @@ type AdminServiceServer interface {
 	ListMySupervisorRequests(context.Context, *ListMySupervisorRequestsReq) (*ListMySupervisorRequestsResp, error)
 	CancelSupervisorRequest(context.Context, *CancelSupervisorRequestReq) (*CancelSupervisorRequestResp, error)
 	// ==================== Topic Registration (Заявление на тему) ====================
+	// Project-first: каноническая привязка к project_id, team_id опционален.
 	SubmitTopicRegistration(context.Context, *SubmitTopicRegistrationRequest) (*SubmitTopicRegistrationResponse, error)
 	ListTopicRegistrations(context.Context, *ListTopicRegistrationsRequest) (*ListTopicRegistrationsResponse, error)
 	ReviewTopicRegistration(context.Context, *ReviewTopicRegistrationRequest) (*ReviewTopicRegistrationResponse, error)
