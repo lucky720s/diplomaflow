@@ -1,5 +1,10 @@
 BEGIN;
 
+-- У вас в state_actions нет is_optional, а код/seed его использует.
+-- Добавляем колонку безопасно.
+ALTER TABLE state_actions
+    ADD COLUMN IF NOT EXISTS is_optional BOOLEAN NOT NULL DEFAULT FALSE;
+
 -- Добавляем LOCK_TEAM_COMPOSITION на ON_EXIT для всех TEAM_FORMATION шагов,
 -- если такого action ещё нет.
 INSERT INTO state_actions (
@@ -24,8 +29,8 @@ SELECT
     'ON_EXIT',
     1000,
     '{"reason":"workflow_lock_after_team_formed"}'::jsonb,
-    true,
-    false,
+    TRUE,
+    FALSE,
     '[]'::jsonb,
     3,
     60,
