@@ -1,8 +1,3 @@
-﻿-- =============================================
--- Migration: 000006_seed_demo_workflow
--- Description: Demo workflow (safe ASCII seed)
--- =============================================
-
 DO $$
 DECLARE
 v_dept_id BIGINT;
