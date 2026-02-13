@@ -14,7 +14,7 @@ func CorsMiddleware(allowedOrigins []string) gin.HandlerFunc {
 			"http://localhost:5173",
 		}
 	}
-
+	//tagy bir push
 	originsMap := make(map[string]bool)
 	for _, o := range allowedOrigins {
 		originsMap[o] = true
