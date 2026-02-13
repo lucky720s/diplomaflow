@@ -16,3 +16,4 @@ redis_addr: "redis:6379"
 allowed_origins:
   - "https://diplomaflow.kz"
   - "http://localhost:3000"
+  - "http://localhost:5173"
