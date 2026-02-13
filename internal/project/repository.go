@@ -11,15 +11,15 @@ import (
 
 type Repository interface {
 	Transaction(ctx context.Context, fn func(tx *gorm.DB) error) error
-
 	CreateWithOutbox(ctx context.Context, project *Project, eventType string, topic string, payloadBase map[string]interface{}) error
 	GetByID(ctx context.Context, id int64) (*Project, error)
 	GetRuntimeByID(ctx context.Context, id int64) (*Project, error)
-
 	GetPendingEvents(ctx context.Context, limit int) ([]OutboxEvent, error)
 	MarkEventProcessed(ctx context.Context, id int64) error
 
+	// Proto compatibility: GetStudentProjects(student_id) is used as "projects visible for user"
 	ListByStudent(ctx context.Context, studentID int64) ([]*Project, error)
+
 	GetProjectsWithExpiredDeadlines(ctx context.Context) ([]*Project, error)
 }
 
@@ -92,15 +92,32 @@ func (r *repository) MarkEventProcessed(ctx context.Context, id int64) error {
 		}).Error
 }
 
+// ListByStudent: returns projects visible for user
+// - owned by user (projects.student_id = user_id)
+// - OR user is member of the team assigned to the project (team_members.user_id = user_id)
 func (r *repository) ListByStudent(ctx context.Context, studentID int64) ([]*Project, error) {
 	var projects []*Project
+
 	q := r.db.WithContext(ctx).Model(&Project{})
-	if studentID != 0 {
-		q = q.Where("student_id = ?", studentID)
+
+	// If caller passed 0 - fallback to all (internal/admin usage)
+	if studentID == 0 {
+		if err := q.Order("created_at DESC").Find(&projects).Error; err != nil {
+			return nil, err
+		}
+		return projects, nil
 	}
-	if err := q.Order("created_at DESC").Find(&projects).Error; err != nil {
+
+	q = q.
+		Select("DISTINCT projects.*").
+		Joins("LEFT JOIN team_members tm ON tm.team_id = projects.team_id").
+		Where("projects.student_id = ? OR tm.user_id = ?", studentID, studentID).
+		Order("projects.created_at DESC")
+
+	if err := q.Find(&projects).Error; err != nil {
 		return nil, err
 	}
+
 	return projects, nil
 }
 

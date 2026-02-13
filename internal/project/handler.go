@@ -31,20 +31,104 @@ type Handler struct {
 
 func NewHandler(service ProjectUseCase) *Handler { return &Handler{service: service} }
 
+// ---- metadata helpers ----
+
+func getInternalService(ctx context.Context) string {
+	if md, ok := metadata.FromIncomingContext(ctx); ok {
+		if v := md.Get("x-internal-service"); len(v) > 0 {
+			return v[0]
+		}
+	}
+	return ""
+}
+
+func getRequesterID(ctx context.Context) int64 {
+	if md, ok := metadata.FromIncomingContext(ctx); ok {
+		if v := md.Get("x-user-id"); len(v) > 0 {
+			id, _ := strconv.ParseInt(v[0], 10, 64)
+			return id
+		}
+	}
+	return 0
+}
+
+func getRequesterRole(ctx context.Context) string {
+	if md, ok := metadata.FromIncomingContext(ctx); ok {
+		if v := md.Get("x-user-role"); len(v) > 0 {
+			return v[0]
+		}
+	}
+	return ""
+}
+
+func requireInternal(ctx context.Context, allow ...string) error {
+	svc := getInternalService(ctx)
+	for _, a := range allow {
+		if svc == a {
+			return nil
+		}
+	}
+	return status.Error(codes.PermissionDenied, "forbidden")
+}
+
+// ---- RPCs ----
+
 func (h *Handler) CreateProject(ctx context.Context, req *projectv1.CreateProjectRequest) (*projectv1.CreateProjectResponse, error) {
+	// project should be created only after supervisor approve/claim (admin flow)
+	if err := requireInternal(ctx, "admin_service"); err != nil {
+		return nil, err
+	}
 	if req.Title == "" {
 		return nil, status.Error(codes.InvalidArgument, "title is required")
+	}
+	if req.StudentId <= 0 || req.UniversityId <= 0 || req.DepartmentId <= 0 {
+		return nil, status.Error(codes.InvalidArgument, "student_id, university_id, department_id are required")
 	}
 	return h.service.CreateProject(ctx, req)
 }
 
 func (h *Handler) GetProject(ctx context.Context, req *projectv1.GetProjectRequest) (*projectv1.GetProjectResponse, error) {
-	if req.ProjectId == 0 {
+	if req.ProjectId <= 0 {
 		return nil, status.Error(codes.InvalidArgument, "project_id is required")
 	}
-	p, err := h.service.GetProject(ctx, req.ProjectId)
-	if err != nil {
-		return nil, status.Errorf(codes.NotFound, "project not found: %v", err)
+
+	var p *Project
+	var err error
+
+	internalSvc := getInternalService(ctx)
+
+	if internalSvc != "" {
+		if permErr := requireInternal(ctx, "admin_service", "workflow_service"); permErr != nil {
+			return nil, permErr
+		}
+		p, err = h.service.GetProject(ctx, req.ProjectId)
+		if err != nil {
+			// если у тебя service/repo умеет различать not found — мапь тут
+			return nil, status.Errorf(codes.NotFound, "project not found: %v", err)
+		}
+		if p == nil {
+			return nil, status.Error(codes.NotFound, "project not found")
+		}
+	} else {
+		uid := getRequesterID(ctx)
+		if uid == 0 {
+			return nil, status.Error(codes.Unauthenticated, "unauthorized")
+		}
+
+		visible, err2 := h.service.GetStudentProjects(ctx, uid)
+		if err2 != nil {
+			return nil, status.Errorf(codes.Internal, "failed: %v", err2)
+		}
+
+		for _, pr := range visible {
+			if pr != nil && pr.ID == req.ProjectId {
+				p = pr
+				break
+			}
+		}
+		if p == nil {
+			return nil, status.Error(codes.NotFound, "project not found")
+		}
 	}
 
 	var hist []*projectv1.StateHistory
@@ -76,16 +160,32 @@ func (h *Handler) GetProject(ctx context.Context, req *projectv1.GetProjectReque
 }
 
 func (h *Handler) GetStudentProjects(ctx context.Context, req *projectv1.GetStudentProjectsRequest) (*projectv1.GetStudentProjectsResponse, error) {
-	if req.StudentId == 0 {
+	if req.StudentId <= 0 {
 		return nil, status.Error(codes.InvalidArgument, "student_id is required")
 	}
+
+	internalSvc := getInternalService(ctx)
+	if internalSvc != "" {
+		if err := requireInternal(ctx, "admin_service", "workflow_service"); err != nil {
+			return nil, err
+		}
+	} else {
+		uid := getRequesterID(ctx)
+		if uid == 0 {
+			return nil, status.Error(codes.Unauthenticated, "unauthorized")
+		}
+		if uid != req.StudentId {
+			return nil, status.Error(codes.PermissionDenied, "forbidden")
+		}
+	}
+
 	list, err := h.service.GetStudentProjects(ctx, req.StudentId)
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, "failed: %v", err)
 	}
+
 	resp := &projectv1.GetStudentProjectsResponse{}
 	for _, p := range list {
-
 		pp := &projectv1.ProjectPreview{
 			ProjectId:        p.ID,
 			Title:            p.Title,
@@ -97,18 +197,16 @@ func (h *Handler) GetStudentProjects(ctx context.Context, req *projectv1.GetStud
 			CurrentStateId:   p.CurrentStateID,
 			CurrentStateName: p.CurrentStateName,
 		}
-
 		if p.DeadlineAt != nil {
 			pp.DeadlineAt = timestamppb.New(*p.DeadlineAt)
 		}
-
 		resp.Projects = append(resp.Projects, pp)
 	}
 	return resp, nil
 }
 
 func (h *Handler) PerformAction(ctx context.Context, req *projectv1.PerformActionRequest) (*projectv1.PerformActionResponse, error) {
-	if req.ProjectId == 0 || req.ActionName == "" {
+	if req.ProjectId <= 0 || req.ActionName == "" {
 		return nil, status.Error(codes.InvalidArgument, "project_id and action_name are required")
 	}
 
@@ -118,15 +216,11 @@ func (h *Handler) PerformAction(ctx context.Context, req *projectv1.PerformActio
 		_ = json.Unmarshal(b, &payload)
 	}
 
-	var userID int64
-	var role string
-	if md, ok := metadata.FromIncomingContext(ctx); ok {
-		if v := md.Get("x-user-id"); len(v) > 0 {
-			userID, _ = strconv.ParseInt(v[0], 10, 64)
-		}
-		if v := md.Get("x-user-role"); len(v) > 0 {
-			role = v[0]
-		}
+	userID := getRequesterID(ctx)
+	role := getRequesterRole(ctx)
+
+	if userID == 0 {
+		return nil, status.Error(codes.Unauthenticated, "unauthorized")
 	}
 
 	p, err := h.service.PerformAction(ctx, req.ProjectId, req.ActionName, payload, userID, role)
@@ -137,14 +231,23 @@ func (h *Handler) PerformAction(ctx context.Context, req *projectv1.PerformActio
 }
 
 func (h *Handler) GetProjectRuntime(ctx context.Context, req *projectv1.GetProjectRuntimeRequest) (*projectv1.GetProjectRuntimeResponse, error) {
-	if req.ProjectId == 0 {
+	// runtime API: internal-only
+	if err := requireInternal(ctx, "workflow_service", "admin_service"); err != nil {
+		return nil, err
+	}
+
+	if req.ProjectId <= 0 {
 		return nil, status.Error(codes.InvalidArgument, "project_id is required")
 	}
 	return h.service.GetProjectRuntime(ctx, req.ProjectId)
 }
 
 func (h *Handler) CommitTransition(ctx context.Context, req *projectv1.CommitTransitionRequest) (*projectv1.CommitTransitionResponse, error) {
-	if req.ProjectId == 0 || req.ExpectedFromStateId == 0 || req.ToStateId == 0 || req.EventName == "" {
+	// runtime API: internal-only (workflow)
+	if err := requireInternal(ctx, "workflow_service"); err != nil {
+		return nil, err
+	}
+	if req.ProjectId <= 0 || req.ExpectedFromStateId <= 0 || req.ToStateId <= 0 || req.EventName == "" {
 		return nil, status.Error(codes.InvalidArgument, "project_id, expected_from_state_id, to_state_id, event_name are required")
 	}
 	return h.service.CommitTransition(ctx, req)

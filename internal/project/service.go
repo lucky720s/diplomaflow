@@ -28,8 +28,13 @@ func NewService(repo Repository, wfClient WorkflowClient, logger *zap.Logger) *S
 	return &Service{repo: repo, workflowClient: wfClient, logger: logger}
 }
 
+func (s *Service) wfInternalCtx(ctx context.Context) context.Context {
+	return metadata.AppendToOutgoingContext(ctx, "x-internal-service", "project_service")
+}
+
 func (s *Service) CreateProject(ctx context.Context, req *projectv1.CreateProjectRequest) (*projectv1.CreateProjectResponse, error) {
-	wf, err := s.workflowClient.GetActiveWorkflowByDepartment(ctx, &workflowv1.GetActiveWorkflowByDepartmentRequest{
+	// workflow call as internal (otherwise workflow_service may deny/require metadata)
+	wf, err := s.workflowClient.GetActiveWorkflowByDepartment(s.wfInternalCtx(ctx), &workflowv1.GetActiveWorkflowByDepartmentRequest{
 		DepartmentId: req.DepartmentId,
 	})
 	if err != nil {
@@ -39,7 +44,7 @@ func (s *Service) CreateProject(ctx context.Context, req *projectv1.CreateProjec
 		return nil, errors.New("workflow has no states configured")
 	}
 
-	// initial state
+	// pick initial state
 	initial := wf.States[0]
 	for _, st := range wf.States {
 		if st.IsInitial {
@@ -76,7 +81,6 @@ func (s *Service) CreateProject(ctx context.Context, req *projectv1.CreateProjec
 		UpdatedAt:        time.Now().UTC(),
 	}
 
-	// IMPORTANT: backward/forward compatible contract
 	eventPayload := map[string]interface{}{
 		"student_id":       req.StudentId,
 		"university_id":    req.UniversityId,
@@ -92,10 +96,7 @@ func (s *Service) CreateProject(ctx context.Context, req *projectv1.CreateProjec
 		return nil, err
 	}
 
-	return &projectv1.CreateProjectResponse{
-		ProjectId: p.ID,
-		Status:    p.Status,
-	}, nil
+	return &projectv1.CreateProjectResponse{ProjectId: p.ID, Status: p.Status}, nil
 }
 
 func (s *Service) GetProject(ctx context.Context, id int64) (*Project, error) {
@@ -106,7 +107,6 @@ func (s *Service) GetStudentProjects(ctx context.Context, studentID int64) ([]*P
 	return s.repo.ListByStudent(ctx, studentID)
 }
 
-// Legacy frontend endpoint: delegates to workflow runtime
 func (s *Service) PerformAction(ctx context.Context, projectID int64, actionName string, payload map[string]interface{}, userID int64, userRole string) (*Project, error) {
 	p, err := s.repo.GetRuntimeByID(ctx, projectID)
 	if err != nil {
@@ -116,8 +116,12 @@ func (s *Service) PerformAction(ctx context.Context, projectID int64, actionName
 		return nil, errors.New("cannot perform action on inactive project")
 	}
 
-	// forward role via metadata to workflow_service runtime
-	outCtx := metadata.AppendToOutgoingContext(ctx, "x-user-role", userRole)
+	outCtx := metadata.AppendToOutgoingContext(
+		ctx,
+		"x-internal-service", "project_service",
+		"x-user-id", fmt.Sprintf("%d", userID),
+		"x-user-role", userRole,
+	)
 
 	trResp, err := s.workflowClient.GetAvailableTransitions(outCtx, &workflowv1.GetAvailableTransitionsRequest{
 		ProjectId:      projectID,
@@ -139,7 +143,6 @@ func (s *Service) PerformAction(ctx context.Context, projectID int64, actionName
 			break
 		}
 	}
-
 	if transitionID == 0 {
 		return nil, fmt.Errorf("unknown action/transition: %s", actionName)
 	}
@@ -161,7 +164,6 @@ func (s *Service) PerformAction(ctx context.Context, projectID int64, actionName
 	return s.repo.GetByID(ctx, projectID)
 }
 
-// Internal RPC for workflow ядра
 func (s *Service) GetProjectRuntime(ctx context.Context, projectID int64) (*projectv1.GetProjectRuntimeResponse, error) {
 	p, err := s.repo.GetRuntimeByID(ctx, projectID)
 	if err != nil {
@@ -188,15 +190,15 @@ func (s *Service) GetProjectRuntime(ctx context.Context, projectID int64) (*proj
 		Status:           p.Status,
 		Data:             dataStruct,
 	}
-
 	if p.DeadlineAt != nil {
 		resp.DeadlineAt = timestamppb.New(*p.DeadlineAt)
 	}
-
 	return resp, nil
 }
 
 func (s *Service) CommitTransition(ctx context.Context, req *projectv1.CommitTransitionRequest) (*projectv1.CommitTransitionResponse, error) {
+	var newStatus string
+
 	err := s.repo.Transaction(ctx, func(tx *gorm.DB) error {
 		var p Project
 		if err := tx.WithContext(ctx).
@@ -231,7 +233,6 @@ func (s *Service) CommitTransition(ctx context.Context, req *projectv1.CommitTra
 		}
 
 		p.UpdatedAt = time.Now().UTC()
-
 		if err := tx.WithContext(ctx).Save(&p).Error; err != nil {
 			return err
 		}
@@ -254,7 +255,7 @@ func (s *Service) CommitTransition(ctx context.Context, req *projectv1.CommitTra
 			return err
 		}
 
-		// post_actions: складываем в outbox
+		// outbox post-actions
 		for _, g := range req.PostActions {
 			if g == nil || len(g.ActionIds) == 0 {
 				continue
@@ -281,6 +282,7 @@ func (s *Service) CommitTransition(ctx context.Context, req *projectv1.CommitTra
 			}
 		}
 
+		newStatus = p.Status
 		return nil
 	})
 
@@ -293,7 +295,7 @@ func (s *Service) CommitTransition(ctx context.Context, req *projectv1.CommitTra
 		ProjectId:    req.ProjectId,
 		NewStateId:   req.ToStateId,
 		NewStateName: req.ToStateName,
-		Status:       req.SetStatus,
+		Status:       newStatus,
 	}, nil
 }
 

@@ -9,6 +9,7 @@ import (
 
 	"github.com/lucky720s/diplomaflow/internal/team"
 	"github.com/lucky720s/diplomaflow/pkg/config"
+	grpcpkg "github.com/lucky720s/diplomaflow/pkg/grpc"
 	"github.com/lucky720s/diplomaflow/pkg/logger"
 	authv1 "github.com/lucky720s/diplomaflow/pkg/protobuf/auth/v1"
 	notificationv1 "github.com/lucky720s/diplomaflow/pkg/protobuf/notification/v1"
@@ -24,6 +25,13 @@ import (
 	"gorm.io/gorm"
 )
 
+func dial(addr string) (*grpc.ClientConn, error) {
+	return grpc.NewClient(addr,
+		grpc.WithTransportCredentials(insecure.NewCredentials()),
+		grpc.WithDefaultServiceConfig(grpcpkg.DefaultRetryServiceConfig()),
+		grpc.WithUnaryInterceptor(grpcpkg.TimeoutInterceptor(10*time.Second)),
+	)
+}
 func main() {
 	var cfg team.Config
 	if err := config.Load("config.yaml", &cfg); err != nil {
@@ -39,7 +47,7 @@ func main() {
 	}
 
 	// Auth client
-	authConn, err := grpc.NewClient(cfg.Services.AuthAddr, grpc.WithTransportCredentials(insecure.NewCredentials()))
+	authConn, err := dial(cfg.Services.AuthAddr)
 	if err != nil {
 		log.Fatal("Failed to connect to auth service", zap.Error(err))
 	}
@@ -47,7 +55,7 @@ func main() {
 	authClient := authv1.NewAuthServiceClient(authConn)
 
 	// Workflow client
-	workflowConn, err := grpc.NewClient(cfg.Services.WorkflowAddr, grpc.WithTransportCredentials(insecure.NewCredentials()))
+	workflowConn, err := dial(cfg.Services.WorkflowAddr)
 	if err != nil {
 		log.Fatal("Failed to connect to workflow service", zap.Error(err))
 	}
@@ -55,7 +63,7 @@ func main() {
 	workflowClient := workflowv1.NewWorkflowServiceClient(workflowConn)
 
 	// Notification client
-	notificationConn, err := grpc.NewClient(cfg.Services.NotificationAddr, grpc.WithTransportCredentials(insecure.NewCredentials()))
+	notificationConn, err := dial(cfg.Services.NotificationAddr)
 	if err != nil {
 		log.Fatal("Failed to connect to notification service", zap.Error(err))
 	}

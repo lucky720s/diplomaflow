@@ -27,8 +27,9 @@ type Config struct {
 	PayloadColumn     string
 	ProcessedAtColumn string // optional
 
-	PendingStatus   string
-	ProcessedStatus string
+	PendingStatus    string
+	ProcessingStatus string // NEW (optional). Default "processing"
+	ProcessedStatus  string
 }
 
 type Poller struct {
@@ -72,11 +73,14 @@ func New(db *gorm.DB, worker *postcommit.Worker, log *zap.Logger, cfg Config) (*
 	if cfg.PendingStatus == "" {
 		cfg.PendingStatus = "pending"
 	}
+	if cfg.ProcessingStatus == "" {
+		cfg.ProcessingStatus = "processing"
+	}
 	if cfg.ProcessedStatus == "" {
 		cfg.ProcessedStatus = "processed"
 	}
 
-	// минимальная защита от SQL injection через identifiers (они берутся из config.yaml)
+	// minimal injection protection for identifiers (from config.yaml)
 	for _, ident := range []string{
 		cfg.Table, cfg.IDColumn, cfg.TopicColumn, cfg.StatusColumn, cfg.EventTypeColumn, cfg.PayloadColumn, cfg.ProcessedAtColumn,
 	} {
@@ -132,7 +136,8 @@ func (p *Poller) Start(ctx context.Context) {
 }
 
 func (p *Poller) tick(ctx context.Context) error {
-	rows, err := p.fetchBatch(ctx)
+	_ = p.requeueStuck(ctx, 10*time.Minute)
+	rows, err := p.fetchAndClaimBatch(ctx)
 	if err != nil {
 		return err
 	}
@@ -143,16 +148,19 @@ func (p *Poller) tick(ctx context.Context) error {
 	for _, r := range rows {
 		if r.EventType == "" || len(r.Payload) == 0 {
 			p.log.Warn("Skipping bad outbox row", zap.Int64("id", r.ID))
+			// return row to pending so it can be inspected/repaired
+			_ = p.setStatus(ctx, r.ID, p.cfg.PendingStatus)
 			continue
 		}
 
 		if err := p.worker.Handle(ctx, r.EventType, r.Payload); err != nil {
-			// оставляем в pending — будет повтор на следующем тике
+			// return to pending to retry later
 			p.log.Warn("Workflow action event handle failed (will retry)",
 				zap.Int64("outbox_id", r.ID),
 				zap.String("event_type", r.EventType),
 				zap.Error(err),
 			)
+			_ = p.setStatus(ctx, r.ID, p.cfg.PendingStatus)
 			continue
 		}
 
@@ -164,43 +172,79 @@ func (p *Poller) tick(ctx context.Context) error {
 	return nil
 }
 
-func (p *Poller) fetchBatch(ctx context.Context) ([]outboxRow, error) {
-	// SELECT ... FOR UPDATE SKIP LOCKED чтобы несколько инстансов workflow_service не дублировали обработку
-	q := fmt.Sprintf(
-		`SELECT %s AS id, %s AS event_type, %s AS payload
-		   FROM %s
-		  WHERE %s = ? AND %s = ?
-		  ORDER BY %s ASC
-		  LIMIT %d
-		  FOR UPDATE SKIP LOCKED`,
-		p.cfg.IDColumn,
-		p.cfg.EventTypeColumn,
-		p.cfg.PayloadColumn,
-		p.cfg.Table,
-		p.cfg.TopicColumn,
-		p.cfg.StatusColumn,
-		p.cfg.IDColumn,
-		p.cfg.BatchSize,
-	)
-
+// fetchAndClaimBatch selects rows with SKIP LOCKED AND immediately updates status->processing inside same TX.
+// This prevents duplicates across multiple workflow_service instances.
+func (p *Poller) fetchAndClaimBatch(ctx context.Context) ([]outboxRow, error) {
 	var out []outboxRow
+
 	err := p.db.WithContext(ctx).Transaction(func(tx *gorm.DB) error {
-		return tx.Raw(q, p.cfg.Topic, p.cfg.PendingStatus).Scan(&out).Error
+		q := fmt.Sprintf(
+			`SELECT %s AS id, %s AS event_type, %s AS payload
+			   FROM %s
+			  WHERE %s = ? AND %s = ?
+			  ORDER BY %s ASC
+			  LIMIT %d
+			  FOR UPDATE SKIP LOCKED`,
+			p.cfg.IDColumn,
+			p.cfg.EventTypeColumn,
+			p.cfg.PayloadColumn,
+			p.cfg.Table,
+			p.cfg.TopicColumn,
+			p.cfg.StatusColumn,
+			p.cfg.IDColumn,
+			p.cfg.BatchSize,
+		)
+
+		if err := tx.Raw(q, p.cfg.Topic, p.cfg.PendingStatus).Scan(&out).Error; err != nil {
+			return err
+		}
+		if len(out) == 0 {
+			return nil
+		}
+
+		ids := make([]int64, 0, len(out))
+		for _, r := range out {
+			ids = append(ids, r.ID)
+		}
+
+		uq := fmt.Sprintf(
+			`UPDATE %s SET %s = ?, processing_started_at = NOW() WHERE %s IN ?`,
+			p.cfg.Table, p.cfg.StatusColumn, p.cfg.IDColumn,
+		)
+		return tx.Exec(uq, p.cfg.ProcessingStatus, ids).Error
+
 	})
+
 	return out, err
 }
 
+func (p *Poller) setStatus(ctx context.Context, id int64, statusVal string) error {
+	q := fmt.Sprintf(`UPDATE %s SET %s = ? WHERE %s = ?`, p.cfg.Table, p.cfg.StatusColumn, p.cfg.IDColumn)
+	return p.db.WithContext(ctx).Exec(q, statusVal, id).Error
+}
+
 func (p *Poller) markProcessed(ctx context.Context, id int64) error {
-	// processed_at может отсутствовать — тогда обновим только статусом
 	if strings.TrimSpace(p.cfg.ProcessedAtColumn) != "" {
 		q := fmt.Sprintf(`UPDATE %s SET %s = ?, %s = NOW() WHERE %s = ?`,
 			p.cfg.Table, p.cfg.StatusColumn, p.cfg.ProcessedAtColumn, p.cfg.IDColumn)
 		if err := p.db.WithContext(ctx).Exec(q, p.cfg.ProcessedStatus, id).Error; err == nil {
 			return nil
 		}
-		// fallback ниже
 	}
-
 	q := fmt.Sprintf(`UPDATE %s SET %s = ? WHERE %s = ?`, p.cfg.Table, p.cfg.StatusColumn, p.cfg.IDColumn)
 	return p.db.WithContext(ctx).Exec(q, p.cfg.ProcessedStatus, id).Error
+}
+func (p *Poller) requeueStuck(ctx context.Context, maxAge time.Duration) error {
+	q := fmt.Sprintf(
+		`UPDATE %s
+		    SET %s = ?, processing_started_at = NULL
+		  WHERE %s = ?
+		    AND processing_started_at IS NOT NULL
+		    AND processing_started_at < NOW() - INTERVAL '%d seconds'`,
+		p.cfg.Table,
+		p.cfg.StatusColumn,
+		p.cfg.StatusColumn,
+		int(maxAge.Seconds()),
+	)
+	return p.db.WithContext(ctx).Exec(q, p.cfg.PendingStatus, p.cfg.ProcessingStatus).Error
 }

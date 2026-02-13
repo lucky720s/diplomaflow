@@ -244,9 +244,7 @@ func (r *repository) ListTeams(ctx context.Context, departmentID int64, limit, o
 	query := r.db.WithContext(ctx).Model(&Team{})
 
 	if departmentID > 0 {
-		query = query.Joins("JOIN projects p ON p.team_id = teams.id").
-			Where("p.department_id = ?", departmentID)
-
+		query = query.Where("department_id = ?", departmentID)
 	}
 
 	if err := query.Count(&total).Error; err != nil {
@@ -254,13 +252,14 @@ func (r *repository) ListTeams(ctx context.Context, departmentID int64, limit, o
 	}
 
 	err := query.
-		Order("teams.created_at DESC").
+		Order("created_at DESC").
 		Limit(limit).
 		Offset(offset).
 		Find(&teams).Error
 
 	return teams, total, err
 }
+
 func (r *repository) GetByInviteCode(ctx context.Context, universityID int64, code string) (*Team, error) {
 	var team Team
 	err := r.db.WithContext(ctx).

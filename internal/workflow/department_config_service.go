@@ -3,11 +3,13 @@ package workflow
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"time"
 
 	"go.uber.org/zap"
 	"gorm.io/datatypes"
+	"gorm.io/gorm"
 )
 
 type DepartmentConfigService struct {
@@ -57,13 +59,18 @@ func (s *DepartmentConfigService) CreateConfig(ctx context.Context, input *Creat
 
 // GetEffectiveWorkflow возвращает workflow с применёнными конфигурациями кафедры
 func (s *DepartmentConfigService) GetEffectiveWorkflow(ctx context.Context, departmentID int64, academicYear string) (*EffectiveWorkflow, error) {
-	// Получаем активную конфигурацию
+	// Получаем активную конфигурацию.
+	// Senior: если это реальная ошибка БД — НЕ фоллбечим, а возвращаем ошибку.
 	config, err := s.repo.GetActiveConfig(ctx, departmentID, academicYear)
 	if err != nil {
-		// Fallback на дефолтный workflow кафедры
-		wf, err := s.wfRepo.GetActiveWorkflowByDepartment(ctx, departmentID)
-		if err != nil {
-			return nil, err
+		if !errors.Is(err, gorm.ErrRecordNotFound) {
+			return nil, fmt.Errorf("failed to get active department config: %w", err)
+		}
+
+		// Record not found => fallback на активный workflow кафедры
+		wf, wfErr := s.wfRepo.GetActiveWorkflowByDepartment(ctx, departmentID)
+		if wfErr != nil {
+			return nil, wfErr
 		}
 		return s.workflowToEffective(wf, nil), nil
 	}

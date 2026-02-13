@@ -1,7 +1,0 @@
-BEGIN;
-
-DELETE FROM state_actions
-WHERE type = 'LOCK_TEAM_COMPOSITION'
-  AND trigger = 'ON_EXIT';
-
-COMMIT;

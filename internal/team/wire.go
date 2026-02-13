@@ -21,8 +21,8 @@ func InitializeApp(
 	db *gorm.DB,
 	logger *zap.Logger,
 	authClient authv1.AuthServiceClient,
-	workflowClient workflowv1.WorkflowServiceClient, // <-- ДОБАВЛЕНО
-	notificationClient notificationv1.NotificationServiceClient, // <-- ДОБАВЛЕНО
+	workflowClient workflowv1.WorkflowServiceClient,
+	notificationClient notificationv1.NotificationServiceClient,
 ) (*App, func(), error) {
 	wire.Build(
 		NewRepository,

@@ -6,6 +6,7 @@ import (
 	workflowv1 "github.com/lucky720s/diplomaflow/pkg/protobuf/workflow/v1"
 	"go.uber.org/zap"
 	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/metadata"
 	"google.golang.org/grpc/status"
 )
 
@@ -23,13 +24,26 @@ func (s *GRPCServer) ProcessWorkflowActionEvent(
 	ctx context.Context,
 	req *workflowv1.ProcessWorkflowActionEventRequest,
 ) (*workflowv1.ProcessWorkflowActionEventResponse, error) {
+	// SECURITY: only internal callers allowed
+	md, _ := metadata.FromIncomingContext(ctx)
+	internal := ""
+	if md != nil {
+		if v := md.Get("x-internal-service"); len(v) > 0 {
+			internal = v[0]
+		}
+	}
+
+	// Allow-list (adjust if needed)
+	if internal != "project_service" && internal != "workflow_service" {
+		return nil, status.Error(codes.PermissionDenied, "forbidden")
+	}
+
 	if req.GetEventType() == "" {
 		return nil, status.Error(codes.InvalidArgument, "event_type is required")
 	}
 	if len(req.GetPayloadJson()) == 0 {
 		return nil, status.Error(codes.InvalidArgument, "payload_json is required")
 	}
-	// topic оставляем просто для трассировки/совместимости
 	if req.GetTopic() != "" && req.GetTopic() != "workflow-actions" {
 		return nil, status.Errorf(codes.InvalidArgument, "unexpected topic: %s", req.GetTopic())
 	}

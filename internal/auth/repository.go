@@ -66,8 +66,13 @@ func (r *repository) ListUsers(ctx context.Context, filter UserFilter) ([]*User,
 	var total int64
 
 	query := r.db.WithContext(ctx).Model(&User{})
+
+	// ✅ filters
 	if filter.UniversityID != 0 {
 		query = query.Where("university_id = ?", filter.UniversityID)
+	}
+	if filter.DepartmentID != 0 {
+		query = query.Where("department_id = ?", filter.DepartmentID)
 	}
 	if filter.Role != "" {
 		query = query.Where("role = ?", filter.Role)
@@ -79,9 +84,22 @@ func (r *repository) ListUsers(ctx context.Context, filter UserFilter) ([]*User,
 	if err := query.Count(&total).Error; err != nil {
 		return nil, 0, err
 	}
-	if err := query.Limit(filter.Limit).Offset(filter.Offset).Find(&users).Error; err != nil {
+
+	if filter.Limit <= 0 {
+		filter.Limit = 10
+	}
+	if filter.Offset < 0 {
+		filter.Offset = 0
+	}
+
+	if err := query.
+		Order("id ASC").
+		Limit(filter.Limit).
+		Offset(filter.Offset).
+		Find(&users).Error; err != nil {
 		return nil, 0, err
 	}
+
 	return users, total, nil
 }
 
@@ -98,11 +116,15 @@ func (r *repository) GetRefreshToken(ctx context.Context, token string) (*Refres
 }
 
 func (r *repository) RevokeRefreshToken(ctx context.Context, id uint64) error {
-	return r.db.WithContext(ctx).Model(&RefreshToken{}).Where("id = ?", id).Update("revoked", true).Error
+	return r.db.WithContext(ctx).
+		Model(&RefreshToken{}).
+		Where("id = ?", id).
+		Update("revoked", true).Error
 }
 
 func (r *repository) RevokeAllUserTokens(ctx context.Context, userID int64) error {
-	return r.db.WithContext(ctx).Model(&RefreshToken{}).
+	return r.db.WithContext(ctx).
+		Model(&RefreshToken{}).
 		Where("user_id = ?", userID).
 		Update("revoked", true).Error
 }
@@ -127,6 +149,7 @@ func (r *repository) ListActiveSessions(ctx context.Context, userID int64) ([]*R
 func (r *repository) Update(ctx context.Context, user *User) error {
 	return r.db.WithContext(ctx).Save(user).Error
 }
+
 func (r *repository) GetByIDs(ctx context.Context, ids []int64) ([]*User, error) {
 	var users []*User
 	err := r.db.WithContext(ctx).

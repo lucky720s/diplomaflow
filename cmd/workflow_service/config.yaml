@@ -20,8 +20,9 @@ outbox_poller:
   topic_column: "topic"
   status_column: "status"
   event_type_column: "event_type"
-  payload_column: "payload"          # либо "payload_json" — поставь как в БД
-  processed_at_column: "processed_at" # если колонки нет, оставь пустым ""
+  payload_column: "payload"
+  processed_at_column: "processed_at"
 
   pending_status: "pending"
+  processing_status: "processing"
   processed_status: "processed"

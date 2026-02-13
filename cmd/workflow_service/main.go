@@ -16,6 +16,7 @@ import (
 	"github.com/lucky720s/diplomaflow/internal/workflow/postcommit"
 	"github.com/lucky720s/diplomaflow/internal/workflow/runtimegrpc"
 	"github.com/lucky720s/diplomaflow/pkg/config"
+	grpcpkg "github.com/lucky720s/diplomaflow/pkg/grpc"
 	"github.com/lucky720s/diplomaflow/pkg/logger"
 	notificationv1 "github.com/lucky720s/diplomaflow/pkg/protobuf/notification/v1"
 	projectv1 "github.com/lucky720s/diplomaflow/pkg/protobuf/project/v1"
@@ -31,6 +32,14 @@ import (
 	"gorm.io/gorm"
 )
 
+func dial(addr string) (*grpc.ClientConn, error) {
+	return grpc.NewClient(addr,
+		grpc.WithTransportCredentials(insecure.NewCredentials()),
+		grpc.WithDefaultServiceConfig(grpcpkg.DefaultRetryServiceConfig()),
+		grpc.WithUnaryInterceptor(grpcpkg.TimeoutInterceptor(10*time.Second)),
+	)
+}
+
 func main() {
 	var cfg workflow.Config
 	if err := config.Load("config.yaml", &cfg); err != nil {
@@ -45,27 +54,31 @@ func main() {
 		log.Fatal("failed to connect db", zap.Error(err))
 	}
 
-	notifConn, err := grpc.NewClient(cfg.Services.NotificationAddr, grpc.WithTransportCredentials(insecure.NewCredentials()))
+	// Connect notification
+	notifConn, err := dial(cfg.Services.NotificationAddr)
 	if err != nil {
-		log.Fatal("failed to connect notification service", zap.Error(err))
+		log.Fatal("failed to connect notification service", zap.String("addr", cfg.Services.NotificationAddr), zap.Error(err))
 	}
 	defer notifConn.Close()
 	notifClient := notificationv1.NewNotificationServiceClient(notifConn)
 
-	projectConn, err := grpc.NewClient(cfg.Services.ProjectAddr, grpc.WithTransportCredentials(insecure.NewCredentials()))
+	// Connect project
+	projectConn, err := dial(cfg.Services.ProjectAddr)
 	if err != nil {
-		log.Fatal("failed to connect project service", zap.Error(err))
+		log.Fatal("failed to connect project service", zap.String("addr", cfg.Services.ProjectAddr), zap.Error(err))
 	}
 	defer projectConn.Close()
 	projectClient := projectv1.NewProjectServiceClient(projectConn)
 
-	teamConn, err := grpc.NewClient(cfg.Services.TeamAddr, grpc.WithTransportCredentials(insecure.NewCredentials()))
+	// Connect team
+	teamConn, err := dial(cfg.Services.TeamAddr)
 	if err != nil {
-		log.Fatal("failed to connect team service", zap.Error(err))
+		log.Fatal("failed to connect team service", zap.String("addr", cfg.Services.TeamAddr), zap.Error(err))
 	}
 	defer teamConn.Close()
 	teamClient := teamv1.NewTeamServiceClient(teamConn)
 
+	// Plugins
 	builtin.RegisterAll(notifClient, teamClient)
 	log.Info("Builtin plugins registered", zap.Strings("plugins", builtin.RegisteredPlugins()))
 
@@ -73,12 +86,10 @@ func main() {
 	svc := workflow.NewService(repo, log.Logger)
 	base := workflow.NewHandler(svc, log.Logger)
 
-	// NEW: engine gets team client (TEAM_FORMED validation)
 	eng := engine.NewWorkflowEngine(repo, teamClient, log.Logger)
-
 	h := runtimegrpc.New(base, eng, projectClient, log.Logger)
 
-	pcWorker := postcommit.NewWorker(db, projectClient, log.Logger)
+	pcWorker := postcommit.NewWorker(db, projectClient, teamClient, log.Logger)
 	pcGRPC := postcommit.NewGRPCServer(pcWorker, log.Logger)
 
 	poller, err := outboxpoller.New(db, pcWorker, log.Logger, outboxpoller.Config{
@@ -94,6 +105,7 @@ func main() {
 		PayloadColumn:     cfg.OutboxPoller.PayloadColumn,
 		ProcessedAtColumn: cfg.OutboxPoller.ProcessedAtColumn,
 		PendingStatus:     cfg.OutboxPoller.PendingStatus,
+		ProcessingStatus:  cfg.OutboxPoller.ProcessingStatus,
 		ProcessedStatus:   cfg.OutboxPoller.ProcessedStatus,
 	})
 	if err != nil {
@@ -140,6 +152,5 @@ func main() {
 
 	time.Sleep(300 * time.Millisecond)
 	grpcServer.GracefulStop()
-
 	log.Info("Workflow Service stopped")
 }

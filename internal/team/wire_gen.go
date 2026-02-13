@@ -18,7 +18,7 @@ import (
 
 func InitializeApp(cfg *Config, db *gorm.DB, logger *zap.Logger, authClient v1.AuthServiceClient, workflowClient v1_2.WorkflowServiceClient, notificationClient v1_3.NotificationServiceClient) (*App, func(), error) {
 	teamRepository := NewRepository(db)
-	service := NewService(teamRepository, authClient, workflowClient, logger)
+	service := NewService(teamRepository, authClient, workflowClient, notificationClient, logger)
 	handler := NewHandler(service, logger)
 	app := &App{
 		Handler: handler,

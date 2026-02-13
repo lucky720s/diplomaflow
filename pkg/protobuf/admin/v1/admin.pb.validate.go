@@ -6097,6 +6097,157 @@ var _ interface {
 	ErrorName() string
 } = CreateSupervisorRequestReqValidationError{}
 
+// Validate checks the field values on CreateSupervisorRequestByTeamReq with
+// the rules defined in the proto definition for this message. If any rules
+// are violated, the first error encountered is returned, or nil if there are
+// no violations.
+func (m *CreateSupervisorRequestByTeamReq) Validate() error {
+	return m.validate(false)
+}
+
+// ValidateAll checks the field values on CreateSupervisorRequestByTeamReq with
+// the rules defined in the proto definition for this message. If any rules
+// are violated, the result is a list of violation errors wrapped in
+// CreateSupervisorRequestByTeamReqMultiError, or nil if none found.
+func (m *CreateSupervisorRequestByTeamReq) ValidateAll() error {
+	return m.validate(true)
+}
+
+func (m *CreateSupervisorRequestByTeamReq) validate(all bool) error {
+	if m == nil {
+		return nil
+	}
+
+	var errors []error
+
+	if m.GetTeamId() <= 0 {
+		err := CreateSupervisorRequestByTeamReqValidationError{
+			field:  "TeamId",
+			reason: "value must be greater than 0",
+		}
+		if !all {
+			return err
+		}
+		errors = append(errors, err)
+	}
+
+	if m.GetSupervisorId() <= 0 {
+		err := CreateSupervisorRequestByTeamReqValidationError{
+			field:  "SupervisorId",
+			reason: "value must be greater than 0",
+		}
+		if !all {
+			return err
+		}
+		errors = append(errors, err)
+	}
+
+	if m.GetRequestedBy() <= 0 {
+		err := CreateSupervisorRequestByTeamReqValidationError{
+			field:  "RequestedBy",
+			reason: "value must be greater than 0",
+		}
+		if !all {
+			return err
+		}
+		errors = append(errors, err)
+	}
+
+	if utf8.RuneCountInString(m.GetMessage()) > 1000 {
+		err := CreateSupervisorRequestByTeamReqValidationError{
+			field:  "Message",
+			reason: "value length must be at most 1000 runes",
+		}
+		if !all {
+			return err
+		}
+		errors = append(errors, err)
+	}
+
+	// no validation rules for ProposedTopic
+
+	if len(errors) > 0 {
+		return CreateSupervisorRequestByTeamReqMultiError(errors)
+	}
+
+	return nil
+}
+
+// CreateSupervisorRequestByTeamReqMultiError is an error wrapping multiple
+// validation errors returned by
+// CreateSupervisorRequestByTeamReq.ValidateAll() if the designated
+// constraints aren't met.
+type CreateSupervisorRequestByTeamReqMultiError []error
+
+// Error returns a concatenation of all the error messages it wraps.
+func (m CreateSupervisorRequestByTeamReqMultiError) Error() string {
+	msgs := make([]string, 0, len(m))
+	for _, err := range m {
+		msgs = append(msgs, err.Error())
+	}
+	return strings.Join(msgs, "; ")
+}
+
+// AllErrors returns a list of validation violation errors.
+func (m CreateSupervisorRequestByTeamReqMultiError) AllErrors() []error { return m }
+
+// CreateSupervisorRequestByTeamReqValidationError is the validation error
+// returned by CreateSupervisorRequestByTeamReq.Validate if the designated
+// constraints aren't met.
+type CreateSupervisorRequestByTeamReqValidationError struct {
+	field  string
+	reason string
+	cause  error
+	key    bool
+}
+
+// Field function returns field value.
+func (e CreateSupervisorRequestByTeamReqValidationError) Field() string { return e.field }
+
+// Reason function returns reason value.
+func (e CreateSupervisorRequestByTeamReqValidationError) Reason() string { return e.reason }
+
+// Cause function returns cause value.
+func (e CreateSupervisorRequestByTeamReqValidationError) Cause() error { return e.cause }
+
+// Key function returns key value.
+func (e CreateSupervisorRequestByTeamReqValidationError) Key() bool { return e.key }
+
+// ErrorName returns error name.
+func (e CreateSupervisorRequestByTeamReqValidationError) ErrorName() string {
+	return "CreateSupervisorRequestByTeamReqValidationError"
+}
+
+// Error satisfies the builtin error interface
+func (e CreateSupervisorRequestByTeamReqValidationError) Error() string {
+	cause := ""
+	if e.cause != nil {
+		cause = fmt.Sprintf(" | caused by: %v", e.cause)
+	}
+
+	key := ""
+	if e.key {
+		key = "key for "
+	}
+
+	return fmt.Sprintf(
+		"invalid %sCreateSupervisorRequestByTeamReq.%s: %s%s",
+		key,
+		e.field,
+		e.reason,
+		cause)
+}
+
+var _ error = CreateSupervisorRequestByTeamReqValidationError{}
+
+var _ interface {
+	Field() string
+	Reason() string
+	Key() bool
+	Cause() error
+	ErrorName() string
+} = CreateSupervisorRequestByTeamReqValidationError{}
+
 // Validate checks the field values on CreateSupervisorRequestResp with the
 // rules defined in the proto definition for this message. If any rules are
 // violated, the first error encountered is returned, or nil if there are no violations.

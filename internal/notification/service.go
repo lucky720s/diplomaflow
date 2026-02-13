@@ -15,6 +15,7 @@ type Service struct {
 func NewService(repo Repository, log *logger.Logger) *Service {
 	return &Service{repo: repo, logger: log}
 }
+
 func (s *Service) SendNotification(ctx context.Context, userID int64, title, message, link, nType string) (int64, error) {
 	n := &Notification{
 		UserID:    userID,
@@ -23,7 +24,8 @@ func (s *Service) SendNotification(ctx context.Context, userID int64, title, mes
 		Link:      link,
 		Type:      nType,
 		IsRead:    false,
-		CreatedAt: time.Now(),
+		CreatedAt: time.Now().UTC(),
+		UpdatedAt: time.Now().UTC(),
 	}
 	if err := s.repo.Create(ctx, n); err != nil {
 		return 0, err

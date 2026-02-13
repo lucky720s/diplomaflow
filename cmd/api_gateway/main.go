@@ -81,22 +81,17 @@ func main() {
 		{
 			admin.POST("/universities", handler.CreateUniversity)
 			admin.POST("/departments", handler.CreateDepartment)
-
 			admin.POST("/workflows", handler.CreateWorkflow)
 			admin.POST("/workflows/:id/states", handler.CreateState)
 			admin.POST("/workflows/:id/activate", handler.SetActiveWorkflow)
-
 			admin.POST("/roles", handler.CreateRole)
 			admin.POST("/assign-role", handler.AssignRole)
-
 			admin.POST("/workflows/:id/clone", handler.CloneWorkflow)
 			admin.POST("/workflows/:id/version", handler.CreateNewVersion)
 			admin.POST("/workflows/:id/validate", handler.ValidateWorkflow)
-
 			admin.POST("/workflows/:id/transitions", handler.CreateTransition)
 			admin.PUT("/workflows/:id/transitions/:tid", handler.UpdateTransition)
 			admin.DELETE("/workflows/:id/transitions/:tid", handler.DeleteTransition)
-
 			admin.POST("/workflows/:id/states/:sid/actions", handler.CreateStateAction)
 		}
 
@@ -107,10 +102,8 @@ func main() {
 		{
 			adminPanel.GET("/dashboard", handler.GetAdminDashboard)
 			adminPanel.GET("/stats", handler.GetDepartmentStats)
-
 			adminPanel.GET("/students", handler.AdminListStudents)
 			adminPanel.GET("/students/:id", handler.AdminGetStudent)
-
 			adminPanel.GET("/teams", handler.AdminListTeams)
 			adminPanel.GET("/teams/:id", handler.AdminGetTeamDetails)
 			adminPanel.PATCH("/teams/:id", handler.AdminUpdateTeam)
@@ -141,17 +134,15 @@ func main() {
 		projects := v1.Group("/projects")
 		projects.Use(middleware.AuthMiddleware(cfg.JWTSecret))
 		{
-			projects.POST("", handler.CreateProject)
 			projects.GET("", handler.ListProjects)
 			projects.GET("/:id", handler.GetProject)
 			projects.GET("/:id/details", handler.GetProjectDetails)
-
 			projects.POST("/:id/actions", handler.PerformProjectAction)
 
-			// NEW: project-first topic/supervisor flows
-			projects.POST("/:id/topic-registration", handler.SubmitTopicRegistration)
-			projects.POST("/:id/supervisor-request", handler.CreateSupervisorRequest)
-			projects.DELETE("/:id/supervisor-requests/:request_id", handler.CancelSupervisorRequest)
+			// project-first flows тоже лучше закрыть admin-only, иначе можно обойти team-first
+			projects.POST("/:id/topic-registration", middleware.RBACMiddleware("admin"), handler.SubmitTopicRegistration)
+			projects.POST("/:id/supervisor-request", middleware.RBACMiddleware("admin"), handler.CreateSupervisorRequest)
+			projects.DELETE("/:id/supervisor-requests/:request_id", middleware.RBACMiddleware("admin"), handler.CancelSupervisorRequest)
 		}
 
 		teams := v1.Group("/teams")
@@ -169,11 +160,6 @@ func main() {
 			teams.POST("/:id/members", handler.AddMember)
 			teams.DELETE("/:id/members/:user_id", handler.RemoveMember)
 
-			// REMOVED (team-first) – intentionally broken by design:
-			// teams.POST("/:id/topic-registration", handler.SubmitTopicRegistration)
-			// teams.POST("/:id/supervisor-request", handler.CreateSupervisorRequest)
-			// teams.DELETE("/supervisor-requests/:id", handler.CancelSupervisorRequest)
-
 			teams.POST("/:id/leave", handler.LeaveTeam)
 			teams.POST("/:id/transfer-leadership", handler.TransferLeadership)
 
@@ -181,7 +167,11 @@ func main() {
 				middleware.RateLimitByUserMiddleware(rdb, 10, time.Hour),
 				handler.JoinTeamByCode,
 			)
+
 			teams.POST("/:id/invite-code/regenerate", handler.RegenerateInviteCode)
+
+			// NEW: team-first supervisor request (до создания проекта)
+			teams.POST("/:id/supervisor-request", handler.CreateSupervisorRequestByTeam)
 		}
 
 		invites := v1.Group("/invites")
@@ -197,12 +187,15 @@ func main() {
 			workflows.GET("", handler.ListWorkflows)
 			workflows.GET("/:id", handler.GetWorkflow)
 			workflows.GET("/:id/full", handler.GetWorkflowFull)
-
 			workflows.GET("/:id/states", handler.ListStates)
 			workflows.GET("/:id/transitions", handler.ListTransitions)
 
 			workflows.GET("/transitions/available", handler.GetAvailableTransitions)
 			workflows.GET("/states/:state_id/config", handler.GetStepConfiguration)
+
+			// NEW: справочные конфиги кафедры/команды из workflow_service
+			workflows.GET("/department-config", handler.GetDepartmentWorkflowConfig)
+			workflows.GET("/team-configuration", handler.GetTeamConfiguration)
 		}
 
 		roles := v1.Group("/roles")
@@ -217,6 +210,13 @@ func main() {
 		{
 			notifications.GET("", handler.ListNotifications)
 			notifications.POST("/:id/read", handler.MarkNotificationRead)
+		}
+
+		// NEW: onboarding status endpoint (BFF для фронта)
+		onboarding := v1.Group("/onboarding")
+		onboarding.Use(middleware.AuthMiddleware(cfg.JWTSecret))
+		{
+			onboarding.GET("", handler.GetOnboardingStatus)
 		}
 
 		tasks := v1.Group("/tasks")
@@ -291,6 +291,9 @@ func main() {
 		{
 			supervisors.GET("/my-requests", handler.ListMySupervisorRequests)
 			supervisors.POST("/requests/:id/respond", handler.RespondToSupervisorRequest)
+
+			// NEW: teacher claims team without request
+			supervisors.POST("/teams/:team_id/claim", handler.TeacherClaimTeam)
 		}
 	}
 
@@ -314,9 +317,11 @@ func main() {
 	router.GET("/healthz", func(c *gin.Context) {
 		c.JSON(200, gin.H{"status": "ok"})
 	})
+
 	router.GET("/health", func(c *gin.Context) {
 		c.JSON(200, gin.H{"status": "ok"})
 	})
+
 	router.GET("/readyz", checker.ReadyHandler(targets))
 
 	log.Info("API Gateway starting", zap.String("port", cfg.Port))

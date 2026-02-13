@@ -28,9 +28,14 @@ func (h *Handler) ListNotifications(c *gin.Context) {
 func (h *Handler) MarkNotificationRead(c *gin.Context) {
 	userID := c.GetInt64("userId")
 	idStr := c.Param("id")
-	id, _ := strconv.ParseInt(idStr, 10, 64)
 
-	_, err := h.notificationClient.MarkAsRead(c.Request.Context(), &notificationv1.MarkAsReadRequest{
+	id, err := strconv.ParseInt(idStr, 10, 64)
+	if err != nil || id <= 0 {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid notification id"})
+		return
+	}
+
+	_, err = h.notificationClient.MarkAsRead(c.Request.Context(), &notificationv1.MarkAsReadRequest{
 		NotificationId: id,
 		UserId:         userID,
 	})

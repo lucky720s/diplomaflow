@@ -31,6 +31,8 @@ service AdminService {
   // ==================== Supervisor Request (Запрос команды к руководителю) ====================
   // Project-first: каноническая привязка к project_id, team_id опционален.
   rpc CreateSupervisorRequest(CreateSupervisorRequestReq) returns (CreateSupervisorRequestResp);
+  rpc CreateSupervisorRequestByTeam(CreateSupervisorRequestByTeamReq) returns (CreateSupervisorRequestResp);
+
   rpc ListSupervisorRequests(ListSupervisorRequestsReq) returns (ListSupervisorRequestsResp);
   rpc GetSupervisorRequest(GetSupervisorRequestReq) returns (GetSupervisorRequestResp);
   rpc RespondToSupervisorRequest(RespondToSupervisorRequestReq) returns (RespondToSupervisorRequestResp);
@@ -69,6 +71,7 @@ service AdminService {
   // ==================== Workflow Progress ====================
   rpc GetWorkflowProgress(GetWorkflowProgressRequest) returns (GetWorkflowProgressResponse);
   rpc ListPendingReviews(ListPendingReviewsRequest) returns (ListPendingReviewsResponse);
+
 }
 
 // ==================== Topic Registration Messages ====================
@@ -421,17 +424,21 @@ message TeamMemberPreview {
   string role = 4;
 }
 
+
 message CreateSupervisorRequestReq {
-  // NEW: project-first
   int64 project_id = 1 [(validate.rules).int64.gt = 0];
-
-  // team_id optional: если 0 — admin_service сам получит team_id из project runtime
   int64 team_id = 2;
-
   int64 supervisor_id = 3 [(validate.rules).int64.gt = 0];
   int64 requested_by = 4 [(validate.rules).int64.gt = 0];
   string message = 5 [(validate.rules).string.max_len = 1000];
   string proposed_topic = 6;
+}
+message CreateSupervisorRequestByTeamReq {
+  int64 team_id = 1 [(validate.rules).int64.gt = 0];
+  int64 supervisor_id = 2 [(validate.rules).int64.gt = 0];
+  int64 requested_by = 3 [(validate.rules).int64.gt = 0];
+  string message = 4 [(validate.rules).string.max_len = 1000];
+  string proposed_topic = 5;
 }
 
 message CreateSupervisorRequestResp {

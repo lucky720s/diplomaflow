@@ -741,9 +741,10 @@ func (h *Handler) GetUpcomingDeadlines(c *gin.Context) {
 	}
 
 	if boardID == 0 {
-		teamResp, err := h.teamClient.GetMyTeam(c.Request.Context(), &teamv1.GetMyTeamRequest{
+		teamResp, err := h.teamClient.GetMyTeam(outgoingCtx(c), &teamv1.GetMyTeamRequest{
 			UserId: userID,
 		})
+
 		if err != nil {
 			MapGRPCError(c, err)
 			return

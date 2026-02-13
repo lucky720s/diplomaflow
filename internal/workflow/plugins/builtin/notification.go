@@ -4,10 +4,12 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"strconv"
 	"strings"
 
 	"github.com/lucky720s/diplomaflow/internal/workflow/plugins"
 	notificationv1 "github.com/lucky720s/diplomaflow/pkg/protobuf/notification/v1"
+	"google.golang.org/grpc/metadata"
 )
 
 type NotificationPlugin struct {
@@ -24,36 +26,25 @@ func (p *NotificationPlugin) Description() string {
 	return "Отправляет push-уведомление пользователям"
 }
 func (p *NotificationPlugin) Category() string   { return plugins.CategoryNotification }
-func (p *NotificationPlugin) IsReversible() bool { return false } // ← ДОБАВЛЕНО!
+func (p *NotificationPlugin) IsReversible() bool { return false }
 
 func (p *NotificationPlugin) ConfigSchema() json.RawMessage {
 	return json.RawMessage(`{
 		"type": "object",
 		"required": ["title", "message"],
 		"properties": {
-			"title": {
-				"type": "string",
-				"title": "Заголовок",
-				"description": "Поддерживает переменные: {{project_title}}, {{student_name}}, {{deadline}}"
-			},
-			"message": {
-				"type": "string",
-				"title": "Сообщение"
-			},
-			"link": {
-				"type": "string",
-				"title": "Ссылка"
-			},
+			"title": {"type":"string"},
+			"message": {"type":"string"},
+			"link": {"type":"string"},
+			"type": {"type":"string", "default":"WORKFLOW"},
 			"recipients": {
-				"type": "string",
-				"title": "Получатели",
-				"enum": ["student", "team", "supervisor", "commission"],
-				"default": "student"
+				"type":"string",
+				"enum":["student","team","supervisor","explicit"],
+				"default":"student"
 			},
-			"urgency": {
-				"type": "string",
-				"enum": ["low", "normal", "high", "urgent"],
-				"default": "normal"
+			"explicit_user_ids": {
+				"type":"array",
+				"items":{"type":"integer"}
 			}
 		}
 	}`)
@@ -70,17 +61,70 @@ func (p *NotificationPlugin) Validate(config map[string]interface{}) error {
 }
 
 func (p *NotificationPlugin) Execute(ctx context.Context, actx *plugins.ActionContext) *plugins.ActionResult {
-	title := p.interpolate(actx.Config["title"].(string), actx)
-	message := p.interpolate(actx.Config["message"].(string), actx)
+	if p.client == nil {
+		return &plugins.ActionResult{Success: true, Data: map[string]interface{}{"skipped": true, "reason": "notification client is nil"}}
+	}
 
-	recipients := p.getRecipients(actx)
+	title := toString(actx.Config["title"])
+	message := toString(actx.Config["message"])
+	if title == "" || message == "" {
+		// do not fail whole workflow; it's a configuration issue
+		return &plugins.ActionResult{Success: true, Data: map[string]interface{}{"skipped": true, "reason": "empty title/message"}}
+	}
+
+	title = interpolate(title, actx)
+	message = interpolate(message, actx)
+
+	link := toString(actx.Config["link"])
+	if link == "" {
+		link = fmt.Sprintf("/projects/%d", actx.ProjectID)
+	} else {
+		link = interpolate(link, actx)
+	}
+
+	nType := toString(actx.Config["type"])
+	if nType == "" {
+		nType = "WORKFLOW"
+	}
+
+	recType := toString(actx.Config["recipients"])
+	if recType == "" {
+		recType = "student"
+	}
+
+	recipients := p.getRecipients(actx, recType)
+
+	// If explicit list configured
+	if recType == "explicit" {
+		if ids := toInt64Slice(actx.Config["explicit_user_ids"]); len(ids) > 0 {
+			recipients = append(recipients, ids...)
+		}
+	}
+
+	recipients = uniqueInt64(recipients)
+
+	if len(recipients) == 0 {
+		// best-effort: don't fail post-commit pipeline
+		return &plugins.ActionResult{
+			Success: true,
+			Data: map[string]interface{}{
+				"skipped": true,
+				"reason":  "no recipients resolved",
+				"mode":    recType,
+			},
+		}
+	}
+
+	// mark internal call for observability / future auth hardening
+	nctx := metadata.AppendToOutgoingContext(ctx, "x-internal-service", "workflow_service")
+
 	for _, userID := range recipients {
-		_, err := p.client.SendNotification(ctx, &notificationv1.SendNotificationRequest{
+		_, err := p.client.SendNotification(nctx, &notificationv1.SendNotificationRequest{
 			UserId:  userID,
 			Title:   title,
 			Message: message,
-			Link:    fmt.Sprintf("/projects/%d", actx.ProjectID),
-			Type:    "WORKFLOW",
+			Link:    link,
+			Type:    nType,
 		})
 		if err != nil {
 			return &plugins.ActionResult{
@@ -91,44 +135,136 @@ func (p *NotificationPlugin) Execute(ctx context.Context, actx *plugins.ActionCo
 			}
 		}
 	}
-	return &plugins.ActionResult{Success: true}
-}
 
-// ДОБАВЛЕНО: реализация Rollback
-func (p *NotificationPlugin) Rollback(ctx context.Context, actx *plugins.ActionContext) error {
-	return nil // Уведомления нельзя отменить
-}
-
-func (p *NotificationPlugin) interpolate(template string, actx *plugins.ActionContext) string {
-	result := template
-	result = strings.ReplaceAll(result, "{{project_id}}", fmt.Sprint(actx.ProjectID))
-	if title, ok := actx.ProjectData["title"].(string); ok {
-		result = strings.ReplaceAll(result, "{{project_title}}", title)
+	return &plugins.ActionResult{
+		Success: true,
+		Data: map[string]interface{}{
+			"sent":       true,
+			"recipients": len(recipients),
+		},
 	}
-	return result
 }
 
-func (p *NotificationPlugin) getRecipients(actx *plugins.ActionContext) []int64 {
-	recipientType, _ := actx.Config["recipients"].(string)
-	var recipients []int64
+func (p *NotificationPlugin) Rollback(ctx context.Context, actx *plugins.ActionContext) error {
+	return nil
+}
 
+// Recipients resolution strategy:
+// - student: prefer project_data.student_id; else fallback to actx.UserID (initiator) to not be empty
+// - supervisor: project_data.supervisor_id if present
+// - team: requires project_data.team_members OR explicit_user_ids (team list not available in this plugin without team_client)
+func (p *NotificationPlugin) getRecipients(actx *plugins.ActionContext, recipientType string) []int64 {
+	var out []int64
 	switch recipientType {
 	case "student":
-		if id, ok := actx.ProjectData["student_id"].(float64); ok {
-			recipients = append(recipients, int64(id))
+		if id, ok := readInt64(actx.ProjectData, "student_id"); ok && id > 0 {
+			out = append(out, id)
+		} else if actx.UserID > 0 {
+			out = append(out, actx.UserID)
+		}
+	case "supervisor":
+		if id, ok := readInt64(actx.ProjectData, "supervisor_id"); ok && id > 0 {
+			out = append(out, id)
 		}
 	case "team":
-		if members, ok := actx.ProjectData["team_members"].([]interface{}); ok {
-			for _, m := range members {
-				if id, ok := m.(float64); ok {
-					recipients = append(recipients, int64(id))
+		// expects team_members in project_data as array
+		if raw, ok := actx.ProjectData["team_members"]; ok {
+			out = append(out, toInt64Slice(raw)...)
+		}
+	}
+	return out
+}
+
+func interpolate(template string, actx *plugins.ActionContext) string {
+	s := template
+	s = strings.ReplaceAll(s, "{{project_id}}", fmt.Sprint(actx.ProjectID))
+	s = strings.ReplaceAll(s, "{{team_id}}", fmt.Sprint(actx.TeamID))
+	s = strings.ReplaceAll(s, "{{user_id}}", fmt.Sprint(actx.UserID))
+	if t, ok := actx.ProjectData["title"].(string); ok && t != "" {
+		s = strings.ReplaceAll(s, "{{project_title}}", t)
+	}
+	return s
+}
+
+func toString(v interface{}) string {
+	if v == nil {
+		return ""
+	}
+	switch t := v.(type) {
+	case string:
+		return t
+	default:
+		return fmt.Sprint(v)
+	}
+}
+
+func readInt64(m map[string]interface{}, key string) (int64, bool) {
+	if m == nil {
+		return 0, false
+	}
+	v, ok := m[key]
+	if !ok || v == nil {
+		return 0, false
+	}
+	switch t := v.(type) {
+	case int64:
+		return t, true
+	case int:
+		return int64(t), true
+	case float64:
+		return int64(t), true
+	case string:
+		id, err := strconv.ParseInt(t, 10, 64)
+		if err == nil {
+			return id, true
+		}
+		return 0, false
+	default:
+		return 0, false
+	}
+}
+
+func toInt64Slice(v interface{}) []int64 {
+	if v == nil {
+		return nil
+	}
+	switch t := v.(type) {
+	case []int64:
+		return t
+	case []interface{}:
+		out := make([]int64, 0, len(t))
+		for _, x := range t {
+			switch n := x.(type) {
+			case int64:
+				out = append(out, n)
+			case int:
+				out = append(out, int64(n))
+			case float64:
+				out = append(out, int64(n))
+			case string:
+				if id, err := strconv.ParseInt(n, 10, 64); err == nil {
+					out = append(out, id)
 				}
 			}
 		}
-	case "supervisor":
-		if id, ok := actx.ProjectData["supervisor_id"].(float64); ok {
-			recipients = append(recipients, int64(id))
-		}
+		return out
+	default:
+		return nil
 	}
-	return recipients
+}
+
+func uniqueInt64(in []int64) []int64 {
+	seen := make(map[int64]struct{}, len(in))
+	out := make([]int64, 0, len(in))
+	for _, v := range in {
+		if v <= 0 {
+			continue
+		}
+		if _, ok := seen[v]; ok {
+			continue
+		}
+		seen[v] = struct{}{}
+		out = append(out, v)
+	}
+	return out
 }

@@ -10,6 +10,7 @@ import (
 
 	"github.com/lucky720s/diplomaflow/internal/project"
 	"github.com/lucky720s/diplomaflow/pkg/config"
+	grpcpkg "github.com/lucky720s/diplomaflow/pkg/grpc"
 	"github.com/lucky720s/diplomaflow/pkg/logger"
 	projectv1 "github.com/lucky720s/diplomaflow/pkg/protobuf/project/v1"
 	workflowv1 "github.com/lucky720s/diplomaflow/pkg/protobuf/workflow/v1"
@@ -22,6 +23,13 @@ import (
 	"gorm.io/gorm"
 )
 
+func dial(addr string) (*grpc.ClientConn, error) {
+	return grpc.NewClient(addr,
+		grpc.WithTransportCredentials(insecure.NewCredentials()),
+		grpc.WithDefaultServiceConfig(grpcpkg.DefaultRetryServiceConfig()),
+		grpc.WithUnaryInterceptor(grpcpkg.TimeoutInterceptor(10*time.Second)),
+	)
+}
 func main() {
 	var cfg project.Config
 	if err := config.Load("config.yaml", &cfg); err != nil {
@@ -37,7 +45,7 @@ func main() {
 	}
 
 	// Workflow client
-	wfConn, err := grpc.NewClient(cfg.Services.WorkflowAddr, grpc.WithTransportCredentials(insecure.NewCredentials()))
+	wfConn, err := dial(cfg.Services.WorkflowAddr)
 	if err != nil {
 		log.Fatal("Failed to connect to workflow service", zap.Error(err))
 	}

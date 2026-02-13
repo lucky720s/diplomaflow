@@ -1,6 +1,7 @@
 package handler
 
 import (
+	"context"
 	"net/http"
 	"strconv"
 
@@ -11,42 +12,30 @@ import (
 	"google.golang.org/protobuf/types/known/structpb"
 )
 
-func (h *Handler) CreateProject(c *gin.Context) {
-	studentID := c.GetInt64("userId")
-	universityID := c.GetInt64("universityId")
-	departmentID := c.GetInt64("departmentId")
-	if studentID == 0 {
-		c.JSON(http.StatusUnauthorized, gin.H{"error": "User ID not found in token"})
-		return
-	}
-
-	var req projectv1.CreateProjectRequest
-	if err := c.ShouldBindJSON(&req); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
-		return
-	}
-
-	req.StudentId = studentID
-	req.UniversityId = universityID
-	req.DepartmentId = departmentID
-
-	ctx := metadata.AppendToOutgoingContext(c.Request.Context(),
-		"x-university-id", strconv.FormatInt(universityID, 10),
-		"x-department-id", strconv.FormatInt(departmentID, 10),
+func projectCtx(c *gin.Context) context.Context {
+	userID := c.GetInt64("userId")
+	role := c.GetString("role")
+	return metadata.AppendToOutgoingContext(
+		c.Request.Context(),
+		"x-user-id", strconv.FormatInt(userID, 10),
+		"x-user-role", role,
 	)
+}
 
-	res, err := h.projectClient.CreateProject(ctx, &req)
-	if err != nil {
-		MapGRPCError(c, err)
-		return
-	}
-	c.JSON(http.StatusCreated, res)
+// NOTE: CreateProject endpoint лучше удалить из gateway (см. ниже патч роутинга).
+// Оставляю метод, чтобы сборка не падала, если где-то ещё на него ссылаются.
+func (h *Handler) CreateProject(c *gin.Context) {
+	c.JSON(http.StatusForbidden, gin.H{"error": "project creation is not available via gateway; use supervisor approve/claim flow"})
 }
 
 func (h *Handler) GetProject(c *gin.Context) {
-	idStr := c.Param("id")
-	id, _ := strconv.ParseInt(idStr, 10, 64)
-	res, err := h.projectClient.GetProject(c.Request.Context(), &projectv1.GetProjectRequest{ProjectId: id})
+	id, err := strconv.ParseInt(c.Param("id"), 10, 64)
+	if err != nil || id <= 0 {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid project id"})
+		return
+	}
+
+	res, err := h.projectClient.GetProject(projectCtx(c), &projectv1.GetProjectRequest{ProjectId: id})
 	if err != nil {
 		MapGRPCError(c, err)
 		return
@@ -55,8 +44,15 @@ func (h *Handler) GetProject(c *gin.Context) {
 }
 
 func (h *Handler) GetStudentProjects(c *gin.Context) {
-	studentID, _ := strconv.ParseInt(c.Param("student_id"), 10, 64)
-	res, err := h.projectClient.GetStudentProjects(c.Request.Context(), &projectv1.GetStudentProjectsRequest{StudentId: studentID})
+	studentID, err := strconv.ParseInt(c.Param("student_id"), 10, 64)
+	if err != nil || studentID <= 0 {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid student id"})
+		return
+	}
+
+	res, err := h.projectClient.GetStudentProjects(projectCtx(c), &projectv1.GetStudentProjectsRequest{
+		StudentId: studentID,
+	})
 	if err != nil {
 		MapGRPCError(c, err)
 		return
@@ -65,20 +61,23 @@ func (h *Handler) GetStudentProjects(c *gin.Context) {
 }
 
 func (h *Handler) GetProjectDetails(c *gin.Context) {
-	idStr := c.Param("id")
-	projectID, _ := strconv.ParseInt(idStr, 10, 64)
-	traceID := c.GetString("trace_id")
+	projectID, err := strconv.ParseInt(c.Param("id"), 10, 64)
+	if err != nil || projectID <= 0 {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid project id"})
+		return
+	}
 
-	ctx := metadata.AppendToOutgoingContext(c.Request.Context(), "x-trace-id", traceID)
+	traceID := c.GetString("trace_id")
+	ctx := metadata.AppendToOutgoingContext(projectCtx(c), "x-trace-id", traceID)
 	g, ctx := errgroup.WithContext(ctx)
 
 	var projectResp *projectv1.GetProjectResponse
 	var currentUserInfo map[string]interface{}
 
 	g.Go(func() error {
-		var err error
-		projectResp, err = h.projectClient.GetProject(ctx, &projectv1.GetProjectRequest{ProjectId: projectID})
-		return err
+		var e error
+		projectResp, e = h.projectClient.GetProject(ctx, &projectv1.GetProjectRequest{ProjectId: projectID})
+		return e
 	})
 
 	userID := c.GetInt64("userId")
@@ -111,7 +110,7 @@ func (h *Handler) ListProjects(c *gin.Context) {
 		req.StudentId = studentID
 	}
 
-	res, err := h.projectClient.GetStudentProjects(c.Request.Context(), &req)
+	res, err := h.projectClient.GetStudentProjects(projectCtx(c), &req)
 	if err != nil {
 		MapGRPCError(c, err)
 		return
@@ -120,31 +119,24 @@ func (h *Handler) ListProjects(c *gin.Context) {
 }
 
 func (h *Handler) PerformProjectAction(c *gin.Context) {
-	projectID, _ := strconv.ParseInt(c.Param("id"), 10, 64)
+	projectID, err := strconv.ParseInt(c.Param("id"), 10, 64)
+	if err != nil || projectID <= 0 {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid project id"})
+		return
+	}
 
 	var req struct {
 		ActionName string                 `json:"action_name" binding:"required"`
 		Payload    map[string]interface{} `json:"payload"`
 	}
-	if err := c.ShouldBindJSON(&req); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+	if bindErr := c.ShouldBindJSON(&req); bindErr != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": bindErr.Error()})
 		return
 	}
 
 	payloadStruct, _ := structpb.NewStruct(req.Payload)
 
-	// IMPORTANT: пробрасываем identity/role до project_service.PerformAction,
-	// потому что project_service читает metadata x-user-id/x-user-role [[1]].
-	userID := c.GetInt64("userId")
-	userRole := c.GetString("role")
-
-	ctx := metadata.AppendToOutgoingContext(
-		c.Request.Context(),
-		"x-user-id", strconv.FormatInt(userID, 10),
-		"x-user-role", userRole,
-	)
-
-	res, err := h.projectClient.PerformAction(ctx, &projectv1.PerformActionRequest{
+	res, err := h.projectClient.PerformAction(projectCtx(c), &projectv1.PerformActionRequest{
 		ProjectId:  projectID,
 		ActionName: req.ActionName,
 		Payload:    payloadStruct,

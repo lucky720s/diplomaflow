@@ -29,7 +29,15 @@ func NewHandler(service *Service, logger *zap.Logger) *Handler {
 	}
 }
 
+func derefInt64(p *int64) int64 {
+	if p == nil {
+		return 0
+	}
+	return *p
+}
+
 // ==================== Dashboard ====================
+
 func (h *Handler) GetDashboard(ctx context.Context, req *adminv1.GetDashboardRequest) (*adminv1.GetDashboardResponse, error) {
 	if req.DepartmentId == 0 {
 		return nil, status.Error(codes.InvalidArgument, "department_id is required")
@@ -50,6 +58,10 @@ func (h *Handler) GetDashboard(ctx context.Context, req *adminv1.GetDashboardReq
 			PendingReviews:            resp.Stats.PendingReviews,
 			ActiveSupervisors:         resp.Stats.ActiveSupervisors,
 			PendingTopicRegistrations: resp.Stats.PendingTopicRegistrations,
+			PendingSupervisorRequests: resp.Stats.PendingSupervisorRequests,
+			PendingPreDefenses:        resp.Stats.PendingPreDefenses,
+			ScheduledPreDefenses:      resp.Stats.ScheduledPreDefenses,
+			PreDefensesThisWeek:       resp.Stats.PreDefensesThisWeek,
 		},
 	}
 
@@ -101,6 +113,10 @@ func (h *Handler) GetDepartmentStats(ctx context.Context, req *adminv1.GetDepart
 			PendingReviews:            resp.Stats.PendingReviews,
 			ActiveSupervisors:         resp.Stats.ActiveSupervisors,
 			PendingTopicRegistrations: resp.Stats.PendingTopicRegistrations,
+			PendingSupervisorRequests: resp.Stats.PendingSupervisorRequests,
+			PendingPreDefenses:        resp.Stats.PendingPreDefenses,
+			ScheduledPreDefenses:      resp.Stats.ScheduledPreDefenses,
+			PreDefensesThisWeek:       resp.Stats.PreDefensesThisWeek,
 		},
 	}
 
@@ -108,6 +124,7 @@ func (h *Handler) GetDepartmentStats(ctx context.Context, req *adminv1.GetDepart
 }
 
 // ==================== Students ====================
+
 func (h *Handler) ListStudents(ctx context.Context, req *adminv1.ListStudentsRequest) (*adminv1.ListStudentsResponse, error) {
 	students, total, err := h.service.ListStudents(ctx, &ListStudentsRequest{
 		UniversityID:    req.UniversityId,
@@ -196,6 +213,7 @@ func (h *Handler) GetStudent(ctx context.Context, req *adminv1.GetStudentRequest
 }
 
 // ==================== Teams ====================
+
 func (h *Handler) ListAllTeams(ctx context.Context, req *adminv1.ListAllTeamsRequest) (*adminv1.ListAllTeamsResponse, error) {
 	teams, total, err := h.service.ListAllTeams(ctx, &ListAllTeamsRequest{
 		DepartmentID: req.DepartmentId,
@@ -371,6 +389,7 @@ func (h *Handler) DeleteTeamAdmin(ctx context.Context, req *adminv1.DeleteTeamAd
 }
 
 // ==================== Supervisors ====================
+
 func (h *Handler) ListSupervisors(ctx context.Context, req *adminv1.ListSupervisorsRequest) (*adminv1.ListSupervisorsResponse, error) {
 	supervisors, total, err := h.service.ListSupervisors(ctx, req.DepartmentId, req.UniversityId, req.Page, req.PageSize)
 	if err != nil {
@@ -400,7 +419,11 @@ func (h *Handler) AssignSupervisor(ctx context.Context, req *adminv1.AssignSuper
 		return nil, status.Error(codes.InvalidArgument, "team_id and supervisor_id are required")
 	}
 
-	actorID := int64(1) // TODO: read from context
+	actorID := getActorIDFromContext(ctx)
+	if actorID == 0 {
+		actorID = int64(1) // fallback (not ideal)
+	}
+
 	err := h.service.AssignSupervisor(ctx, req.TeamId, req.SupervisorId, actorID)
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, "failed to assign supervisor: %v", err)
@@ -413,8 +436,8 @@ func (h *Handler) AssignSupervisor(ctx context.Context, req *adminv1.AssignSuper
 }
 
 // ==================== Topic Registration ====================
+
 func (h *Handler) SubmitTopicRegistration(ctx context.Context, req *adminv1.SubmitTopicRegistrationRequest) (*adminv1.SubmitTopicRegistrationResponse, error) {
-	// Variant B: project-first
 	if req.ProjectId == 0 {
 		return nil, status.Error(codes.InvalidArgument, "project_id is required")
 	}
@@ -595,6 +618,7 @@ func (h *Handler) ReviewTopicRegistration(ctx context.Context, req *adminv1.Revi
 }
 
 // ==================== Submissions ====================
+
 func (h *Handler) ListSubmissions(ctx context.Context, req *adminv1.ListSubmissionsRequest) (*adminv1.ListSubmissionsResponse, error) {
 	pageSize := int(req.PageSize)
 	if pageSize <= 0 {
@@ -733,7 +757,8 @@ func (h *Handler) ReviewSubmission(ctx context.Context, req *adminv1.ReviewSubmi
 	}, nil
 }
 
-// ==================== Grading (только баллы, без буквенных оценок) ====================
+// ==================== Grading ====================
+
 func (h *Handler) GetProjectGrades(ctx context.Context, req *adminv1.GetProjectGradesRequest) (*adminv1.GetProjectGradesResponse, error) {
 	grades, avg, err := h.service.GetProjectGrades(ctx, req.ProjectId)
 	if err != nil {
@@ -824,6 +849,7 @@ func (h *Handler) GetGradingHistory(ctx context.Context, req *adminv1.GetGrading
 }
 
 // ==================== Workflow Progress ====================
+
 func (h *Handler) GetWorkflowProgress(ctx context.Context, req *adminv1.GetWorkflowProgressRequest) (*adminv1.GetWorkflowProgressResponse, error) {
 	progress, err := h.service.GetWorkflowProgress(ctx, req.DepartmentId, req.WorkflowId)
 	if err != nil {
@@ -903,9 +929,10 @@ func (h *Handler) ListPendingReviews(ctx context.Context, req *adminv1.ListPendi
 	}, nil
 }
 
-// ==================== Supervisor Request Handlers ====================
+// ==================== Supervisor Requests ====================
+
+// Project-first (оставляем как есть)
 func (h *Handler) CreateSupervisorRequest(ctx context.Context, req *adminv1.CreateSupervisorRequestReq) (*adminv1.CreateSupervisorRequestResp, error) {
-	// Variant B: project-first
 	if req.ProjectId == 0 {
 		return nil, status.Error(codes.InvalidArgument, "project_id is required")
 	}
@@ -925,6 +952,45 @@ func (h *Handler) CreateSupervisorRequest(ctx context.Context, req *adminv1.Crea
 		ProposedTopic: req.ProposedTopic,
 	})
 	if err != nil {
+		if st, ok := status.FromError(err); ok {
+			return nil, st.Err()
+		}
+		h.logger.Error("CreateSupervisorRequest failed", zap.Error(err))
+		return nil, status.Errorf(codes.Internal, "failed to create supervisor request: %v", err)
+	}
+
+	return &adminv1.CreateSupervisorRequestResp{
+		Success:   true,
+		RequestId: result.ID,
+		Message:   "Запрос успешно отправлен супервайзеру",
+		Request:   h.convertSupervisorRequestToProto(result),
+	}, nil
+}
+
+// Team-first (NEW)
+func (h *Handler) CreateSupervisorRequestByTeam(ctx context.Context, req *adminv1.CreateSupervisorRequestByTeamReq) (*adminv1.CreateSupervisorRequestResp, error) {
+	if req.TeamId == 0 {
+		return nil, status.Error(codes.InvalidArgument, "team_id is required")
+	}
+	if req.SupervisorId == 0 {
+		return nil, status.Error(codes.InvalidArgument, "supervisor_id is required")
+	}
+	if req.RequestedBy == 0 {
+		return nil, status.Error(codes.InvalidArgument, "requested_by is required")
+	}
+
+	result, err := h.service.CreateSupervisorRequest(ctx, &CreateSupervisorRequestInput{
+		ProjectID:     0,
+		TeamID:        req.TeamId,
+		SupervisorID:  req.SupervisorId,
+		RequestedBy:   req.RequestedBy,
+		Message:       req.Message,
+		ProposedTopic: req.ProposedTopic,
+	})
+	if err != nil {
+		if st, ok := status.FromError(err); ok {
+			return nil, st.Err()
+		}
 		h.logger.Error("CreateSupervisorRequest failed", zap.Error(err))
 		return nil, status.Errorf(codes.Internal, "failed to create supervisor request: %v", err)
 	}
@@ -1085,7 +1151,6 @@ func (h *Handler) CancelSupervisorRequest(ctx context.Context, req *adminv1.Canc
 	}, nil
 }
 
-// convertSupervisorRequestToProto - конвертация в protobuf
 func (h *Handler) convertSupervisorRequestToProto(req *SupervisorRequestWithDetails) *adminv1.SupervisorRequest {
 	if req == nil {
 		return nil
@@ -1095,7 +1160,7 @@ func (h *Handler) convertSupervisorRequestToProto(req *SupervisorRequestWithDeta
 		Id:              req.ID,
 		TeamId:          req.TeamID,
 		TeamName:        req.TeamName,
-		ProjectId:       req.ProjectID,
+		ProjectId:       derefInt64(req.ProjectID), // 0 if not created yet
 		SupervisorId:    req.SupervisorID,
 		SupervisorName:  req.SupervisorName,
 		SupervisorEmail: req.SupervisorEmail,

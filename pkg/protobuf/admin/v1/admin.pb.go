@@ -3160,15 +3160,13 @@ func (x *TeamMemberPreview) GetRole() string {
 }
 
 type CreateSupervisorRequestReq struct {
-	state protoimpl.MessageState `protogen:"open.v1"`
-	// NEW: project-first
-	ProjectId int64 `protobuf:"varint,1,opt,name=project_id,json=projectId,proto3" json:"project_id,omitempty"`
-	// team_id optional: если 0 — admin_service сам получит team_id из project runtime
-	TeamId        int64  `protobuf:"varint,2,opt,name=team_id,json=teamId,proto3" json:"team_id,omitempty"`
-	SupervisorId  int64  `protobuf:"varint,3,opt,name=supervisor_id,json=supervisorId,proto3" json:"supervisor_id,omitempty"`
-	RequestedBy   int64  `protobuf:"varint,4,opt,name=requested_by,json=requestedBy,proto3" json:"requested_by,omitempty"`
-	Message       string `protobuf:"bytes,5,opt,name=message,proto3" json:"message,omitempty"`
-	ProposedTopic string `protobuf:"bytes,6,opt,name=proposed_topic,json=proposedTopic,proto3" json:"proposed_topic,omitempty"`
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	ProjectId     int64                  `protobuf:"varint,1,opt,name=project_id,json=projectId,proto3" json:"project_id,omitempty"`
+	TeamId        int64                  `protobuf:"varint,2,opt,name=team_id,json=teamId,proto3" json:"team_id,omitempty"`
+	SupervisorId  int64                  `protobuf:"varint,3,opt,name=supervisor_id,json=supervisorId,proto3" json:"supervisor_id,omitempty"`
+	RequestedBy   int64                  `protobuf:"varint,4,opt,name=requested_by,json=requestedBy,proto3" json:"requested_by,omitempty"`
+	Message       string                 `protobuf:"bytes,5,opt,name=message,proto3" json:"message,omitempty"`
+	ProposedTopic string                 `protobuf:"bytes,6,opt,name=proposed_topic,json=proposedTopic,proto3" json:"proposed_topic,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -3245,6 +3243,82 @@ func (x *CreateSupervisorRequestReq) GetProposedTopic() string {
 	return ""
 }
 
+type CreateSupervisorRequestByTeamReq struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	TeamId        int64                  `protobuf:"varint,1,opt,name=team_id,json=teamId,proto3" json:"team_id,omitempty"`
+	SupervisorId  int64                  `protobuf:"varint,2,opt,name=supervisor_id,json=supervisorId,proto3" json:"supervisor_id,omitempty"`
+	RequestedBy   int64                  `protobuf:"varint,3,opt,name=requested_by,json=requestedBy,proto3" json:"requested_by,omitempty"`
+	Message       string                 `protobuf:"bytes,4,opt,name=message,proto3" json:"message,omitempty"`
+	ProposedTopic string                 `protobuf:"bytes,5,opt,name=proposed_topic,json=proposedTopic,proto3" json:"proposed_topic,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *CreateSupervisorRequestByTeamReq) Reset() {
+	*x = CreateSupervisorRequestByTeamReq{}
+	mi := &file_admin_v1_admin_proto_msgTypes[44]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *CreateSupervisorRequestByTeamReq) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*CreateSupervisorRequestByTeamReq) ProtoMessage() {}
+
+func (x *CreateSupervisorRequestByTeamReq) ProtoReflect() protoreflect.Message {
+	mi := &file_admin_v1_admin_proto_msgTypes[44]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use CreateSupervisorRequestByTeamReq.ProtoReflect.Descriptor instead.
+func (*CreateSupervisorRequestByTeamReq) Descriptor() ([]byte, []int) {
+	return file_admin_v1_admin_proto_rawDescGZIP(), []int{44}
+}
+
+func (x *CreateSupervisorRequestByTeamReq) GetTeamId() int64 {
+	if x != nil {
+		return x.TeamId
+	}
+	return 0
+}
+
+func (x *CreateSupervisorRequestByTeamReq) GetSupervisorId() int64 {
+	if x != nil {
+		return x.SupervisorId
+	}
+	return 0
+}
+
+func (x *CreateSupervisorRequestByTeamReq) GetRequestedBy() int64 {
+	if x != nil {
+		return x.RequestedBy
+	}
+	return 0
+}
+
+func (x *CreateSupervisorRequestByTeamReq) GetMessage() string {
+	if x != nil {
+		return x.Message
+	}
+	return ""
+}
+
+func (x *CreateSupervisorRequestByTeamReq) GetProposedTopic() string {
+	if x != nil {
+		return x.ProposedTopic
+	}
+	return ""
+}
+
 type CreateSupervisorRequestResp struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	Success       bool                   `protobuf:"varint,1,opt,name=success,proto3" json:"success,omitempty"`
@@ -3257,7 +3331,7 @@ type CreateSupervisorRequestResp struct {
 
 func (x *CreateSupervisorRequestResp) Reset() {
 	*x = CreateSupervisorRequestResp{}
-	mi := &file_admin_v1_admin_proto_msgTypes[44]
+	mi := &file_admin_v1_admin_proto_msgTypes[45]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -3269,7 +3343,7 @@ func (x *CreateSupervisorRequestResp) String() string {
 func (*CreateSupervisorRequestResp) ProtoMessage() {}
 
 func (x *CreateSupervisorRequestResp) ProtoReflect() protoreflect.Message {
-	mi := &file_admin_v1_admin_proto_msgTypes[44]
+	mi := &file_admin_v1_admin_proto_msgTypes[45]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -3282,7 +3356,7 @@ func (x *CreateSupervisorRequestResp) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use CreateSupervisorRequestResp.ProtoReflect.Descriptor instead.
 func (*CreateSupervisorRequestResp) Descriptor() ([]byte, []int) {
-	return file_admin_v1_admin_proto_rawDescGZIP(), []int{44}
+	return file_admin_v1_admin_proto_rawDescGZIP(), []int{45}
 }
 
 func (x *CreateSupervisorRequestResp) GetSuccess() bool {
@@ -3327,7 +3401,7 @@ type ListSupervisorRequestsReq struct {
 
 func (x *ListSupervisorRequestsReq) Reset() {
 	*x = ListSupervisorRequestsReq{}
-	mi := &file_admin_v1_admin_proto_msgTypes[45]
+	mi := &file_admin_v1_admin_proto_msgTypes[46]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -3339,7 +3413,7 @@ func (x *ListSupervisorRequestsReq) String() string {
 func (*ListSupervisorRequestsReq) ProtoMessage() {}
 
 func (x *ListSupervisorRequestsReq) ProtoReflect() protoreflect.Message {
-	mi := &file_admin_v1_admin_proto_msgTypes[45]
+	mi := &file_admin_v1_admin_proto_msgTypes[46]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -3352,7 +3426,7 @@ func (x *ListSupervisorRequestsReq) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ListSupervisorRequestsReq.ProtoReflect.Descriptor instead.
 func (*ListSupervisorRequestsReq) Descriptor() ([]byte, []int) {
-	return file_admin_v1_admin_proto_rawDescGZIP(), []int{45}
+	return file_admin_v1_admin_proto_rawDescGZIP(), []int{46}
 }
 
 func (x *ListSupervisorRequestsReq) GetDepartmentId() int64 {
@@ -3407,7 +3481,7 @@ type ListSupervisorRequestsResp struct {
 
 func (x *ListSupervisorRequestsResp) Reset() {
 	*x = ListSupervisorRequestsResp{}
-	mi := &file_admin_v1_admin_proto_msgTypes[46]
+	mi := &file_admin_v1_admin_proto_msgTypes[47]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -3419,7 +3493,7 @@ func (x *ListSupervisorRequestsResp) String() string {
 func (*ListSupervisorRequestsResp) ProtoMessage() {}
 
 func (x *ListSupervisorRequestsResp) ProtoReflect() protoreflect.Message {
-	mi := &file_admin_v1_admin_proto_msgTypes[46]
+	mi := &file_admin_v1_admin_proto_msgTypes[47]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -3432,7 +3506,7 @@ func (x *ListSupervisorRequestsResp) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ListSupervisorRequestsResp.ProtoReflect.Descriptor instead.
 func (*ListSupervisorRequestsResp) Descriptor() ([]byte, []int) {
-	return file_admin_v1_admin_proto_rawDescGZIP(), []int{46}
+	return file_admin_v1_admin_proto_rawDescGZIP(), []int{47}
 }
 
 func (x *ListSupervisorRequestsResp) GetRequests() []*SupervisorRequest {
@@ -3458,7 +3532,7 @@ type GetSupervisorRequestReq struct {
 
 func (x *GetSupervisorRequestReq) Reset() {
 	*x = GetSupervisorRequestReq{}
-	mi := &file_admin_v1_admin_proto_msgTypes[47]
+	mi := &file_admin_v1_admin_proto_msgTypes[48]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -3470,7 +3544,7 @@ func (x *GetSupervisorRequestReq) String() string {
 func (*GetSupervisorRequestReq) ProtoMessage() {}
 
 func (x *GetSupervisorRequestReq) ProtoReflect() protoreflect.Message {
-	mi := &file_admin_v1_admin_proto_msgTypes[47]
+	mi := &file_admin_v1_admin_proto_msgTypes[48]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -3483,7 +3557,7 @@ func (x *GetSupervisorRequestReq) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetSupervisorRequestReq.ProtoReflect.Descriptor instead.
 func (*GetSupervisorRequestReq) Descriptor() ([]byte, []int) {
-	return file_admin_v1_admin_proto_rawDescGZIP(), []int{47}
+	return file_admin_v1_admin_proto_rawDescGZIP(), []int{48}
 }
 
 func (x *GetSupervisorRequestReq) GetRequestId() string {
@@ -3503,7 +3577,7 @@ type GetSupervisorRequestResp struct {
 
 func (x *GetSupervisorRequestResp) Reset() {
 	*x = GetSupervisorRequestResp{}
-	mi := &file_admin_v1_admin_proto_msgTypes[48]
+	mi := &file_admin_v1_admin_proto_msgTypes[49]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -3515,7 +3589,7 @@ func (x *GetSupervisorRequestResp) String() string {
 func (*GetSupervisorRequestResp) ProtoMessage() {}
 
 func (x *GetSupervisorRequestResp) ProtoReflect() protoreflect.Message {
-	mi := &file_admin_v1_admin_proto_msgTypes[48]
+	mi := &file_admin_v1_admin_proto_msgTypes[49]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -3528,7 +3602,7 @@ func (x *GetSupervisorRequestResp) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetSupervisorRequestResp.ProtoReflect.Descriptor instead.
 func (*GetSupervisorRequestResp) Descriptor() ([]byte, []int) {
-	return file_admin_v1_admin_proto_rawDescGZIP(), []int{48}
+	return file_admin_v1_admin_proto_rawDescGZIP(), []int{49}
 }
 
 func (x *GetSupervisorRequestResp) GetRequest() *SupervisorRequest {
@@ -3559,7 +3633,7 @@ type SupervisorRequestHistory struct {
 
 func (x *SupervisorRequestHistory) Reset() {
 	*x = SupervisorRequestHistory{}
-	mi := &file_admin_v1_admin_proto_msgTypes[49]
+	mi := &file_admin_v1_admin_proto_msgTypes[50]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -3571,7 +3645,7 @@ func (x *SupervisorRequestHistory) String() string {
 func (*SupervisorRequestHistory) ProtoMessage() {}
 
 func (x *SupervisorRequestHistory) ProtoReflect() protoreflect.Message {
-	mi := &file_admin_v1_admin_proto_msgTypes[49]
+	mi := &file_admin_v1_admin_proto_msgTypes[50]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -3584,7 +3658,7 @@ func (x *SupervisorRequestHistory) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use SupervisorRequestHistory.ProtoReflect.Descriptor instead.
 func (*SupervisorRequestHistory) Descriptor() ([]byte, []int) {
-	return file_admin_v1_admin_proto_rawDescGZIP(), []int{49}
+	return file_admin_v1_admin_proto_rawDescGZIP(), []int{50}
 }
 
 func (x *SupervisorRequestHistory) GetId() int64 {
@@ -3642,7 +3716,7 @@ type RespondToSupervisorRequestReq struct {
 
 func (x *RespondToSupervisorRequestReq) Reset() {
 	*x = RespondToSupervisorRequestReq{}
-	mi := &file_admin_v1_admin_proto_msgTypes[50]
+	mi := &file_admin_v1_admin_proto_msgTypes[51]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -3654,7 +3728,7 @@ func (x *RespondToSupervisorRequestReq) String() string {
 func (*RespondToSupervisorRequestReq) ProtoMessage() {}
 
 func (x *RespondToSupervisorRequestReq) ProtoReflect() protoreflect.Message {
-	mi := &file_admin_v1_admin_proto_msgTypes[50]
+	mi := &file_admin_v1_admin_proto_msgTypes[51]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -3667,7 +3741,7 @@ func (x *RespondToSupervisorRequestReq) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use RespondToSupervisorRequestReq.ProtoReflect.Descriptor instead.
 func (*RespondToSupervisorRequestReq) Descriptor() ([]byte, []int) {
-	return file_admin_v1_admin_proto_rawDescGZIP(), []int{50}
+	return file_admin_v1_admin_proto_rawDescGZIP(), []int{51}
 }
 
 func (x *RespondToSupervisorRequestReq) GetRequestId() string {
@@ -3716,7 +3790,7 @@ type RespondToSupervisorRequestResp struct {
 
 func (x *RespondToSupervisorRequestResp) Reset() {
 	*x = RespondToSupervisorRequestResp{}
-	mi := &file_admin_v1_admin_proto_msgTypes[51]
+	mi := &file_admin_v1_admin_proto_msgTypes[52]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -3728,7 +3802,7 @@ func (x *RespondToSupervisorRequestResp) String() string {
 func (*RespondToSupervisorRequestResp) ProtoMessage() {}
 
 func (x *RespondToSupervisorRequestResp) ProtoReflect() protoreflect.Message {
-	mi := &file_admin_v1_admin_proto_msgTypes[51]
+	mi := &file_admin_v1_admin_proto_msgTypes[52]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -3741,7 +3815,7 @@ func (x *RespondToSupervisorRequestResp) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use RespondToSupervisorRequestResp.ProtoReflect.Descriptor instead.
 func (*RespondToSupervisorRequestResp) Descriptor() ([]byte, []int) {
-	return file_admin_v1_admin_proto_rawDescGZIP(), []int{51}
+	return file_admin_v1_admin_proto_rawDescGZIP(), []int{52}
 }
 
 func (x *RespondToSupervisorRequestResp) GetSuccess() bool {
@@ -3777,7 +3851,7 @@ type ListMySupervisorRequestsReq struct {
 
 func (x *ListMySupervisorRequestsReq) Reset() {
 	*x = ListMySupervisorRequestsReq{}
-	mi := &file_admin_v1_admin_proto_msgTypes[52]
+	mi := &file_admin_v1_admin_proto_msgTypes[53]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -3789,7 +3863,7 @@ func (x *ListMySupervisorRequestsReq) String() string {
 func (*ListMySupervisorRequestsReq) ProtoMessage() {}
 
 func (x *ListMySupervisorRequestsReq) ProtoReflect() protoreflect.Message {
-	mi := &file_admin_v1_admin_proto_msgTypes[52]
+	mi := &file_admin_v1_admin_proto_msgTypes[53]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -3802,7 +3876,7 @@ func (x *ListMySupervisorRequestsReq) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ListMySupervisorRequestsReq.ProtoReflect.Descriptor instead.
 func (*ListMySupervisorRequestsReq) Descriptor() ([]byte, []int) {
-	return file_admin_v1_admin_proto_rawDescGZIP(), []int{52}
+	return file_admin_v1_admin_proto_rawDescGZIP(), []int{53}
 }
 
 func (x *ListMySupervisorRequestsReq) GetSupervisorId() int64 {
@@ -3844,7 +3918,7 @@ type ListMySupervisorRequestsResp struct {
 
 func (x *ListMySupervisorRequestsResp) Reset() {
 	*x = ListMySupervisorRequestsResp{}
-	mi := &file_admin_v1_admin_proto_msgTypes[53]
+	mi := &file_admin_v1_admin_proto_msgTypes[54]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -3856,7 +3930,7 @@ func (x *ListMySupervisorRequestsResp) String() string {
 func (*ListMySupervisorRequestsResp) ProtoMessage() {}
 
 func (x *ListMySupervisorRequestsResp) ProtoReflect() protoreflect.Message {
-	mi := &file_admin_v1_admin_proto_msgTypes[53]
+	mi := &file_admin_v1_admin_proto_msgTypes[54]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -3869,7 +3943,7 @@ func (x *ListMySupervisorRequestsResp) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ListMySupervisorRequestsResp.ProtoReflect.Descriptor instead.
 func (*ListMySupervisorRequestsResp) Descriptor() ([]byte, []int) {
-	return file_admin_v1_admin_proto_rawDescGZIP(), []int{53}
+	return file_admin_v1_admin_proto_rawDescGZIP(), []int{54}
 }
 
 func (x *ListMySupervisorRequestsResp) GetRequests() []*SupervisorRequest {
@@ -3904,7 +3978,7 @@ type CancelSupervisorRequestReq struct {
 
 func (x *CancelSupervisorRequestReq) Reset() {
 	*x = CancelSupervisorRequestReq{}
-	mi := &file_admin_v1_admin_proto_msgTypes[54]
+	mi := &file_admin_v1_admin_proto_msgTypes[55]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -3916,7 +3990,7 @@ func (x *CancelSupervisorRequestReq) String() string {
 func (*CancelSupervisorRequestReq) ProtoMessage() {}
 
 func (x *CancelSupervisorRequestReq) ProtoReflect() protoreflect.Message {
-	mi := &file_admin_v1_admin_proto_msgTypes[54]
+	mi := &file_admin_v1_admin_proto_msgTypes[55]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -3929,7 +4003,7 @@ func (x *CancelSupervisorRequestReq) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use CancelSupervisorRequestReq.ProtoReflect.Descriptor instead.
 func (*CancelSupervisorRequestReq) Descriptor() ([]byte, []int) {
-	return file_admin_v1_admin_proto_rawDescGZIP(), []int{54}
+	return file_admin_v1_admin_proto_rawDescGZIP(), []int{55}
 }
 
 func (x *CancelSupervisorRequestReq) GetRequestId() string {
@@ -3963,7 +4037,7 @@ type CancelSupervisorRequestResp struct {
 
 func (x *CancelSupervisorRequestResp) Reset() {
 	*x = CancelSupervisorRequestResp{}
-	mi := &file_admin_v1_admin_proto_msgTypes[55]
+	mi := &file_admin_v1_admin_proto_msgTypes[56]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -3975,7 +4049,7 @@ func (x *CancelSupervisorRequestResp) String() string {
 func (*CancelSupervisorRequestResp) ProtoMessage() {}
 
 func (x *CancelSupervisorRequestResp) ProtoReflect() protoreflect.Message {
-	mi := &file_admin_v1_admin_proto_msgTypes[55]
+	mi := &file_admin_v1_admin_proto_msgTypes[56]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -3988,7 +4062,7 @@ func (x *CancelSupervisorRequestResp) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use CancelSupervisorRequestResp.ProtoReflect.Descriptor instead.
 func (*CancelSupervisorRequestResp) Descriptor() ([]byte, []int) {
-	return file_admin_v1_admin_proto_rawDescGZIP(), []int{55}
+	return file_admin_v1_admin_proto_rawDescGZIP(), []int{56}
 }
 
 func (x *CancelSupervisorRequestResp) GetSuccess() bool {
@@ -4042,7 +4116,7 @@ type PreDefenseSubmission struct {
 
 func (x *PreDefenseSubmission) Reset() {
 	*x = PreDefenseSubmission{}
-	mi := &file_admin_v1_admin_proto_msgTypes[56]
+	mi := &file_admin_v1_admin_proto_msgTypes[57]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -4054,7 +4128,7 @@ func (x *PreDefenseSubmission) String() string {
 func (*PreDefenseSubmission) ProtoMessage() {}
 
 func (x *PreDefenseSubmission) ProtoReflect() protoreflect.Message {
-	mi := &file_admin_v1_admin_proto_msgTypes[56]
+	mi := &file_admin_v1_admin_proto_msgTypes[57]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -4067,7 +4141,7 @@ func (x *PreDefenseSubmission) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use PreDefenseSubmission.ProtoReflect.Descriptor instead.
 func (*PreDefenseSubmission) Descriptor() ([]byte, []int) {
-	return file_admin_v1_admin_proto_rawDescGZIP(), []int{56}
+	return file_admin_v1_admin_proto_rawDescGZIP(), []int{57}
 }
 
 func (x *PreDefenseSubmission) GetId() string {
@@ -4290,7 +4364,7 @@ type PreDefenseCommissionMember struct {
 
 func (x *PreDefenseCommissionMember) Reset() {
 	*x = PreDefenseCommissionMember{}
-	mi := &file_admin_v1_admin_proto_msgTypes[57]
+	mi := &file_admin_v1_admin_proto_msgTypes[58]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -4302,7 +4376,7 @@ func (x *PreDefenseCommissionMember) String() string {
 func (*PreDefenseCommissionMember) ProtoMessage() {}
 
 func (x *PreDefenseCommissionMember) ProtoReflect() protoreflect.Message {
-	mi := &file_admin_v1_admin_proto_msgTypes[57]
+	mi := &file_admin_v1_admin_proto_msgTypes[58]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -4315,7 +4389,7 @@ func (x *PreDefenseCommissionMember) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use PreDefenseCommissionMember.ProtoReflect.Descriptor instead.
 func (*PreDefenseCommissionMember) Descriptor() ([]byte, []int) {
-	return file_admin_v1_admin_proto_rawDescGZIP(), []int{57}
+	return file_admin_v1_admin_proto_rawDescGZIP(), []int{58}
 }
 
 func (x *PreDefenseCommissionMember) GetId() int64 {
@@ -4397,7 +4471,7 @@ type PreDefenseDocument struct {
 
 func (x *PreDefenseDocument) Reset() {
 	*x = PreDefenseDocument{}
-	mi := &file_admin_v1_admin_proto_msgTypes[58]
+	mi := &file_admin_v1_admin_proto_msgTypes[59]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -4409,7 +4483,7 @@ func (x *PreDefenseDocument) String() string {
 func (*PreDefenseDocument) ProtoMessage() {}
 
 func (x *PreDefenseDocument) ProtoReflect() protoreflect.Message {
-	mi := &file_admin_v1_admin_proto_msgTypes[58]
+	mi := &file_admin_v1_admin_proto_msgTypes[59]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -4422,7 +4496,7 @@ func (x *PreDefenseDocument) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use PreDefenseDocument.ProtoReflect.Descriptor instead.
 func (*PreDefenseDocument) Descriptor() ([]byte, []int) {
-	return file_admin_v1_admin_proto_rawDescGZIP(), []int{58}
+	return file_admin_v1_admin_proto_rawDescGZIP(), []int{59}
 }
 
 func (x *PreDefenseDocument) GetId() string {
@@ -4497,7 +4571,7 @@ type PreDefenseHistory struct {
 
 func (x *PreDefenseHistory) Reset() {
 	*x = PreDefenseHistory{}
-	mi := &file_admin_v1_admin_proto_msgTypes[59]
+	mi := &file_admin_v1_admin_proto_msgTypes[60]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -4509,7 +4583,7 @@ func (x *PreDefenseHistory) String() string {
 func (*PreDefenseHistory) ProtoMessage() {}
 
 func (x *PreDefenseHistory) ProtoReflect() protoreflect.Message {
-	mi := &file_admin_v1_admin_proto_msgTypes[59]
+	mi := &file_admin_v1_admin_proto_msgTypes[60]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -4522,7 +4596,7 @@ func (x *PreDefenseHistory) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use PreDefenseHistory.ProtoReflect.Descriptor instead.
 func (*PreDefenseHistory) Descriptor() ([]byte, []int) {
-	return file_admin_v1_admin_proto_rawDescGZIP(), []int{59}
+	return file_admin_v1_admin_proto_rawDescGZIP(), []int{60}
 }
 
 func (x *PreDefenseHistory) GetId() int64 {
@@ -4595,7 +4669,7 @@ type SubmitPreDefenseRequest struct {
 
 func (x *SubmitPreDefenseRequest) Reset() {
 	*x = SubmitPreDefenseRequest{}
-	mi := &file_admin_v1_admin_proto_msgTypes[60]
+	mi := &file_admin_v1_admin_proto_msgTypes[61]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -4607,7 +4681,7 @@ func (x *SubmitPreDefenseRequest) String() string {
 func (*SubmitPreDefenseRequest) ProtoMessage() {}
 
 func (x *SubmitPreDefenseRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_admin_v1_admin_proto_msgTypes[60]
+	mi := &file_admin_v1_admin_proto_msgTypes[61]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -4620,7 +4694,7 @@ func (x *SubmitPreDefenseRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use SubmitPreDefenseRequest.ProtoReflect.Descriptor instead.
 func (*SubmitPreDefenseRequest) Descriptor() ([]byte, []int) {
-	return file_admin_v1_admin_proto_rawDescGZIP(), []int{60}
+	return file_admin_v1_admin_proto_rawDescGZIP(), []int{61}
 }
 
 func (x *SubmitPreDefenseRequest) GetTeamId() int64 {
@@ -4677,7 +4751,7 @@ type SubmitPreDefenseResponse struct {
 
 func (x *SubmitPreDefenseResponse) Reset() {
 	*x = SubmitPreDefenseResponse{}
-	mi := &file_admin_v1_admin_proto_msgTypes[61]
+	mi := &file_admin_v1_admin_proto_msgTypes[62]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -4689,7 +4763,7 @@ func (x *SubmitPreDefenseResponse) String() string {
 func (*SubmitPreDefenseResponse) ProtoMessage() {}
 
 func (x *SubmitPreDefenseResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_admin_v1_admin_proto_msgTypes[61]
+	mi := &file_admin_v1_admin_proto_msgTypes[62]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -4702,7 +4776,7 @@ func (x *SubmitPreDefenseResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use SubmitPreDefenseResponse.ProtoReflect.Descriptor instead.
 func (*SubmitPreDefenseResponse) Descriptor() ([]byte, []int) {
-	return file_admin_v1_admin_proto_rawDescGZIP(), []int{61}
+	return file_admin_v1_admin_proto_rawDescGZIP(), []int{62}
 }
 
 func (x *SubmitPreDefenseResponse) GetSuccess() bool {
@@ -4749,7 +4823,7 @@ type ListPreDefenseSubmissionsRequest struct {
 
 func (x *ListPreDefenseSubmissionsRequest) Reset() {
 	*x = ListPreDefenseSubmissionsRequest{}
-	mi := &file_admin_v1_admin_proto_msgTypes[62]
+	mi := &file_admin_v1_admin_proto_msgTypes[63]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -4761,7 +4835,7 @@ func (x *ListPreDefenseSubmissionsRequest) String() string {
 func (*ListPreDefenseSubmissionsRequest) ProtoMessage() {}
 
 func (x *ListPreDefenseSubmissionsRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_admin_v1_admin_proto_msgTypes[62]
+	mi := &file_admin_v1_admin_proto_msgTypes[63]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -4774,7 +4848,7 @@ func (x *ListPreDefenseSubmissionsRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ListPreDefenseSubmissionsRequest.ProtoReflect.Descriptor instead.
 func (*ListPreDefenseSubmissionsRequest) Descriptor() ([]byte, []int) {
-	return file_admin_v1_admin_proto_rawDescGZIP(), []int{62}
+	return file_admin_v1_admin_proto_rawDescGZIP(), []int{63}
 }
 
 func (x *ListPreDefenseSubmissionsRequest) GetDepartmentId() int64 {
@@ -4844,7 +4918,7 @@ type ListPreDefenseSubmissionsResponse struct {
 
 func (x *ListPreDefenseSubmissionsResponse) Reset() {
 	*x = ListPreDefenseSubmissionsResponse{}
-	mi := &file_admin_v1_admin_proto_msgTypes[63]
+	mi := &file_admin_v1_admin_proto_msgTypes[64]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -4856,7 +4930,7 @@ func (x *ListPreDefenseSubmissionsResponse) String() string {
 func (*ListPreDefenseSubmissionsResponse) ProtoMessage() {}
 
 func (x *ListPreDefenseSubmissionsResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_admin_v1_admin_proto_msgTypes[63]
+	mi := &file_admin_v1_admin_proto_msgTypes[64]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -4869,7 +4943,7 @@ func (x *ListPreDefenseSubmissionsResponse) ProtoReflect() protoreflect.Message 
 
 // Deprecated: Use ListPreDefenseSubmissionsResponse.ProtoReflect.Descriptor instead.
 func (*ListPreDefenseSubmissionsResponse) Descriptor() ([]byte, []int) {
-	return file_admin_v1_admin_proto_rawDescGZIP(), []int{63}
+	return file_admin_v1_admin_proto_rawDescGZIP(), []int{64}
 }
 
 func (x *ListPreDefenseSubmissionsResponse) GetSubmissions() []*PreDefenseSubmission {
@@ -4906,7 +4980,7 @@ type PreDefenseStats struct {
 
 func (x *PreDefenseStats) Reset() {
 	*x = PreDefenseStats{}
-	mi := &file_admin_v1_admin_proto_msgTypes[64]
+	mi := &file_admin_v1_admin_proto_msgTypes[65]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -4918,7 +4992,7 @@ func (x *PreDefenseStats) String() string {
 func (*PreDefenseStats) ProtoMessage() {}
 
 func (x *PreDefenseStats) ProtoReflect() protoreflect.Message {
-	mi := &file_admin_v1_admin_proto_msgTypes[64]
+	mi := &file_admin_v1_admin_proto_msgTypes[65]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -4931,7 +5005,7 @@ func (x *PreDefenseStats) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use PreDefenseStats.ProtoReflect.Descriptor instead.
 func (*PreDefenseStats) Descriptor() ([]byte, []int) {
-	return file_admin_v1_admin_proto_rawDescGZIP(), []int{64}
+	return file_admin_v1_admin_proto_rawDescGZIP(), []int{65}
 }
 
 func (x *PreDefenseStats) GetPendingCount() int32 {
@@ -4978,7 +5052,7 @@ type GetPreDefenseSubmissionRequest struct {
 
 func (x *GetPreDefenseSubmissionRequest) Reset() {
 	*x = GetPreDefenseSubmissionRequest{}
-	mi := &file_admin_v1_admin_proto_msgTypes[65]
+	mi := &file_admin_v1_admin_proto_msgTypes[66]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -4990,7 +5064,7 @@ func (x *GetPreDefenseSubmissionRequest) String() string {
 func (*GetPreDefenseSubmissionRequest) ProtoMessage() {}
 
 func (x *GetPreDefenseSubmissionRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_admin_v1_admin_proto_msgTypes[65]
+	mi := &file_admin_v1_admin_proto_msgTypes[66]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -5003,7 +5077,7 @@ func (x *GetPreDefenseSubmissionRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetPreDefenseSubmissionRequest.ProtoReflect.Descriptor instead.
 func (*GetPreDefenseSubmissionRequest) Descriptor() ([]byte, []int) {
-	return file_admin_v1_admin_proto_rawDescGZIP(), []int{65}
+	return file_admin_v1_admin_proto_rawDescGZIP(), []int{66}
 }
 
 func (x *GetPreDefenseSubmissionRequest) GetSubmissionId() string {
@@ -5025,7 +5099,7 @@ type GetPreDefenseSubmissionResponse struct {
 
 func (x *GetPreDefenseSubmissionResponse) Reset() {
 	*x = GetPreDefenseSubmissionResponse{}
-	mi := &file_admin_v1_admin_proto_msgTypes[66]
+	mi := &file_admin_v1_admin_proto_msgTypes[67]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -5037,7 +5111,7 @@ func (x *GetPreDefenseSubmissionResponse) String() string {
 func (*GetPreDefenseSubmissionResponse) ProtoMessage() {}
 
 func (x *GetPreDefenseSubmissionResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_admin_v1_admin_proto_msgTypes[66]
+	mi := &file_admin_v1_admin_proto_msgTypes[67]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -5050,7 +5124,7 @@ func (x *GetPreDefenseSubmissionResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetPreDefenseSubmissionResponse.ProtoReflect.Descriptor instead.
 func (*GetPreDefenseSubmissionResponse) Descriptor() ([]byte, []int) {
-	return file_admin_v1_admin_proto_rawDescGZIP(), []int{66}
+	return file_admin_v1_admin_proto_rawDescGZIP(), []int{67}
 }
 
 func (x *GetPreDefenseSubmissionResponse) GetSubmission() *PreDefenseSubmission {
@@ -5098,7 +5172,7 @@ type SchedulePreDefenseRequest struct {
 
 func (x *SchedulePreDefenseRequest) Reset() {
 	*x = SchedulePreDefenseRequest{}
-	mi := &file_admin_v1_admin_proto_msgTypes[67]
+	mi := &file_admin_v1_admin_proto_msgTypes[68]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -5110,7 +5184,7 @@ func (x *SchedulePreDefenseRequest) String() string {
 func (*SchedulePreDefenseRequest) ProtoMessage() {}
 
 func (x *SchedulePreDefenseRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_admin_v1_admin_proto_msgTypes[67]
+	mi := &file_admin_v1_admin_proto_msgTypes[68]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -5123,7 +5197,7 @@ func (x *SchedulePreDefenseRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use SchedulePreDefenseRequest.ProtoReflect.Descriptor instead.
 func (*SchedulePreDefenseRequest) Descriptor() ([]byte, []int) {
-	return file_admin_v1_admin_proto_rawDescGZIP(), []int{67}
+	return file_admin_v1_admin_proto_rawDescGZIP(), []int{68}
 }
 
 func (x *SchedulePreDefenseRequest) GetSubmissionId() string {
@@ -5200,7 +5274,7 @@ type SchedulePreDefenseResponse struct {
 
 func (x *SchedulePreDefenseResponse) Reset() {
 	*x = SchedulePreDefenseResponse{}
-	mi := &file_admin_v1_admin_proto_msgTypes[68]
+	mi := &file_admin_v1_admin_proto_msgTypes[69]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -5212,7 +5286,7 @@ func (x *SchedulePreDefenseResponse) String() string {
 func (*SchedulePreDefenseResponse) ProtoMessage() {}
 
 func (x *SchedulePreDefenseResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_admin_v1_admin_proto_msgTypes[68]
+	mi := &file_admin_v1_admin_proto_msgTypes[69]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -5225,7 +5299,7 @@ func (x *SchedulePreDefenseResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use SchedulePreDefenseResponse.ProtoReflect.Descriptor instead.
 func (*SchedulePreDefenseResponse) Descriptor() ([]byte, []int) {
-	return file_admin_v1_admin_proto_rawDescGZIP(), []int{68}
+	return file_admin_v1_admin_proto_rawDescGZIP(), []int{69}
 }
 
 func (x *SchedulePreDefenseResponse) GetSuccess() bool {
@@ -5262,7 +5336,7 @@ type GradePreDefenseRequest struct {
 
 func (x *GradePreDefenseRequest) Reset() {
 	*x = GradePreDefenseRequest{}
-	mi := &file_admin_v1_admin_proto_msgTypes[69]
+	mi := &file_admin_v1_admin_proto_msgTypes[70]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -5274,7 +5348,7 @@ func (x *GradePreDefenseRequest) String() string {
 func (*GradePreDefenseRequest) ProtoMessage() {}
 
 func (x *GradePreDefenseRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_admin_v1_admin_proto_msgTypes[69]
+	mi := &file_admin_v1_admin_proto_msgTypes[70]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -5287,7 +5361,7 @@ func (x *GradePreDefenseRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GradePreDefenseRequest.ProtoReflect.Descriptor instead.
 func (*GradePreDefenseRequest) Descriptor() ([]byte, []int) {
-	return file_admin_v1_admin_proto_rawDescGZIP(), []int{69}
+	return file_admin_v1_admin_proto_rawDescGZIP(), []int{70}
 }
 
 func (x *GradePreDefenseRequest) GetSubmissionId() string {
@@ -5336,7 +5410,7 @@ type CommissionMemberGrade struct {
 
 func (x *CommissionMemberGrade) Reset() {
 	*x = CommissionMemberGrade{}
-	mi := &file_admin_v1_admin_proto_msgTypes[70]
+	mi := &file_admin_v1_admin_proto_msgTypes[71]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -5348,7 +5422,7 @@ func (x *CommissionMemberGrade) String() string {
 func (*CommissionMemberGrade) ProtoMessage() {}
 
 func (x *CommissionMemberGrade) ProtoReflect() protoreflect.Message {
-	mi := &file_admin_v1_admin_proto_msgTypes[70]
+	mi := &file_admin_v1_admin_proto_msgTypes[71]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -5361,7 +5435,7 @@ func (x *CommissionMemberGrade) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use CommissionMemberGrade.ProtoReflect.Descriptor instead.
 func (*CommissionMemberGrade) Descriptor() ([]byte, []int) {
-	return file_admin_v1_admin_proto_rawDescGZIP(), []int{70}
+	return file_admin_v1_admin_proto_rawDescGZIP(), []int{71}
 }
 
 func (x *CommissionMemberGrade) GetMemberId() int64 {
@@ -5396,7 +5470,7 @@ type GradePreDefenseResponse struct {
 
 func (x *GradePreDefenseResponse) Reset() {
 	*x = GradePreDefenseResponse{}
-	mi := &file_admin_v1_admin_proto_msgTypes[71]
+	mi := &file_admin_v1_admin_proto_msgTypes[72]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -5408,7 +5482,7 @@ func (x *GradePreDefenseResponse) String() string {
 func (*GradePreDefenseResponse) ProtoMessage() {}
 
 func (x *GradePreDefenseResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_admin_v1_admin_proto_msgTypes[71]
+	mi := &file_admin_v1_admin_proto_msgTypes[72]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -5421,7 +5495,7 @@ func (x *GradePreDefenseResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GradePreDefenseResponse.ProtoReflect.Descriptor instead.
 func (*GradePreDefenseResponse) Descriptor() ([]byte, []int) {
-	return file_admin_v1_admin_proto_rawDescGZIP(), []int{71}
+	return file_admin_v1_admin_proto_rawDescGZIP(), []int{72}
 }
 
 func (x *GradePreDefenseResponse) GetSuccess() bool {
@@ -5459,7 +5533,7 @@ type CompletePreDefenseRequest struct {
 
 func (x *CompletePreDefenseRequest) Reset() {
 	*x = CompletePreDefenseRequest{}
-	mi := &file_admin_v1_admin_proto_msgTypes[72]
+	mi := &file_admin_v1_admin_proto_msgTypes[73]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -5471,7 +5545,7 @@ func (x *CompletePreDefenseRequest) String() string {
 func (*CompletePreDefenseRequest) ProtoMessage() {}
 
 func (x *CompletePreDefenseRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_admin_v1_admin_proto_msgTypes[72]
+	mi := &file_admin_v1_admin_proto_msgTypes[73]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -5484,7 +5558,7 @@ func (x *CompletePreDefenseRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use CompletePreDefenseRequest.ProtoReflect.Descriptor instead.
 func (*CompletePreDefenseRequest) Descriptor() ([]byte, []int) {
-	return file_admin_v1_admin_proto_rawDescGZIP(), []int{72}
+	return file_admin_v1_admin_proto_rawDescGZIP(), []int{73}
 }
 
 func (x *CompletePreDefenseRequest) GetSubmissionId() string {
@@ -5540,7 +5614,7 @@ type CompletePreDefenseResponse struct {
 
 func (x *CompletePreDefenseResponse) Reset() {
 	*x = CompletePreDefenseResponse{}
-	mi := &file_admin_v1_admin_proto_msgTypes[73]
+	mi := &file_admin_v1_admin_proto_msgTypes[74]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -5552,7 +5626,7 @@ func (x *CompletePreDefenseResponse) String() string {
 func (*CompletePreDefenseResponse) ProtoMessage() {}
 
 func (x *CompletePreDefenseResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_admin_v1_admin_proto_msgTypes[73]
+	mi := &file_admin_v1_admin_proto_msgTypes[74]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -5565,7 +5639,7 @@ func (x *CompletePreDefenseResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use CompletePreDefenseResponse.ProtoReflect.Descriptor instead.
 func (*CompletePreDefenseResponse) Descriptor() ([]byte, []int) {
-	return file_admin_v1_admin_proto_rawDescGZIP(), []int{73}
+	return file_admin_v1_admin_proto_rawDescGZIP(), []int{74}
 }
 
 func (x *CompletePreDefenseResponse) GetSuccess() bool {
@@ -5603,7 +5677,7 @@ type ReschedulePreDefenseRequest struct {
 
 func (x *ReschedulePreDefenseRequest) Reset() {
 	*x = ReschedulePreDefenseRequest{}
-	mi := &file_admin_v1_admin_proto_msgTypes[74]
+	mi := &file_admin_v1_admin_proto_msgTypes[75]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -5615,7 +5689,7 @@ func (x *ReschedulePreDefenseRequest) String() string {
 func (*ReschedulePreDefenseRequest) ProtoMessage() {}
 
 func (x *ReschedulePreDefenseRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_admin_v1_admin_proto_msgTypes[74]
+	mi := &file_admin_v1_admin_proto_msgTypes[75]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -5628,7 +5702,7 @@ func (x *ReschedulePreDefenseRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ReschedulePreDefenseRequest.ProtoReflect.Descriptor instead.
 func (*ReschedulePreDefenseRequest) Descriptor() ([]byte, []int) {
-	return file_admin_v1_admin_proto_rawDescGZIP(), []int{74}
+	return file_admin_v1_admin_proto_rawDescGZIP(), []int{75}
 }
 
 func (x *ReschedulePreDefenseRequest) GetSubmissionId() string {
@@ -5684,7 +5758,7 @@ type ReschedulePreDefenseResponse struct {
 
 func (x *ReschedulePreDefenseResponse) Reset() {
 	*x = ReschedulePreDefenseResponse{}
-	mi := &file_admin_v1_admin_proto_msgTypes[75]
+	mi := &file_admin_v1_admin_proto_msgTypes[76]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -5696,7 +5770,7 @@ func (x *ReschedulePreDefenseResponse) String() string {
 func (*ReschedulePreDefenseResponse) ProtoMessage() {}
 
 func (x *ReschedulePreDefenseResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_admin_v1_admin_proto_msgTypes[75]
+	mi := &file_admin_v1_admin_proto_msgTypes[76]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -5709,7 +5783,7 @@ func (x *ReschedulePreDefenseResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ReschedulePreDefenseResponse.ProtoReflect.Descriptor instead.
 func (*ReschedulePreDefenseResponse) Descriptor() ([]byte, []int) {
-	return file_admin_v1_admin_proto_rawDescGZIP(), []int{75}
+	return file_admin_v1_admin_proto_rawDescGZIP(), []int{76}
 }
 
 func (x *ReschedulePreDefenseResponse) GetSuccess() bool {
@@ -5746,7 +5820,7 @@ type ListScheduledPreDefensesRequest struct {
 
 func (x *ListScheduledPreDefensesRequest) Reset() {
 	*x = ListScheduledPreDefensesRequest{}
-	mi := &file_admin_v1_admin_proto_msgTypes[76]
+	mi := &file_admin_v1_admin_proto_msgTypes[77]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -5758,7 +5832,7 @@ func (x *ListScheduledPreDefensesRequest) String() string {
 func (*ListScheduledPreDefensesRequest) ProtoMessage() {}
 
 func (x *ListScheduledPreDefensesRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_admin_v1_admin_proto_msgTypes[76]
+	mi := &file_admin_v1_admin_proto_msgTypes[77]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -5771,7 +5845,7 @@ func (x *ListScheduledPreDefensesRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ListScheduledPreDefensesRequest.ProtoReflect.Descriptor instead.
 func (*ListScheduledPreDefensesRequest) Descriptor() ([]byte, []int) {
-	return file_admin_v1_admin_proto_rawDescGZIP(), []int{76}
+	return file_admin_v1_admin_proto_rawDescGZIP(), []int{77}
 }
 
 func (x *ListScheduledPreDefensesRequest) GetDepartmentId() int64 {
@@ -5819,7 +5893,7 @@ type ListScheduledPreDefensesResponse struct {
 
 func (x *ListScheduledPreDefensesResponse) Reset() {
 	*x = ListScheduledPreDefensesResponse{}
-	mi := &file_admin_v1_admin_proto_msgTypes[77]
+	mi := &file_admin_v1_admin_proto_msgTypes[78]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -5831,7 +5905,7 @@ func (x *ListScheduledPreDefensesResponse) String() string {
 func (*ListScheduledPreDefensesResponse) ProtoMessage() {}
 
 func (x *ListScheduledPreDefensesResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_admin_v1_admin_proto_msgTypes[77]
+	mi := &file_admin_v1_admin_proto_msgTypes[78]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -5844,7 +5918,7 @@ func (x *ListScheduledPreDefensesResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ListScheduledPreDefensesResponse.ProtoReflect.Descriptor instead.
 func (*ListScheduledPreDefensesResponse) Descriptor() ([]byte, []int) {
-	return file_admin_v1_admin_proto_rawDescGZIP(), []int{77}
+	return file_admin_v1_admin_proto_rawDescGZIP(), []int{78}
 }
 
 func (x *ListScheduledPreDefensesResponse) GetSchedule() []*PreDefenseScheduleItem {
@@ -5880,7 +5954,7 @@ type PreDefenseScheduleItem struct {
 
 func (x *PreDefenseScheduleItem) Reset() {
 	*x = PreDefenseScheduleItem{}
-	mi := &file_admin_v1_admin_proto_msgTypes[78]
+	mi := &file_admin_v1_admin_proto_msgTypes[79]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -5892,7 +5966,7 @@ func (x *PreDefenseScheduleItem) String() string {
 func (*PreDefenseScheduleItem) ProtoMessage() {}
 
 func (x *PreDefenseScheduleItem) ProtoReflect() protoreflect.Message {
-	mi := &file_admin_v1_admin_proto_msgTypes[78]
+	mi := &file_admin_v1_admin_proto_msgTypes[79]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -5905,7 +5979,7 @@ func (x *PreDefenseScheduleItem) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use PreDefenseScheduleItem.ProtoReflect.Descriptor instead.
 func (*PreDefenseScheduleItem) Descriptor() ([]byte, []int) {
-	return file_admin_v1_admin_proto_rawDescGZIP(), []int{78}
+	return file_admin_v1_admin_proto_rawDescGZIP(), []int{79}
 }
 
 func (x *PreDefenseScheduleItem) GetSubmissionId() string {
@@ -5997,7 +6071,7 @@ type AddPreDefenseCommissionMemberRequest struct {
 
 func (x *AddPreDefenseCommissionMemberRequest) Reset() {
 	*x = AddPreDefenseCommissionMemberRequest{}
-	mi := &file_admin_v1_admin_proto_msgTypes[79]
+	mi := &file_admin_v1_admin_proto_msgTypes[80]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -6009,7 +6083,7 @@ func (x *AddPreDefenseCommissionMemberRequest) String() string {
 func (*AddPreDefenseCommissionMemberRequest) ProtoMessage() {}
 
 func (x *AddPreDefenseCommissionMemberRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_admin_v1_admin_proto_msgTypes[79]
+	mi := &file_admin_v1_admin_proto_msgTypes[80]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -6022,7 +6096,7 @@ func (x *AddPreDefenseCommissionMemberRequest) ProtoReflect() protoreflect.Messa
 
 // Deprecated: Use AddPreDefenseCommissionMemberRequest.ProtoReflect.Descriptor instead.
 func (*AddPreDefenseCommissionMemberRequest) Descriptor() ([]byte, []int) {
-	return file_admin_v1_admin_proto_rawDescGZIP(), []int{79}
+	return file_admin_v1_admin_proto_rawDescGZIP(), []int{80}
 }
 
 func (x *AddPreDefenseCommissionMemberRequest) GetSubmissionId() string {
@@ -6064,7 +6138,7 @@ type AddPreDefenseCommissionMemberResponse struct {
 
 func (x *AddPreDefenseCommissionMemberResponse) Reset() {
 	*x = AddPreDefenseCommissionMemberResponse{}
-	mi := &file_admin_v1_admin_proto_msgTypes[80]
+	mi := &file_admin_v1_admin_proto_msgTypes[81]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -6076,7 +6150,7 @@ func (x *AddPreDefenseCommissionMemberResponse) String() string {
 func (*AddPreDefenseCommissionMemberResponse) ProtoMessage() {}
 
 func (x *AddPreDefenseCommissionMemberResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_admin_v1_admin_proto_msgTypes[80]
+	mi := &file_admin_v1_admin_proto_msgTypes[81]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -6089,7 +6163,7 @@ func (x *AddPreDefenseCommissionMemberResponse) ProtoReflect() protoreflect.Mess
 
 // Deprecated: Use AddPreDefenseCommissionMemberResponse.ProtoReflect.Descriptor instead.
 func (*AddPreDefenseCommissionMemberResponse) Descriptor() ([]byte, []int) {
-	return file_admin_v1_admin_proto_rawDescGZIP(), []int{80}
+	return file_admin_v1_admin_proto_rawDescGZIP(), []int{81}
 }
 
 func (x *AddPreDefenseCommissionMemberResponse) GetSuccess() bool {
@@ -6125,7 +6199,7 @@ type RemovePreDefenseCommissionMemberRequest struct {
 
 func (x *RemovePreDefenseCommissionMemberRequest) Reset() {
 	*x = RemovePreDefenseCommissionMemberRequest{}
-	mi := &file_admin_v1_admin_proto_msgTypes[81]
+	mi := &file_admin_v1_admin_proto_msgTypes[82]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -6137,7 +6211,7 @@ func (x *RemovePreDefenseCommissionMemberRequest) String() string {
 func (*RemovePreDefenseCommissionMemberRequest) ProtoMessage() {}
 
 func (x *RemovePreDefenseCommissionMemberRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_admin_v1_admin_proto_msgTypes[81]
+	mi := &file_admin_v1_admin_proto_msgTypes[82]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -6150,7 +6224,7 @@ func (x *RemovePreDefenseCommissionMemberRequest) ProtoReflect() protoreflect.Me
 
 // Deprecated: Use RemovePreDefenseCommissionMemberRequest.ProtoReflect.Descriptor instead.
 func (*RemovePreDefenseCommissionMemberRequest) Descriptor() ([]byte, []int) {
-	return file_admin_v1_admin_proto_rawDescGZIP(), []int{81}
+	return file_admin_v1_admin_proto_rawDescGZIP(), []int{82}
 }
 
 func (x *RemovePreDefenseCommissionMemberRequest) GetSubmissionId() string {
@@ -6191,7 +6265,7 @@ type RemovePreDefenseCommissionMemberResponse struct {
 
 func (x *RemovePreDefenseCommissionMemberResponse) Reset() {
 	*x = RemovePreDefenseCommissionMemberResponse{}
-	mi := &file_admin_v1_admin_proto_msgTypes[82]
+	mi := &file_admin_v1_admin_proto_msgTypes[83]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -6203,7 +6277,7 @@ func (x *RemovePreDefenseCommissionMemberResponse) String() string {
 func (*RemovePreDefenseCommissionMemberResponse) ProtoMessage() {}
 
 func (x *RemovePreDefenseCommissionMemberResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_admin_v1_admin_proto_msgTypes[82]
+	mi := &file_admin_v1_admin_proto_msgTypes[83]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -6216,7 +6290,7 @@ func (x *RemovePreDefenseCommissionMemberResponse) ProtoReflect() protoreflect.M
 
 // Deprecated: Use RemovePreDefenseCommissionMemberResponse.ProtoReflect.Descriptor instead.
 func (*RemovePreDefenseCommissionMemberResponse) Descriptor() ([]byte, []int) {
-	return file_admin_v1_admin_proto_rawDescGZIP(), []int{82}
+	return file_admin_v1_admin_proto_rawDescGZIP(), []int{83}
 }
 
 func (x *RemovePreDefenseCommissionMemberResponse) GetSuccess() bool {
@@ -6247,7 +6321,7 @@ type ListSubmissionsRequest struct {
 
 func (x *ListSubmissionsRequest) Reset() {
 	*x = ListSubmissionsRequest{}
-	mi := &file_admin_v1_admin_proto_msgTypes[83]
+	mi := &file_admin_v1_admin_proto_msgTypes[84]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -6259,7 +6333,7 @@ func (x *ListSubmissionsRequest) String() string {
 func (*ListSubmissionsRequest) ProtoMessage() {}
 
 func (x *ListSubmissionsRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_admin_v1_admin_proto_msgTypes[83]
+	mi := &file_admin_v1_admin_proto_msgTypes[84]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -6272,7 +6346,7 @@ func (x *ListSubmissionsRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ListSubmissionsRequest.ProtoReflect.Descriptor instead.
 func (*ListSubmissionsRequest) Descriptor() ([]byte, []int) {
-	return file_admin_v1_admin_proto_rawDescGZIP(), []int{83}
+	return file_admin_v1_admin_proto_rawDescGZIP(), []int{84}
 }
 
 func (x *ListSubmissionsRequest) GetDepartmentId() int64 {
@@ -6327,7 +6401,7 @@ type ListSubmissionsResponse struct {
 
 func (x *ListSubmissionsResponse) Reset() {
 	*x = ListSubmissionsResponse{}
-	mi := &file_admin_v1_admin_proto_msgTypes[84]
+	mi := &file_admin_v1_admin_proto_msgTypes[85]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -6339,7 +6413,7 @@ func (x *ListSubmissionsResponse) String() string {
 func (*ListSubmissionsResponse) ProtoMessage() {}
 
 func (x *ListSubmissionsResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_admin_v1_admin_proto_msgTypes[84]
+	mi := &file_admin_v1_admin_proto_msgTypes[85]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -6352,7 +6426,7 @@ func (x *ListSubmissionsResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ListSubmissionsResponse.ProtoReflect.Descriptor instead.
 func (*ListSubmissionsResponse) Descriptor() ([]byte, []int) {
-	return file_admin_v1_admin_proto_rawDescGZIP(), []int{84}
+	return file_admin_v1_admin_proto_rawDescGZIP(), []int{85}
 }
 
 func (x *ListSubmissionsResponse) GetSubmissions() []*SubmissionInfo {
@@ -6391,7 +6465,7 @@ type SubmissionInfo struct {
 
 func (x *SubmissionInfo) Reset() {
 	*x = SubmissionInfo{}
-	mi := &file_admin_v1_admin_proto_msgTypes[85]
+	mi := &file_admin_v1_admin_proto_msgTypes[86]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -6403,7 +6477,7 @@ func (x *SubmissionInfo) String() string {
 func (*SubmissionInfo) ProtoMessage() {}
 
 func (x *SubmissionInfo) ProtoReflect() protoreflect.Message {
-	mi := &file_admin_v1_admin_proto_msgTypes[85]
+	mi := &file_admin_v1_admin_proto_msgTypes[86]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -6416,7 +6490,7 @@ func (x *SubmissionInfo) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use SubmissionInfo.ProtoReflect.Descriptor instead.
 func (*SubmissionInfo) Descriptor() ([]byte, []int) {
-	return file_admin_v1_admin_proto_rawDescGZIP(), []int{85}
+	return file_admin_v1_admin_proto_rawDescGZIP(), []int{86}
 }
 
 func (x *SubmissionInfo) GetId() string {
@@ -6529,7 +6603,7 @@ type SubmissionPreview struct {
 
 func (x *SubmissionPreview) Reset() {
 	*x = SubmissionPreview{}
-	mi := &file_admin_v1_admin_proto_msgTypes[86]
+	mi := &file_admin_v1_admin_proto_msgTypes[87]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -6541,7 +6615,7 @@ func (x *SubmissionPreview) String() string {
 func (*SubmissionPreview) ProtoMessage() {}
 
 func (x *SubmissionPreview) ProtoReflect() protoreflect.Message {
-	mi := &file_admin_v1_admin_proto_msgTypes[86]
+	mi := &file_admin_v1_admin_proto_msgTypes[87]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -6554,7 +6628,7 @@ func (x *SubmissionPreview) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use SubmissionPreview.ProtoReflect.Descriptor instead.
 func (*SubmissionPreview) Descriptor() ([]byte, []int) {
-	return file_admin_v1_admin_proto_rawDescGZIP(), []int{86}
+	return file_admin_v1_admin_proto_rawDescGZIP(), []int{87}
 }
 
 func (x *SubmissionPreview) GetId() string {
@@ -6598,7 +6672,7 @@ type FileAttachment struct {
 
 func (x *FileAttachment) Reset() {
 	*x = FileAttachment{}
-	mi := &file_admin_v1_admin_proto_msgTypes[87]
+	mi := &file_admin_v1_admin_proto_msgTypes[88]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -6610,7 +6684,7 @@ func (x *FileAttachment) String() string {
 func (*FileAttachment) ProtoMessage() {}
 
 func (x *FileAttachment) ProtoReflect() protoreflect.Message {
-	mi := &file_admin_v1_admin_proto_msgTypes[87]
+	mi := &file_admin_v1_admin_proto_msgTypes[88]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -6623,7 +6697,7 @@ func (x *FileAttachment) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use FileAttachment.ProtoReflect.Descriptor instead.
 func (*FileAttachment) Descriptor() ([]byte, []int) {
-	return file_admin_v1_admin_proto_rawDescGZIP(), []int{87}
+	return file_admin_v1_admin_proto_rawDescGZIP(), []int{88}
 }
 
 func (x *FileAttachment) GetId() string {
@@ -6674,7 +6748,7 @@ type ReviewInfo struct {
 
 func (x *ReviewInfo) Reset() {
 	*x = ReviewInfo{}
-	mi := &file_admin_v1_admin_proto_msgTypes[88]
+	mi := &file_admin_v1_admin_proto_msgTypes[89]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -6686,7 +6760,7 @@ func (x *ReviewInfo) String() string {
 func (*ReviewInfo) ProtoMessage() {}
 
 func (x *ReviewInfo) ProtoReflect() protoreflect.Message {
-	mi := &file_admin_v1_admin_proto_msgTypes[88]
+	mi := &file_admin_v1_admin_proto_msgTypes[89]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -6699,7 +6773,7 @@ func (x *ReviewInfo) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ReviewInfo.ProtoReflect.Descriptor instead.
 func (*ReviewInfo) Descriptor() ([]byte, []int) {
-	return file_admin_v1_admin_proto_rawDescGZIP(), []int{88}
+	return file_admin_v1_admin_proto_rawDescGZIP(), []int{89}
 }
 
 func (x *ReviewInfo) GetReviewerId() int64 {
@@ -6746,7 +6820,7 @@ type GetSubmissionRequest struct {
 
 func (x *GetSubmissionRequest) Reset() {
 	*x = GetSubmissionRequest{}
-	mi := &file_admin_v1_admin_proto_msgTypes[89]
+	mi := &file_admin_v1_admin_proto_msgTypes[90]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -6758,7 +6832,7 @@ func (x *GetSubmissionRequest) String() string {
 func (*GetSubmissionRequest) ProtoMessage() {}
 
 func (x *GetSubmissionRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_admin_v1_admin_proto_msgTypes[89]
+	mi := &file_admin_v1_admin_proto_msgTypes[90]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -6771,7 +6845,7 @@ func (x *GetSubmissionRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetSubmissionRequest.ProtoReflect.Descriptor instead.
 func (*GetSubmissionRequest) Descriptor() ([]byte, []int) {
-	return file_admin_v1_admin_proto_rawDescGZIP(), []int{89}
+	return file_admin_v1_admin_proto_rawDescGZIP(), []int{90}
 }
 
 func (x *GetSubmissionRequest) GetSubmissionId() string {
@@ -6791,7 +6865,7 @@ type GetSubmissionResponse struct {
 
 func (x *GetSubmissionResponse) Reset() {
 	*x = GetSubmissionResponse{}
-	mi := &file_admin_v1_admin_proto_msgTypes[90]
+	mi := &file_admin_v1_admin_proto_msgTypes[91]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -6803,7 +6877,7 @@ func (x *GetSubmissionResponse) String() string {
 func (*GetSubmissionResponse) ProtoMessage() {}
 
 func (x *GetSubmissionResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_admin_v1_admin_proto_msgTypes[90]
+	mi := &file_admin_v1_admin_proto_msgTypes[91]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -6816,7 +6890,7 @@ func (x *GetSubmissionResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetSubmissionResponse.ProtoReflect.Descriptor instead.
 func (*GetSubmissionResponse) Descriptor() ([]byte, []int) {
-	return file_admin_v1_admin_proto_rawDescGZIP(), []int{90}
+	return file_admin_v1_admin_proto_rawDescGZIP(), []int{91}
 }
 
 func (x *GetSubmissionResponse) GetSubmission() *SubmissionInfo {
@@ -6847,7 +6921,7 @@ type ReviewHistory struct {
 
 func (x *ReviewHistory) Reset() {
 	*x = ReviewHistory{}
-	mi := &file_admin_v1_admin_proto_msgTypes[91]
+	mi := &file_admin_v1_admin_proto_msgTypes[92]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -6859,7 +6933,7 @@ func (x *ReviewHistory) String() string {
 func (*ReviewHistory) ProtoMessage() {}
 
 func (x *ReviewHistory) ProtoReflect() protoreflect.Message {
-	mi := &file_admin_v1_admin_proto_msgTypes[91]
+	mi := &file_admin_v1_admin_proto_msgTypes[92]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -6872,7 +6946,7 @@ func (x *ReviewHistory) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ReviewHistory.ProtoReflect.Descriptor instead.
 func (*ReviewHistory) Descriptor() ([]byte, []int) {
-	return file_admin_v1_admin_proto_rawDescGZIP(), []int{91}
+	return file_admin_v1_admin_proto_rawDescGZIP(), []int{92}
 }
 
 func (x *ReviewHistory) GetId() int64 {
@@ -6930,7 +7004,7 @@ type ReviewSubmissionRequest struct {
 
 func (x *ReviewSubmissionRequest) Reset() {
 	*x = ReviewSubmissionRequest{}
-	mi := &file_admin_v1_admin_proto_msgTypes[92]
+	mi := &file_admin_v1_admin_proto_msgTypes[93]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -6942,7 +7016,7 @@ func (x *ReviewSubmissionRequest) String() string {
 func (*ReviewSubmissionRequest) ProtoMessage() {}
 
 func (x *ReviewSubmissionRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_admin_v1_admin_proto_msgTypes[92]
+	mi := &file_admin_v1_admin_proto_msgTypes[93]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -6955,7 +7029,7 @@ func (x *ReviewSubmissionRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ReviewSubmissionRequest.ProtoReflect.Descriptor instead.
 func (*ReviewSubmissionRequest) Descriptor() ([]byte, []int) {
-	return file_admin_v1_admin_proto_rawDescGZIP(), []int{92}
+	return file_admin_v1_admin_proto_rawDescGZIP(), []int{93}
 }
 
 func (x *ReviewSubmissionRequest) GetSubmissionId() string {
@@ -7004,7 +7078,7 @@ type ReviewSubmissionResponse struct {
 
 func (x *ReviewSubmissionResponse) Reset() {
 	*x = ReviewSubmissionResponse{}
-	mi := &file_admin_v1_admin_proto_msgTypes[93]
+	mi := &file_admin_v1_admin_proto_msgTypes[94]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -7016,7 +7090,7 @@ func (x *ReviewSubmissionResponse) String() string {
 func (*ReviewSubmissionResponse) ProtoMessage() {}
 
 func (x *ReviewSubmissionResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_admin_v1_admin_proto_msgTypes[93]
+	mi := &file_admin_v1_admin_proto_msgTypes[94]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -7029,7 +7103,7 @@ func (x *ReviewSubmissionResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ReviewSubmissionResponse.ProtoReflect.Descriptor instead.
 func (*ReviewSubmissionResponse) Descriptor() ([]byte, []int) {
-	return file_admin_v1_admin_proto_rawDescGZIP(), []int{93}
+	return file_admin_v1_admin_proto_rawDescGZIP(), []int{94}
 }
 
 func (x *ReviewSubmissionResponse) GetSuccess() bool {
@@ -7070,7 +7144,7 @@ type GradeInfo struct {
 
 func (x *GradeInfo) Reset() {
 	*x = GradeInfo{}
-	mi := &file_admin_v1_admin_proto_msgTypes[94]
+	mi := &file_admin_v1_admin_proto_msgTypes[95]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -7082,7 +7156,7 @@ func (x *GradeInfo) String() string {
 func (*GradeInfo) ProtoMessage() {}
 
 func (x *GradeInfo) ProtoReflect() protoreflect.Message {
-	mi := &file_admin_v1_admin_proto_msgTypes[94]
+	mi := &file_admin_v1_admin_proto_msgTypes[95]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -7095,7 +7169,7 @@ func (x *GradeInfo) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GradeInfo.ProtoReflect.Descriptor instead.
 func (*GradeInfo) Descriptor() ([]byte, []int) {
-	return file_admin_v1_admin_proto_rawDescGZIP(), []int{94}
+	return file_admin_v1_admin_proto_rawDescGZIP(), []int{95}
 }
 
 func (x *GradeInfo) GetId() int64 {
@@ -7170,7 +7244,7 @@ type GetProjectGradesRequest struct {
 
 func (x *GetProjectGradesRequest) Reset() {
 	*x = GetProjectGradesRequest{}
-	mi := &file_admin_v1_admin_proto_msgTypes[95]
+	mi := &file_admin_v1_admin_proto_msgTypes[96]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -7182,7 +7256,7 @@ func (x *GetProjectGradesRequest) String() string {
 func (*GetProjectGradesRequest) ProtoMessage() {}
 
 func (x *GetProjectGradesRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_admin_v1_admin_proto_msgTypes[95]
+	mi := &file_admin_v1_admin_proto_msgTypes[96]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -7195,7 +7269,7 @@ func (x *GetProjectGradesRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetProjectGradesRequest.ProtoReflect.Descriptor instead.
 func (*GetProjectGradesRequest) Descriptor() ([]byte, []int) {
-	return file_admin_v1_admin_proto_rawDescGZIP(), []int{95}
+	return file_admin_v1_admin_proto_rawDescGZIP(), []int{96}
 }
 
 func (x *GetProjectGradesRequest) GetProjectId() int64 {
@@ -7220,7 +7294,7 @@ type GetProjectGradesResponse struct {
 
 func (x *GetProjectGradesResponse) Reset() {
 	*x = GetProjectGradesResponse{}
-	mi := &file_admin_v1_admin_proto_msgTypes[96]
+	mi := &file_admin_v1_admin_proto_msgTypes[97]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -7232,7 +7306,7 @@ func (x *GetProjectGradesResponse) String() string {
 func (*GetProjectGradesResponse) ProtoMessage() {}
 
 func (x *GetProjectGradesResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_admin_v1_admin_proto_msgTypes[96]
+	mi := &file_admin_v1_admin_proto_msgTypes[97]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -7245,7 +7319,7 @@ func (x *GetProjectGradesResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetProjectGradesResponse.ProtoReflect.Descriptor instead.
 func (*GetProjectGradesResponse) Descriptor() ([]byte, []int) {
-	return file_admin_v1_admin_proto_rawDescGZIP(), []int{96}
+	return file_admin_v1_admin_proto_rawDescGZIP(), []int{97}
 }
 
 func (x *GetProjectGradesResponse) GetProjectId() int64 {
@@ -7310,7 +7384,7 @@ type SetStepGradeRequest struct {
 
 func (x *SetStepGradeRequest) Reset() {
 	*x = SetStepGradeRequest{}
-	mi := &file_admin_v1_admin_proto_msgTypes[97]
+	mi := &file_admin_v1_admin_proto_msgTypes[98]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -7322,7 +7396,7 @@ func (x *SetStepGradeRequest) String() string {
 func (*SetStepGradeRequest) ProtoMessage() {}
 
 func (x *SetStepGradeRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_admin_v1_admin_proto_msgTypes[97]
+	mi := &file_admin_v1_admin_proto_msgTypes[98]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -7335,7 +7409,7 @@ func (x *SetStepGradeRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use SetStepGradeRequest.ProtoReflect.Descriptor instead.
 func (*SetStepGradeRequest) Descriptor() ([]byte, []int) {
-	return file_admin_v1_admin_proto_rawDescGZIP(), []int{97}
+	return file_admin_v1_admin_proto_rawDescGZIP(), []int{98}
 }
 
 func (x *SetStepGradeRequest) GetProjectId() int64 {
@@ -7383,7 +7457,7 @@ type SetStepGradeResponse struct {
 
 func (x *SetStepGradeResponse) Reset() {
 	*x = SetStepGradeResponse{}
-	mi := &file_admin_v1_admin_proto_msgTypes[98]
+	mi := &file_admin_v1_admin_proto_msgTypes[99]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -7395,7 +7469,7 @@ func (x *SetStepGradeResponse) String() string {
 func (*SetStepGradeResponse) ProtoMessage() {}
 
 func (x *SetStepGradeResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_admin_v1_admin_proto_msgTypes[98]
+	mi := &file_admin_v1_admin_proto_msgTypes[99]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -7408,7 +7482,7 @@ func (x *SetStepGradeResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use SetStepGradeResponse.ProtoReflect.Descriptor instead.
 func (*SetStepGradeResponse) Descriptor() ([]byte, []int) {
-	return file_admin_v1_admin_proto_rawDescGZIP(), []int{98}
+	return file_admin_v1_admin_proto_rawDescGZIP(), []int{99}
 }
 
 func (x *SetStepGradeResponse) GetSuccess() bool {
@@ -7435,7 +7509,7 @@ type GetGradingHistoryRequest struct {
 
 func (x *GetGradingHistoryRequest) Reset() {
 	*x = GetGradingHistoryRequest{}
-	mi := &file_admin_v1_admin_proto_msgTypes[99]
+	mi := &file_admin_v1_admin_proto_msgTypes[100]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -7447,7 +7521,7 @@ func (x *GetGradingHistoryRequest) String() string {
 func (*GetGradingHistoryRequest) ProtoMessage() {}
 
 func (x *GetGradingHistoryRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_admin_v1_admin_proto_msgTypes[99]
+	mi := &file_admin_v1_admin_proto_msgTypes[100]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -7460,7 +7534,7 @@ func (x *GetGradingHistoryRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetGradingHistoryRequest.ProtoReflect.Descriptor instead.
 func (*GetGradingHistoryRequest) Descriptor() ([]byte, []int) {
-	return file_admin_v1_admin_proto_rawDescGZIP(), []int{99}
+	return file_admin_v1_admin_proto_rawDescGZIP(), []int{100}
 }
 
 func (x *GetGradingHistoryRequest) GetProjectId() int64 {
@@ -7486,7 +7560,7 @@ type GetGradingHistoryResponse struct {
 
 func (x *GetGradingHistoryResponse) Reset() {
 	*x = GetGradingHistoryResponse{}
-	mi := &file_admin_v1_admin_proto_msgTypes[100]
+	mi := &file_admin_v1_admin_proto_msgTypes[101]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -7498,7 +7572,7 @@ func (x *GetGradingHistoryResponse) String() string {
 func (*GetGradingHistoryResponse) ProtoMessage() {}
 
 func (x *GetGradingHistoryResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_admin_v1_admin_proto_msgTypes[100]
+	mi := &file_admin_v1_admin_proto_msgTypes[101]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -7511,7 +7585,7 @@ func (x *GetGradingHistoryResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetGradingHistoryResponse.ProtoReflect.Descriptor instead.
 func (*GetGradingHistoryResponse) Descriptor() ([]byte, []int) {
-	return file_admin_v1_admin_proto_rawDescGZIP(), []int{100}
+	return file_admin_v1_admin_proto_rawDescGZIP(), []int{101}
 }
 
 func (x *GetGradingHistoryResponse) GetHistory() []*GradeHistoryItem {
@@ -7536,7 +7610,7 @@ type GradeHistoryItem struct {
 
 func (x *GradeHistoryItem) Reset() {
 	*x = GradeHistoryItem{}
-	mi := &file_admin_v1_admin_proto_msgTypes[101]
+	mi := &file_admin_v1_admin_proto_msgTypes[102]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -7548,7 +7622,7 @@ func (x *GradeHistoryItem) String() string {
 func (*GradeHistoryItem) ProtoMessage() {}
 
 func (x *GradeHistoryItem) ProtoReflect() protoreflect.Message {
-	mi := &file_admin_v1_admin_proto_msgTypes[101]
+	mi := &file_admin_v1_admin_proto_msgTypes[102]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -7561,7 +7635,7 @@ func (x *GradeHistoryItem) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GradeHistoryItem.ProtoReflect.Descriptor instead.
 func (*GradeHistoryItem) Descriptor() ([]byte, []int) {
-	return file_admin_v1_admin_proto_rawDescGZIP(), []int{101}
+	return file_admin_v1_admin_proto_rawDescGZIP(), []int{102}
 }
 
 func (x *GradeHistoryItem) GetId() int64 {
@@ -7623,7 +7697,7 @@ type GetWorkflowProgressRequest struct {
 
 func (x *GetWorkflowProgressRequest) Reset() {
 	*x = GetWorkflowProgressRequest{}
-	mi := &file_admin_v1_admin_proto_msgTypes[102]
+	mi := &file_admin_v1_admin_proto_msgTypes[103]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -7635,7 +7709,7 @@ func (x *GetWorkflowProgressRequest) String() string {
 func (*GetWorkflowProgressRequest) ProtoMessage() {}
 
 func (x *GetWorkflowProgressRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_admin_v1_admin_proto_msgTypes[102]
+	mi := &file_admin_v1_admin_proto_msgTypes[103]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -7648,7 +7722,7 @@ func (x *GetWorkflowProgressRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetWorkflowProgressRequest.ProtoReflect.Descriptor instead.
 func (*GetWorkflowProgressRequest) Descriptor() ([]byte, []int) {
-	return file_admin_v1_admin_proto_rawDescGZIP(), []int{102}
+	return file_admin_v1_admin_proto_rawDescGZIP(), []int{103}
 }
 
 func (x *GetWorkflowProgressRequest) GetDepartmentId() int64 {
@@ -7676,7 +7750,7 @@ type GetWorkflowProgressResponse struct {
 
 func (x *GetWorkflowProgressResponse) Reset() {
 	*x = GetWorkflowProgressResponse{}
-	mi := &file_admin_v1_admin_proto_msgTypes[103]
+	mi := &file_admin_v1_admin_proto_msgTypes[104]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -7688,7 +7762,7 @@ func (x *GetWorkflowProgressResponse) String() string {
 func (*GetWorkflowProgressResponse) ProtoMessage() {}
 
 func (x *GetWorkflowProgressResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_admin_v1_admin_proto_msgTypes[103]
+	mi := &file_admin_v1_admin_proto_msgTypes[104]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -7701,7 +7775,7 @@ func (x *GetWorkflowProgressResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetWorkflowProgressResponse.ProtoReflect.Descriptor instead.
 func (*GetWorkflowProgressResponse) Descriptor() ([]byte, []int) {
-	return file_admin_v1_admin_proto_rawDescGZIP(), []int{103}
+	return file_admin_v1_admin_proto_rawDescGZIP(), []int{104}
 }
 
 func (x *GetWorkflowProgressResponse) GetWorkflowId() int64 {
@@ -7738,7 +7812,7 @@ type ListPendingReviewsRequest struct {
 
 func (x *ListPendingReviewsRequest) Reset() {
 	*x = ListPendingReviewsRequest{}
-	mi := &file_admin_v1_admin_proto_msgTypes[104]
+	mi := &file_admin_v1_admin_proto_msgTypes[105]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -7750,7 +7824,7 @@ func (x *ListPendingReviewsRequest) String() string {
 func (*ListPendingReviewsRequest) ProtoMessage() {}
 
 func (x *ListPendingReviewsRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_admin_v1_admin_proto_msgTypes[104]
+	mi := &file_admin_v1_admin_proto_msgTypes[105]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -7763,7 +7837,7 @@ func (x *ListPendingReviewsRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ListPendingReviewsRequest.ProtoReflect.Descriptor instead.
 func (*ListPendingReviewsRequest) Descriptor() ([]byte, []int) {
-	return file_admin_v1_admin_proto_rawDescGZIP(), []int{104}
+	return file_admin_v1_admin_proto_rawDescGZIP(), []int{105}
 }
 
 func (x *ListPendingReviewsRequest) GetDepartmentId() int64 {
@@ -7811,7 +7885,7 @@ type ListPendingReviewsResponse struct {
 
 func (x *ListPendingReviewsResponse) Reset() {
 	*x = ListPendingReviewsResponse{}
-	mi := &file_admin_v1_admin_proto_msgTypes[105]
+	mi := &file_admin_v1_admin_proto_msgTypes[106]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -7823,7 +7897,7 @@ func (x *ListPendingReviewsResponse) String() string {
 func (*ListPendingReviewsResponse) ProtoMessage() {}
 
 func (x *ListPendingReviewsResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_admin_v1_admin_proto_msgTypes[105]
+	mi := &file_admin_v1_admin_proto_msgTypes[106]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -7836,7 +7910,7 @@ func (x *ListPendingReviewsResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ListPendingReviewsResponse.ProtoReflect.Descriptor instead.
 func (*ListPendingReviewsResponse) Descriptor() ([]byte, []int) {
-	return file_admin_v1_admin_proto_rawDescGZIP(), []int{105}
+	return file_admin_v1_admin_proto_rawDescGZIP(), []int{106}
 }
 
 func (x *ListPendingReviewsResponse) GetReviews() []*PendingReview {
@@ -7871,7 +7945,7 @@ type PendingReview struct {
 
 func (x *PendingReview) Reset() {
 	*x = PendingReview{}
-	mi := &file_admin_v1_admin_proto_msgTypes[106]
+	mi := &file_admin_v1_admin_proto_msgTypes[107]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -7883,7 +7957,7 @@ func (x *PendingReview) String() string {
 func (*PendingReview) ProtoMessage() {}
 
 func (x *PendingReview) ProtoReflect() protoreflect.Message {
-	mi := &file_admin_v1_admin_proto_msgTypes[106]
+	mi := &file_admin_v1_admin_proto_msgTypes[107]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -7896,7 +7970,7 @@ func (x *PendingReview) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use PendingReview.ProtoReflect.Descriptor instead.
 func (*PendingReview) Descriptor() ([]byte, []int) {
-	return file_admin_v1_admin_proto_rawDescGZIP(), []int{106}
+	return file_admin_v1_admin_proto_rawDescGZIP(), []int{107}
 }
 
 func (x *PendingReview) GetSubmissionId() string {
@@ -8258,7 +8332,13 @@ const file_admin_v1_admin_proto_rawDesc = "" +
 	"\rsupervisor_id\x18\x03 \x01(\x03B\a\xfaB\x04\"\x02 \x00R\fsupervisorId\x12*\n" +
 	"\frequested_by\x18\x04 \x01(\x03B\a\xfaB\x04\"\x02 \x00R\vrequestedBy\x12\"\n" +
 	"\amessage\x18\x05 \x01(\tB\b\xfaB\x05r\x03\x18\xe8\aR\amessage\x12%\n" +
-	"\x0eproposed_topic\x18\x06 \x01(\tR\rproposedTopic\"\xa7\x01\n" +
+	"\x0eproposed_topic\x18\x06 \x01(\tR\rproposedTopic\"\xe9\x01\n" +
+	" CreateSupervisorRequestByTeamReq\x12 \n" +
+	"\ateam_id\x18\x01 \x01(\x03B\a\xfaB\x04\"\x02 \x00R\x06teamId\x12,\n" +
+	"\rsupervisor_id\x18\x02 \x01(\x03B\a\xfaB\x04\"\x02 \x00R\fsupervisorId\x12*\n" +
+	"\frequested_by\x18\x03 \x01(\x03B\a\xfaB\x04\"\x02 \x00R\vrequestedBy\x12\"\n" +
+	"\amessage\x18\x04 \x01(\tB\b\xfaB\x05r\x03\x18\xe8\aR\amessage\x12%\n" +
+	"\x0eproposed_topic\x18\x05 \x01(\tR\rproposedTopic\"\xa7\x01\n" +
 	"\x1bCreateSupervisorRequestResp\x12\x18\n" +
 	"\asuccess\x18\x01 \x01(\bR\asuccess\x12\x1d\n" +
 	"\n" +
@@ -8684,7 +8764,7 @@ const file_admin_v1_admin_proto_rawDesc = "" +
 	"\fsubmitted_at\x18\b \x01(\v2\x1a.google.protobuf.TimestampR\vsubmittedAt\x12!\n" +
 	"\fdays_pending\x18\t \x01(\x05R\vdaysPending\x12\x1a\n" +
 	"\bpriority\x18\n" +
-	" \x01(\tR\bpriority2\x8c\x1d\n" +
+	" \x01(\tR\bpriority2\x80\x1e\n" +
 	"\fAdminService\x12M\n" +
 	"\fGetDashboard\x12\x1d.admin.v1.GetDashboardRequest\x1a\x1e.admin.v1.GetDashboardResponse\x12_\n" +
 	"\x12GetDepartmentStats\x12#.admin.v1.GetDepartmentStatsRequest\x1a$.admin.v1.GetDepartmentStatsResponse\x12M\n" +
@@ -8697,7 +8777,8 @@ const file_admin_v1_admin_proto_rawDesc = "" +
 	"\x0fDeleteTeamAdmin\x12 .admin.v1.DeleteTeamAdminRequest\x1a\x16.google.protobuf.Empty\x12V\n" +
 	"\x0fListSupervisors\x12 .admin.v1.ListSupervisorsRequest\x1a!.admin.v1.ListSupervisorsResponse\x12Y\n" +
 	"\x10AssignSupervisor\x12!.admin.v1.AssignSupervisorRequest\x1a\".admin.v1.AssignSupervisorResponse\x12f\n" +
-	"\x17CreateSupervisorRequest\x12$.admin.v1.CreateSupervisorRequestReq\x1a%.admin.v1.CreateSupervisorRequestResp\x12c\n" +
+	"\x17CreateSupervisorRequest\x12$.admin.v1.CreateSupervisorRequestReq\x1a%.admin.v1.CreateSupervisorRequestResp\x12r\n" +
+	"\x1dCreateSupervisorRequestByTeam\x12*.admin.v1.CreateSupervisorRequestByTeamReq\x1a%.admin.v1.CreateSupervisorRequestResp\x12c\n" +
 	"\x16ListSupervisorRequests\x12#.admin.v1.ListSupervisorRequestsReq\x1a$.admin.v1.ListSupervisorRequestsResp\x12]\n" +
 	"\x14GetSupervisorRequest\x12!.admin.v1.GetSupervisorRequestReq\x1a\".admin.v1.GetSupervisorRequestResp\x12o\n" +
 	"\x1aRespondToSupervisorRequest\x12'.admin.v1.RespondToSupervisorRequestReq\x1a(.admin.v1.RespondToSupervisorRequestResp\x12i\n" +
@@ -8738,7 +8819,7 @@ func file_admin_v1_admin_proto_rawDescGZIP() []byte {
 	return file_admin_v1_admin_proto_rawDescData
 }
 
-var file_admin_v1_admin_proto_msgTypes = make([]protoimpl.MessageInfo, 107)
+var file_admin_v1_admin_proto_msgTypes = make([]protoimpl.MessageInfo, 108)
 var file_admin_v1_admin_proto_goTypes = []any{
 	(*TopicRegistrationInfo)(nil),                    // 0: admin.v1.TopicRegistrationInfo
 	(*SubmitTopicRegistrationRequest)(nil),           // 1: admin.v1.SubmitTopicRegistrationRequest
@@ -8784,168 +8865,169 @@ var file_admin_v1_admin_proto_goTypes = []any{
 	(*SupervisorRequest)(nil),                        // 41: admin.v1.SupervisorRequest
 	(*TeamMemberPreview)(nil),                        // 42: admin.v1.TeamMemberPreview
 	(*CreateSupervisorRequestReq)(nil),               // 43: admin.v1.CreateSupervisorRequestReq
-	(*CreateSupervisorRequestResp)(nil),              // 44: admin.v1.CreateSupervisorRequestResp
-	(*ListSupervisorRequestsReq)(nil),                // 45: admin.v1.ListSupervisorRequestsReq
-	(*ListSupervisorRequestsResp)(nil),               // 46: admin.v1.ListSupervisorRequestsResp
-	(*GetSupervisorRequestReq)(nil),                  // 47: admin.v1.GetSupervisorRequestReq
-	(*GetSupervisorRequestResp)(nil),                 // 48: admin.v1.GetSupervisorRequestResp
-	(*SupervisorRequestHistory)(nil),                 // 49: admin.v1.SupervisorRequestHistory
-	(*RespondToSupervisorRequestReq)(nil),            // 50: admin.v1.RespondToSupervisorRequestReq
-	(*RespondToSupervisorRequestResp)(nil),           // 51: admin.v1.RespondToSupervisorRequestResp
-	(*ListMySupervisorRequestsReq)(nil),              // 52: admin.v1.ListMySupervisorRequestsReq
-	(*ListMySupervisorRequestsResp)(nil),             // 53: admin.v1.ListMySupervisorRequestsResp
-	(*CancelSupervisorRequestReq)(nil),               // 54: admin.v1.CancelSupervisorRequestReq
-	(*CancelSupervisorRequestResp)(nil),              // 55: admin.v1.CancelSupervisorRequestResp
-	(*PreDefenseSubmission)(nil),                     // 56: admin.v1.PreDefenseSubmission
-	(*PreDefenseCommissionMember)(nil),               // 57: admin.v1.PreDefenseCommissionMember
-	(*PreDefenseDocument)(nil),                       // 58: admin.v1.PreDefenseDocument
-	(*PreDefenseHistory)(nil),                        // 59: admin.v1.PreDefenseHistory
-	(*SubmitPreDefenseRequest)(nil),                  // 60: admin.v1.SubmitPreDefenseRequest
-	(*SubmitPreDefenseResponse)(nil),                 // 61: admin.v1.SubmitPreDefenseResponse
-	(*ListPreDefenseSubmissionsRequest)(nil),         // 62: admin.v1.ListPreDefenseSubmissionsRequest
-	(*ListPreDefenseSubmissionsResponse)(nil),        // 63: admin.v1.ListPreDefenseSubmissionsResponse
-	(*PreDefenseStats)(nil),                          // 64: admin.v1.PreDefenseStats
-	(*GetPreDefenseSubmissionRequest)(nil),           // 65: admin.v1.GetPreDefenseSubmissionRequest
-	(*GetPreDefenseSubmissionResponse)(nil),          // 66: admin.v1.GetPreDefenseSubmissionResponse
-	(*SchedulePreDefenseRequest)(nil),                // 67: admin.v1.SchedulePreDefenseRequest
-	(*SchedulePreDefenseResponse)(nil),               // 68: admin.v1.SchedulePreDefenseResponse
-	(*GradePreDefenseRequest)(nil),                   // 69: admin.v1.GradePreDefenseRequest
-	(*CommissionMemberGrade)(nil),                    // 70: admin.v1.CommissionMemberGrade
-	(*GradePreDefenseResponse)(nil),                  // 71: admin.v1.GradePreDefenseResponse
-	(*CompletePreDefenseRequest)(nil),                // 72: admin.v1.CompletePreDefenseRequest
-	(*CompletePreDefenseResponse)(nil),               // 73: admin.v1.CompletePreDefenseResponse
-	(*ReschedulePreDefenseRequest)(nil),              // 74: admin.v1.ReschedulePreDefenseRequest
-	(*ReschedulePreDefenseResponse)(nil),             // 75: admin.v1.ReschedulePreDefenseResponse
-	(*ListScheduledPreDefensesRequest)(nil),          // 76: admin.v1.ListScheduledPreDefensesRequest
-	(*ListScheduledPreDefensesResponse)(nil),         // 77: admin.v1.ListScheduledPreDefensesResponse
-	(*PreDefenseScheduleItem)(nil),                   // 78: admin.v1.PreDefenseScheduleItem
-	(*AddPreDefenseCommissionMemberRequest)(nil),     // 79: admin.v1.AddPreDefenseCommissionMemberRequest
-	(*AddPreDefenseCommissionMemberResponse)(nil),    // 80: admin.v1.AddPreDefenseCommissionMemberResponse
-	(*RemovePreDefenseCommissionMemberRequest)(nil),  // 81: admin.v1.RemovePreDefenseCommissionMemberRequest
-	(*RemovePreDefenseCommissionMemberResponse)(nil), // 82: admin.v1.RemovePreDefenseCommissionMemberResponse
-	(*ListSubmissionsRequest)(nil),                   // 83: admin.v1.ListSubmissionsRequest
-	(*ListSubmissionsResponse)(nil),                  // 84: admin.v1.ListSubmissionsResponse
-	(*SubmissionInfo)(nil),                           // 85: admin.v1.SubmissionInfo
-	(*SubmissionPreview)(nil),                        // 86: admin.v1.SubmissionPreview
-	(*FileAttachment)(nil),                           // 87: admin.v1.FileAttachment
-	(*ReviewInfo)(nil),                               // 88: admin.v1.ReviewInfo
-	(*GetSubmissionRequest)(nil),                     // 89: admin.v1.GetSubmissionRequest
-	(*GetSubmissionResponse)(nil),                    // 90: admin.v1.GetSubmissionResponse
-	(*ReviewHistory)(nil),                            // 91: admin.v1.ReviewHistory
-	(*ReviewSubmissionRequest)(nil),                  // 92: admin.v1.ReviewSubmissionRequest
-	(*ReviewSubmissionResponse)(nil),                 // 93: admin.v1.ReviewSubmissionResponse
-	(*GradeInfo)(nil),                                // 94: admin.v1.GradeInfo
-	(*GetProjectGradesRequest)(nil),                  // 95: admin.v1.GetProjectGradesRequest
-	(*GetProjectGradesResponse)(nil),                 // 96: admin.v1.GetProjectGradesResponse
-	(*SetStepGradeRequest)(nil),                      // 97: admin.v1.SetStepGradeRequest
-	(*SetStepGradeResponse)(nil),                     // 98: admin.v1.SetStepGradeResponse
-	(*GetGradingHistoryRequest)(nil),                 // 99: admin.v1.GetGradingHistoryRequest
-	(*GetGradingHistoryResponse)(nil),                // 100: admin.v1.GetGradingHistoryResponse
-	(*GradeHistoryItem)(nil),                         // 101: admin.v1.GradeHistoryItem
-	(*GetWorkflowProgressRequest)(nil),               // 102: admin.v1.GetWorkflowProgressRequest
-	(*GetWorkflowProgressResponse)(nil),              // 103: admin.v1.GetWorkflowProgressResponse
-	(*ListPendingReviewsRequest)(nil),                // 104: admin.v1.ListPendingReviewsRequest
-	(*ListPendingReviewsResponse)(nil),               // 105: admin.v1.ListPendingReviewsResponse
-	(*PendingReview)(nil),                            // 106: admin.v1.PendingReview
-	(*timestamppb.Timestamp)(nil),                    // 107: google.protobuf.Timestamp
-	(*structpb.Struct)(nil),                          // 108: google.protobuf.Struct
-	(*emptypb.Empty)(nil),                            // 109: google.protobuf.Empty
+	(*CreateSupervisorRequestByTeamReq)(nil),         // 44: admin.v1.CreateSupervisorRequestByTeamReq
+	(*CreateSupervisorRequestResp)(nil),              // 45: admin.v1.CreateSupervisorRequestResp
+	(*ListSupervisorRequestsReq)(nil),                // 46: admin.v1.ListSupervisorRequestsReq
+	(*ListSupervisorRequestsResp)(nil),               // 47: admin.v1.ListSupervisorRequestsResp
+	(*GetSupervisorRequestReq)(nil),                  // 48: admin.v1.GetSupervisorRequestReq
+	(*GetSupervisorRequestResp)(nil),                 // 49: admin.v1.GetSupervisorRequestResp
+	(*SupervisorRequestHistory)(nil),                 // 50: admin.v1.SupervisorRequestHistory
+	(*RespondToSupervisorRequestReq)(nil),            // 51: admin.v1.RespondToSupervisorRequestReq
+	(*RespondToSupervisorRequestResp)(nil),           // 52: admin.v1.RespondToSupervisorRequestResp
+	(*ListMySupervisorRequestsReq)(nil),              // 53: admin.v1.ListMySupervisorRequestsReq
+	(*ListMySupervisorRequestsResp)(nil),             // 54: admin.v1.ListMySupervisorRequestsResp
+	(*CancelSupervisorRequestReq)(nil),               // 55: admin.v1.CancelSupervisorRequestReq
+	(*CancelSupervisorRequestResp)(nil),              // 56: admin.v1.CancelSupervisorRequestResp
+	(*PreDefenseSubmission)(nil),                     // 57: admin.v1.PreDefenseSubmission
+	(*PreDefenseCommissionMember)(nil),               // 58: admin.v1.PreDefenseCommissionMember
+	(*PreDefenseDocument)(nil),                       // 59: admin.v1.PreDefenseDocument
+	(*PreDefenseHistory)(nil),                        // 60: admin.v1.PreDefenseHistory
+	(*SubmitPreDefenseRequest)(nil),                  // 61: admin.v1.SubmitPreDefenseRequest
+	(*SubmitPreDefenseResponse)(nil),                 // 62: admin.v1.SubmitPreDefenseResponse
+	(*ListPreDefenseSubmissionsRequest)(nil),         // 63: admin.v1.ListPreDefenseSubmissionsRequest
+	(*ListPreDefenseSubmissionsResponse)(nil),        // 64: admin.v1.ListPreDefenseSubmissionsResponse
+	(*PreDefenseStats)(nil),                          // 65: admin.v1.PreDefenseStats
+	(*GetPreDefenseSubmissionRequest)(nil),           // 66: admin.v1.GetPreDefenseSubmissionRequest
+	(*GetPreDefenseSubmissionResponse)(nil),          // 67: admin.v1.GetPreDefenseSubmissionResponse
+	(*SchedulePreDefenseRequest)(nil),                // 68: admin.v1.SchedulePreDefenseRequest
+	(*SchedulePreDefenseResponse)(nil),               // 69: admin.v1.SchedulePreDefenseResponse
+	(*GradePreDefenseRequest)(nil),                   // 70: admin.v1.GradePreDefenseRequest
+	(*CommissionMemberGrade)(nil),                    // 71: admin.v1.CommissionMemberGrade
+	(*GradePreDefenseResponse)(nil),                  // 72: admin.v1.GradePreDefenseResponse
+	(*CompletePreDefenseRequest)(nil),                // 73: admin.v1.CompletePreDefenseRequest
+	(*CompletePreDefenseResponse)(nil),               // 74: admin.v1.CompletePreDefenseResponse
+	(*ReschedulePreDefenseRequest)(nil),              // 75: admin.v1.ReschedulePreDefenseRequest
+	(*ReschedulePreDefenseResponse)(nil),             // 76: admin.v1.ReschedulePreDefenseResponse
+	(*ListScheduledPreDefensesRequest)(nil),          // 77: admin.v1.ListScheduledPreDefensesRequest
+	(*ListScheduledPreDefensesResponse)(nil),         // 78: admin.v1.ListScheduledPreDefensesResponse
+	(*PreDefenseScheduleItem)(nil),                   // 79: admin.v1.PreDefenseScheduleItem
+	(*AddPreDefenseCommissionMemberRequest)(nil),     // 80: admin.v1.AddPreDefenseCommissionMemberRequest
+	(*AddPreDefenseCommissionMemberResponse)(nil),    // 81: admin.v1.AddPreDefenseCommissionMemberResponse
+	(*RemovePreDefenseCommissionMemberRequest)(nil),  // 82: admin.v1.RemovePreDefenseCommissionMemberRequest
+	(*RemovePreDefenseCommissionMemberResponse)(nil), // 83: admin.v1.RemovePreDefenseCommissionMemberResponse
+	(*ListSubmissionsRequest)(nil),                   // 84: admin.v1.ListSubmissionsRequest
+	(*ListSubmissionsResponse)(nil),                  // 85: admin.v1.ListSubmissionsResponse
+	(*SubmissionInfo)(nil),                           // 86: admin.v1.SubmissionInfo
+	(*SubmissionPreview)(nil),                        // 87: admin.v1.SubmissionPreview
+	(*FileAttachment)(nil),                           // 88: admin.v1.FileAttachment
+	(*ReviewInfo)(nil),                               // 89: admin.v1.ReviewInfo
+	(*GetSubmissionRequest)(nil),                     // 90: admin.v1.GetSubmissionRequest
+	(*GetSubmissionResponse)(nil),                    // 91: admin.v1.GetSubmissionResponse
+	(*ReviewHistory)(nil),                            // 92: admin.v1.ReviewHistory
+	(*ReviewSubmissionRequest)(nil),                  // 93: admin.v1.ReviewSubmissionRequest
+	(*ReviewSubmissionResponse)(nil),                 // 94: admin.v1.ReviewSubmissionResponse
+	(*GradeInfo)(nil),                                // 95: admin.v1.GradeInfo
+	(*GetProjectGradesRequest)(nil),                  // 96: admin.v1.GetProjectGradesRequest
+	(*GetProjectGradesResponse)(nil),                 // 97: admin.v1.GetProjectGradesResponse
+	(*SetStepGradeRequest)(nil),                      // 98: admin.v1.SetStepGradeRequest
+	(*SetStepGradeResponse)(nil),                     // 99: admin.v1.SetStepGradeResponse
+	(*GetGradingHistoryRequest)(nil),                 // 100: admin.v1.GetGradingHistoryRequest
+	(*GetGradingHistoryResponse)(nil),                // 101: admin.v1.GetGradingHistoryResponse
+	(*GradeHistoryItem)(nil),                         // 102: admin.v1.GradeHistoryItem
+	(*GetWorkflowProgressRequest)(nil),               // 103: admin.v1.GetWorkflowProgressRequest
+	(*GetWorkflowProgressResponse)(nil),              // 104: admin.v1.GetWorkflowProgressResponse
+	(*ListPendingReviewsRequest)(nil),                // 105: admin.v1.ListPendingReviewsRequest
+	(*ListPendingReviewsResponse)(nil),               // 106: admin.v1.ListPendingReviewsResponse
+	(*PendingReview)(nil),                            // 107: admin.v1.PendingReview
+	(*timestamppb.Timestamp)(nil),                    // 108: google.protobuf.Timestamp
+	(*structpb.Struct)(nil),                          // 109: google.protobuf.Struct
+	(*emptypb.Empty)(nil),                            // 110: google.protobuf.Empty
 }
 var file_admin_v1_admin_proto_depIdxs = []int32{
-	107, // 0: admin.v1.TopicRegistrationInfo.submitted_at:type_name -> google.protobuf.Timestamp
-	107, // 1: admin.v1.TopicRegistrationInfo.reviewed_at:type_name -> google.protobuf.Timestamp
+	108, // 0: admin.v1.TopicRegistrationInfo.submitted_at:type_name -> google.protobuf.Timestamp
+	108, // 1: admin.v1.TopicRegistrationInfo.reviewed_at:type_name -> google.protobuf.Timestamp
 	0,   // 2: admin.v1.ListTopicRegistrationsResponse.registrations:type_name -> admin.v1.TopicRegistrationInfo
 	0,   // 3: admin.v1.ReviewTopicRegistrationResponse.updated_registration:type_name -> admin.v1.TopicRegistrationInfo
 	0,   // 4: admin.v1.GetTopicRegistrationResponse.registration:type_name -> admin.v1.TopicRegistrationInfo
 	9,   // 5: admin.v1.GetTopicRegistrationResponse.history:type_name -> admin.v1.TopicRegistrationHistory
-	107, // 6: admin.v1.TopicRegistrationHistory.created_at:type_name -> google.protobuf.Timestamp
+	108, // 6: admin.v1.TopicRegistrationHistory.created_at:type_name -> google.protobuf.Timestamp
 	12,  // 7: admin.v1.GetDashboardResponse.stats:type_name -> admin.v1.DashboardStats
 	13,  // 8: admin.v1.GetDashboardResponse.step_progress:type_name -> admin.v1.StepProgress
 	14,  // 9: admin.v1.GetDashboardResponse.recent_activities:type_name -> admin.v1.RecentActivity
-	107, // 10: admin.v1.RecentActivity.created_at:type_name -> google.protobuf.Timestamp
+	108, // 10: admin.v1.RecentActivity.created_at:type_name -> google.protobuf.Timestamp
 	12,  // 11: admin.v1.GetDepartmentStatsResponse.stats:type_name -> admin.v1.DashboardStats
 	17,  // 12: admin.v1.GetDepartmentStatsResponse.workflow_stats:type_name -> admin.v1.WorkflowStepStats
 	20,  // 13: admin.v1.ListStudentsResponse.students:type_name -> admin.v1.StudentInfo
-	107, // 14: admin.v1.StudentInfo.created_at:type_name -> google.protobuf.Timestamp
+	108, // 14: admin.v1.StudentInfo.created_at:type_name -> google.protobuf.Timestamp
 	20,  // 15: admin.v1.GetStudentResponse.student:type_name -> admin.v1.StudentInfo
-	94,  // 16: admin.v1.GetStudentResponse.grades:type_name -> admin.v1.GradeInfo
-	86,  // 17: admin.v1.GetStudentResponse.submissions:type_name -> admin.v1.SubmissionPreview
+	95,  // 16: admin.v1.GetStudentResponse.grades:type_name -> admin.v1.GradeInfo
+	87,  // 17: admin.v1.GetStudentResponse.submissions:type_name -> admin.v1.SubmissionPreview
 	25,  // 18: admin.v1.ListAllTeamsResponse.teams:type_name -> admin.v1.TeamAdminInfo
 	26,  // 19: admin.v1.TeamAdminInfo.members:type_name -> admin.v1.TeamMemberInfo
 	27,  // 20: admin.v1.TeamAdminInfo.supervisor:type_name -> admin.v1.SupervisorInfo
-	107, // 21: admin.v1.TeamAdminInfo.created_at:type_name -> google.protobuf.Timestamp
-	107, // 22: admin.v1.TeamAdminInfo.updated_at:type_name -> google.protobuf.Timestamp
+	108, // 21: admin.v1.TeamAdminInfo.created_at:type_name -> google.protobuf.Timestamp
+	108, // 22: admin.v1.TeamAdminInfo.updated_at:type_name -> google.protobuf.Timestamp
 	25,  // 23: admin.v1.GetTeamDetailsResponse.team:type_name -> admin.v1.TeamAdminInfo
 	30,  // 24: admin.v1.GetTeamDetailsResponse.project_progress:type_name -> admin.v1.ProjectProgress
-	94,  // 25: admin.v1.GetTeamDetailsResponse.grades:type_name -> admin.v1.GradeInfo
-	86,  // 26: admin.v1.GetTeamDetailsResponse.submissions:type_name -> admin.v1.SubmissionPreview
+	95,  // 25: admin.v1.GetTeamDetailsResponse.grades:type_name -> admin.v1.GradeInfo
+	87,  // 26: admin.v1.GetTeamDetailsResponse.submissions:type_name -> admin.v1.SubmissionPreview
 	31,  // 27: admin.v1.ProjectProgress.steps:type_name -> admin.v1.StepStatus
-	107, // 28: admin.v1.StepStatus.completed_at:type_name -> google.protobuf.Timestamp
-	94,  // 29: admin.v1.StepStatus.grade:type_name -> admin.v1.GradeInfo
+	108, // 28: admin.v1.StepStatus.completed_at:type_name -> google.protobuf.Timestamp
+	95,  // 29: admin.v1.StepStatus.grade:type_name -> admin.v1.GradeInfo
 	25,  // 30: admin.v1.UpdateTeamAdminResponse.team:type_name -> admin.v1.TeamAdminInfo
 	37,  // 31: admin.v1.ListSupervisorsResponse.supervisors:type_name -> admin.v1.SupervisorDetails
 	38,  // 32: admin.v1.SupervisorDetails.assigned_teams:type_name -> admin.v1.TeamPreview
-	107, // 33: admin.v1.SupervisorRequest.created_at:type_name -> google.protobuf.Timestamp
-	107, // 34: admin.v1.SupervisorRequest.responded_at:type_name -> google.protobuf.Timestamp
-	107, // 35: admin.v1.SupervisorRequest.expires_at:type_name -> google.protobuf.Timestamp
+	108, // 33: admin.v1.SupervisorRequest.created_at:type_name -> google.protobuf.Timestamp
+	108, // 34: admin.v1.SupervisorRequest.responded_at:type_name -> google.protobuf.Timestamp
+	108, // 35: admin.v1.SupervisorRequest.expires_at:type_name -> google.protobuf.Timestamp
 	42,  // 36: admin.v1.SupervisorRequest.team_members:type_name -> admin.v1.TeamMemberPreview
 	41,  // 37: admin.v1.CreateSupervisorRequestResp.request:type_name -> admin.v1.SupervisorRequest
 	41,  // 38: admin.v1.ListSupervisorRequestsResp.requests:type_name -> admin.v1.SupervisorRequest
 	41,  // 39: admin.v1.GetSupervisorRequestResp.request:type_name -> admin.v1.SupervisorRequest
-	49,  // 40: admin.v1.GetSupervisorRequestResp.history:type_name -> admin.v1.SupervisorRequestHistory
-	107, // 41: admin.v1.SupervisorRequestHistory.created_at:type_name -> google.protobuf.Timestamp
+	50,  // 40: admin.v1.GetSupervisorRequestResp.history:type_name -> admin.v1.SupervisorRequestHistory
+	108, // 41: admin.v1.SupervisorRequestHistory.created_at:type_name -> google.protobuf.Timestamp
 	41,  // 42: admin.v1.RespondToSupervisorRequestResp.updated_request:type_name -> admin.v1.SupervisorRequest
 	41,  // 43: admin.v1.ListMySupervisorRequestsResp.requests:type_name -> admin.v1.SupervisorRequest
-	107, // 44: admin.v1.PreDefenseSubmission.scheduled_date:type_name -> google.protobuf.Timestamp
-	107, // 45: admin.v1.PreDefenseSubmission.graded_at:type_name -> google.protobuf.Timestamp
-	57,  // 46: admin.v1.PreDefenseSubmission.commission:type_name -> admin.v1.PreDefenseCommissionMember
-	58,  // 47: admin.v1.PreDefenseSubmission.documents:type_name -> admin.v1.PreDefenseDocument
-	107, // 48: admin.v1.PreDefenseSubmission.submitted_at:type_name -> google.protobuf.Timestamp
-	107, // 49: admin.v1.PreDefenseSubmission.completed_at:type_name -> google.protobuf.Timestamp
-	107, // 50: admin.v1.PreDefenseSubmission.created_at:type_name -> google.protobuf.Timestamp
-	107, // 51: admin.v1.PreDefenseSubmission.updated_at:type_name -> google.protobuf.Timestamp
-	107, // 52: admin.v1.PreDefenseDocument.uploaded_at:type_name -> google.protobuf.Timestamp
-	107, // 53: admin.v1.PreDefenseHistory.created_at:type_name -> google.protobuf.Timestamp
-	56,  // 54: admin.v1.SubmitPreDefenseResponse.submission:type_name -> admin.v1.PreDefenseSubmission
-	107, // 55: admin.v1.ListPreDefenseSubmissionsRequest.date_from:type_name -> google.protobuf.Timestamp
-	107, // 56: admin.v1.ListPreDefenseSubmissionsRequest.date_to:type_name -> google.protobuf.Timestamp
-	56,  // 57: admin.v1.ListPreDefenseSubmissionsResponse.submissions:type_name -> admin.v1.PreDefenseSubmission
-	64,  // 58: admin.v1.ListPreDefenseSubmissionsResponse.stats:type_name -> admin.v1.PreDefenseStats
-	56,  // 59: admin.v1.GetPreDefenseSubmissionResponse.submission:type_name -> admin.v1.PreDefenseSubmission
-	59,  // 60: admin.v1.GetPreDefenseSubmissionResponse.history:type_name -> admin.v1.PreDefenseHistory
+	108, // 44: admin.v1.PreDefenseSubmission.scheduled_date:type_name -> google.protobuf.Timestamp
+	108, // 45: admin.v1.PreDefenseSubmission.graded_at:type_name -> google.protobuf.Timestamp
+	58,  // 46: admin.v1.PreDefenseSubmission.commission:type_name -> admin.v1.PreDefenseCommissionMember
+	59,  // 47: admin.v1.PreDefenseSubmission.documents:type_name -> admin.v1.PreDefenseDocument
+	108, // 48: admin.v1.PreDefenseSubmission.submitted_at:type_name -> google.protobuf.Timestamp
+	108, // 49: admin.v1.PreDefenseSubmission.completed_at:type_name -> google.protobuf.Timestamp
+	108, // 50: admin.v1.PreDefenseSubmission.created_at:type_name -> google.protobuf.Timestamp
+	108, // 51: admin.v1.PreDefenseSubmission.updated_at:type_name -> google.protobuf.Timestamp
+	108, // 52: admin.v1.PreDefenseDocument.uploaded_at:type_name -> google.protobuf.Timestamp
+	108, // 53: admin.v1.PreDefenseHistory.created_at:type_name -> google.protobuf.Timestamp
+	57,  // 54: admin.v1.SubmitPreDefenseResponse.submission:type_name -> admin.v1.PreDefenseSubmission
+	108, // 55: admin.v1.ListPreDefenseSubmissionsRequest.date_from:type_name -> google.protobuf.Timestamp
+	108, // 56: admin.v1.ListPreDefenseSubmissionsRequest.date_to:type_name -> google.protobuf.Timestamp
+	57,  // 57: admin.v1.ListPreDefenseSubmissionsResponse.submissions:type_name -> admin.v1.PreDefenseSubmission
+	65,  // 58: admin.v1.ListPreDefenseSubmissionsResponse.stats:type_name -> admin.v1.PreDefenseStats
+	57,  // 59: admin.v1.GetPreDefenseSubmissionResponse.submission:type_name -> admin.v1.PreDefenseSubmission
+	60,  // 60: admin.v1.GetPreDefenseSubmissionResponse.history:type_name -> admin.v1.PreDefenseHistory
 	30,  // 61: admin.v1.GetPreDefenseSubmissionResponse.project_progress:type_name -> admin.v1.ProjectProgress
-	56,  // 62: admin.v1.GetPreDefenseSubmissionResponse.previous_attempts:type_name -> admin.v1.PreDefenseSubmission
-	107, // 63: admin.v1.SchedulePreDefenseRequest.scheduled_date:type_name -> google.protobuf.Timestamp
-	56,  // 64: admin.v1.SchedulePreDefenseResponse.updated_submission:type_name -> admin.v1.PreDefenseSubmission
-	70,  // 65: admin.v1.GradePreDefenseRequest.member_grades:type_name -> admin.v1.CommissionMemberGrade
-	56,  // 66: admin.v1.GradePreDefenseResponse.updated_submission:type_name -> admin.v1.PreDefenseSubmission
-	56,  // 67: admin.v1.CompletePreDefenseResponse.updated_submission:type_name -> admin.v1.PreDefenseSubmission
-	107, // 68: admin.v1.ReschedulePreDefenseRequest.new_date:type_name -> google.protobuf.Timestamp
-	56,  // 69: admin.v1.ReschedulePreDefenseResponse.updated_submission:type_name -> admin.v1.PreDefenseSubmission
-	107, // 70: admin.v1.ListScheduledPreDefensesRequest.date_from:type_name -> google.protobuf.Timestamp
-	107, // 71: admin.v1.ListScheduledPreDefensesRequest.date_to:type_name -> google.protobuf.Timestamp
-	78,  // 72: admin.v1.ListScheduledPreDefensesResponse.schedule:type_name -> admin.v1.PreDefenseScheduleItem
-	107, // 73: admin.v1.PreDefenseScheduleItem.scheduled_date:type_name -> google.protobuf.Timestamp
-	57,  // 74: admin.v1.AddPreDefenseCommissionMemberResponse.member:type_name -> admin.v1.PreDefenseCommissionMember
-	85,  // 75: admin.v1.ListSubmissionsResponse.submissions:type_name -> admin.v1.SubmissionInfo
-	108, // 76: admin.v1.SubmissionInfo.data:type_name -> google.protobuf.Struct
-	87,  // 77: admin.v1.SubmissionInfo.files:type_name -> admin.v1.FileAttachment
-	107, // 78: admin.v1.SubmissionInfo.submitted_at:type_name -> google.protobuf.Timestamp
-	88,  // 79: admin.v1.SubmissionInfo.review:type_name -> admin.v1.ReviewInfo
-	107, // 80: admin.v1.SubmissionPreview.submitted_at:type_name -> google.protobuf.Timestamp
-	107, // 81: admin.v1.ReviewInfo.reviewed_at:type_name -> google.protobuf.Timestamp
-	85,  // 82: admin.v1.GetSubmissionResponse.submission:type_name -> admin.v1.SubmissionInfo
-	91,  // 83: admin.v1.GetSubmissionResponse.history:type_name -> admin.v1.ReviewHistory
-	107, // 84: admin.v1.ReviewHistory.created_at:type_name -> google.protobuf.Timestamp
-	85,  // 85: admin.v1.ReviewSubmissionResponse.updated_submission:type_name -> admin.v1.SubmissionInfo
-	107, // 86: admin.v1.GradeInfo.graded_at:type_name -> google.protobuf.Timestamp
-	94,  // 87: admin.v1.GetProjectGradesResponse.step_grades:type_name -> admin.v1.GradeInfo
-	94,  // 88: admin.v1.SetStepGradeResponse.grade:type_name -> admin.v1.GradeInfo
-	101, // 89: admin.v1.GetGradingHistoryResponse.history:type_name -> admin.v1.GradeHistoryItem
-	107, // 90: admin.v1.GradeHistoryItem.changed_at:type_name -> google.protobuf.Timestamp
+	57,  // 62: admin.v1.GetPreDefenseSubmissionResponse.previous_attempts:type_name -> admin.v1.PreDefenseSubmission
+	108, // 63: admin.v1.SchedulePreDefenseRequest.scheduled_date:type_name -> google.protobuf.Timestamp
+	57,  // 64: admin.v1.SchedulePreDefenseResponse.updated_submission:type_name -> admin.v1.PreDefenseSubmission
+	71,  // 65: admin.v1.GradePreDefenseRequest.member_grades:type_name -> admin.v1.CommissionMemberGrade
+	57,  // 66: admin.v1.GradePreDefenseResponse.updated_submission:type_name -> admin.v1.PreDefenseSubmission
+	57,  // 67: admin.v1.CompletePreDefenseResponse.updated_submission:type_name -> admin.v1.PreDefenseSubmission
+	108, // 68: admin.v1.ReschedulePreDefenseRequest.new_date:type_name -> google.protobuf.Timestamp
+	57,  // 69: admin.v1.ReschedulePreDefenseResponse.updated_submission:type_name -> admin.v1.PreDefenseSubmission
+	108, // 70: admin.v1.ListScheduledPreDefensesRequest.date_from:type_name -> google.protobuf.Timestamp
+	108, // 71: admin.v1.ListScheduledPreDefensesRequest.date_to:type_name -> google.protobuf.Timestamp
+	79,  // 72: admin.v1.ListScheduledPreDefensesResponse.schedule:type_name -> admin.v1.PreDefenseScheduleItem
+	108, // 73: admin.v1.PreDefenseScheduleItem.scheduled_date:type_name -> google.protobuf.Timestamp
+	58,  // 74: admin.v1.AddPreDefenseCommissionMemberResponse.member:type_name -> admin.v1.PreDefenseCommissionMember
+	86,  // 75: admin.v1.ListSubmissionsResponse.submissions:type_name -> admin.v1.SubmissionInfo
+	109, // 76: admin.v1.SubmissionInfo.data:type_name -> google.protobuf.Struct
+	88,  // 77: admin.v1.SubmissionInfo.files:type_name -> admin.v1.FileAttachment
+	108, // 78: admin.v1.SubmissionInfo.submitted_at:type_name -> google.protobuf.Timestamp
+	89,  // 79: admin.v1.SubmissionInfo.review:type_name -> admin.v1.ReviewInfo
+	108, // 80: admin.v1.SubmissionPreview.submitted_at:type_name -> google.protobuf.Timestamp
+	108, // 81: admin.v1.ReviewInfo.reviewed_at:type_name -> google.protobuf.Timestamp
+	86,  // 82: admin.v1.GetSubmissionResponse.submission:type_name -> admin.v1.SubmissionInfo
+	92,  // 83: admin.v1.GetSubmissionResponse.history:type_name -> admin.v1.ReviewHistory
+	108, // 84: admin.v1.ReviewHistory.created_at:type_name -> google.protobuf.Timestamp
+	86,  // 85: admin.v1.ReviewSubmissionResponse.updated_submission:type_name -> admin.v1.SubmissionInfo
+	108, // 86: admin.v1.GradeInfo.graded_at:type_name -> google.protobuf.Timestamp
+	95,  // 87: admin.v1.GetProjectGradesResponse.step_grades:type_name -> admin.v1.GradeInfo
+	95,  // 88: admin.v1.SetStepGradeResponse.grade:type_name -> admin.v1.GradeInfo
+	102, // 89: admin.v1.GetGradingHistoryResponse.history:type_name -> admin.v1.GradeHistoryItem
+	108, // 90: admin.v1.GradeHistoryItem.changed_at:type_name -> google.protobuf.Timestamp
 	13,  // 91: admin.v1.GetWorkflowProgressResponse.steps:type_name -> admin.v1.StepProgress
-	106, // 92: admin.v1.ListPendingReviewsResponse.reviews:type_name -> admin.v1.PendingReview
-	107, // 93: admin.v1.PendingReview.submitted_at:type_name -> google.protobuf.Timestamp
+	107, // 92: admin.v1.ListPendingReviewsResponse.reviews:type_name -> admin.v1.PendingReview
+	108, // 93: admin.v1.PendingReview.submitted_at:type_name -> google.protobuf.Timestamp
 	10,  // 94: admin.v1.AdminService.GetDashboard:input_type -> admin.v1.GetDashboardRequest
 	15,  // 95: admin.v1.AdminService.GetDepartmentStats:input_type -> admin.v1.GetDepartmentStatsRequest
 	18,  // 96: admin.v1.AdminService.ListStudents:input_type -> admin.v1.ListStudentsRequest
@@ -8957,73 +9039,75 @@ var file_admin_v1_admin_proto_depIdxs = []int32{
 	35,  // 102: admin.v1.AdminService.ListSupervisors:input_type -> admin.v1.ListSupervisorsRequest
 	39,  // 103: admin.v1.AdminService.AssignSupervisor:input_type -> admin.v1.AssignSupervisorRequest
 	43,  // 104: admin.v1.AdminService.CreateSupervisorRequest:input_type -> admin.v1.CreateSupervisorRequestReq
-	45,  // 105: admin.v1.AdminService.ListSupervisorRequests:input_type -> admin.v1.ListSupervisorRequestsReq
-	47,  // 106: admin.v1.AdminService.GetSupervisorRequest:input_type -> admin.v1.GetSupervisorRequestReq
-	50,  // 107: admin.v1.AdminService.RespondToSupervisorRequest:input_type -> admin.v1.RespondToSupervisorRequestReq
-	52,  // 108: admin.v1.AdminService.ListMySupervisorRequests:input_type -> admin.v1.ListMySupervisorRequestsReq
-	54,  // 109: admin.v1.AdminService.CancelSupervisorRequest:input_type -> admin.v1.CancelSupervisorRequestReq
-	1,   // 110: admin.v1.AdminService.SubmitTopicRegistration:input_type -> admin.v1.SubmitTopicRegistrationRequest
-	3,   // 111: admin.v1.AdminService.ListTopicRegistrations:input_type -> admin.v1.ListTopicRegistrationsRequest
-	5,   // 112: admin.v1.AdminService.ReviewTopicRegistration:input_type -> admin.v1.ReviewTopicRegistrationRequest
-	7,   // 113: admin.v1.AdminService.GetTopicRegistration:input_type -> admin.v1.GetTopicRegistrationRequest
-	60,  // 114: admin.v1.AdminService.SubmitPreDefense:input_type -> admin.v1.SubmitPreDefenseRequest
-	62,  // 115: admin.v1.AdminService.ListPreDefenseSubmissions:input_type -> admin.v1.ListPreDefenseSubmissionsRequest
-	65,  // 116: admin.v1.AdminService.GetPreDefenseSubmission:input_type -> admin.v1.GetPreDefenseSubmissionRequest
-	67,  // 117: admin.v1.AdminService.SchedulePreDefense:input_type -> admin.v1.SchedulePreDefenseRequest
-	69,  // 118: admin.v1.AdminService.GradePreDefense:input_type -> admin.v1.GradePreDefenseRequest
-	72,  // 119: admin.v1.AdminService.CompletePreDefense:input_type -> admin.v1.CompletePreDefenseRequest
-	74,  // 120: admin.v1.AdminService.ReschedulePreDefense:input_type -> admin.v1.ReschedulePreDefenseRequest
-	76,  // 121: admin.v1.AdminService.ListScheduledPreDefenses:input_type -> admin.v1.ListScheduledPreDefensesRequest
-	79,  // 122: admin.v1.AdminService.AddPreDefenseCommissionMember:input_type -> admin.v1.AddPreDefenseCommissionMemberRequest
-	81,  // 123: admin.v1.AdminService.RemovePreDefenseCommissionMember:input_type -> admin.v1.RemovePreDefenseCommissionMemberRequest
-	83,  // 124: admin.v1.AdminService.ListSubmissions:input_type -> admin.v1.ListSubmissionsRequest
-	89,  // 125: admin.v1.AdminService.GetSubmission:input_type -> admin.v1.GetSubmissionRequest
-	92,  // 126: admin.v1.AdminService.ReviewSubmission:input_type -> admin.v1.ReviewSubmissionRequest
-	95,  // 127: admin.v1.AdminService.GetProjectGrades:input_type -> admin.v1.GetProjectGradesRequest
-	97,  // 128: admin.v1.AdminService.SetStepGrade:input_type -> admin.v1.SetStepGradeRequest
-	99,  // 129: admin.v1.AdminService.GetGradingHistory:input_type -> admin.v1.GetGradingHistoryRequest
-	102, // 130: admin.v1.AdminService.GetWorkflowProgress:input_type -> admin.v1.GetWorkflowProgressRequest
-	104, // 131: admin.v1.AdminService.ListPendingReviews:input_type -> admin.v1.ListPendingReviewsRequest
-	11,  // 132: admin.v1.AdminService.GetDashboard:output_type -> admin.v1.GetDashboardResponse
-	16,  // 133: admin.v1.AdminService.GetDepartmentStats:output_type -> admin.v1.GetDepartmentStatsResponse
-	19,  // 134: admin.v1.AdminService.ListStudents:output_type -> admin.v1.ListStudentsResponse
-	22,  // 135: admin.v1.AdminService.GetStudent:output_type -> admin.v1.GetStudentResponse
-	24,  // 136: admin.v1.AdminService.ListAllTeams:output_type -> admin.v1.ListAllTeamsResponse
-	29,  // 137: admin.v1.AdminService.GetTeamDetails:output_type -> admin.v1.GetTeamDetailsResponse
-	33,  // 138: admin.v1.AdminService.UpdateTeamAdmin:output_type -> admin.v1.UpdateTeamAdminResponse
-	109, // 139: admin.v1.AdminService.DeleteTeamAdmin:output_type -> google.protobuf.Empty
-	36,  // 140: admin.v1.AdminService.ListSupervisors:output_type -> admin.v1.ListSupervisorsResponse
-	40,  // 141: admin.v1.AdminService.AssignSupervisor:output_type -> admin.v1.AssignSupervisorResponse
-	44,  // 142: admin.v1.AdminService.CreateSupervisorRequest:output_type -> admin.v1.CreateSupervisorRequestResp
-	46,  // 143: admin.v1.AdminService.ListSupervisorRequests:output_type -> admin.v1.ListSupervisorRequestsResp
-	48,  // 144: admin.v1.AdminService.GetSupervisorRequest:output_type -> admin.v1.GetSupervisorRequestResp
-	51,  // 145: admin.v1.AdminService.RespondToSupervisorRequest:output_type -> admin.v1.RespondToSupervisorRequestResp
-	53,  // 146: admin.v1.AdminService.ListMySupervisorRequests:output_type -> admin.v1.ListMySupervisorRequestsResp
-	55,  // 147: admin.v1.AdminService.CancelSupervisorRequest:output_type -> admin.v1.CancelSupervisorRequestResp
-	2,   // 148: admin.v1.AdminService.SubmitTopicRegistration:output_type -> admin.v1.SubmitTopicRegistrationResponse
-	4,   // 149: admin.v1.AdminService.ListTopicRegistrations:output_type -> admin.v1.ListTopicRegistrationsResponse
-	6,   // 150: admin.v1.AdminService.ReviewTopicRegistration:output_type -> admin.v1.ReviewTopicRegistrationResponse
-	8,   // 151: admin.v1.AdminService.GetTopicRegistration:output_type -> admin.v1.GetTopicRegistrationResponse
-	61,  // 152: admin.v1.AdminService.SubmitPreDefense:output_type -> admin.v1.SubmitPreDefenseResponse
-	63,  // 153: admin.v1.AdminService.ListPreDefenseSubmissions:output_type -> admin.v1.ListPreDefenseSubmissionsResponse
-	66,  // 154: admin.v1.AdminService.GetPreDefenseSubmission:output_type -> admin.v1.GetPreDefenseSubmissionResponse
-	68,  // 155: admin.v1.AdminService.SchedulePreDefense:output_type -> admin.v1.SchedulePreDefenseResponse
-	71,  // 156: admin.v1.AdminService.GradePreDefense:output_type -> admin.v1.GradePreDefenseResponse
-	73,  // 157: admin.v1.AdminService.CompletePreDefense:output_type -> admin.v1.CompletePreDefenseResponse
-	75,  // 158: admin.v1.AdminService.ReschedulePreDefense:output_type -> admin.v1.ReschedulePreDefenseResponse
-	77,  // 159: admin.v1.AdminService.ListScheduledPreDefenses:output_type -> admin.v1.ListScheduledPreDefensesResponse
-	80,  // 160: admin.v1.AdminService.AddPreDefenseCommissionMember:output_type -> admin.v1.AddPreDefenseCommissionMemberResponse
-	82,  // 161: admin.v1.AdminService.RemovePreDefenseCommissionMember:output_type -> admin.v1.RemovePreDefenseCommissionMemberResponse
-	84,  // 162: admin.v1.AdminService.ListSubmissions:output_type -> admin.v1.ListSubmissionsResponse
-	90,  // 163: admin.v1.AdminService.GetSubmission:output_type -> admin.v1.GetSubmissionResponse
-	93,  // 164: admin.v1.AdminService.ReviewSubmission:output_type -> admin.v1.ReviewSubmissionResponse
-	96,  // 165: admin.v1.AdminService.GetProjectGrades:output_type -> admin.v1.GetProjectGradesResponse
-	98,  // 166: admin.v1.AdminService.SetStepGrade:output_type -> admin.v1.SetStepGradeResponse
-	100, // 167: admin.v1.AdminService.GetGradingHistory:output_type -> admin.v1.GetGradingHistoryResponse
-	103, // 168: admin.v1.AdminService.GetWorkflowProgress:output_type -> admin.v1.GetWorkflowProgressResponse
-	105, // 169: admin.v1.AdminService.ListPendingReviews:output_type -> admin.v1.ListPendingReviewsResponse
-	132, // [132:170] is the sub-list for method output_type
-	94,  // [94:132] is the sub-list for method input_type
+	44,  // 105: admin.v1.AdminService.CreateSupervisorRequestByTeam:input_type -> admin.v1.CreateSupervisorRequestByTeamReq
+	46,  // 106: admin.v1.AdminService.ListSupervisorRequests:input_type -> admin.v1.ListSupervisorRequestsReq
+	48,  // 107: admin.v1.AdminService.GetSupervisorRequest:input_type -> admin.v1.GetSupervisorRequestReq
+	51,  // 108: admin.v1.AdminService.RespondToSupervisorRequest:input_type -> admin.v1.RespondToSupervisorRequestReq
+	53,  // 109: admin.v1.AdminService.ListMySupervisorRequests:input_type -> admin.v1.ListMySupervisorRequestsReq
+	55,  // 110: admin.v1.AdminService.CancelSupervisorRequest:input_type -> admin.v1.CancelSupervisorRequestReq
+	1,   // 111: admin.v1.AdminService.SubmitTopicRegistration:input_type -> admin.v1.SubmitTopicRegistrationRequest
+	3,   // 112: admin.v1.AdminService.ListTopicRegistrations:input_type -> admin.v1.ListTopicRegistrationsRequest
+	5,   // 113: admin.v1.AdminService.ReviewTopicRegistration:input_type -> admin.v1.ReviewTopicRegistrationRequest
+	7,   // 114: admin.v1.AdminService.GetTopicRegistration:input_type -> admin.v1.GetTopicRegistrationRequest
+	61,  // 115: admin.v1.AdminService.SubmitPreDefense:input_type -> admin.v1.SubmitPreDefenseRequest
+	63,  // 116: admin.v1.AdminService.ListPreDefenseSubmissions:input_type -> admin.v1.ListPreDefenseSubmissionsRequest
+	66,  // 117: admin.v1.AdminService.GetPreDefenseSubmission:input_type -> admin.v1.GetPreDefenseSubmissionRequest
+	68,  // 118: admin.v1.AdminService.SchedulePreDefense:input_type -> admin.v1.SchedulePreDefenseRequest
+	70,  // 119: admin.v1.AdminService.GradePreDefense:input_type -> admin.v1.GradePreDefenseRequest
+	73,  // 120: admin.v1.AdminService.CompletePreDefense:input_type -> admin.v1.CompletePreDefenseRequest
+	75,  // 121: admin.v1.AdminService.ReschedulePreDefense:input_type -> admin.v1.ReschedulePreDefenseRequest
+	77,  // 122: admin.v1.AdminService.ListScheduledPreDefenses:input_type -> admin.v1.ListScheduledPreDefensesRequest
+	80,  // 123: admin.v1.AdminService.AddPreDefenseCommissionMember:input_type -> admin.v1.AddPreDefenseCommissionMemberRequest
+	82,  // 124: admin.v1.AdminService.RemovePreDefenseCommissionMember:input_type -> admin.v1.RemovePreDefenseCommissionMemberRequest
+	84,  // 125: admin.v1.AdminService.ListSubmissions:input_type -> admin.v1.ListSubmissionsRequest
+	90,  // 126: admin.v1.AdminService.GetSubmission:input_type -> admin.v1.GetSubmissionRequest
+	93,  // 127: admin.v1.AdminService.ReviewSubmission:input_type -> admin.v1.ReviewSubmissionRequest
+	96,  // 128: admin.v1.AdminService.GetProjectGrades:input_type -> admin.v1.GetProjectGradesRequest
+	98,  // 129: admin.v1.AdminService.SetStepGrade:input_type -> admin.v1.SetStepGradeRequest
+	100, // 130: admin.v1.AdminService.GetGradingHistory:input_type -> admin.v1.GetGradingHistoryRequest
+	103, // 131: admin.v1.AdminService.GetWorkflowProgress:input_type -> admin.v1.GetWorkflowProgressRequest
+	105, // 132: admin.v1.AdminService.ListPendingReviews:input_type -> admin.v1.ListPendingReviewsRequest
+	11,  // 133: admin.v1.AdminService.GetDashboard:output_type -> admin.v1.GetDashboardResponse
+	16,  // 134: admin.v1.AdminService.GetDepartmentStats:output_type -> admin.v1.GetDepartmentStatsResponse
+	19,  // 135: admin.v1.AdminService.ListStudents:output_type -> admin.v1.ListStudentsResponse
+	22,  // 136: admin.v1.AdminService.GetStudent:output_type -> admin.v1.GetStudentResponse
+	24,  // 137: admin.v1.AdminService.ListAllTeams:output_type -> admin.v1.ListAllTeamsResponse
+	29,  // 138: admin.v1.AdminService.GetTeamDetails:output_type -> admin.v1.GetTeamDetailsResponse
+	33,  // 139: admin.v1.AdminService.UpdateTeamAdmin:output_type -> admin.v1.UpdateTeamAdminResponse
+	110, // 140: admin.v1.AdminService.DeleteTeamAdmin:output_type -> google.protobuf.Empty
+	36,  // 141: admin.v1.AdminService.ListSupervisors:output_type -> admin.v1.ListSupervisorsResponse
+	40,  // 142: admin.v1.AdminService.AssignSupervisor:output_type -> admin.v1.AssignSupervisorResponse
+	45,  // 143: admin.v1.AdminService.CreateSupervisorRequest:output_type -> admin.v1.CreateSupervisorRequestResp
+	45,  // 144: admin.v1.AdminService.CreateSupervisorRequestByTeam:output_type -> admin.v1.CreateSupervisorRequestResp
+	47,  // 145: admin.v1.AdminService.ListSupervisorRequests:output_type -> admin.v1.ListSupervisorRequestsResp
+	49,  // 146: admin.v1.AdminService.GetSupervisorRequest:output_type -> admin.v1.GetSupervisorRequestResp
+	52,  // 147: admin.v1.AdminService.RespondToSupervisorRequest:output_type -> admin.v1.RespondToSupervisorRequestResp
+	54,  // 148: admin.v1.AdminService.ListMySupervisorRequests:output_type -> admin.v1.ListMySupervisorRequestsResp
+	56,  // 149: admin.v1.AdminService.CancelSupervisorRequest:output_type -> admin.v1.CancelSupervisorRequestResp
+	2,   // 150: admin.v1.AdminService.SubmitTopicRegistration:output_type -> admin.v1.SubmitTopicRegistrationResponse
+	4,   // 151: admin.v1.AdminService.ListTopicRegistrations:output_type -> admin.v1.ListTopicRegistrationsResponse
+	6,   // 152: admin.v1.AdminService.ReviewTopicRegistration:output_type -> admin.v1.ReviewTopicRegistrationResponse
+	8,   // 153: admin.v1.AdminService.GetTopicRegistration:output_type -> admin.v1.GetTopicRegistrationResponse
+	62,  // 154: admin.v1.AdminService.SubmitPreDefense:output_type -> admin.v1.SubmitPreDefenseResponse
+	64,  // 155: admin.v1.AdminService.ListPreDefenseSubmissions:output_type -> admin.v1.ListPreDefenseSubmissionsResponse
+	67,  // 156: admin.v1.AdminService.GetPreDefenseSubmission:output_type -> admin.v1.GetPreDefenseSubmissionResponse
+	69,  // 157: admin.v1.AdminService.SchedulePreDefense:output_type -> admin.v1.SchedulePreDefenseResponse
+	72,  // 158: admin.v1.AdminService.GradePreDefense:output_type -> admin.v1.GradePreDefenseResponse
+	74,  // 159: admin.v1.AdminService.CompletePreDefense:output_type -> admin.v1.CompletePreDefenseResponse
+	76,  // 160: admin.v1.AdminService.ReschedulePreDefense:output_type -> admin.v1.ReschedulePreDefenseResponse
+	78,  // 161: admin.v1.AdminService.ListScheduledPreDefenses:output_type -> admin.v1.ListScheduledPreDefensesResponse
+	81,  // 162: admin.v1.AdminService.AddPreDefenseCommissionMember:output_type -> admin.v1.AddPreDefenseCommissionMemberResponse
+	83,  // 163: admin.v1.AdminService.RemovePreDefenseCommissionMember:output_type -> admin.v1.RemovePreDefenseCommissionMemberResponse
+	85,  // 164: admin.v1.AdminService.ListSubmissions:output_type -> admin.v1.ListSubmissionsResponse
+	91,  // 165: admin.v1.AdminService.GetSubmission:output_type -> admin.v1.GetSubmissionResponse
+	94,  // 166: admin.v1.AdminService.ReviewSubmission:output_type -> admin.v1.ReviewSubmissionResponse
+	97,  // 167: admin.v1.AdminService.GetProjectGrades:output_type -> admin.v1.GetProjectGradesResponse
+	99,  // 168: admin.v1.AdminService.SetStepGrade:output_type -> admin.v1.SetStepGradeResponse
+	101, // 169: admin.v1.AdminService.GetGradingHistory:output_type -> admin.v1.GetGradingHistoryResponse
+	104, // 170: admin.v1.AdminService.GetWorkflowProgress:output_type -> admin.v1.GetWorkflowProgressResponse
+	106, // 171: admin.v1.AdminService.ListPendingReviews:output_type -> admin.v1.ListPendingReviewsResponse
+	133, // [133:172] is the sub-list for method output_type
+	94,  // [94:133] is the sub-list for method input_type
 	94,  // [94:94] is the sub-list for extension type_name
 	94,  // [94:94] is the sub-list for extension extendee
 	0,   // [0:94] is the sub-list for field type_name
@@ -9040,7 +9124,7 @@ func file_admin_v1_admin_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_admin_v1_admin_proto_rawDesc), len(file_admin_v1_admin_proto_rawDesc)),
 			NumEnums:      0,
-			NumMessages:   107,
+			NumMessages:   108,
 			NumExtensions: 0,
 			NumServices:   1,
 		},

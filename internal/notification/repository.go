@@ -2,9 +2,13 @@ package notification
 
 import (
 	"context"
+	"errors"
+	"time"
 
 	"gorm.io/gorm"
 )
+
+var ErrNotificationNotFound = errors.New("notification not found")
 
 type Repository interface {
 	Create(ctx context.Context, n *Notification) error
@@ -29,7 +33,6 @@ func (r *repository) List(ctx context.Context, userID int64, onlyUnread bool, li
 	var total int64
 
 	query := r.db.WithContext(ctx).Model(&Notification{}).Where("user_id = ?", userID)
-
 	if onlyUnread {
 		query = query.Where("is_read = ?", false)
 	}
@@ -43,8 +46,18 @@ func (r *repository) List(ctx context.Context, userID int64, onlyUnread bool, li
 }
 
 func (r *repository) MarkAsRead(ctx context.Context, id int64, userID int64) error {
-	return r.db.WithContext(ctx).
+	res := r.db.WithContext(ctx).
 		Model(&Notification{}).
 		Where("id = ? AND user_id = ?", id, userID).
-		Update("is_read", true).Error
+		Updates(map[string]interface{}{
+			"is_read":    true,
+			"updated_at": time.Now().UTC(),
+		})
+	if res.Error != nil {
+		return res.Error
+	}
+	if res.RowsAffected == 0 {
+		return ErrNotificationNotFound
+	}
+	return nil
 }

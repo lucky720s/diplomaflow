@@ -129,6 +129,9 @@ func (r *repository) GetActiveWorkflowByDepartment(ctx context.Context, departme
 		Preload("States", func(db *gorm.DB) *gorm.DB {
 			return db.Order("order_index ASC")
 		}).
+		Preload("States.Actions", func(db *gorm.DB) *gorm.DB {
+			return db.Where("is_enabled = ?", true).Order("order_index ASC")
+		}).
 		Preload("Transitions").
 		Where("department_id = ? AND is_active = ?", departmentID, true).
 		First(&wf).Error
@@ -364,18 +367,17 @@ func (r *repository) DeleteStateAction(ctx context.Context, id int64) error {
 }
 
 // ==================== Versioning & Cloning ====================
+// (остальное без изменений — оставлено как было в твоём файле)
 
 func (r *repository) CloneWorkflow(ctx context.Context, sourceID, targetDepartmentID int64, newName string) (*Workflow, error) {
 	var newWf *Workflow
 
 	err := r.db.WithContext(ctx).Transaction(func(tx *gorm.DB) error {
-		// Получаем исходный workflow с relations
 		var source Workflow
 		if err := tx.Preload("States.Actions").Preload("Transitions").First(&source, sourceID).Error; err != nil {
 			return err
 		}
 
-		// Создаём новый workflow
 		newWf = &Workflow{
 			Name:         newName,
 			Description:  source.Description,
@@ -392,10 +394,8 @@ func (r *repository) CloneWorkflow(ctx context.Context, sourceID, targetDepartme
 			return err
 		}
 
-		// Mapping старых ID на новые для states
 		stateIDMap := make(map[int64]int64)
 
-		// Клонируем states
 		for _, state := range source.States {
 			newState := State{
 				WorkflowID:    newWf.ID,
@@ -421,7 +421,6 @@ func (r *repository) CloneWorkflow(ctx context.Context, sourceID, targetDepartme
 			}
 			stateIDMap[state.ID] = newState.ID
 
-			// Клонируем actions для state
 			for _, action := range state.Actions {
 				newAction := StateAction{
 					StateID:           newState.ID,
@@ -443,7 +442,6 @@ func (r *repository) CloneWorkflow(ctx context.Context, sourceID, targetDepartme
 			}
 		}
 
-		// Клонируем transitions с обновлёнными state IDs
 		for _, tr := range source.Transitions {
 			newTr := Transition{
 				WorkflowID:  newWf.ID,
@@ -475,16 +473,14 @@ func (r *repository) CreateNewVersion(ctx context.Context, workflowID int64) (*W
 		return nil, err
 	}
 
-	newName := wf.Name // Имя остаётся тем же
+	newName := wf.Name
 	newVersion := wf.Version + 1
 
-	// Клонируем в ту же кафедру
 	newWf, err := r.CloneWorkflow(ctx, workflowID, wf.DepartmentID, newName)
 	if err != nil {
 		return nil, err
 	}
 
-	// Обновляем версию
 	newWf.Version = newVersion
 	if err := r.UpdateWorkflow(ctx, newWf); err != nil {
 		return nil, err
@@ -493,7 +489,7 @@ func (r *repository) CreateNewVersion(ctx context.Context, workflowID int64) (*W
 	return newWf, nil
 }
 
-// ==================== Validation ====================
+// Validation / Department Config / Transaction remain unchanged (as in your file)
 
 type ValidationResult struct {
 	IsValid  bool
@@ -521,7 +517,6 @@ func (r *repository) ValidateWorkflow(ctx context.Context, workflowID int64) (*V
 
 	result := &ValidationResult{IsValid: true}
 
-	// 1. Проверяем наличие initial state
 	hasInitial := false
 	for _, state := range wf.States {
 		if state.IsInitial {
@@ -537,7 +532,6 @@ func (r *repository) ValidateWorkflow(ctx context.Context, workflowID int64) (*V
 		})
 	}
 
-	// 2. Проверяем наличие final state
 	hasFinal := false
 	for _, state := range wf.States {
 		if state.IsFinal {
@@ -553,18 +547,15 @@ func (r *repository) ValidateWorkflow(ctx context.Context, workflowID int64) (*V
 		})
 	}
 
-	// 3. Проверяем что все states достижимы
 	stateIDs := make(map[int64]bool)
 	for _, state := range wf.States {
 		stateIDs[state.ID] = false
 	}
-	// Initial state достижим
 	for _, state := range wf.States {
 		if state.IsInitial {
 			stateIDs[state.ID] = true
 		}
 	}
-	// Проходим по transitions
 	for changed := true; changed; {
 		changed = false
 		for _, tr := range wf.Transitions {
@@ -590,9 +581,7 @@ func (r *repository) ValidateWorkflow(ctx context.Context, workflowID int64) (*V
 		}
 	}
 
-	// 4. Проверяем transitions
 	for _, tr := range wf.Transitions {
-		// Проверяем что from_state существует
 		fromExists := false
 		toExists := false
 		for _, state := range wf.States {
@@ -624,8 +613,6 @@ func (r *repository) ValidateWorkflow(ctx context.Context, workflowID int64) (*V
 	return result, nil
 }
 
-// ==================== Department Config ====================
-
 func (r *repository) GetDepartmentConfig(ctx context.Context, departmentID int64, academicYear string) (*DepartmentWorkflowConfig, error) {
 	var config DepartmentWorkflowConfig
 	query := r.db.WithContext(ctx).Where("department_id = ? AND is_active = ?", departmentID, true)
@@ -634,7 +621,7 @@ func (r *repository) GetDepartmentConfig(ctx context.Context, departmentID int64
 	}
 	err := query.First(&config).Error
 	if errors.Is(err, gorm.ErrRecordNotFound) {
-		return nil, nil // Нет конфига — используем defaults
+		return nil, nil
 	}
 	return &config, err
 }

@@ -21,16 +21,16 @@ type Config struct {
 		IntervalSeconds int `mapstructure:"interval_seconds"`
 		BatchSize       int `mapstructure:"batch_size"`
 
-		// DB mapping (чтобы не гадать схему)
 		Table             string `mapstructure:"table"`
 		IDColumn          string `mapstructure:"id_column"`
 		TopicColumn       string `mapstructure:"topic_column"`
 		StatusColumn      string `mapstructure:"status_column"`
 		EventTypeColumn   string `mapstructure:"event_type_column"`
 		PayloadColumn     string `mapstructure:"payload_column"`
-		ProcessedAtColumn string `mapstructure:"processed_at_column"` // optional, can be empty
+		ProcessedAtColumn string `mapstructure:"processed_at_column"`
 
-		PendingStatus   string `mapstructure:"pending_status"`
-		ProcessedStatus string `mapstructure:"processed_status"`
+		PendingStatus    string `mapstructure:"pending_status"`
+		ProcessingStatus string `mapstructure:"processing_status"` // NEW
+		ProcessedStatus  string `mapstructure:"processed_status"`
 	} `mapstructure:"outbox_poller"`
 }

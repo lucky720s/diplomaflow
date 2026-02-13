@@ -1,0 +1,63 @@
+BEGIN;
+
+DROP TABLE IF EXISTS task_watchers CASCADE;
+DROP TABLE IF EXISTS task_activity_log CASCADE;
+DROP TABLE IF EXISTS task_attachments CASCADE;
+DROP TABLE IF EXISTS task_comments CASCADE;
+DROP TABLE IF EXISTS tasks CASCADE;
+DROP TABLE IF EXISTS task_columns CASCADE;
+DROP TABLE IF EXISTS task_boards CASCADE;
+
+DROP TABLE IF EXISTS admin_pre_defense_history CASCADE;
+DROP TABLE IF EXISTS admin_pre_defense_documents CASCADE;
+DROP TABLE IF EXISTS admin_pre_defense_commission CASCADE;
+DROP TABLE IF EXISTS admin_pre_defense_submissions CASCADE;
+
+DROP TABLE IF EXISTS admin_supervisor_request_history CASCADE;
+DROP TABLE IF EXISTS admin_supervisor_requests CASCADE;
+
+DROP TABLE IF EXISTS admin_topic_registration_reviews CASCADE;
+DROP TABLE IF EXISTS admin_topic_registrations CASCADE;
+
+DROP TABLE IF EXISTS admin_activities CASCADE;
+DROP TABLE IF EXISTS admin_supervisor_assignments CASCADE;
+DROP TABLE IF EXISTS admin_submission_reviews CASCADE;
+DROP TABLE IF EXISTS admin_submissions CASCADE;
+DROP TABLE IF EXISTS admin_grade_history CASCADE;
+DROP TABLE IF EXISTS admin_grades CASCADE;
+
+DROP TABLE IF EXISTS form_submissions CASCADE;
+DROP TABLE IF EXISTS workflow_action_runs CASCADE;
+DROP TABLE IF EXISTS outbox_events CASCADE;
+DROP TABLE IF EXISTS state_histories CASCADE;
+
+ALTER TABLE IF EXISTS file_metadata DROP CONSTRAINT IF EXISTS fk_file_metadata_project;
+DROP TABLE IF EXISTS projects CASCADE;
+
+DROP TABLE IF EXISTS action_registry CASCADE;
+DROP TABLE IF EXISTS department_custom_steps CASCADE;
+DROP TABLE IF EXISTS department_workflow_configs CASCADE;
+
+DROP TABLE IF EXISTS workflow_templates CASCADE;
+DROP TABLE IF EXISTS state_conditions CASCADE;
+DROP TABLE IF EXISTS state_actions CASCADE;
+DROP TABLE IF EXISTS transitions CASCADE;
+DROP TABLE IF EXISTS states CASCADE;
+DROP TABLE IF EXISTS workflows CASCADE;
+
+DROP TABLE IF EXISTS file_metadata CASCADE;
+DROP TABLE IF EXISTS notifications CASCADE;
+
+DROP TABLE IF EXISTS team_invites CASCADE;
+DROP TABLE IF EXISTS team_members CASCADE;
+DROP TABLE IF EXISTS teams CASCADE;
+
+DROP TABLE IF EXISTS refresh_tokens CASCADE;
+DROP TABLE IF EXISTS user_role_assignments CASCADE;
+DROP TABLE IF EXISTS users CASCADE;
+
+DROP TABLE IF EXISTS roles CASCADE;
+DROP TABLE IF EXISTS departments CASCADE;
+DROP TABLE IF EXISTS universities CASCADE;
+
+COMMIT;

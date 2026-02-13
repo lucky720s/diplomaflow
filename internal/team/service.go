@@ -8,8 +8,10 @@ import (
 	"time"
 
 	authv1 "github.com/lucky720s/diplomaflow/pkg/protobuf/auth/v1"
+	notificationv1 "github.com/lucky720s/diplomaflow/pkg/protobuf/notification/v1"
 	workflowv1 "github.com/lucky720s/diplomaflow/pkg/protobuf/workflow/v1"
 	"go.uber.org/zap"
+	"google.golang.org/grpc/metadata"
 )
 
 var (
@@ -25,27 +27,56 @@ var (
 	ErrForbiddenDepartment   = errors.New("user department does not match team department")
 	ErrForbiddenRole         = errors.New("only students can join by code")
 )
+
 var inviteAlphabet = []byte("0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz")
 
 type Service struct {
-	repo           Repository
-	authClient     authv1.AuthServiceClient
-	workflowClient workflowv1.WorkflowServiceClient
-	logger         *zap.Logger
+	repo               Repository
+	authClient         authv1.AuthServiceClient
+	workflowClient     workflowv1.WorkflowServiceClient
+	notificationClient notificationv1.NotificationServiceClient
+	logger             *zap.Logger
 }
 
 func NewService(
 	repo Repository,
 	authClient authv1.AuthServiceClient,
 	workflowClient workflowv1.WorkflowServiceClient,
+	notificationClient notificationv1.NotificationServiceClient,
 	logger *zap.Logger,
 ) *Service {
 	return &Service{
-		repo:           repo,
-		authClient:     authClient,
-		workflowClient: workflowClient,
-		logger:         logger,
+		repo:               repo,
+		authClient:         authClient,
+		workflowClient:     workflowClient,
+		notificationClient: notificationClient,
+		logger:             logger,
 	}
+}
+
+func (s *Service) notifyBestEffort(ctx context.Context, userID int64, title, message, link, nType string) {
+	if s.notificationClient == nil || userID <= 0 {
+		return
+	}
+	nctx := metadata.AppendToOutgoingContext(ctx, "x-internal-service", "team_service")
+	_, err := s.notificationClient.SendNotification(nctx, &notificationv1.SendNotificationRequest{
+		UserId:  userID,
+		Title:   title,
+		Message: message,
+		Link:    link,
+		Type:    nType,
+	})
+	if err != nil {
+		s.logger.Warn("send notification failed", zap.Int64("user_id", userID), zap.Error(err))
+	}
+}
+
+func (s *Service) workflowInternalCtx(ctx context.Context) context.Context {
+	return metadata.AppendToOutgoingContext(ctx, "x-internal-service", "team_service")
+}
+
+func (s *Service) authInternalCtx(ctx context.Context) context.Context {
+	return metadata.AppendToOutgoingContext(ctx, "x-internal-service", "team_service")
 }
 
 func (s *Service) CreateTeam(
@@ -55,7 +86,6 @@ func (s *Service) CreateTeam(
 	memberIDs []int64,
 	departmentID, universityID int64,
 ) (int64, error) {
-	// 1) Лидер не должен быть в другой команде
 	inTeam, err := s.repo.IsUserInTeam(ctx, leaderID)
 	if err != nil {
 		return 0, fmt.Errorf("check user team: %w", err)
@@ -64,20 +94,20 @@ func (s *Service) CreateTeam(
 		return 0, ErrAlreadyInTeam
 	}
 
-	// 2) Берём team config из workflow и проверяем max_size
-	cfg, cfgErr := s.workflowClient.GetTeamConfiguration(ctx, &workflowv1.GetTeamConfigurationRequest{
+	// team config from workflow (internal)
+	cfg, cfgErr := s.workflowClient.GetTeamConfiguration(s.workflowInternalCtx(ctx), &workflowv1.GetTeamConfigurationRequest{
 		DepartmentId: departmentID,
 		WorkflowId:   0,
 		StateId:      0,
 	})
 	if cfgErr == nil && cfg != nil && cfg.TeamConfig != nil && cfg.TeamConfig.MaxSize > 0 {
-		requested := int32(1 + len(memberIDs)) // лидер + приглашённые
+		requested := int32(1 + len(memberIDs)) // leader + invited
 		if requested > cfg.TeamConfig.MaxSize {
 			return 0, ErrTeamFull
 		}
 	}
 
-	// 3) Создаём команду + invite_code (retry при уникальном конфликте)
+	// create team with unique code
 	var team *Team
 	for i := 0; i < 10; i++ {
 		code, err := generateInviteCode()
@@ -98,7 +128,6 @@ func (s *Service) CreateTeam(
 			}
 			return 0, fmt.Errorf("create team: %w", err)
 		}
-
 		team = t
 		break
 	}
@@ -106,25 +135,30 @@ func (s *Service) CreateTeam(
 		return 0, errors.New("failed to generate unique invite code")
 	}
 
-	// 4) Добавляем лидера
-	leaderMember := &TeamMember{
+	// add leader
+	if err := s.repo.AddMember(ctx, &TeamMember{
 		TeamID: team.ID,
 		UserID: leaderID,
 		Role:   RoleLeader,
-	}
-	if err := s.repo.AddMember(ctx, leaderMember); err != nil {
-		// best-effort rollback, чтобы не осталась пустая команда
+	}); err != nil {
 		_ = s.repo.Delete(ctx, team.ID)
 		return 0, fmt.Errorf("add leader: %w", err)
 	}
 
-	// 5) ExpiresAt берём из workflow (если доступен), иначе 3 дня
+	s.notifyBestEffort(ctx, leaderID,
+		"Команда создана",
+		fmt.Sprintf("Команда \"%s\" создана. Код для вступления: %s", team.Name, team.InviteCode),
+		"/dashboard/team",
+		"team_created",
+	)
+
+	// invite expiry days
 	inviteDays := int32(3)
 	if cfgErr == nil && cfg != nil && cfg.InviteExpireDays > 0 {
 		inviteDays = cfg.InviteExpireDays
 	}
 
-	// 6) Создаём приглашения
+	// create invites
 	for _, memberID := range memberIDs {
 		if memberID == leaderID {
 			continue
@@ -132,7 +166,6 @@ func (s *Service) CreateTeam(
 
 		memberInTeam, err := s.repo.IsUserInTeam(ctx, memberID)
 		if err != nil {
-			// лучше логировать и продолжать, чем падать после создания команды
 			s.logger.Warn("check member team failed", zap.Int64("user_id", memberID), zap.Error(err))
 			continue
 		}
@@ -145,24 +178,22 @@ func (s *Service) CreateTeam(
 			UserID:    memberID,
 			InviterID: leaderID,
 			Status:    InviteStatusPending,
-			ExpiresAt: time.Now().Add(time.Duration(inviteDays) * 24 * time.Hour),
+			ExpiresAt: time.Now().UTC().Add(time.Duration(inviteDays) * 24 * time.Hour),
 		}
 		if err := s.repo.CreateInvite(ctx, invite); err != nil {
-			s.logger.Warn("create invite failed",
-				zap.Int64("team_id", team.ID),
-				zap.Int64("user_id", memberID),
-				zap.Error(err),
-			)
+			s.logger.Warn("create invite failed", zap.Int64("team_id", team.ID), zap.Int64("user_id", memberID), zap.Error(err))
 			continue
 		}
+
+		s.notifyBestEffort(ctx, memberID,
+			"Приглашение в команду",
+			fmt.Sprintf("Вас пригласили в команду \"%s\". Откройте приглашения, чтобы принять/отклонить.", team.Name),
+			"/dashboard/invites",
+			"team_invite",
+		)
 	}
 
-	s.logger.Info("Team created",
-		zap.Int64("team_id", team.ID),
-		zap.String("name", name),
-		zap.Int64("leader_id", leaderID),
-	)
-
+	s.logger.Info("Team created", zap.Int64("team_id", team.ID), zap.String("name", name), zap.Int64("leader_id", leaderID))
 	return team.ID, nil
 }
 
@@ -171,12 +202,10 @@ func (s *Service) GetTeam(ctx context.Context, teamID int64) (*Team, []*TeamMemb
 	if err != nil {
 		return nil, nil, err
 	}
-
 	members, err := s.repo.GetMembers(ctx, teamID)
 	if err != nil {
 		return nil, nil, err
 	}
-
 	return team, members, nil
 }
 
@@ -193,36 +222,25 @@ func (s *Service) GetMyTeam(ctx context.Context, userID int64) (*Team, *TeamMemb
 	if err != nil {
 		return nil, nil, nil, 0, err
 	}
-
 	pendingCount, _ := s.repo.GetPendingInvitesCount(ctx, team.ID)
-
 	return team, membership, members, pendingCount, nil
 }
 
 func (s *Service) UpdateTeam(ctx context.Context, teamID int64, name string, requesterID int64) (*Team, error) {
-	// Проверяем права: только лидер может редактировать команду
 	if err := s.validateLeader(ctx, teamID, requesterID); err != nil {
 		return nil, err
 	}
-
 	team, err := s.repo.GetByID(ctx, teamID)
 	if err != nil {
 		return nil, err
 	}
-
 	if name != "" {
 		team.Name = name
 	}
-
 	if err := s.repo.Update(ctx, team); err != nil {
 		return nil, fmt.Errorf("update team: %w", err)
 	}
-
-	s.logger.Info("Team updated",
-		zap.Int64("team_id", teamID),
-		zap.String("new_name", name),
-		zap.Int64("by_user", requesterID))
-
+	s.logger.Info("Team updated", zap.Int64("team_id", teamID), zap.String("new_name", name), zap.Int64("by_user", requesterID))
 	return team, nil
 }
 
@@ -233,12 +251,15 @@ func (s *Service) DeleteTeam(ctx context.Context, teamID int64, requesterID int6
 	if err := s.repo.Delete(ctx, teamID); err != nil {
 		return fmt.Errorf("delete team: %w", err)
 	}
-
-	s.logger.Info("Team deleted",
-		zap.Int64("team_id", teamID),
-		zap.Int64("by_user", requesterID))
-
+	s.logger.Info("Team deleted", zap.Int64("team_id", teamID), zap.Int64("by_user", requesterID))
 	return nil
+}
+
+type LeaveTeamResult struct {
+	Success     bool
+	Message     string
+	TeamDeleted bool
+	NewLeaderID int64
 }
 
 func (s *Service) LeaveTeam(ctx context.Context, teamID int64, userID int64) (*LeaveTeamResult, error) {
@@ -246,7 +267,6 @@ func (s *Service) LeaveTeam(ctx context.Context, teamID int64, userID int64) (*L
 		return nil, err
 	}
 
-	// Проверяем, что пользователь состоит в этой команде
 	member, err := s.repo.GetMember(ctx, teamID, userID)
 	if err != nil {
 		if errors.Is(err, ErrMemberNotFound) {
@@ -255,34 +275,24 @@ func (s *Service) LeaveTeam(ctx context.Context, teamID int64, userID int64) (*L
 		return nil, err
 	}
 
-	result := &LeaveTeamResult{
-		Success: true,
-		Message: "Вы успешно вышли из команды",
-	}
+	result := &LeaveTeamResult{Success: true, Message: "Вы успешно вышли из команды"}
 
 	memberCount, err := s.repo.GetMemberCount(ctx, teamID)
 	if err != nil {
 		return nil, err
 	}
 
-	// Если это последний участник — удаляем команду
 	if memberCount == 1 {
 		if err := s.repo.Delete(ctx, teamID); err != nil {
 			return nil, fmt.Errorf("delete team: %w", err)
 		}
 		result.TeamDeleted = true
 		result.Message = "Вы вышли из команды. Команда удалена, так как вы были последним участником."
-
-		s.logger.Info("Last member left, team deleted",
-			zap.Int64("team_id", teamID),
-			zap.Int64("user_id", userID))
-
+		s.logger.Info("Last member left, team deleted", zap.Int64("team_id", teamID), zap.Int64("user_id", userID))
 		return result, nil
 	}
 
-	// Если выходит лидер — нужно передать лидерство
 	if member.Role == RoleLeader {
-		// Находим нового лидера (первый по времени вступления)
 		members, err := s.repo.GetMembers(ctx, teamID)
 		if err != nil {
 			return nil, err
@@ -295,7 +305,6 @@ func (s *Service) LeaveTeam(ctx context.Context, teamID int64, userID int64) (*L
 				break
 			}
 		}
-
 		if newLeaderID == 0 {
 			return nil, errors.New("no suitable member to become leader")
 		}
@@ -307,37 +316,28 @@ func (s *Service) LeaveTeam(ctx context.Context, teamID int64, userID int64) (*L
 		result.NewLeaderID = newLeaderID
 		result.Message = fmt.Sprintf("Вы вышли из команды. Лидерство передано участнику с ID %d.", newLeaderID)
 
-		s.logger.Info("Leader left, leadership transferred",
-			zap.Int64("team_id", teamID),
-			zap.Int64("old_leader", userID),
-			zap.Int64("new_leader", newLeaderID))
+		s.notifyBestEffort(ctx, newLeaderID,
+			"Вы стали лидером команды",
+			"Лидер команды вышел. Вам передано лидерство.",
+			"/dashboard/team",
+			"leadership_changed",
+		)
+
+		s.logger.Info("Leader left, leadership transferred", zap.Int64("team_id", teamID), zap.Int64("old_leader", userID), zap.Int64("new_leader", newLeaderID))
 	}
 
 	if err := s.repo.RemoveMember(ctx, teamID, userID); err != nil {
 		return nil, fmt.Errorf("remove member: %w", err)
 	}
 
-	s.logger.Info("Member left team",
-		zap.Int64("team_id", teamID),
-		zap.Int64("user_id", userID))
-
+	s.logger.Info("Member left team", zap.Int64("team_id", teamID), zap.Int64("user_id", userID))
 	return result, nil
-}
-
-// LeaveTeamResult - результат выхода из команды
-type LeaveTeamResult struct {
-	Success     bool
-	Message     string
-	TeamDeleted bool
-	NewLeaderID int64
 }
 
 func (s *Service) TransferLeadership(ctx context.Context, teamID int64, currentLeaderID int64, newLeaderID int64) (*Team, []*TeamMember, error) {
 	if err := s.ensureCompositionUnlocked(ctx, teamID); err != nil {
 		return nil, nil, err
 	}
-
-	// Проверяем, что текущий пользователь — лидер
 	if err := s.validateLeader(ctx, teamID, currentLeaderID); err != nil {
 		return nil, nil, err
 	}
@@ -349,26 +349,20 @@ func (s *Service) TransferLeadership(ctx context.Context, teamID int64, currentL
 		}
 		return nil, nil, err
 	}
-
 	if newLeaderMember.Role == RoleLeader {
-		team, members, _ := s.GetTeam(ctx, teamID)
-		return team, members, nil
+		return s.GetTeam(ctx, teamID)
 	}
 
 	if err := s.repo.UpdateMemberRole(ctx, teamID, currentLeaderID, RoleMember); err != nil {
 		return nil, nil, fmt.Errorf("demote current leader: %w", err)
 	}
-
 	if err := s.repo.UpdateMemberRole(ctx, teamID, newLeaderID, RoleLeader); err != nil {
 		_ = s.repo.UpdateMemberRole(ctx, teamID, currentLeaderID, RoleLeader)
 		return nil, nil, fmt.Errorf("promote new leader: %w", err)
 	}
 
-	s.logger.Info("Leadership transferred",
-		zap.Int64("team_id", teamID),
-		zap.Int64("from_user", currentLeaderID),
-		zap.Int64("to_user", newLeaderID))
-
+	s.notifyBestEffort(ctx, newLeaderID, "Вам передано лидерство", "Теперь вы лидер команды.", "/dashboard/team", "leadership_changed")
+	s.logger.Info("Leadership transferred", zap.Int64("team_id", teamID), zap.Int64("from_user", currentLeaderID), zap.Int64("to_user", newLeaderID))
 	return s.GetTeam(ctx, teamID)
 }
 
@@ -379,13 +373,10 @@ func (s *Service) AddMember(ctx context.Context, teamID int64, userID int64, rol
 	if err := s.validateLeader(ctx, teamID, requesterID); err != nil {
 		return err
 	}
-
-	// NEW: лимит из workflow
 	if err := s.ensureTeamNotFull(ctx, teamID); err != nil {
 		return err
 	}
 
-	// Проверяем, не в команде ли уже
 	inTeam, err := s.repo.IsUserInTeam(ctx, userID)
 	if err != nil {
 		return err
@@ -393,46 +384,42 @@ func (s *Service) AddMember(ctx context.Context, teamID int64, userID int64, rol
 	if inTeam {
 		return ErrAlreadyInTeam
 	}
-
 	if role == "" {
 		role = RoleMember
 	}
 
-	member := &TeamMember{
-		TeamID: teamID,
-		UserID: userID,
-		Role:   role,
+	if err := s.repo.AddMember(ctx, &TeamMember{TeamID: teamID, UserID: userID, Role: role}); err != nil {
+		return err
 	}
 
-	return s.repo.AddMember(ctx, member)
+	s.notifyBestEffort(ctx, userID, "Вы добавлены в команду", "Вас добавили в команду. Откройте страницу команды.", "/dashboard/team", "team_member_added")
+	return nil
 }
 
 func (s *Service) RemoveMember(ctx context.Context, teamID int64, userID int64, requesterID int64) error {
 	if err := s.ensureCompositionUnlocked(ctx, teamID); err != nil {
 		return err
 	}
-
-	// Проверяем права: только лидер может удалять участников
 	if err := s.validateLeader(ctx, teamID, requesterID); err != nil {
 		return err
 	}
-
 	if userID == requesterID {
 		return errors.New("use LeaveTeam to leave the team")
 	}
 
-	// Проверяем, что удаляемый — участник команды
 	member, err := s.repo.GetMember(ctx, teamID, userID)
 	if err != nil {
 		return err
 	}
-
-	// Нельзя удалить лидера
 	if member.Role == RoleLeader {
 		return ErrCannotRemoveLeader
 	}
+	if err := s.repo.RemoveMember(ctx, teamID, userID); err != nil {
+		return err
+	}
 
-	return s.repo.RemoveMember(ctx, teamID, userID)
+	s.notifyBestEffort(ctx, userID, "Вы удалены из команды", "Вас удалили из команды.", "/dashboard", "team_member_removed")
+	return nil
 }
 
 func (s *Service) GetMyInvites(ctx context.Context, userID int64) ([]*TeamInvite, error) {
@@ -444,14 +431,13 @@ func (s *Service) RespondToInvite(ctx context.Context, inviteID int64, userID in
 	if err != nil {
 		return err
 	}
-
 	if invite.UserID != userID {
 		return ErrUnauthorized
 	}
 	if invite.Status != InviteStatusPending {
 		return errors.New("invite already processed")
 	}
-	if time.Now().After(invite.ExpiresAt) {
+	if time.Now().UTC().After(invite.ExpiresAt) {
 		invite.Status = InviteStatusExpired
 		_ = s.repo.UpdateInvite(ctx, invite)
 		return errors.New("invite expired")
@@ -461,13 +447,10 @@ func (s *Service) RespondToInvite(ctx context.Context, inviteID int64, userID in
 		if err := s.ensureCompositionUnlocked(ctx, invite.TeamID); err != nil {
 			return err
 		}
-
-		// NEW: лимит из workflow
 		if err := s.ensureTeamNotFull(ctx, invite.TeamID); err != nil {
 			return err
 		}
 
-		// Проверяем, не в команде ли уже
 		inTeam, _ := s.repo.IsUserInTeam(ctx, userID)
 		if inTeam {
 			invite.Status = InviteStatusDeclined
@@ -475,24 +458,32 @@ func (s *Service) RespondToInvite(ctx context.Context, inviteID int64, userID in
 			return ErrAlreadyInTeam
 		}
 
-		member := &TeamMember{
-			TeamID: invite.TeamID,
-			UserID: userID,
-			Role:   RoleMember,
-		}
-		if err := s.repo.AddMember(ctx, member); err != nil {
+		if err := s.repo.AddMember(ctx, &TeamMember{TeamID: invite.TeamID, UserID: userID, Role: RoleMember}); err != nil {
 			return err
 		}
 		invite.Status = InviteStatusAccepted
+
+		s.notifyBestEffort(ctx, invite.InviterID,
+			"Приглашение принято",
+			fmt.Sprintf("Пользователь %d принял приглашение в команду.", userID),
+			"/dashboard/team",
+			"team_invite_accepted",
+		)
 	} else {
 		invite.Status = InviteStatusDeclined
+		s.notifyBestEffort(ctx, invite.InviterID,
+			"Приглашение отклонено",
+			fmt.Sprintf("Пользователь %d отклонил приглашение в команду.", userID),
+			"/dashboard/team",
+			"team_invite_declined",
+		)
 	}
 
 	return s.repo.UpdateInvite(ctx, invite)
 }
 
 func (s *Service) GetAvailableStudents(ctx context.Context, universityID int64, departmentID int64, excludeUserID int64) ([]*authv1.UserPreview, error) {
-	resp, err := s.authClient.ListUsers(ctx, &authv1.ListUsersRequest{
+	resp, err := s.authClient.ListUsers(s.authInternalCtx(ctx), &authv1.ListUsersRequest{
 		UniversityId:  universityID,
 		DepartmentId:  departmentID,
 		Role:          "student",
@@ -504,15 +495,13 @@ func (s *Service) GetAvailableStudents(ctx context.Context, universityID int64, 
 		return nil, err
 	}
 
-	// Фильтруем тех, кто уже в команде
-	var available []*authv1.UserPreview
+	available := make([]*authv1.UserPreview, 0, len(resp.Users))
 	for _, user := range resp.Users {
 		inTeam, _ := s.repo.IsUserInTeam(ctx, user.Id)
 		if !inTeam {
 			available = append(available, user)
 		}
 	}
-
 	return available, nil
 }
 
@@ -524,7 +513,6 @@ func (s *Service) ListTeams(ctx context.Context, departmentID int64, page, pageS
 		page = 1
 	}
 	offset := (page - 1) * pageSize
-
 	return s.repo.ListTeams(ctx, departmentID, int(pageSize), int(offset))
 }
 
@@ -536,7 +524,6 @@ func (s *Service) validateLeader(ctx context.Context, teamID int64, userID int64
 		}
 		return err
 	}
-
 	if member.Role != RoleLeader {
 		return ErrNotLeader
 	}
@@ -547,7 +534,7 @@ func generateInviteCode() (string, error) {
 	const n = 6
 	b := make([]byte, n)
 	rb := make([]byte, n)
-	if _, err := rand.Read(rb); err != nil { // crypto/rand
+	if _, err := rand.Read(rb); err != nil {
 		return "", err
 	}
 	for i := 0; i < n; i++ {
@@ -555,10 +542,12 @@ func generateInviteCode() (string, error) {
 	}
 	return string(b), nil
 }
+
 func (s *Service) LockTeamComposition(ctx context.Context, teamID int64) error {
 	now := time.Now().UTC()
 	return s.repo.SetCompositionLocked(ctx, teamID, true, &now)
 }
+
 func (s *Service) JoinTeamByCode(ctx context.Context, inviteCode string, userID, universityID, departmentID int64, role string) (int64, error) {
 	if role != "student" {
 		return 0, ErrForbiddenRole
@@ -587,7 +576,7 @@ func (s *Service) JoinTeamByCode(ctx context.Context, inviteCode string, userID,
 		return 0, ErrForbiddenDepartment
 	}
 
-	cfg, err := s.workflowClient.GetTeamConfiguration(ctx, &workflowv1.GetTeamConfigurationRequest{
+	cfg, err := s.workflowClient.GetTeamConfiguration(s.workflowInternalCtx(ctx), &workflowv1.GetTeamConfigurationRequest{
 		DepartmentId: team.DepartmentID,
 		WorkflowId:   0,
 		StateId:      0,
@@ -601,17 +590,26 @@ func (s *Service) JoinTeamByCode(ctx context.Context, inviteCode string, userID,
 			return 0, ErrTeamFull
 		}
 	}
-	if err := s.repo.AddMember(ctx, &TeamMember{
-		TeamID: team.ID,
-		UserID: userID,
-		Role:   RoleMember,
-	}); err != nil {
+
+	if err := s.repo.AddMember(ctx, &TeamMember{TeamID: team.ID, UserID: userID, Role: RoleMember}); err != nil {
 		return 0, err
 	}
+
+	leader, lerr := s.repo.GetTeamLeader(ctx, team.ID)
+	if lerr == nil && leader != nil {
+		s.notifyBestEffort(ctx, leader.UserID,
+			"Новый участник в команде",
+			fmt.Sprintf("Пользователь %d присоединился к команде по коду.", userID),
+			"/dashboard/team",
+			"team_member_joined",
+		)
+	}
+
 	return team.ID, nil
 }
+
 func (s *Service) RegenerateInviteCode(ctx context.Context, teamID, requesterID int64) (string, error) {
-	if err := s.validateLeader(ctx, teamID, requesterID); err != nil { // уже есть [[1]]
+	if err := s.validateLeader(ctx, teamID, requesterID); err != nil {
 		return "", err
 	}
 	team, err := s.repo.GetByID(ctx, teamID)
@@ -638,6 +636,7 @@ func (s *Service) RegenerateInviteCode(ctx context.Context, teamID, requesterID 
 	}
 	return "", errors.New("failed to generate unique invite code")
 }
+
 func (s *Service) ensureCompositionUnlocked(ctx context.Context, teamID int64) error {
 	team, err := s.repo.GetByID(ctx, teamID)
 	if err != nil {
@@ -648,8 +647,9 @@ func (s *Service) ensureCompositionUnlocked(ctx context.Context, teamID int64) e
 	}
 	return nil
 }
+
 func (s *Service) getMaxTeamSizeFromWorkflow(ctx context.Context, departmentID int64) (int32, error) {
-	cfg, err := s.workflowClient.GetTeamConfiguration(ctx, &workflowv1.GetTeamConfigurationRequest{
+	cfg, err := s.workflowClient.GetTeamConfiguration(s.workflowInternalCtx(ctx), &workflowv1.GetTeamConfigurationRequest{
 		DepartmentId: departmentID,
 		WorkflowId:   0,
 		StateId:      0,
@@ -671,8 +671,7 @@ func (s *Service) ensureTeamNotFull(ctx context.Context, teamID int64) error {
 
 	maxSize, err := s.getMaxTeamSizeFromWorkflow(ctx, team.DepartmentID)
 	if err != nil {
-		// Политика как у тебя в других местах: fail-open
-		// (если хочешь fail-closed — скажи, поменяю)
+		// fail-open
 		return nil
 	}
 	if maxSize <= 0 {

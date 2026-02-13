@@ -31,6 +31,7 @@ const (
 	AdminService_ListSupervisors_FullMethodName                  = "/admin.v1.AdminService/ListSupervisors"
 	AdminService_AssignSupervisor_FullMethodName                 = "/admin.v1.AdminService/AssignSupervisor"
 	AdminService_CreateSupervisorRequest_FullMethodName          = "/admin.v1.AdminService/CreateSupervisorRequest"
+	AdminService_CreateSupervisorRequestByTeam_FullMethodName    = "/admin.v1.AdminService/CreateSupervisorRequestByTeam"
 	AdminService_ListSupervisorRequests_FullMethodName           = "/admin.v1.AdminService/ListSupervisorRequests"
 	AdminService_GetSupervisorRequest_FullMethodName             = "/admin.v1.AdminService/GetSupervisorRequest"
 	AdminService_RespondToSupervisorRequest_FullMethodName       = "/admin.v1.AdminService/RespondToSupervisorRequest"
@@ -81,6 +82,7 @@ type AdminServiceClient interface {
 	// ==================== Supervisor Request (Запрос команды к руководителю) ====================
 	// Project-first: каноническая привязка к project_id, team_id опционален.
 	CreateSupervisorRequest(ctx context.Context, in *CreateSupervisorRequestReq, opts ...grpc.CallOption) (*CreateSupervisorRequestResp, error)
+	CreateSupervisorRequestByTeam(ctx context.Context, in *CreateSupervisorRequestByTeamReq, opts ...grpc.CallOption) (*CreateSupervisorRequestResp, error)
 	ListSupervisorRequests(ctx context.Context, in *ListSupervisorRequestsReq, opts ...grpc.CallOption) (*ListSupervisorRequestsResp, error)
 	GetSupervisorRequest(ctx context.Context, in *GetSupervisorRequestReq, opts ...grpc.CallOption) (*GetSupervisorRequestResp, error)
 	RespondToSupervisorRequest(ctx context.Context, in *RespondToSupervisorRequestReq, opts ...grpc.CallOption) (*RespondToSupervisorRequestResp, error)
@@ -228,6 +230,16 @@ func (c *adminServiceClient) CreateSupervisorRequest(ctx context.Context, in *Cr
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
 	out := new(CreateSupervisorRequestResp)
 	err := c.cc.Invoke(ctx, AdminService_CreateSupervisorRequest_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *adminServiceClient) CreateSupervisorRequestByTeam(ctx context.Context, in *CreateSupervisorRequestByTeamReq, opts ...grpc.CallOption) (*CreateSupervisorRequestResp, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(CreateSupervisorRequestResp)
+	err := c.cc.Invoke(ctx, AdminService_CreateSupervisorRequestByTeam_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
 	}
@@ -525,6 +537,7 @@ type AdminServiceServer interface {
 	// ==================== Supervisor Request (Запрос команды к руководителю) ====================
 	// Project-first: каноническая привязка к project_id, team_id опционален.
 	CreateSupervisorRequest(context.Context, *CreateSupervisorRequestReq) (*CreateSupervisorRequestResp, error)
+	CreateSupervisorRequestByTeam(context.Context, *CreateSupervisorRequestByTeamReq) (*CreateSupervisorRequestResp, error)
 	ListSupervisorRequests(context.Context, *ListSupervisorRequestsReq) (*ListSupervisorRequestsResp, error)
 	GetSupervisorRequest(context.Context, *GetSupervisorRequestReq) (*GetSupervisorRequestResp, error)
 	RespondToSupervisorRequest(context.Context, *RespondToSupervisorRequestReq) (*RespondToSupervisorRequestResp, error)
@@ -600,6 +613,9 @@ func (UnimplementedAdminServiceServer) AssignSupervisor(context.Context, *Assign
 }
 func (UnimplementedAdminServiceServer) CreateSupervisorRequest(context.Context, *CreateSupervisorRequestReq) (*CreateSupervisorRequestResp, error) {
 	return nil, status.Error(codes.Unimplemented, "method CreateSupervisorRequest not implemented")
+}
+func (UnimplementedAdminServiceServer) CreateSupervisorRequestByTeam(context.Context, *CreateSupervisorRequestByTeamReq) (*CreateSupervisorRequestResp, error) {
+	return nil, status.Error(codes.Unimplemented, "method CreateSupervisorRequestByTeam not implemented")
 }
 func (UnimplementedAdminServiceServer) ListSupervisorRequests(context.Context, *ListSupervisorRequestsReq) (*ListSupervisorRequestsResp, error) {
 	return nil, status.Error(codes.Unimplemented, "method ListSupervisorRequests not implemented")
@@ -897,6 +913,24 @@ func _AdminService_CreateSupervisorRequest_Handler(srv interface{}, ctx context.
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return srv.(AdminServiceServer).CreateSupervisorRequest(ctx, req.(*CreateSupervisorRequestReq))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _AdminService_CreateSupervisorRequestByTeam_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(CreateSupervisorRequestByTeamReq)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(AdminServiceServer).CreateSupervisorRequestByTeam(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: AdminService_CreateSupervisorRequestByTeam_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(AdminServiceServer).CreateSupervisorRequestByTeam(ctx, req.(*CreateSupervisorRequestByTeamReq))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -1437,6 +1471,10 @@ var AdminService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "CreateSupervisorRequest",
 			Handler:    _AdminService_CreateSupervisorRequest_Handler,
+		},
+		{
+			MethodName: "CreateSupervisorRequestByTeam",
+			Handler:    _AdminService_CreateSupervisorRequestByTeam_Handler,
 		},
 		{
 			MethodName: "ListSupervisorRequests",

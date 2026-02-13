@@ -13,7 +13,9 @@ import (
 	teamv1 "github.com/lucky720s/diplomaflow/pkg/protobuf/team/v1"
 	workflowv1 "github.com/lucky720s/diplomaflow/pkg/protobuf/workflow/v1"
 	"go.uber.org/zap"
+	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/metadata"
+	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/types/known/structpb"
 )
 
@@ -50,11 +52,9 @@ func (s *Service) internalCtx(ctx context.Context) context.Context {
 	return metadata.AppendToOutgoingContext(ctx, "x-internal-service", "admin_service")
 }
 
-// extract user_id/role from incoming ctx (gateway -> admin_service), fallback if absent.
 func (s *Service) callerFromContext(ctx context.Context, fallbackUserID int64, fallbackRole string) (int64, string) {
 	uid := fallbackUserID
 	role := fallbackRole
-
 	if md, ok := metadata.FromIncomingContext(ctx); ok && md != nil {
 		if v := md.Get("x-user-id"); len(v) > 0 {
 			if parsed, err := strconv.ParseInt(v[0], 10, 64); err == nil && parsed > 0 {
@@ -68,15 +68,10 @@ func (s *Service) callerFromContext(ctx context.Context, fallbackUserID int64, f
 	return uid, role
 }
 
-// resolveTeamIDByProject enforces project-first:
-// - projectID must exist
-// - project must have team_id (solo is also a team of size 1)
-// - if teamID is provided (non-zero), it must match project's team_id
 func (s *Service) resolveTeamIDByProject(ctx context.Context, projectID int64, teamID int64) (int64, error) {
 	if projectID <= 0 {
 		return 0, errors.New("project_id is required")
 	}
-
 	rt, err := s.projectClient.GetProjectRuntime(s.internalCtx(ctx), &projectv1.GetProjectRuntimeRequest{
 		ProjectId: projectID,
 	})
@@ -84,10 +79,8 @@ func (s *Service) resolveTeamIDByProject(ctx context.Context, projectID int64, t
 		return 0, fmt.Errorf("failed to get project runtime: %w", err)
 	}
 	if rt == nil || rt.TeamId <= 0 {
-		// По нашей модели: даже solo = team из 1.
 		return 0, errors.New("project has no team_id (team is required, including solo)")
 	}
-
 	if teamID == 0 {
 		return rt.TeamId, nil
 	}
@@ -97,8 +90,6 @@ func (s *Service) resolveTeamIDByProject(ctx context.Context, projectID int64, t
 	return teamID, nil
 }
 
-// performWorkflowAction calls project_service.PerformAction with proper metadata.
-// action_name MUST equal workflow Transition.event_name [[11]].
 func (s *Service) performWorkflowAction(ctx context.Context, actorID int64, actorRole string, projectID int64, actionName string, payload map[string]interface{}) error {
 	pbPayload, _ := structpb.NewStruct(payload)
 
@@ -114,6 +105,55 @@ func (s *Service) performWorkflowAction(ctx context.Context, actorID int64, acto
 		Payload:    pbPayload,
 	})
 	return err
+}
+
+// tryPerformIfAvailable checks current state transitions and performs event if available+can_execute.
+func (s *Service) tryPerformIfAvailable(ctx context.Context, actorID int64, actorRole string, projectID int64, eventName string, payload map[string]interface{}) error {
+	rt, err := s.projectClient.GetProjectRuntime(s.internalCtx(ctx), &projectv1.GetProjectRuntimeRequest{
+		ProjectId: projectID,
+	})
+	if err != nil {
+		return fmt.Errorf("GetProjectRuntime failed: %w", err)
+	}
+	if rt == nil {
+		return errors.New("project runtime is nil")
+	}
+
+	tr, err := s.workflowClient.GetAvailableTransitions(ctx, &workflowv1.GetAvailableTransitionsRequest{
+		ProjectId:      projectID,
+		CurrentStateId: rt.CurrentStateId,
+		UserId:         actorID,
+		UserRole:       actorRole,
+	})
+	if err != nil {
+		// Если runtime API недоступно/ошибка — fallback: просто пробуем PerformAction.
+		s.logger.Warn("GetAvailableTransitions failed, fallback to PerformAction",
+			zap.Error(err),
+			zap.Int64("project_id", projectID),
+			zap.String("event", eventName),
+		)
+		return s.performWorkflowAction(ctx, actorID, actorRole, projectID, eventName, payload)
+	}
+
+	available := false
+	can := false
+	for _, at := range tr.Transitions {
+		if at == nil || at.Transition == nil {
+			continue
+		}
+		if at.Transition.EventName == eventName {
+			available = true
+			can = at.CanExecute
+			if !can {
+				return fmt.Errorf("transition %s blocked: %s", eventName, at.BlockedReason)
+			}
+		}
+	}
+	if !available {
+		// silently skip (workflow may not have this transition)
+		return nil
+	}
+	return s.performWorkflowAction(ctx, actorID, actorRole, projectID, eventName, payload)
 }
 
 // ==================== Topic Registration ====================
@@ -149,7 +189,6 @@ func (s *Service) SubmitTopicRegistration(ctx context.Context, req *SubmitTopicR
 		return nil, err
 	}
 
-	// Ensure no active reg for team
 	existing, err := s.repo.GetTopicRegistrationByTeam(ctx, teamID)
 	if err == nil && existing != nil {
 		if existing.Status == StatusPending {
@@ -175,7 +214,6 @@ func (s *Service) SubmitTopicRegistration(ctx context.Context, req *SubmitTopicR
 		return nil, fmt.Errorf("не удалось создать заявление: %w", err)
 	}
 
-	// Best-effort: lock team composition
 	_, _ = s.teamClient.LockTeamComposition(s.internalCtx(ctx), &teamv1.LockTeamCompositionRequest{
 		TeamId: teamID,
 		Reason: "topic_registration_submitted",
@@ -207,7 +245,6 @@ type ReviewTopicRegistrationRequest struct {
 	RejectionReason string
 }
 
-// STRICT: approve/reject обязаны двигать workflow, иначе не фиксируем решение в admin-проекции.
 func (s *Service) ReviewTopicRegistration(ctx context.Context, req *ReviewTopicRegistrationRequest) (*TopicRegistration, error) {
 	if req == nil {
 		return nil, errors.New("request is nil")
@@ -220,14 +257,12 @@ func (s *Service) ReviewTopicRegistration(ctx context.Context, req *ReviewTopicR
 	if reg.ProjectID <= 0 {
 		return nil, errors.New("topic registration has no project_id (data inconsistent)")
 	}
-
 	if reg.Status != StatusPending && reg.Status != StatusRevisionRequested {
 		return nil, errors.New("заявление не может быть рассмотрено в текущем статусе")
 	}
 
 	actorID, actorRole := s.callerFromContext(ctx, req.ReviewerID, "commission")
 
-	// 1) workflow ядро
 	switch req.Action {
 	case "approve":
 		if wfErr := s.performWorkflowAction(ctx, actorID, actorRole, reg.ProjectID, "TOPIC_APPROVED", map[string]interface{}{
@@ -254,7 +289,6 @@ func (s *Service) ReviewTopicRegistration(ctx context.Context, req *ReviewTopicR
 		return nil, errors.New("недопустимое действие")
 	}
 
-	// 2) admin projection
 	now := time.Now()
 	reg.ReviewerID = &req.ReviewerID
 	reg.ReviewedAt = &now
@@ -389,7 +423,6 @@ func (s *Service) ListStudents(ctx context.Context, req *ListStudentsRequest) ([
 			student.TeamID = teamResp.Team.TeamId
 			student.TeamName = teamResp.Team.Name
 		}
-
 		students = append(students, student)
 	}
 
@@ -470,7 +503,7 @@ func (s *Service) ListSupervisors(ctx context.Context, departmentID, universityI
 			ID:         u.Id,
 			FullName:   u.FirstName + " " + u.LastName,
 			Email:      u.Email,
-			Position:   "Senior Lecturer",
+			Position:   "Teacher",
 			TeamsCount: int32(teamsCount),
 			MaxTeams:   5,
 		})
@@ -691,11 +724,11 @@ func (s *Service) ListPendingReviews(ctx context.Context, departmentID int64, pa
 	return s.repo.ListSubmissions(ctx, filter)
 }
 
-// ==================== Supervisor Request (project-first) ====================
+// ==================== Supervisor Request (supports project-first AND team-first) ====================
 
 type CreateSupervisorRequestInput struct {
-	ProjectID     int64
-	TeamID        int64 // optional (0 allowed)
+	ProjectID     int64 // may be 0 for team-first
+	TeamID        int64 // required for team-first, optional for project-first
 	SupervisorID  int64
 	RequestedBy   int64
 	Message       string
@@ -706,9 +739,6 @@ func (s *Service) CreateSupervisorRequest(ctx context.Context, req *CreateSuperv
 	if req == nil {
 		return nil, errors.New("request is nil")
 	}
-	if req.ProjectID <= 0 {
-		return nil, errors.New("project_id is required")
-	}
 	if req.SupervisorID <= 0 {
 		return nil, errors.New("supervisor_id is required")
 	}
@@ -716,9 +746,36 @@ func (s *Service) CreateSupervisorRequest(ctx context.Context, req *CreateSuperv
 		return nil, errors.New("requested_by is required")
 	}
 
-	teamID, err := s.resolveTeamIDByProject(ctx, req.ProjectID, req.TeamID)
-	if err != nil {
-		return nil, err
+	// project-first OR team-first
+	teamID := int64(0)
+	var projectIDPtr *int64
+
+	if req.ProjectID > 0 {
+		tid, err := s.resolveTeamIDByProject(ctx, req.ProjectID, req.TeamID)
+		if err != nil {
+			return nil, err
+		}
+		teamID = tid
+		pid := req.ProjectID
+		projectIDPtr = &pid
+	} else {
+		// team-first: no project yet
+		if req.TeamID <= 0 {
+			return nil, errors.New("team_id is required when project_id is not provided")
+		}
+		teamID = req.TeamID
+		projectIDPtr = nil
+	}
+	actorID, actorRole := s.callerFromContext(ctx, req.RequestedBy, "")
+	isTeacherSelfClaim := (actorRole == "teacher" || actorRole == "admin") &&
+		actorID > 0 &&
+		actorID == req.RequestedBy &&
+		req.RequestedBy == req.SupervisorID
+
+	if !isTeacherSelfClaim {
+		if err := s.ensureUserInTeam(ctx, teamID, req.RequestedBy); err != nil {
+			return nil, err
+		}
 	}
 
 	hasPending, err := s.repo.HasPendingSupervisorRequest(ctx, teamID)
@@ -741,7 +798,7 @@ func (s *Service) CreateSupervisorRequest(ctx context.Context, req *CreateSuperv
 	supervisorRequest := &SupervisorRequest{
 		ID:            uuid.New().String(),
 		TeamID:        teamID,
-		ProjectID:     req.ProjectID,
+		ProjectID:     projectIDPtr, // NULL if team-first
 		SupervisorID:  req.SupervisorID,
 		RequestedBy:   req.RequestedBy,
 		Status:        SupervisorRequestStatusPending,
@@ -763,7 +820,7 @@ func (s *Service) CreateSupervisorRequest(ctx context.Context, req *CreateSuperv
 
 	_ = s.repo.LogActivity(ctx, &AdminActivity{
 		ActivityType: ActivityTypeSupervisorRequest,
-		Description:  fmt.Sprintf("Team %d (project %d) sent request to supervisor %d", teamID, req.ProjectID, req.SupervisorID),
+		Description:  fmt.Sprintf("Team %d sent request to supervisor %d (project_id=%v)", teamID, req.SupervisorID, req.ProjectID),
 		ActorID:      req.RequestedBy,
 		TargetID:     req.SupervisorID,
 		TargetType:   "supervisor_request",
@@ -828,8 +885,73 @@ type RespondToSupervisorRequestInput struct {
 	Comment      string
 }
 
-// STRICT approve: сначала workflow, потом admin projection + assignment.
-// Контракт PerformAction: action_name = Transition.event_name [[11]].
+func (s *Service) createProjectForTeamOnApprove(ctx context.Context, teamID int64, supervisorID int64, proposedTopic string) (int64, error) {
+	tc, err := s.repo.GetTeamContext(ctx, teamID)
+	if err != nil {
+		return 0, fmt.Errorf("GetTeamContext failed: %w", err)
+	}
+
+	wf, err := s.workflowClient.GetActiveWorkflowByDepartment(ctx, &workflowv1.GetActiveWorkflowByDepartmentRequest{
+		DepartmentId: tc.DepartmentID,
+	})
+	if err != nil {
+		return 0, fmt.Errorf("GetActiveWorkflowByDepartment failed: %w", err)
+	}
+	if wf == nil || wf.Id == 0 {
+		return 0, errors.New("no active workflow for department")
+	}
+
+	title := fmt.Sprintf("Diploma project (%s)", tc.TeamName)
+	desc := proposedTopic
+	if desc == "" {
+		desc = "Created on supervisor approval"
+	}
+
+	// Create project (owner = team leader)
+	cr, err := s.projectClient.CreateProject(s.internalCtx(ctx), &projectv1.CreateProjectRequest{
+		Title:        title,
+		Description:  desc,
+		StudentId:    tc.LeaderUserID,
+		WorkflowName: wf.Name,
+		UniversityId: tc.UniversityID,
+		DepartmentId: tc.DepartmentID,
+		TeamId:       tc.TeamID,
+	})
+	if err != nil {
+		return 0, fmt.Errorf("CreateProject failed: %w", err)
+	}
+	if cr == nil || cr.ProjectId == 0 {
+		return 0, errors.New("CreateProject returned empty response")
+	}
+
+	// Best-effort lock team composition at this point
+	_, _ = s.teamClient.LockTeamComposition(s.internalCtx(ctx), &teamv1.LockTeamCompositionRequest{
+		TeamId: tc.TeamID,
+		Reason: "supervisor_selected",
+	})
+
+	// Best-effort: move workflow forward (TEAM_FORMED then SUPERVISOR_SELECTED), if available
+	// TEAM_FORMED as leader/student
+	_ = s.tryPerformIfAvailable(ctx, tc.LeaderUserID, "student", cr.ProjectId, "TEAM_FORMED", map[string]interface{}{
+		"source":  "admin_service",
+		"team_id": tc.TeamID,
+		"comment": "Auto after supervisor approval",
+	})
+
+	// SUPERVISOR_SELECTED as teacher
+	_ = s.tryPerformIfAvailable(ctx, supervisorID, "teacher", cr.ProjectId, "SUPERVISOR_SELECTED", map[string]interface{}{
+		"source":        "admin_service",
+		"team_id":       tc.TeamID,
+		"supervisor_id": supervisorID,
+		"comment":       "Approved",
+	})
+
+	return cr.ProjectId, nil
+}
+
+// RespondToSupervisorRequest:
+// - approve: if request has no project_id => create project now, then do workflow action(s), then mark approved & assignment.
+// - reject: mark rejected.
 func (s *Service) RespondToSupervisorRequest(ctx context.Context, req *RespondToSupervisorRequestInput) (*SupervisorRequestWithDetails, error) {
 	if req == nil {
 		return nil, errors.New("request is nil")
@@ -846,30 +968,29 @@ func (s *Service) RespondToSupervisorRequest(ctx context.Context, req *RespondTo
 	if supervisorReq.Status != SupervisorRequestStatusPending {
 		return nil, errors.New("запрос уже обработан")
 	}
-	if supervisorReq.ProjectID <= 0 {
-		return nil, errors.New("request has no project_id (data inconsistent)")
-	}
 
 	now := time.Now()
 	supervisorReq.RespondedAt = &now
 
 	switch req.Action {
 	case "approve":
-		actorID, actorRole := s.callerFromContext(ctx, req.SupervisorID, "teacher")
-
-		// 1) workflow ядро
-		if wfErr := s.performWorkflowAction(ctx, actorID, actorRole, supervisorReq.ProjectID, "SUPERVISOR_SELECTED", map[string]interface{}{
-			"source":        "admin_service",
-			"request_id":    supervisorReq.ID,
-			"supervisor_id": supervisorReq.SupervisorID,
-			"comment":       req.Comment,
-		}); wfErr != nil {
-			return nil, fmt.Errorf("workflow transition SUPERVISOR_SELECTED failed: %w", wfErr)
+		// Ensure project exists
+		if supervisorReq.ProjectID == nil || *supervisorReq.ProjectID <= 0 {
+			if supervisorReq.TeamID <= 0 {
+				return nil, errors.New("cannot approve: request has no team_id and no project_id")
+			}
+			pid, err := s.createProjectForTeamOnApprove(ctx, supervisorReq.TeamID, supervisorReq.SupervisorID, supervisorReq.ProposedTopic)
+			if err != nil {
+				return nil, err
+			}
+			supervisorReq.ProjectID = &pid
 		}
 
-		// 2) assignment (projection)
-		if err := s.AssignSupervisor(ctx, supervisorReq.TeamID, supervisorReq.SupervisorID, supervisorReq.SupervisorID); err != nil {
-			return nil, fmt.Errorf("failed to assign supervisor: %w", err)
+		// Assignment (projection)
+		if supervisorReq.TeamID > 0 {
+			if err := s.AssignSupervisor(ctx, supervisorReq.TeamID, supervisorReq.SupervisorID, supervisorReq.SupervisorID); err != nil {
+				return nil, fmt.Errorf("failed to assign supervisor: %w", err)
+			}
 		}
 
 		supervisorReq.Status = SupervisorRequestStatusApproved
@@ -901,7 +1022,6 @@ func (s *Service) RespondToSupervisorRequest(ctx context.Context, req *RespondTo
 	if req.Action == "reject" {
 		activityType = ActivityTypeSupervisorRequestRejected
 	}
-
 	_ = s.repo.LogActivity(ctx, &AdminActivity{
 		ActivityType: activityType,
 		Description:  fmt.Sprintf("Supervisor %d %s request %s", req.SupervisorID, req.Action, req.RequestID),
@@ -1056,4 +1176,19 @@ func (s *Service) DeleteTeamByAdmin(ctx context.Context, teamID int64, reason st
 
 func (s *Service) GetGradingHistoryFull(ctx context.Context, projectID, stepID int64) ([]*GradeHistoryFull, error) {
 	return s.repo.GetGradingHistoryFull(ctx, projectID, stepID)
+}
+func (s *Service) ensureUserInTeam(ctx context.Context, teamID, userID int64) error {
+	if teamID <= 0 || userID <= 0 {
+		return errors.New("team_id and user_id are required")
+	}
+	t, err := s.teamClient.GetTeam(s.internalCtx(ctx), &teamv1.GetTeamRequest{TeamId: teamID})
+	if err != nil {
+		return fmt.Errorf("GetTeam failed: %w", err)
+	}
+	for _, m := range t.Members {
+		if m != nil && m.UserId == userID {
+			return nil
+		}
+	}
+	return status.Error(codes.PermissionDenied, "forbidden: user is not a member of the team")
 }

@@ -5,6 +5,7 @@ package workflow
 import (
 	"context"
 	"encoding/json"
+	"errors"
 
 	workflowv1 "github.com/lucky720s/diplomaflow/pkg/protobuf/workflow/v1"
 	"go.uber.org/zap"
@@ -70,7 +71,11 @@ func (h *Handler) GetWorkflow(ctx context.Context, req *workflowv1.GetWorkflowRe
 	}
 
 	if err != nil {
-		return nil, status.Errorf(codes.NotFound, "workflow not found: %v", err)
+		// Distinguish "not found" vs real failure
+		if errors.Is(err, ErrWorkflowNotFound) {
+			return nil, status.Errorf(codes.NotFound, "workflow not found: %v", err)
+		}
+		return nil, status.Errorf(codes.Internal, "failed to get workflow: %v", err)
 	}
 
 	return h.workflowToProto(wf), nil
@@ -79,7 +84,10 @@ func (h *Handler) GetWorkflow(ctx context.Context, req *workflowv1.GetWorkflowRe
 func (h *Handler) GetWorkflowFull(ctx context.Context, req *workflowv1.GetWorkflowFullRequest) (*workflowv1.WorkflowFull, error) {
 	wf, err := h.service.GetWorkflowFull(ctx, req.WorkflowId)
 	if err != nil {
-		return nil, status.Errorf(codes.NotFound, "workflow not found: %v", err)
+		if errors.Is(err, ErrWorkflowNotFound) {
+			return nil, status.Errorf(codes.NotFound, "workflow not found: %v", err)
+		}
+		return nil, status.Errorf(codes.Internal, "failed to get workflow full: %v", err)
 	}
 
 	return &workflowv1.WorkflowFull{
@@ -138,11 +146,20 @@ func (h *Handler) SetActiveWorkflow(ctx context.Context, req *workflowv1.SetActi
 	return h.workflowToProto(wf), nil
 }
 
+// Variant A: if no workflow -> codes.NotFound
 func (h *Handler) GetActiveWorkflowByDepartment(ctx context.Context, req *workflowv1.GetActiveWorkflowByDepartmentRequest) (*workflowv1.Workflow, error) {
+	if req.DepartmentId == 0 {
+		return nil, status.Error(codes.InvalidArgument, "department_id is required")
+	}
+
 	wf, err := h.service.GetActiveWorkflowByDepartment(ctx, req.DepartmentId)
 	if err != nil {
-		return nil, status.Errorf(codes.NotFound, "no active workflow for department: %v", err)
+		if errors.Is(err, ErrWorkflowNotFound) {
+			return nil, status.Error(codes.NotFound, "no active workflow for department")
+		}
+		return nil, status.Errorf(codes.Internal, "failed to get active workflow: %v", err)
 	}
+
 	return h.workflowToProto(wf), nil
 }
 
@@ -409,7 +426,7 @@ func (h *Handler) GetNextState(ctx context.Context, req *workflowv1.GetNextState
 }
 
 func (h *Handler) GetAvailableTransitions(ctx context.Context, req *workflowv1.GetAvailableTransitionsRequest) (*workflowv1.GetAvailableTransitionsResponse, error) {
-	// TODO: Integrate with engine
+	// NOTE: runtimegrpc overrides this in production path.
 	transitions, err := h.service.repo.GetTransitionsFromState(ctx, req.CurrentStateId)
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, "failed to get transitions: %v", err)
@@ -419,7 +436,7 @@ func (h *Handler) GetAvailableTransitions(ctx context.Context, req *workflowv1.G
 	for _, tr := range transitions {
 		pbTransitions = append(pbTransitions, &workflowv1.AvailableTransition{
 			Transition: h.transitionToProto(&tr),
-			CanExecute: true, // TODO: Check conditions
+			CanExecute: true,
 		})
 	}
 
@@ -482,7 +499,7 @@ func (h *Handler) GetStepConfiguration(ctx context.Context, req *workflowv1.GetS
 }
 
 func (h *Handler) ExecuteTransition(ctx context.Context, req *workflowv1.ExecuteTransitionRequest) (*workflowv1.ExecuteTransitionResponse, error) {
-	// TODO: Integrate with engine
+	// NOTE: runtimegrpc overrides this in production path.
 	return nil, status.Error(codes.Unimplemented, "not implemented - use engine directly")
 }
 
@@ -645,6 +662,10 @@ func (h *Handler) stateActionToProto(a *StateAction) *workflowv1.StateAction {
 func (h *Handler) GetTeamConfiguration(ctx context.Context, req *workflowv1.GetTeamConfigurationRequest) (*workflowv1.TeamConfigurationResponse, error) {
 	result, err := h.service.GetTeamConfiguration(ctx, req.DepartmentId, req.WorkflowId, req.StateId)
 	if err != nil {
+		// Senior: if no active workflow, return NotFound (not Internal)
+		if errors.Is(err, ErrWorkflowNotFound) {
+			return nil, status.Error(codes.NotFound, "no active workflow for department")
+		}
 		return nil, status.Errorf(codes.Internal, "failed to get team configuration: %v", err)
 	}
 
@@ -668,7 +689,6 @@ func (h *Handler) GetTeamConfiguration(ctx context.Context, req *workflowv1.GetT
 	return resp, nil
 }
 
-// CanExecuteTransition проверяет возможность выполнения перехода
 func (h *Handler) CanExecuteTransition(ctx context.Context, req *workflowv1.CanExecuteTransitionRequest) (*workflowv1.CanExecuteTransitionResponse, error) {
 	// TODO: Implement with engine integration
 	return &workflowv1.CanExecuteTransitionResponse{
@@ -677,10 +697,13 @@ func (h *Handler) CanExecuteTransition(ctx context.Context, req *workflowv1.CanE
 	}, nil
 }
 
-// GetDepartmentWorkflowConfig возвращает полную конфигурацию workflow для кафедры
 func (h *Handler) GetDepartmentWorkflowConfig(ctx context.Context, req *workflowv1.GetDepartmentWorkflowConfigRequest) (*workflowv1.DepartmentWorkflowConfigResponse, error) {
 	config, err := h.service.GetDepartmentWorkflowConfiguration(ctx, req.DepartmentId, req.AcademicYear)
 	if err != nil {
+		// Senior: if no active workflow, return NotFound (not Internal)
+		if errors.Is(err, ErrWorkflowNotFound) {
+			return nil, status.Error(codes.NotFound, "no active workflow for department")
+		}
 		return nil, status.Errorf(codes.Internal, "failed to get department workflow config: %v", err)
 	}
 
