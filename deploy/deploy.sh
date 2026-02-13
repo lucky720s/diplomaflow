@@ -1,16 +1,17 @@
 #!/bin/bash
 set -euo pipefail
 
-APP_DIR="$1"
-PAT_TOKEN="$2"
-JWT_SECRET="$3"
-POSTGRES_PASSWORD="$4"
-REPO="$5"
-BRANCH="$6"
+APP_DIR="${1:?APP_DIR required}"
+PAT_TOKEN="${2:?PAT_TOKEN required}"
+JWT_SECRET="${3:?JWT_SECRET required}"
+POSTGRES_PASSWORD="${4:?POSTGRES_PASSWORD required}"
+REPO="${5:?REPO required}"
+BRANCH="${6:?BRANCH required}"
 
 PROJECT_NAME="diplomaflow"
 STATE_DIR="/opt/diplomaflow_state"
 ENV_FILE="${STATE_DIR}/.env"
+LOCK_FILE="${STATE_DIR}/deploy.lock"
 
 export DOCKER_BUILDKIT=1
 export COMPOSE_DOCKER_CLI_BUILD=1
@@ -21,83 +22,89 @@ dc() {
   docker compose -p "$PROJECT_NAME" --env-file "$ENV_FILE" "$@"
 }
 
-echo "==> Ensure dirs"
+log() {
+  echo "==> $*"
+}
+
+require_cmd() {
+  command -v "$1" >/dev/null 2>&1 || { echo "Missing required command: $1"; exit 1; }
+}
+
+log "Check required commands"
+require_cmd git
+require_cmd docker
+require_cmd df
+require_cmd curl
+
+log "Ensure dirs"
 mkdir -p "$APP_DIR" "$STATE_DIR"
 chmod 700 "$STATE_DIR"
-cd "$APP_DIR"
 
+# Lock to avoid parallel deployments
+exec 9>"$LOCK_FILE"
+if ! flock -n 9; then
+  echo "Another deployment is running (lock: $LOCK_FILE). Exiting."
+  exit 1
+fi
+
+log "Sync repository"
+cd "$APP_DIR"
 git config --global --add safe.directory "$APP_DIR"
 
-echo "==> Sync repository"
 if [ -d ".git" ]; then
   git remote set-url origin "https://${PAT_TOKEN}@github.com/${REPO}.git"
-  git fetch origin "$BRANCH"
+  # Shallow fetch for speed (keeps repo small)
+  git fetch --depth=1 origin "$BRANCH"
   git reset --hard "origin/${BRANCH}"
   git clean -fd
 else
   rm -rf "$APP_DIR"/* "$APP_DIR"/.[!.]* 2>/dev/null || true
-  git clone -b "$BRANCH" "https://${PAT_TOKEN}@github.com/${REPO}.git" .
+  git clone --depth=1 -b "$BRANCH" "https://${PAT_TOKEN}@github.com/${REPO}.git" .
 fi
 
-echo "==> Create .env"
+log "Create .env"
+umask 077
 cat > "$ENV_FILE" <<EOF
 ENV=dev
 GIN_MODE=release
+
 JWT_SECRET=${JWT_SECRET}
+
 POSTGRES_USER=diplomaflow
 POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
 POSTGRES_DB=diplomaflow
+
+# network_mode: host => сервисы ходят в Postgres/Redis по 127.0.0.1
 DATABASE_DSN=host=127.0.0.1 user=diplomaflow password=${POSTGRES_PASSWORD} dbname=diplomaflow port=5433 sslmode=disable TimeZone=UTC
 DATABASE_URL=postgres://diplomaflow:${POSTGRES_PASSWORD}@127.0.0.1:5433/diplomaflow?sslmode=disable
+
 REDIS_ADDR=127.0.0.1:6380
+
 ACCESS_TOKEN_TTL=15m
 REFRESH_TOKEN_TTL=720h
 EOF
 chmod 600 "$ENV_FILE"
 
-echo "==> Validate compose"
+log "Validate compose"
 dc config > /dev/null
 
-echo "==> Stop old containers"
-dc down --remove-orphans || true
+log "Disk usage before"
+df -h / | tail -1 || true
+docker system df || true
 
-# ============================================
-# ОЧИСТКА DOCKER ПЕРЕД СБОРКОЙ
-# ============================================
-echo "🧹 Cleaning Docker (images, build cache)..."
-echo "📊 Disk before cleanup:"
-df -h / | tail -1
+# IMPORTANT:
+# Do NOT prune builder cache / images before build. It makes every deploy rebuild from scratch.
 
-# Удалить неиспользуемые образы
-docker image prune -af || true
+log "Build images (cached)"
+# parallel helps when you have many services
+dc build --parallel
 
-# Очистить кэш сборки
-docker builder prune -af || true
-
-# Удалить остановленные контейнеры
-docker container prune -f || true
-
-# Удалить неиспользуемые сети
-docker network prune -f || true
-
-# ⚠️ НЕ удаляем volumes - там данные PostgreSQL!
-# docker volume prune -f  # ЗАПРЕЩЕНО
-
-echo "📊 Disk after cleanup:"
-df -h / | tail -1
-echo "🐳 Docker usage:"
-docker system df
-# ============================================
-
-echo "==> Build images"
-dc build
-
-echo "==> Start infra"
+log "Start/ensure infra is up"
 dc up -d main_postgres redis
 
-echo "==> Wait for postgres (via docker exec)"
+log "Wait for postgres"
 for i in $(seq 1 60); do
-  if docker exec diplomaflow-main_postgres-1 pg_isready -h 127.0.0.1 -p 5433 -U diplomaflow 2>/dev/null; then
+  if dc exec -T main_postgres pg_isready -h 127.0.0.1 -p 5433 -U diplomaflow >/dev/null 2>&1; then
     echo "Postgres ready!"
     break
   fi
@@ -105,34 +112,47 @@ for i in $(seq 1 60); do
   sleep 2
 done
 
-echo "==> Wait for redis (via docker exec)"
+log "Wait for redis"
 for i in $(seq 1 30); do
-  if docker exec diplomaflow-redis-1 redis-cli -h 127.0.0.1 -p 6380 ping 2>/dev/null | grep -q PONG; then
+  if dc exec -T redis redis-cli -h 127.0.0.1 -p 6380 ping 2>/dev/null | grep -q PONG; then
     echo "Redis ready!"
     break
   fi
+  echo "Waiting for redis... ($i/30)"
   sleep 1
 done
 
-
-echo "==> Run migrations"
+log "Run migrations"
 dc run --rm migrate
 
-echo "==> Start all services"
-dc up -d --no-build
+log "Update/start all services (no full down)"
+# --build here is optional because we already built, but harmless.
+# If you prefer, replace with: dc up -d --no-build --remove-orphans
+dc up -d --no-build --remove-orphans
 
-echo "==> Wait for gateway"
-sleep 30
-curl -fsS "http://127.0.0.1:8080/healthz" > /dev/null && echo "Gateway OK" || echo "Gateway not ready yet"
+log "Wait for gateway"
+for i in $(seq 1 30); do
+  if curl -fsS "http://127.0.0.1:8080/healthz" >/dev/null 2>&1; then
+    echo "Gateway OK"
+    break
+  fi
+  echo "Waiting for gateway... ($i/30)"
+  sleep 2
+done
 
-echo "==> Final cleanup (dangling images after build)"
-docker image prune -f || true
+log "Cleanup old docker data (keep cache for speed)"
+# Clean only OLD unused stuff to prevent disk growth but keep cache for fast deploys
+docker image prune -af --filter "until=168h" || true
+docker builder prune -af --filter "until=168h" || true
+docker container prune -f || true
+docker network prune -f || true
+# DO NOT prune volumes (Postgres data lives there)
 
-echo "==> Status"
-dc ps
+log "Status"
+dc ps || true
 
-echo "📊 Final disk usage:"
-df -h / | tail -1
-docker system df
+log "Disk usage after"
+df -h / | tail -1 || true
+docker system df || true
 
-echo "✅ Deployment completed!"
+echo "Deployment completed!"
