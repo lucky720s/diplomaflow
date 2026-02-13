@@ -11,6 +11,7 @@ func CorsMiddleware(allowedOrigins []string) gin.HandlerFunc {
 		allowedOrigins = []string{
 			"https://diplomaflow.kz",
 			"http://localhost:3000",
+			"http://localhost:5173",
 		}
 	}
 
