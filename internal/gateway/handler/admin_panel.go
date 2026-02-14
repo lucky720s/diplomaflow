@@ -675,7 +675,26 @@ func (h *Handler) ListMySupervisorRequests(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, resp)
+	// optional: safety fallback (как у вас на фронте)
+	pending := resp.PendingCount
+	if pending == 0 && len(resp.Requests) > 0 {
+		cnt := 0
+		for _, r := range resp.Requests {
+			if r != nil && r.Status == "pending" {
+				cnt++
+			}
+		}
+		pending = int32(cnt)
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"requests":       resp.Requests,
+		"total_count":    resp.TotalCount,
+		"pending_count":  pending,
+		"active_teams":   resp.ActiveTeams,
+		"total_students": resp.TotalStudents,
+		"teams_report":   resp.TeamsReport,
+	})
 }
 
 // DELETE /api/v1/projects/:id/supervisor-requests/:request_id
