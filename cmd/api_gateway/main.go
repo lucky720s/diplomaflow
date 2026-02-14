@@ -291,8 +291,6 @@ func main() {
 		{
 			supervisors.GET("/my-requests", handler.ListMySupervisorRequests)
 			supervisors.POST("/requests/:id/respond", handler.RespondToSupervisorRequest)
-
-			// NEW: teacher claims team without request
 			supervisors.POST("/teams/:team_id/claim", handler.TeacherClaimTeam)
 		}
 	}

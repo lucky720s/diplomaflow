@@ -157,26 +157,22 @@ type StudentFullInfo struct {
 
 	CreatedAt time.Time
 }
-
 type TeamFullDetails struct {
-	ID   int64
-	Name string
-
+	ID           int64 `gorm:"primaryKey"`
+	Name         string
 	ProjectID    int64
 	ProjectTitle string
 	CurrentStep  string
 	Status       string
-
 	SupervisorID int64
-
-	Members []*TeamMemberDetails
-
-	CreatedAt time.Time
-	UpdatedAt time.Time
+	Members      []*TeamMemberDetails `gorm:"foreignKey:TeamID;references:ID"` // Define the relationship
+	CreatedAt    time.Time
+	UpdatedAt    time.Time
 }
 
 type TeamMemberDetails struct {
-	UserID   int64
+	UserID   int64 `gorm:"primaryKey"`
+	TeamID   int64 `gorm:"index"` // This is the foreign key
 	FullName string
 	Email    string
 	Role     string
