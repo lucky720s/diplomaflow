@@ -6,6 +6,9 @@ import (
 	"strconv"
 
 	"github.com/gin-gonic/gin"
+	adminv1 "github.com/lucky720s/diplomaflow/pkg/protobuf/admin/v1"
+	authv1 "github.com/lucky720s/diplomaflow/pkg/protobuf/auth/v1"
+	projectv1 "github.com/lucky720s/diplomaflow/pkg/protobuf/project/v1"
 	teamv1 "github.com/lucky720s/diplomaflow/pkg/protobuf/team/v1"
 	"google.golang.org/genproto/protobuf/field_mask"
 	"google.golang.org/grpc/metadata"
@@ -152,12 +155,179 @@ func (h *Handler) GetMyTeam(c *gin.Context) {
 		return
 	}
 
-	res, err := h.teamClient.GetMyTeam(outgoingCtx(c), &teamv1.GetMyTeamRequest{UserId: userID})
+	teamResp, err := h.teamClient.GetMyTeam(outgoingCtx(c), &teamv1.GetMyTeamRequest{UserId: userID})
 	if err != nil {
 		MapGRPCError(c, err)
 		return
 	}
-	c.JSON(http.StatusOK, res)
+
+	if teamResp == nil || !teamResp.HasTeam || teamResp.Team == nil || teamResp.Team.TeamId == 0 {
+		c.JSON(http.StatusOK, gin.H{"has_team": false})
+		return
+	}
+
+	team := teamResp.Team
+	teamID := team.TeamId
+
+	ids := make([]int64, 0, len(team.Members))
+	seen := map[int64]struct{}{}
+	leaderID := int64(0)
+
+	for _, m := range team.Members {
+		if m == nil || m.UserId == 0 {
+			continue
+		}
+		if m.Role == "leader" {
+			leaderID = m.UserId
+		}
+		if _, ok := seen[m.UserId]; ok {
+			continue
+		}
+		seen[m.UserId] = struct{}{}
+		ids = append(ids, m.UserId)
+	}
+	if leaderID == 0 {
+		leaderID = userID
+	}
+	authCtx := metadata.AppendToOutgoingContext(c.Request.Context(), "x-internal-service", "team_service")
+	au, _ := h.authClient.BatchGetUserPreviews(authCtx, &authv1.BatchGetUserPreviewsRequest{Ids: ids})
+
+	users := map[int64]*authv1.UserPreview{}
+	if au != nil {
+		for _, u := range au.Users {
+			if u != nil && u.Id != 0 {
+				users[u.Id] = u
+			}
+		}
+	}
+
+	pbMembers := make([]gin.H, 0, len(team.Members))
+	for _, m := range team.Members {
+		if m == nil {
+			continue
+		}
+
+		first := m.FirstName
+		last := m.LastName
+		email := m.Email
+
+		if u := users[m.UserId]; u != nil {
+			if u.FirstName != "" {
+				first = u.FirstName
+			}
+			if u.LastName != "" {
+				last = u.LastName
+			}
+			if u.Email != "" {
+				email = u.Email
+			}
+		}
+
+		full := (first + " " + last)
+		if full == " " {
+			full = ""
+		}
+
+		pbMembers = append(pbMembers, gin.H{
+			"user_id":    m.UserId,
+			"role":       m.Role,
+			"first_name": first,
+			"last_name":  last,
+			"email":      email,
+			"full_name":  full,
+			"fullName":   full,
+		})
+	}
+
+	var supervisorInfo gin.H = nil
+	var supervisorID int64 = 0
+	supResp, supErr := h.adminClient.ListSupervisorRequests(outgoingCtx(c), &adminv1.ListSupervisorRequestsReq{
+		DepartmentId: c.GetInt64("departmentId"),
+		Status:       "approved",
+		TeamId:       teamID,
+		Page:         1,
+		PageSize:     1,
+	})
+
+	if supErr == nil && supResp != nil && len(supResp.Requests) > 0 && supResp.Requests[0] != nil {
+		r := supResp.Requests[0]
+		supervisorID = r.SupervisorId
+		supervisorInfo = gin.H{
+			"id":        r.SupervisorId,
+			"full_name": r.SupervisorName,
+			"fullName":  r.SupervisorName,
+			"email":     r.SupervisorEmail,
+			"position":  "Scientific Supervisor",
+		}
+	}
+	if supervisorID == 0 {
+		det, detErr := h.adminClient.GetTeamDetails(outgoingCtx(c), &adminv1.GetTeamDetailsRequest{TeamId: teamID})
+		if detErr == nil && det != nil && det.Team != nil && det.Team.Supervisor != nil && det.Team.Supervisor.Id != 0 {
+			s := det.Team.Supervisor
+			supervisorID = s.Id
+			supervisorInfo = gin.H{
+				"id":        s.Id,
+				"full_name": s.FullName,
+				"fullName":  s.FullName,
+				"email":     s.Email,
+				"position":  s.Position,
+			}
+		}
+	}
+	var projectID int64 = 0
+
+	candidates := make([]int64, 0, len(ids)+2)
+	addCand := func(v int64) {
+		if v <= 0 {
+			return
+		}
+		for _, x := range candidates {
+			if x == v {
+				return
+			}
+		}
+		candidates = append(candidates, v)
+	}
+
+	addCand(leaderID)
+	addCand(userID)
+	for _, id := range ids {
+		addCand(id)
+	}
+
+	for _, sid := range candidates {
+		pr, perr := h.projectClient.GetStudentProjects(projectCtx(c), &projectv1.GetStudentProjectsRequest{
+			StudentId: sid,
+		})
+		if perr != nil || pr == nil {
+			continue
+		}
+		for _, p := range pr.Projects {
+			if p != nil && p.TeamId == teamID {
+				projectID = p.ProjectId
+				break
+			}
+		}
+		if projectID != 0 {
+			break
+		}
+	}
+	c.JSON(http.StatusOK, gin.H{
+		"has_team": true,
+		"team": gin.H{
+			"team_id":               team.TeamId,
+			"name":                  team.Name,
+			"role":                  team.Role,
+			"members":               pbMembers,
+			"member_count":          team.MemberCount,
+			"pending_invites_count": team.PendingInvitesCount,
+			"invite_code":           team.InviteCode,
+			"composition_locked":    team.CompositionLocked,
+			"supervisor":            supervisorInfo,
+			"supervisor_id":         supervisorID,
+			"project_id":            projectID,
+		},
+	})
 }
 
 func (h *Handler) ListTeams(c *gin.Context) {
