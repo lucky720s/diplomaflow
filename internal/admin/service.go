@@ -843,9 +843,12 @@ func (s *Service) ListSupervisorRequests(ctx context.Context, filter SupervisorR
 }
 
 type MySupervisorRequestsResponse struct {
-	Requests     []*SupervisorRequestWithDetails
-	TotalCount   int64
-	PendingCount int32
+	Requests      []*SupervisorRequestWithDetails
+	TotalCount    int64
+	PendingCount  int32
+	ActiveTeams   int32
+	TotalStudents int32
+	Teams         []*TeamFullDetails
 }
 
 func (s *Service) ListMySupervisorRequests(ctx context.Context, supervisorID int64, status string, page, pageSize int32) (*MySupervisorRequestsResponse, error) {
@@ -870,10 +873,17 @@ func (s *Service) ListMySupervisorRequests(ctx context.Context, supervisorID int
 
 	pendingCount, _ := s.repo.CountPendingSupervisorRequests(ctx, supervisorID)
 
+	teams, totalStudents, err := s.repo.GetSupervisorTeamsReport(ctx, supervisorID)
+	if err != nil {
+		return nil, fmt.Errorf("failed to build supervisor teams report: %w", err)
+	}
 	return &MySupervisorRequestsResponse{
-		Requests:     requests,
-		TotalCount:   total,
-		PendingCount: int32(pendingCount),
+		Requests:      requests,
+		TotalCount:    total,
+		PendingCount:  int32(pendingCount),
+		ActiveTeams:   int32(len(teams)),
+		TotalStudents: totalStudents,
+		Teams:         teams,
 	}, nil
 }
 

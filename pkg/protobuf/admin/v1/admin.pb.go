@@ -3908,10 +3908,13 @@ func (x *ListMySupervisorRequestsReq) GetPageSize() int32 {
 }
 
 type ListMySupervisorRequestsResp struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	Requests      []*SupervisorRequest   `protobuf:"bytes,1,rep,name=requests,proto3" json:"requests,omitempty"`
-	TotalCount    int64                  `protobuf:"varint,2,opt,name=total_count,json=totalCount,proto3" json:"total_count,omitempty"`
-	PendingCount  int32                  `protobuf:"varint,3,opt,name=pending_count,json=pendingCount,proto3" json:"pending_count,omitempty"`
+	state         protoimpl.MessageState  `protogen:"open.v1"`
+	Requests      []*SupervisorRequest    `protobuf:"bytes,1,rep,name=requests,proto3" json:"requests,omitempty"`
+	TotalCount    int64                   `protobuf:"varint,2,opt,name=total_count,json=totalCount,proto3" json:"total_count,omitempty"`
+	PendingCount  int32                   `protobuf:"varint,3,opt,name=pending_count,json=pendingCount,proto3" json:"pending_count,omitempty"`
+	ActiveTeams   int32                   `protobuf:"varint,4,opt,name=active_teams,json=activeTeams,proto3" json:"active_teams,omitempty"`
+	TotalStudents int32                   `protobuf:"varint,5,opt,name=total_students,json=totalStudents,proto3" json:"total_students,omitempty"`
+	TeamsReport   []*SupervisorTeamReport `protobuf:"bytes,6,rep,name=teams_report,json=teamsReport,proto3" json:"teams_report,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -3965,6 +3968,27 @@ func (x *ListMySupervisorRequestsResp) GetPendingCount() int32 {
 		return x.PendingCount
 	}
 	return 0
+}
+
+func (x *ListMySupervisorRequestsResp) GetActiveTeams() int32 {
+	if x != nil {
+		return x.ActiveTeams
+	}
+	return 0
+}
+
+func (x *ListMySupervisorRequestsResp) GetTotalStudents() int32 {
+	if x != nil {
+		return x.TotalStudents
+	}
+	return 0
+}
+
+func (x *ListMySupervisorRequestsResp) GetTeamsReport() []*SupervisorTeamReport {
+	if x != nil {
+		return x.TeamsReport
+	}
+	return nil
 }
 
 type CancelSupervisorRequestReq struct {
@@ -8043,6 +8067,106 @@ func (x *PendingReview) GetPriority() string {
 	return ""
 }
 
+type SupervisorTeamReport struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	TeamId        int64                  `protobuf:"varint,1,opt,name=team_id,json=teamId,proto3" json:"team_id,omitempty"`
+	TeamName      string                 `protobuf:"bytes,2,opt,name=team_name,json=teamName,proto3" json:"team_name,omitempty"`
+	MemberCount   int32                  `protobuf:"varint,3,opt,name=member_count,json=memberCount,proto3" json:"member_count,omitempty"`
+	Members       []*TeamMemberPreview   `protobuf:"bytes,4,rep,name=members,proto3" json:"members,omitempty"`
+	ProjectId     int64                  `protobuf:"varint,5,opt,name=project_id,json=projectId,proto3" json:"project_id,omitempty"`
+	ProjectTitle  string                 `protobuf:"bytes,6,opt,name=project_title,json=projectTitle,proto3" json:"project_title,omitempty"`
+	CurrentStep   string                 `protobuf:"bytes,7,opt,name=current_step,json=currentStep,proto3" json:"current_step,omitempty"`
+	Status        string                 `protobuf:"bytes,8,opt,name=status,proto3" json:"status,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *SupervisorTeamReport) Reset() {
+	*x = SupervisorTeamReport{}
+	mi := &file_admin_v1_admin_proto_msgTypes[108]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *SupervisorTeamReport) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*SupervisorTeamReport) ProtoMessage() {}
+
+func (x *SupervisorTeamReport) ProtoReflect() protoreflect.Message {
+	mi := &file_admin_v1_admin_proto_msgTypes[108]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use SupervisorTeamReport.ProtoReflect.Descriptor instead.
+func (*SupervisorTeamReport) Descriptor() ([]byte, []int) {
+	return file_admin_v1_admin_proto_rawDescGZIP(), []int{108}
+}
+
+func (x *SupervisorTeamReport) GetTeamId() int64 {
+	if x != nil {
+		return x.TeamId
+	}
+	return 0
+}
+
+func (x *SupervisorTeamReport) GetTeamName() string {
+	if x != nil {
+		return x.TeamName
+	}
+	return ""
+}
+
+func (x *SupervisorTeamReport) GetMemberCount() int32 {
+	if x != nil {
+		return x.MemberCount
+	}
+	return 0
+}
+
+func (x *SupervisorTeamReport) GetMembers() []*TeamMemberPreview {
+	if x != nil {
+		return x.Members
+	}
+	return nil
+}
+
+func (x *SupervisorTeamReport) GetProjectId() int64 {
+	if x != nil {
+		return x.ProjectId
+	}
+	return 0
+}
+
+func (x *SupervisorTeamReport) GetProjectTitle() string {
+	if x != nil {
+		return x.ProjectTitle
+	}
+	return ""
+}
+
+func (x *SupervisorTeamReport) GetCurrentStep() string {
+	if x != nil {
+		return x.CurrentStep
+	}
+	return ""
+}
+
+func (x *SupervisorTeamReport) GetStatus() string {
+	if x != nil {
+		return x.Status
+	}
+	return ""
+}
+
 var File_admin_v1_admin_proto protoreflect.FileDescriptor
 
 const file_admin_v1_admin_proto_rawDesc = "" +
@@ -8386,12 +8510,15 @@ const file_admin_v1_admin_proto_rawDesc = "" +
 	"\rsupervisor_id\x18\x01 \x01(\x03B\a\xfaB\x04\"\x02 \x00R\fsupervisorId\x12\x16\n" +
 	"\x06status\x18\x02 \x01(\tR\x06status\x12\x12\n" +
 	"\x04page\x18\x03 \x01(\x05R\x04page\x12\x1b\n" +
-	"\tpage_size\x18\x04 \x01(\x05R\bpageSize\"\x9d\x01\n" +
+	"\tpage_size\x18\x04 \x01(\x05R\bpageSize\"\xaa\x02\n" +
 	"\x1cListMySupervisorRequestsResp\x127\n" +
 	"\brequests\x18\x01 \x03(\v2\x1b.admin.v1.SupervisorRequestR\brequests\x12\x1f\n" +
 	"\vtotal_count\x18\x02 \x01(\x03R\n" +
 	"totalCount\x12#\n" +
-	"\rpending_count\x18\x03 \x01(\x05R\fpendingCount\"\x88\x01\n" +
+	"\rpending_count\x18\x03 \x01(\x05R\fpendingCount\x12!\n" +
+	"\factive_teams\x18\x04 \x01(\x05R\vactiveTeams\x12%\n" +
+	"\x0etotal_students\x18\x05 \x01(\x05R\rtotalStudents\x12A\n" +
+	"\fteams_report\x18\x06 \x03(\v2\x1e.admin.v1.SupervisorTeamReportR\vteamsReport\"\x88\x01\n" +
 	"\x1aCancelSupervisorRequestReq\x12&\n" +
 	"\n" +
 	"request_id\x18\x01 \x01(\tB\a\xfaB\x04r\x02\x10\x01R\trequestId\x12*\n" +
@@ -8764,7 +8891,17 @@ const file_admin_v1_admin_proto_rawDesc = "" +
 	"\fsubmitted_at\x18\b \x01(\v2\x1a.google.protobuf.TimestampR\vsubmittedAt\x12!\n" +
 	"\fdays_pending\x18\t \x01(\x05R\vdaysPending\x12\x1a\n" +
 	"\bpriority\x18\n" +
-	" \x01(\tR\bpriority2\x80\x1e\n" +
+	" \x01(\tR\bpriority\"\xa5\x02\n" +
+	"\x14SupervisorTeamReport\x12\x17\n" +
+	"\ateam_id\x18\x01 \x01(\x03R\x06teamId\x12\x1b\n" +
+	"\tteam_name\x18\x02 \x01(\tR\bteamName\x12!\n" +
+	"\fmember_count\x18\x03 \x01(\x05R\vmemberCount\x125\n" +
+	"\amembers\x18\x04 \x03(\v2\x1b.admin.v1.TeamMemberPreviewR\amembers\x12\x1d\n" +
+	"\n" +
+	"project_id\x18\x05 \x01(\x03R\tprojectId\x12#\n" +
+	"\rproject_title\x18\x06 \x01(\tR\fprojectTitle\x12!\n" +
+	"\fcurrent_step\x18\a \x01(\tR\vcurrentStep\x12\x16\n" +
+	"\x06status\x18\b \x01(\tR\x06status2\x80\x1e\n" +
 	"\fAdminService\x12M\n" +
 	"\fGetDashboard\x12\x1d.admin.v1.GetDashboardRequest\x1a\x1e.admin.v1.GetDashboardResponse\x12_\n" +
 	"\x12GetDepartmentStats\x12#.admin.v1.GetDepartmentStatsRequest\x1a$.admin.v1.GetDepartmentStatsResponse\x12M\n" +
@@ -8819,7 +8956,7 @@ func file_admin_v1_admin_proto_rawDescGZIP() []byte {
 	return file_admin_v1_admin_proto_rawDescData
 }
 
-var file_admin_v1_admin_proto_msgTypes = make([]protoimpl.MessageInfo, 108)
+var file_admin_v1_admin_proto_msgTypes = make([]protoimpl.MessageInfo, 109)
 var file_admin_v1_admin_proto_goTypes = []any{
 	(*TopicRegistrationInfo)(nil),                    // 0: admin.v1.TopicRegistrationInfo
 	(*SubmitTopicRegistrationRequest)(nil),           // 1: admin.v1.SubmitTopicRegistrationRequest
@@ -8929,188 +9066,191 @@ var file_admin_v1_admin_proto_goTypes = []any{
 	(*ListPendingReviewsRequest)(nil),                // 105: admin.v1.ListPendingReviewsRequest
 	(*ListPendingReviewsResponse)(nil),               // 106: admin.v1.ListPendingReviewsResponse
 	(*PendingReview)(nil),                            // 107: admin.v1.PendingReview
-	(*timestamppb.Timestamp)(nil),                    // 108: google.protobuf.Timestamp
-	(*structpb.Struct)(nil),                          // 109: google.protobuf.Struct
-	(*emptypb.Empty)(nil),                            // 110: google.protobuf.Empty
+	(*SupervisorTeamReport)(nil),                     // 108: admin.v1.SupervisorTeamReport
+	(*timestamppb.Timestamp)(nil),                    // 109: google.protobuf.Timestamp
+	(*structpb.Struct)(nil),                          // 110: google.protobuf.Struct
+	(*emptypb.Empty)(nil),                            // 111: google.protobuf.Empty
 }
 var file_admin_v1_admin_proto_depIdxs = []int32{
-	108, // 0: admin.v1.TopicRegistrationInfo.submitted_at:type_name -> google.protobuf.Timestamp
-	108, // 1: admin.v1.TopicRegistrationInfo.reviewed_at:type_name -> google.protobuf.Timestamp
+	109, // 0: admin.v1.TopicRegistrationInfo.submitted_at:type_name -> google.protobuf.Timestamp
+	109, // 1: admin.v1.TopicRegistrationInfo.reviewed_at:type_name -> google.protobuf.Timestamp
 	0,   // 2: admin.v1.ListTopicRegistrationsResponse.registrations:type_name -> admin.v1.TopicRegistrationInfo
 	0,   // 3: admin.v1.ReviewTopicRegistrationResponse.updated_registration:type_name -> admin.v1.TopicRegistrationInfo
 	0,   // 4: admin.v1.GetTopicRegistrationResponse.registration:type_name -> admin.v1.TopicRegistrationInfo
 	9,   // 5: admin.v1.GetTopicRegistrationResponse.history:type_name -> admin.v1.TopicRegistrationHistory
-	108, // 6: admin.v1.TopicRegistrationHistory.created_at:type_name -> google.protobuf.Timestamp
+	109, // 6: admin.v1.TopicRegistrationHistory.created_at:type_name -> google.protobuf.Timestamp
 	12,  // 7: admin.v1.GetDashboardResponse.stats:type_name -> admin.v1.DashboardStats
 	13,  // 8: admin.v1.GetDashboardResponse.step_progress:type_name -> admin.v1.StepProgress
 	14,  // 9: admin.v1.GetDashboardResponse.recent_activities:type_name -> admin.v1.RecentActivity
-	108, // 10: admin.v1.RecentActivity.created_at:type_name -> google.protobuf.Timestamp
+	109, // 10: admin.v1.RecentActivity.created_at:type_name -> google.protobuf.Timestamp
 	12,  // 11: admin.v1.GetDepartmentStatsResponse.stats:type_name -> admin.v1.DashboardStats
 	17,  // 12: admin.v1.GetDepartmentStatsResponse.workflow_stats:type_name -> admin.v1.WorkflowStepStats
 	20,  // 13: admin.v1.ListStudentsResponse.students:type_name -> admin.v1.StudentInfo
-	108, // 14: admin.v1.StudentInfo.created_at:type_name -> google.protobuf.Timestamp
+	109, // 14: admin.v1.StudentInfo.created_at:type_name -> google.protobuf.Timestamp
 	20,  // 15: admin.v1.GetStudentResponse.student:type_name -> admin.v1.StudentInfo
 	95,  // 16: admin.v1.GetStudentResponse.grades:type_name -> admin.v1.GradeInfo
 	87,  // 17: admin.v1.GetStudentResponse.submissions:type_name -> admin.v1.SubmissionPreview
 	25,  // 18: admin.v1.ListAllTeamsResponse.teams:type_name -> admin.v1.TeamAdminInfo
 	26,  // 19: admin.v1.TeamAdminInfo.members:type_name -> admin.v1.TeamMemberInfo
 	27,  // 20: admin.v1.TeamAdminInfo.supervisor:type_name -> admin.v1.SupervisorInfo
-	108, // 21: admin.v1.TeamAdminInfo.created_at:type_name -> google.protobuf.Timestamp
-	108, // 22: admin.v1.TeamAdminInfo.updated_at:type_name -> google.protobuf.Timestamp
+	109, // 21: admin.v1.TeamAdminInfo.created_at:type_name -> google.protobuf.Timestamp
+	109, // 22: admin.v1.TeamAdminInfo.updated_at:type_name -> google.protobuf.Timestamp
 	25,  // 23: admin.v1.GetTeamDetailsResponse.team:type_name -> admin.v1.TeamAdminInfo
 	30,  // 24: admin.v1.GetTeamDetailsResponse.project_progress:type_name -> admin.v1.ProjectProgress
 	95,  // 25: admin.v1.GetTeamDetailsResponse.grades:type_name -> admin.v1.GradeInfo
 	87,  // 26: admin.v1.GetTeamDetailsResponse.submissions:type_name -> admin.v1.SubmissionPreview
 	31,  // 27: admin.v1.ProjectProgress.steps:type_name -> admin.v1.StepStatus
-	108, // 28: admin.v1.StepStatus.completed_at:type_name -> google.protobuf.Timestamp
+	109, // 28: admin.v1.StepStatus.completed_at:type_name -> google.protobuf.Timestamp
 	95,  // 29: admin.v1.StepStatus.grade:type_name -> admin.v1.GradeInfo
 	25,  // 30: admin.v1.UpdateTeamAdminResponse.team:type_name -> admin.v1.TeamAdminInfo
 	37,  // 31: admin.v1.ListSupervisorsResponse.supervisors:type_name -> admin.v1.SupervisorDetails
 	38,  // 32: admin.v1.SupervisorDetails.assigned_teams:type_name -> admin.v1.TeamPreview
-	108, // 33: admin.v1.SupervisorRequest.created_at:type_name -> google.protobuf.Timestamp
-	108, // 34: admin.v1.SupervisorRequest.responded_at:type_name -> google.protobuf.Timestamp
-	108, // 35: admin.v1.SupervisorRequest.expires_at:type_name -> google.protobuf.Timestamp
+	109, // 33: admin.v1.SupervisorRequest.created_at:type_name -> google.protobuf.Timestamp
+	109, // 34: admin.v1.SupervisorRequest.responded_at:type_name -> google.protobuf.Timestamp
+	109, // 35: admin.v1.SupervisorRequest.expires_at:type_name -> google.protobuf.Timestamp
 	42,  // 36: admin.v1.SupervisorRequest.team_members:type_name -> admin.v1.TeamMemberPreview
 	41,  // 37: admin.v1.CreateSupervisorRequestResp.request:type_name -> admin.v1.SupervisorRequest
 	41,  // 38: admin.v1.ListSupervisorRequestsResp.requests:type_name -> admin.v1.SupervisorRequest
 	41,  // 39: admin.v1.GetSupervisorRequestResp.request:type_name -> admin.v1.SupervisorRequest
 	50,  // 40: admin.v1.GetSupervisorRequestResp.history:type_name -> admin.v1.SupervisorRequestHistory
-	108, // 41: admin.v1.SupervisorRequestHistory.created_at:type_name -> google.protobuf.Timestamp
+	109, // 41: admin.v1.SupervisorRequestHistory.created_at:type_name -> google.protobuf.Timestamp
 	41,  // 42: admin.v1.RespondToSupervisorRequestResp.updated_request:type_name -> admin.v1.SupervisorRequest
 	41,  // 43: admin.v1.ListMySupervisorRequestsResp.requests:type_name -> admin.v1.SupervisorRequest
-	108, // 44: admin.v1.PreDefenseSubmission.scheduled_date:type_name -> google.protobuf.Timestamp
-	108, // 45: admin.v1.PreDefenseSubmission.graded_at:type_name -> google.protobuf.Timestamp
-	58,  // 46: admin.v1.PreDefenseSubmission.commission:type_name -> admin.v1.PreDefenseCommissionMember
-	59,  // 47: admin.v1.PreDefenseSubmission.documents:type_name -> admin.v1.PreDefenseDocument
-	108, // 48: admin.v1.PreDefenseSubmission.submitted_at:type_name -> google.protobuf.Timestamp
-	108, // 49: admin.v1.PreDefenseSubmission.completed_at:type_name -> google.protobuf.Timestamp
-	108, // 50: admin.v1.PreDefenseSubmission.created_at:type_name -> google.protobuf.Timestamp
-	108, // 51: admin.v1.PreDefenseSubmission.updated_at:type_name -> google.protobuf.Timestamp
-	108, // 52: admin.v1.PreDefenseDocument.uploaded_at:type_name -> google.protobuf.Timestamp
-	108, // 53: admin.v1.PreDefenseHistory.created_at:type_name -> google.protobuf.Timestamp
-	57,  // 54: admin.v1.SubmitPreDefenseResponse.submission:type_name -> admin.v1.PreDefenseSubmission
-	108, // 55: admin.v1.ListPreDefenseSubmissionsRequest.date_from:type_name -> google.protobuf.Timestamp
-	108, // 56: admin.v1.ListPreDefenseSubmissionsRequest.date_to:type_name -> google.protobuf.Timestamp
-	57,  // 57: admin.v1.ListPreDefenseSubmissionsResponse.submissions:type_name -> admin.v1.PreDefenseSubmission
-	65,  // 58: admin.v1.ListPreDefenseSubmissionsResponse.stats:type_name -> admin.v1.PreDefenseStats
-	57,  // 59: admin.v1.GetPreDefenseSubmissionResponse.submission:type_name -> admin.v1.PreDefenseSubmission
-	60,  // 60: admin.v1.GetPreDefenseSubmissionResponse.history:type_name -> admin.v1.PreDefenseHistory
-	30,  // 61: admin.v1.GetPreDefenseSubmissionResponse.project_progress:type_name -> admin.v1.ProjectProgress
-	57,  // 62: admin.v1.GetPreDefenseSubmissionResponse.previous_attempts:type_name -> admin.v1.PreDefenseSubmission
-	108, // 63: admin.v1.SchedulePreDefenseRequest.scheduled_date:type_name -> google.protobuf.Timestamp
-	57,  // 64: admin.v1.SchedulePreDefenseResponse.updated_submission:type_name -> admin.v1.PreDefenseSubmission
-	71,  // 65: admin.v1.GradePreDefenseRequest.member_grades:type_name -> admin.v1.CommissionMemberGrade
-	57,  // 66: admin.v1.GradePreDefenseResponse.updated_submission:type_name -> admin.v1.PreDefenseSubmission
-	57,  // 67: admin.v1.CompletePreDefenseResponse.updated_submission:type_name -> admin.v1.PreDefenseSubmission
-	108, // 68: admin.v1.ReschedulePreDefenseRequest.new_date:type_name -> google.protobuf.Timestamp
-	57,  // 69: admin.v1.ReschedulePreDefenseResponse.updated_submission:type_name -> admin.v1.PreDefenseSubmission
-	108, // 70: admin.v1.ListScheduledPreDefensesRequest.date_from:type_name -> google.protobuf.Timestamp
-	108, // 71: admin.v1.ListScheduledPreDefensesRequest.date_to:type_name -> google.protobuf.Timestamp
-	79,  // 72: admin.v1.ListScheduledPreDefensesResponse.schedule:type_name -> admin.v1.PreDefenseScheduleItem
-	108, // 73: admin.v1.PreDefenseScheduleItem.scheduled_date:type_name -> google.protobuf.Timestamp
-	58,  // 74: admin.v1.AddPreDefenseCommissionMemberResponse.member:type_name -> admin.v1.PreDefenseCommissionMember
-	86,  // 75: admin.v1.ListSubmissionsResponse.submissions:type_name -> admin.v1.SubmissionInfo
-	109, // 76: admin.v1.SubmissionInfo.data:type_name -> google.protobuf.Struct
-	88,  // 77: admin.v1.SubmissionInfo.files:type_name -> admin.v1.FileAttachment
-	108, // 78: admin.v1.SubmissionInfo.submitted_at:type_name -> google.protobuf.Timestamp
-	89,  // 79: admin.v1.SubmissionInfo.review:type_name -> admin.v1.ReviewInfo
-	108, // 80: admin.v1.SubmissionPreview.submitted_at:type_name -> google.protobuf.Timestamp
-	108, // 81: admin.v1.ReviewInfo.reviewed_at:type_name -> google.protobuf.Timestamp
-	86,  // 82: admin.v1.GetSubmissionResponse.submission:type_name -> admin.v1.SubmissionInfo
-	92,  // 83: admin.v1.GetSubmissionResponse.history:type_name -> admin.v1.ReviewHistory
-	108, // 84: admin.v1.ReviewHistory.created_at:type_name -> google.protobuf.Timestamp
-	86,  // 85: admin.v1.ReviewSubmissionResponse.updated_submission:type_name -> admin.v1.SubmissionInfo
-	108, // 86: admin.v1.GradeInfo.graded_at:type_name -> google.protobuf.Timestamp
-	95,  // 87: admin.v1.GetProjectGradesResponse.step_grades:type_name -> admin.v1.GradeInfo
-	95,  // 88: admin.v1.SetStepGradeResponse.grade:type_name -> admin.v1.GradeInfo
-	102, // 89: admin.v1.GetGradingHistoryResponse.history:type_name -> admin.v1.GradeHistoryItem
-	108, // 90: admin.v1.GradeHistoryItem.changed_at:type_name -> google.protobuf.Timestamp
-	13,  // 91: admin.v1.GetWorkflowProgressResponse.steps:type_name -> admin.v1.StepProgress
-	107, // 92: admin.v1.ListPendingReviewsResponse.reviews:type_name -> admin.v1.PendingReview
-	108, // 93: admin.v1.PendingReview.submitted_at:type_name -> google.protobuf.Timestamp
-	10,  // 94: admin.v1.AdminService.GetDashboard:input_type -> admin.v1.GetDashboardRequest
-	15,  // 95: admin.v1.AdminService.GetDepartmentStats:input_type -> admin.v1.GetDepartmentStatsRequest
-	18,  // 96: admin.v1.AdminService.ListStudents:input_type -> admin.v1.ListStudentsRequest
-	21,  // 97: admin.v1.AdminService.GetStudent:input_type -> admin.v1.GetStudentRequest
-	23,  // 98: admin.v1.AdminService.ListAllTeams:input_type -> admin.v1.ListAllTeamsRequest
-	28,  // 99: admin.v1.AdminService.GetTeamDetails:input_type -> admin.v1.GetTeamDetailsRequest
-	32,  // 100: admin.v1.AdminService.UpdateTeamAdmin:input_type -> admin.v1.UpdateTeamAdminRequest
-	34,  // 101: admin.v1.AdminService.DeleteTeamAdmin:input_type -> admin.v1.DeleteTeamAdminRequest
-	35,  // 102: admin.v1.AdminService.ListSupervisors:input_type -> admin.v1.ListSupervisorsRequest
-	39,  // 103: admin.v1.AdminService.AssignSupervisor:input_type -> admin.v1.AssignSupervisorRequest
-	43,  // 104: admin.v1.AdminService.CreateSupervisorRequest:input_type -> admin.v1.CreateSupervisorRequestReq
-	44,  // 105: admin.v1.AdminService.CreateSupervisorRequestByTeam:input_type -> admin.v1.CreateSupervisorRequestByTeamReq
-	46,  // 106: admin.v1.AdminService.ListSupervisorRequests:input_type -> admin.v1.ListSupervisorRequestsReq
-	48,  // 107: admin.v1.AdminService.GetSupervisorRequest:input_type -> admin.v1.GetSupervisorRequestReq
-	51,  // 108: admin.v1.AdminService.RespondToSupervisorRequest:input_type -> admin.v1.RespondToSupervisorRequestReq
-	53,  // 109: admin.v1.AdminService.ListMySupervisorRequests:input_type -> admin.v1.ListMySupervisorRequestsReq
-	55,  // 110: admin.v1.AdminService.CancelSupervisorRequest:input_type -> admin.v1.CancelSupervisorRequestReq
-	1,   // 111: admin.v1.AdminService.SubmitTopicRegistration:input_type -> admin.v1.SubmitTopicRegistrationRequest
-	3,   // 112: admin.v1.AdminService.ListTopicRegistrations:input_type -> admin.v1.ListTopicRegistrationsRequest
-	5,   // 113: admin.v1.AdminService.ReviewTopicRegistration:input_type -> admin.v1.ReviewTopicRegistrationRequest
-	7,   // 114: admin.v1.AdminService.GetTopicRegistration:input_type -> admin.v1.GetTopicRegistrationRequest
-	61,  // 115: admin.v1.AdminService.SubmitPreDefense:input_type -> admin.v1.SubmitPreDefenseRequest
-	63,  // 116: admin.v1.AdminService.ListPreDefenseSubmissions:input_type -> admin.v1.ListPreDefenseSubmissionsRequest
-	66,  // 117: admin.v1.AdminService.GetPreDefenseSubmission:input_type -> admin.v1.GetPreDefenseSubmissionRequest
-	68,  // 118: admin.v1.AdminService.SchedulePreDefense:input_type -> admin.v1.SchedulePreDefenseRequest
-	70,  // 119: admin.v1.AdminService.GradePreDefense:input_type -> admin.v1.GradePreDefenseRequest
-	73,  // 120: admin.v1.AdminService.CompletePreDefense:input_type -> admin.v1.CompletePreDefenseRequest
-	75,  // 121: admin.v1.AdminService.ReschedulePreDefense:input_type -> admin.v1.ReschedulePreDefenseRequest
-	77,  // 122: admin.v1.AdminService.ListScheduledPreDefenses:input_type -> admin.v1.ListScheduledPreDefensesRequest
-	80,  // 123: admin.v1.AdminService.AddPreDefenseCommissionMember:input_type -> admin.v1.AddPreDefenseCommissionMemberRequest
-	82,  // 124: admin.v1.AdminService.RemovePreDefenseCommissionMember:input_type -> admin.v1.RemovePreDefenseCommissionMemberRequest
-	84,  // 125: admin.v1.AdminService.ListSubmissions:input_type -> admin.v1.ListSubmissionsRequest
-	90,  // 126: admin.v1.AdminService.GetSubmission:input_type -> admin.v1.GetSubmissionRequest
-	93,  // 127: admin.v1.AdminService.ReviewSubmission:input_type -> admin.v1.ReviewSubmissionRequest
-	96,  // 128: admin.v1.AdminService.GetProjectGrades:input_type -> admin.v1.GetProjectGradesRequest
-	98,  // 129: admin.v1.AdminService.SetStepGrade:input_type -> admin.v1.SetStepGradeRequest
-	100, // 130: admin.v1.AdminService.GetGradingHistory:input_type -> admin.v1.GetGradingHistoryRequest
-	103, // 131: admin.v1.AdminService.GetWorkflowProgress:input_type -> admin.v1.GetWorkflowProgressRequest
-	105, // 132: admin.v1.AdminService.ListPendingReviews:input_type -> admin.v1.ListPendingReviewsRequest
-	11,  // 133: admin.v1.AdminService.GetDashboard:output_type -> admin.v1.GetDashboardResponse
-	16,  // 134: admin.v1.AdminService.GetDepartmentStats:output_type -> admin.v1.GetDepartmentStatsResponse
-	19,  // 135: admin.v1.AdminService.ListStudents:output_type -> admin.v1.ListStudentsResponse
-	22,  // 136: admin.v1.AdminService.GetStudent:output_type -> admin.v1.GetStudentResponse
-	24,  // 137: admin.v1.AdminService.ListAllTeams:output_type -> admin.v1.ListAllTeamsResponse
-	29,  // 138: admin.v1.AdminService.GetTeamDetails:output_type -> admin.v1.GetTeamDetailsResponse
-	33,  // 139: admin.v1.AdminService.UpdateTeamAdmin:output_type -> admin.v1.UpdateTeamAdminResponse
-	110, // 140: admin.v1.AdminService.DeleteTeamAdmin:output_type -> google.protobuf.Empty
-	36,  // 141: admin.v1.AdminService.ListSupervisors:output_type -> admin.v1.ListSupervisorsResponse
-	40,  // 142: admin.v1.AdminService.AssignSupervisor:output_type -> admin.v1.AssignSupervisorResponse
-	45,  // 143: admin.v1.AdminService.CreateSupervisorRequest:output_type -> admin.v1.CreateSupervisorRequestResp
-	45,  // 144: admin.v1.AdminService.CreateSupervisorRequestByTeam:output_type -> admin.v1.CreateSupervisorRequestResp
-	47,  // 145: admin.v1.AdminService.ListSupervisorRequests:output_type -> admin.v1.ListSupervisorRequestsResp
-	49,  // 146: admin.v1.AdminService.GetSupervisorRequest:output_type -> admin.v1.GetSupervisorRequestResp
-	52,  // 147: admin.v1.AdminService.RespondToSupervisorRequest:output_type -> admin.v1.RespondToSupervisorRequestResp
-	54,  // 148: admin.v1.AdminService.ListMySupervisorRequests:output_type -> admin.v1.ListMySupervisorRequestsResp
-	56,  // 149: admin.v1.AdminService.CancelSupervisorRequest:output_type -> admin.v1.CancelSupervisorRequestResp
-	2,   // 150: admin.v1.AdminService.SubmitTopicRegistration:output_type -> admin.v1.SubmitTopicRegistrationResponse
-	4,   // 151: admin.v1.AdminService.ListTopicRegistrations:output_type -> admin.v1.ListTopicRegistrationsResponse
-	6,   // 152: admin.v1.AdminService.ReviewTopicRegistration:output_type -> admin.v1.ReviewTopicRegistrationResponse
-	8,   // 153: admin.v1.AdminService.GetTopicRegistration:output_type -> admin.v1.GetTopicRegistrationResponse
-	62,  // 154: admin.v1.AdminService.SubmitPreDefense:output_type -> admin.v1.SubmitPreDefenseResponse
-	64,  // 155: admin.v1.AdminService.ListPreDefenseSubmissions:output_type -> admin.v1.ListPreDefenseSubmissionsResponse
-	67,  // 156: admin.v1.AdminService.GetPreDefenseSubmission:output_type -> admin.v1.GetPreDefenseSubmissionResponse
-	69,  // 157: admin.v1.AdminService.SchedulePreDefense:output_type -> admin.v1.SchedulePreDefenseResponse
-	72,  // 158: admin.v1.AdminService.GradePreDefense:output_type -> admin.v1.GradePreDefenseResponse
-	74,  // 159: admin.v1.AdminService.CompletePreDefense:output_type -> admin.v1.CompletePreDefenseResponse
-	76,  // 160: admin.v1.AdminService.ReschedulePreDefense:output_type -> admin.v1.ReschedulePreDefenseResponse
-	78,  // 161: admin.v1.AdminService.ListScheduledPreDefenses:output_type -> admin.v1.ListScheduledPreDefensesResponse
-	81,  // 162: admin.v1.AdminService.AddPreDefenseCommissionMember:output_type -> admin.v1.AddPreDefenseCommissionMemberResponse
-	83,  // 163: admin.v1.AdminService.RemovePreDefenseCommissionMember:output_type -> admin.v1.RemovePreDefenseCommissionMemberResponse
-	85,  // 164: admin.v1.AdminService.ListSubmissions:output_type -> admin.v1.ListSubmissionsResponse
-	91,  // 165: admin.v1.AdminService.GetSubmission:output_type -> admin.v1.GetSubmissionResponse
-	94,  // 166: admin.v1.AdminService.ReviewSubmission:output_type -> admin.v1.ReviewSubmissionResponse
-	97,  // 167: admin.v1.AdminService.GetProjectGrades:output_type -> admin.v1.GetProjectGradesResponse
-	99,  // 168: admin.v1.AdminService.SetStepGrade:output_type -> admin.v1.SetStepGradeResponse
-	101, // 169: admin.v1.AdminService.GetGradingHistory:output_type -> admin.v1.GetGradingHistoryResponse
-	104, // 170: admin.v1.AdminService.GetWorkflowProgress:output_type -> admin.v1.GetWorkflowProgressResponse
-	106, // 171: admin.v1.AdminService.ListPendingReviews:output_type -> admin.v1.ListPendingReviewsResponse
-	133, // [133:172] is the sub-list for method output_type
-	94,  // [94:133] is the sub-list for method input_type
-	94,  // [94:94] is the sub-list for extension type_name
-	94,  // [94:94] is the sub-list for extension extendee
-	0,   // [0:94] is the sub-list for field type_name
+	108, // 44: admin.v1.ListMySupervisorRequestsResp.teams_report:type_name -> admin.v1.SupervisorTeamReport
+	109, // 45: admin.v1.PreDefenseSubmission.scheduled_date:type_name -> google.protobuf.Timestamp
+	109, // 46: admin.v1.PreDefenseSubmission.graded_at:type_name -> google.protobuf.Timestamp
+	58,  // 47: admin.v1.PreDefenseSubmission.commission:type_name -> admin.v1.PreDefenseCommissionMember
+	59,  // 48: admin.v1.PreDefenseSubmission.documents:type_name -> admin.v1.PreDefenseDocument
+	109, // 49: admin.v1.PreDefenseSubmission.submitted_at:type_name -> google.protobuf.Timestamp
+	109, // 50: admin.v1.PreDefenseSubmission.completed_at:type_name -> google.protobuf.Timestamp
+	109, // 51: admin.v1.PreDefenseSubmission.created_at:type_name -> google.protobuf.Timestamp
+	109, // 52: admin.v1.PreDefenseSubmission.updated_at:type_name -> google.protobuf.Timestamp
+	109, // 53: admin.v1.PreDefenseDocument.uploaded_at:type_name -> google.protobuf.Timestamp
+	109, // 54: admin.v1.PreDefenseHistory.created_at:type_name -> google.protobuf.Timestamp
+	57,  // 55: admin.v1.SubmitPreDefenseResponse.submission:type_name -> admin.v1.PreDefenseSubmission
+	109, // 56: admin.v1.ListPreDefenseSubmissionsRequest.date_from:type_name -> google.protobuf.Timestamp
+	109, // 57: admin.v1.ListPreDefenseSubmissionsRequest.date_to:type_name -> google.protobuf.Timestamp
+	57,  // 58: admin.v1.ListPreDefenseSubmissionsResponse.submissions:type_name -> admin.v1.PreDefenseSubmission
+	65,  // 59: admin.v1.ListPreDefenseSubmissionsResponse.stats:type_name -> admin.v1.PreDefenseStats
+	57,  // 60: admin.v1.GetPreDefenseSubmissionResponse.submission:type_name -> admin.v1.PreDefenseSubmission
+	60,  // 61: admin.v1.GetPreDefenseSubmissionResponse.history:type_name -> admin.v1.PreDefenseHistory
+	30,  // 62: admin.v1.GetPreDefenseSubmissionResponse.project_progress:type_name -> admin.v1.ProjectProgress
+	57,  // 63: admin.v1.GetPreDefenseSubmissionResponse.previous_attempts:type_name -> admin.v1.PreDefenseSubmission
+	109, // 64: admin.v1.SchedulePreDefenseRequest.scheduled_date:type_name -> google.protobuf.Timestamp
+	57,  // 65: admin.v1.SchedulePreDefenseResponse.updated_submission:type_name -> admin.v1.PreDefenseSubmission
+	71,  // 66: admin.v1.GradePreDefenseRequest.member_grades:type_name -> admin.v1.CommissionMemberGrade
+	57,  // 67: admin.v1.GradePreDefenseResponse.updated_submission:type_name -> admin.v1.PreDefenseSubmission
+	57,  // 68: admin.v1.CompletePreDefenseResponse.updated_submission:type_name -> admin.v1.PreDefenseSubmission
+	109, // 69: admin.v1.ReschedulePreDefenseRequest.new_date:type_name -> google.protobuf.Timestamp
+	57,  // 70: admin.v1.ReschedulePreDefenseResponse.updated_submission:type_name -> admin.v1.PreDefenseSubmission
+	109, // 71: admin.v1.ListScheduledPreDefensesRequest.date_from:type_name -> google.protobuf.Timestamp
+	109, // 72: admin.v1.ListScheduledPreDefensesRequest.date_to:type_name -> google.protobuf.Timestamp
+	79,  // 73: admin.v1.ListScheduledPreDefensesResponse.schedule:type_name -> admin.v1.PreDefenseScheduleItem
+	109, // 74: admin.v1.PreDefenseScheduleItem.scheduled_date:type_name -> google.protobuf.Timestamp
+	58,  // 75: admin.v1.AddPreDefenseCommissionMemberResponse.member:type_name -> admin.v1.PreDefenseCommissionMember
+	86,  // 76: admin.v1.ListSubmissionsResponse.submissions:type_name -> admin.v1.SubmissionInfo
+	110, // 77: admin.v1.SubmissionInfo.data:type_name -> google.protobuf.Struct
+	88,  // 78: admin.v1.SubmissionInfo.files:type_name -> admin.v1.FileAttachment
+	109, // 79: admin.v1.SubmissionInfo.submitted_at:type_name -> google.protobuf.Timestamp
+	89,  // 80: admin.v1.SubmissionInfo.review:type_name -> admin.v1.ReviewInfo
+	109, // 81: admin.v1.SubmissionPreview.submitted_at:type_name -> google.protobuf.Timestamp
+	109, // 82: admin.v1.ReviewInfo.reviewed_at:type_name -> google.protobuf.Timestamp
+	86,  // 83: admin.v1.GetSubmissionResponse.submission:type_name -> admin.v1.SubmissionInfo
+	92,  // 84: admin.v1.GetSubmissionResponse.history:type_name -> admin.v1.ReviewHistory
+	109, // 85: admin.v1.ReviewHistory.created_at:type_name -> google.protobuf.Timestamp
+	86,  // 86: admin.v1.ReviewSubmissionResponse.updated_submission:type_name -> admin.v1.SubmissionInfo
+	109, // 87: admin.v1.GradeInfo.graded_at:type_name -> google.protobuf.Timestamp
+	95,  // 88: admin.v1.GetProjectGradesResponse.step_grades:type_name -> admin.v1.GradeInfo
+	95,  // 89: admin.v1.SetStepGradeResponse.grade:type_name -> admin.v1.GradeInfo
+	102, // 90: admin.v1.GetGradingHistoryResponse.history:type_name -> admin.v1.GradeHistoryItem
+	109, // 91: admin.v1.GradeHistoryItem.changed_at:type_name -> google.protobuf.Timestamp
+	13,  // 92: admin.v1.GetWorkflowProgressResponse.steps:type_name -> admin.v1.StepProgress
+	107, // 93: admin.v1.ListPendingReviewsResponse.reviews:type_name -> admin.v1.PendingReview
+	109, // 94: admin.v1.PendingReview.submitted_at:type_name -> google.protobuf.Timestamp
+	42,  // 95: admin.v1.SupervisorTeamReport.members:type_name -> admin.v1.TeamMemberPreview
+	10,  // 96: admin.v1.AdminService.GetDashboard:input_type -> admin.v1.GetDashboardRequest
+	15,  // 97: admin.v1.AdminService.GetDepartmentStats:input_type -> admin.v1.GetDepartmentStatsRequest
+	18,  // 98: admin.v1.AdminService.ListStudents:input_type -> admin.v1.ListStudentsRequest
+	21,  // 99: admin.v1.AdminService.GetStudent:input_type -> admin.v1.GetStudentRequest
+	23,  // 100: admin.v1.AdminService.ListAllTeams:input_type -> admin.v1.ListAllTeamsRequest
+	28,  // 101: admin.v1.AdminService.GetTeamDetails:input_type -> admin.v1.GetTeamDetailsRequest
+	32,  // 102: admin.v1.AdminService.UpdateTeamAdmin:input_type -> admin.v1.UpdateTeamAdminRequest
+	34,  // 103: admin.v1.AdminService.DeleteTeamAdmin:input_type -> admin.v1.DeleteTeamAdminRequest
+	35,  // 104: admin.v1.AdminService.ListSupervisors:input_type -> admin.v1.ListSupervisorsRequest
+	39,  // 105: admin.v1.AdminService.AssignSupervisor:input_type -> admin.v1.AssignSupervisorRequest
+	43,  // 106: admin.v1.AdminService.CreateSupervisorRequest:input_type -> admin.v1.CreateSupervisorRequestReq
+	44,  // 107: admin.v1.AdminService.CreateSupervisorRequestByTeam:input_type -> admin.v1.CreateSupervisorRequestByTeamReq
+	46,  // 108: admin.v1.AdminService.ListSupervisorRequests:input_type -> admin.v1.ListSupervisorRequestsReq
+	48,  // 109: admin.v1.AdminService.GetSupervisorRequest:input_type -> admin.v1.GetSupervisorRequestReq
+	51,  // 110: admin.v1.AdminService.RespondToSupervisorRequest:input_type -> admin.v1.RespondToSupervisorRequestReq
+	53,  // 111: admin.v1.AdminService.ListMySupervisorRequests:input_type -> admin.v1.ListMySupervisorRequestsReq
+	55,  // 112: admin.v1.AdminService.CancelSupervisorRequest:input_type -> admin.v1.CancelSupervisorRequestReq
+	1,   // 113: admin.v1.AdminService.SubmitTopicRegistration:input_type -> admin.v1.SubmitTopicRegistrationRequest
+	3,   // 114: admin.v1.AdminService.ListTopicRegistrations:input_type -> admin.v1.ListTopicRegistrationsRequest
+	5,   // 115: admin.v1.AdminService.ReviewTopicRegistration:input_type -> admin.v1.ReviewTopicRegistrationRequest
+	7,   // 116: admin.v1.AdminService.GetTopicRegistration:input_type -> admin.v1.GetTopicRegistrationRequest
+	61,  // 117: admin.v1.AdminService.SubmitPreDefense:input_type -> admin.v1.SubmitPreDefenseRequest
+	63,  // 118: admin.v1.AdminService.ListPreDefenseSubmissions:input_type -> admin.v1.ListPreDefenseSubmissionsRequest
+	66,  // 119: admin.v1.AdminService.GetPreDefenseSubmission:input_type -> admin.v1.GetPreDefenseSubmissionRequest
+	68,  // 120: admin.v1.AdminService.SchedulePreDefense:input_type -> admin.v1.SchedulePreDefenseRequest
+	70,  // 121: admin.v1.AdminService.GradePreDefense:input_type -> admin.v1.GradePreDefenseRequest
+	73,  // 122: admin.v1.AdminService.CompletePreDefense:input_type -> admin.v1.CompletePreDefenseRequest
+	75,  // 123: admin.v1.AdminService.ReschedulePreDefense:input_type -> admin.v1.ReschedulePreDefenseRequest
+	77,  // 124: admin.v1.AdminService.ListScheduledPreDefenses:input_type -> admin.v1.ListScheduledPreDefensesRequest
+	80,  // 125: admin.v1.AdminService.AddPreDefenseCommissionMember:input_type -> admin.v1.AddPreDefenseCommissionMemberRequest
+	82,  // 126: admin.v1.AdminService.RemovePreDefenseCommissionMember:input_type -> admin.v1.RemovePreDefenseCommissionMemberRequest
+	84,  // 127: admin.v1.AdminService.ListSubmissions:input_type -> admin.v1.ListSubmissionsRequest
+	90,  // 128: admin.v1.AdminService.GetSubmission:input_type -> admin.v1.GetSubmissionRequest
+	93,  // 129: admin.v1.AdminService.ReviewSubmission:input_type -> admin.v1.ReviewSubmissionRequest
+	96,  // 130: admin.v1.AdminService.GetProjectGrades:input_type -> admin.v1.GetProjectGradesRequest
+	98,  // 131: admin.v1.AdminService.SetStepGrade:input_type -> admin.v1.SetStepGradeRequest
+	100, // 132: admin.v1.AdminService.GetGradingHistory:input_type -> admin.v1.GetGradingHistoryRequest
+	103, // 133: admin.v1.AdminService.GetWorkflowProgress:input_type -> admin.v1.GetWorkflowProgressRequest
+	105, // 134: admin.v1.AdminService.ListPendingReviews:input_type -> admin.v1.ListPendingReviewsRequest
+	11,  // 135: admin.v1.AdminService.GetDashboard:output_type -> admin.v1.GetDashboardResponse
+	16,  // 136: admin.v1.AdminService.GetDepartmentStats:output_type -> admin.v1.GetDepartmentStatsResponse
+	19,  // 137: admin.v1.AdminService.ListStudents:output_type -> admin.v1.ListStudentsResponse
+	22,  // 138: admin.v1.AdminService.GetStudent:output_type -> admin.v1.GetStudentResponse
+	24,  // 139: admin.v1.AdminService.ListAllTeams:output_type -> admin.v1.ListAllTeamsResponse
+	29,  // 140: admin.v1.AdminService.GetTeamDetails:output_type -> admin.v1.GetTeamDetailsResponse
+	33,  // 141: admin.v1.AdminService.UpdateTeamAdmin:output_type -> admin.v1.UpdateTeamAdminResponse
+	111, // 142: admin.v1.AdminService.DeleteTeamAdmin:output_type -> google.protobuf.Empty
+	36,  // 143: admin.v1.AdminService.ListSupervisors:output_type -> admin.v1.ListSupervisorsResponse
+	40,  // 144: admin.v1.AdminService.AssignSupervisor:output_type -> admin.v1.AssignSupervisorResponse
+	45,  // 145: admin.v1.AdminService.CreateSupervisorRequest:output_type -> admin.v1.CreateSupervisorRequestResp
+	45,  // 146: admin.v1.AdminService.CreateSupervisorRequestByTeam:output_type -> admin.v1.CreateSupervisorRequestResp
+	47,  // 147: admin.v1.AdminService.ListSupervisorRequests:output_type -> admin.v1.ListSupervisorRequestsResp
+	49,  // 148: admin.v1.AdminService.GetSupervisorRequest:output_type -> admin.v1.GetSupervisorRequestResp
+	52,  // 149: admin.v1.AdminService.RespondToSupervisorRequest:output_type -> admin.v1.RespondToSupervisorRequestResp
+	54,  // 150: admin.v1.AdminService.ListMySupervisorRequests:output_type -> admin.v1.ListMySupervisorRequestsResp
+	56,  // 151: admin.v1.AdminService.CancelSupervisorRequest:output_type -> admin.v1.CancelSupervisorRequestResp
+	2,   // 152: admin.v1.AdminService.SubmitTopicRegistration:output_type -> admin.v1.SubmitTopicRegistrationResponse
+	4,   // 153: admin.v1.AdminService.ListTopicRegistrations:output_type -> admin.v1.ListTopicRegistrationsResponse
+	6,   // 154: admin.v1.AdminService.ReviewTopicRegistration:output_type -> admin.v1.ReviewTopicRegistrationResponse
+	8,   // 155: admin.v1.AdminService.GetTopicRegistration:output_type -> admin.v1.GetTopicRegistrationResponse
+	62,  // 156: admin.v1.AdminService.SubmitPreDefense:output_type -> admin.v1.SubmitPreDefenseResponse
+	64,  // 157: admin.v1.AdminService.ListPreDefenseSubmissions:output_type -> admin.v1.ListPreDefenseSubmissionsResponse
+	67,  // 158: admin.v1.AdminService.GetPreDefenseSubmission:output_type -> admin.v1.GetPreDefenseSubmissionResponse
+	69,  // 159: admin.v1.AdminService.SchedulePreDefense:output_type -> admin.v1.SchedulePreDefenseResponse
+	72,  // 160: admin.v1.AdminService.GradePreDefense:output_type -> admin.v1.GradePreDefenseResponse
+	74,  // 161: admin.v1.AdminService.CompletePreDefense:output_type -> admin.v1.CompletePreDefenseResponse
+	76,  // 162: admin.v1.AdminService.ReschedulePreDefense:output_type -> admin.v1.ReschedulePreDefenseResponse
+	78,  // 163: admin.v1.AdminService.ListScheduledPreDefenses:output_type -> admin.v1.ListScheduledPreDefensesResponse
+	81,  // 164: admin.v1.AdminService.AddPreDefenseCommissionMember:output_type -> admin.v1.AddPreDefenseCommissionMemberResponse
+	83,  // 165: admin.v1.AdminService.RemovePreDefenseCommissionMember:output_type -> admin.v1.RemovePreDefenseCommissionMemberResponse
+	85,  // 166: admin.v1.AdminService.ListSubmissions:output_type -> admin.v1.ListSubmissionsResponse
+	91,  // 167: admin.v1.AdminService.GetSubmission:output_type -> admin.v1.GetSubmissionResponse
+	94,  // 168: admin.v1.AdminService.ReviewSubmission:output_type -> admin.v1.ReviewSubmissionResponse
+	97,  // 169: admin.v1.AdminService.GetProjectGrades:output_type -> admin.v1.GetProjectGradesResponse
+	99,  // 170: admin.v1.AdminService.SetStepGrade:output_type -> admin.v1.SetStepGradeResponse
+	101, // 171: admin.v1.AdminService.GetGradingHistory:output_type -> admin.v1.GetGradingHistoryResponse
+	104, // 172: admin.v1.AdminService.GetWorkflowProgress:output_type -> admin.v1.GetWorkflowProgressResponse
+	106, // 173: admin.v1.AdminService.ListPendingReviews:output_type -> admin.v1.ListPendingReviewsResponse
+	135, // [135:174] is the sub-list for method output_type
+	96,  // [96:135] is the sub-list for method input_type
+	96,  // [96:96] is the sub-list for extension type_name
+	96,  // [96:96] is the sub-list for extension extendee
+	0,   // [0:96] is the sub-list for field type_name
 }
 
 func init() { file_admin_v1_admin_proto_init() }
@@ -9124,7 +9264,7 @@ func file_admin_v1_admin_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_admin_v1_admin_proto_rawDesc), len(file_admin_v1_admin_proto_rawDesc)),
 			NumEnums:      0,
-			NumMessages:   108,
+			NumMessages:   109,
 			NumExtensions: 0,
 			NumServices:   1,
 		},

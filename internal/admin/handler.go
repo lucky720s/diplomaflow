@@ -1119,15 +1119,48 @@ func (h *Handler) ListMySupervisorRequests(ctx context.Context, req *adminv1.Lis
 		return nil, status.Errorf(codes.Internal, "failed to list supervisor requests: %v", err)
 	}
 
+	// requests
 	var pbRequests []*adminv1.SupervisorRequest
 	for _, r := range result.Requests {
 		pbRequests = append(pbRequests, h.convertSupervisorRequestToProto(r))
 	}
 
+	// teams_report
+	var pbTeams []*adminv1.SupervisorTeamReport
+	for _, t := range result.Teams {
+		if t == nil {
+			continue
+		}
+		rep := &adminv1.SupervisorTeamReport{
+			TeamId:       t.ID,
+			TeamName:     t.Name,
+			MemberCount:  int32(len(t.Members)),
+			ProjectId:    t.ProjectID,
+			ProjectTitle: t.ProjectTitle,
+			CurrentStep:  t.CurrentStep,
+			Status:       t.Status,
+		}
+		for _, m := range t.Members {
+			if m == nil {
+				continue
+			}
+			rep.Members = append(rep.Members, &adminv1.TeamMemberPreview{
+				UserId:   m.UserID,
+				FullName: m.FullName,
+				Email:    m.Email,
+				Role:     m.Role,
+			})
+		}
+		pbTeams = append(pbTeams, rep)
+	}
+
 	return &adminv1.ListMySupervisorRequestsResp{
-		Requests:     pbRequests,
-		TotalCount:   result.TotalCount,
-		PendingCount: result.PendingCount,
+		Requests:      pbRequests,
+		TotalCount:    result.TotalCount,
+		PendingCount:  result.PendingCount,
+		ActiveTeams:   result.ActiveTeams,
+		TotalStudents: result.TotalStudents,
+		TeamsReport:   pbTeams,
 	}, nil
 }
 

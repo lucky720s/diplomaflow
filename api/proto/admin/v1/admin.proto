@@ -505,6 +505,9 @@ message ListMySupervisorRequestsResp {
   repeated SupervisorRequest requests = 1;
   int64 total_count = 2;
   int32 pending_count = 3;
+  int32 active_teams = 4;
+  int32 total_students = 5;
+  repeated SupervisorTeamReport teams_report = 6;
 }
 
 message CancelSupervisorRequestReq {
@@ -950,4 +953,14 @@ message PendingReview {
   google.protobuf.Timestamp submitted_at = 8;
   int32 days_pending = 9;
   string priority = 10; // low, medium, high, urgent
+}
+message SupervisorTeamReport {
+  int64 team_id = 1;
+  string team_name = 2;
+  int32 member_count = 3;
+  repeated TeamMemberPreview members = 4;
+  int64 project_id = 5;
+  string project_title = 6;
+  string current_step = 7;
+  string status = 8;
 }

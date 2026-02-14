@@ -7518,6 +7518,44 @@ func (m *ListMySupervisorRequestsResp) validate(all bool) error {
 
 	// no validation rules for PendingCount
 
+	// no validation rules for ActiveTeams
+
+	// no validation rules for TotalStudents
+
+	for idx, item := range m.GetTeamsReport() {
+		_, _ = idx, item
+
+		if all {
+			switch v := interface{}(item).(type) {
+			case interface{ ValidateAll() error }:
+				if err := v.ValidateAll(); err != nil {
+					errors = append(errors, ListMySupervisorRequestsRespValidationError{
+						field:  fmt.Sprintf("TeamsReport[%v]", idx),
+						reason: "embedded message failed validation",
+						cause:  err,
+					})
+				}
+			case interface{ Validate() error }:
+				if err := v.Validate(); err != nil {
+					errors = append(errors, ListMySupervisorRequestsRespValidationError{
+						field:  fmt.Sprintf("TeamsReport[%v]", idx),
+						reason: "embedded message failed validation",
+						cause:  err,
+					})
+				}
+			}
+		} else if v, ok := interface{}(item).(interface{ Validate() error }); ok {
+			if err := v.Validate(); err != nil {
+				return ListMySupervisorRequestsRespValidationError{
+					field:  fmt.Sprintf("TeamsReport[%v]", idx),
+					reason: "embedded message failed validation",
+					cause:  err,
+				}
+			}
+		}
+
+	}
+
 	if len(errors) > 0 {
 		return ListMySupervisorRequestsRespMultiError(errors)
 	}
@@ -15218,3 +15256,153 @@ var _ interface {
 	Cause() error
 	ErrorName() string
 } = PendingReviewValidationError{}
+
+// Validate checks the field values on SupervisorTeamReport with the rules
+// defined in the proto definition for this message. If any rules are
+// violated, the first error encountered is returned, or nil if there are no violations.
+func (m *SupervisorTeamReport) Validate() error {
+	return m.validate(false)
+}
+
+// ValidateAll checks the field values on SupervisorTeamReport with the rules
+// defined in the proto definition for this message. If any rules are
+// violated, the result is a list of violation errors wrapped in
+// SupervisorTeamReportMultiError, or nil if none found.
+func (m *SupervisorTeamReport) ValidateAll() error {
+	return m.validate(true)
+}
+
+func (m *SupervisorTeamReport) validate(all bool) error {
+	if m == nil {
+		return nil
+	}
+
+	var errors []error
+
+	// no validation rules for TeamId
+
+	// no validation rules for TeamName
+
+	// no validation rules for MemberCount
+
+	for idx, item := range m.GetMembers() {
+		_, _ = idx, item
+
+		if all {
+			switch v := interface{}(item).(type) {
+			case interface{ ValidateAll() error }:
+				if err := v.ValidateAll(); err != nil {
+					errors = append(errors, SupervisorTeamReportValidationError{
+						field:  fmt.Sprintf("Members[%v]", idx),
+						reason: "embedded message failed validation",
+						cause:  err,
+					})
+				}
+			case interface{ Validate() error }:
+				if err := v.Validate(); err != nil {
+					errors = append(errors, SupervisorTeamReportValidationError{
+						field:  fmt.Sprintf("Members[%v]", idx),
+						reason: "embedded message failed validation",
+						cause:  err,
+					})
+				}
+			}
+		} else if v, ok := interface{}(item).(interface{ Validate() error }); ok {
+			if err := v.Validate(); err != nil {
+				return SupervisorTeamReportValidationError{
+					field:  fmt.Sprintf("Members[%v]", idx),
+					reason: "embedded message failed validation",
+					cause:  err,
+				}
+			}
+		}
+
+	}
+
+	// no validation rules for ProjectId
+
+	// no validation rules for ProjectTitle
+
+	// no validation rules for CurrentStep
+
+	// no validation rules for Status
+
+	if len(errors) > 0 {
+		return SupervisorTeamReportMultiError(errors)
+	}
+
+	return nil
+}
+
+// SupervisorTeamReportMultiError is an error wrapping multiple validation
+// errors returned by SupervisorTeamReport.ValidateAll() if the designated
+// constraints aren't met.
+type SupervisorTeamReportMultiError []error
+
+// Error returns a concatenation of all the error messages it wraps.
+func (m SupervisorTeamReportMultiError) Error() string {
+	msgs := make([]string, 0, len(m))
+	for _, err := range m {
+		msgs = append(msgs, err.Error())
+	}
+	return strings.Join(msgs, "; ")
+}
+
+// AllErrors returns a list of validation violation errors.
+func (m SupervisorTeamReportMultiError) AllErrors() []error { return m }
+
+// SupervisorTeamReportValidationError is the validation error returned by
+// SupervisorTeamReport.Validate if the designated constraints aren't met.
+type SupervisorTeamReportValidationError struct {
+	field  string
+	reason string
+	cause  error
+	key    bool
+}
+
+// Field function returns field value.
+func (e SupervisorTeamReportValidationError) Field() string { return e.field }
+
+// Reason function returns reason value.
+func (e SupervisorTeamReportValidationError) Reason() string { return e.reason }
+
+// Cause function returns cause value.
+func (e SupervisorTeamReportValidationError) Cause() error { return e.cause }
+
+// Key function returns key value.
+func (e SupervisorTeamReportValidationError) Key() bool { return e.key }
+
+// ErrorName returns error name.
+func (e SupervisorTeamReportValidationError) ErrorName() string {
+	return "SupervisorTeamReportValidationError"
+}
+
+// Error satisfies the builtin error interface
+func (e SupervisorTeamReportValidationError) Error() string {
+	cause := ""
+	if e.cause != nil {
+		cause = fmt.Sprintf(" | caused by: %v", e.cause)
+	}
+
+	key := ""
+	if e.key {
+		key = "key for "
+	}
+
+	return fmt.Sprintf(
+		"invalid %sSupervisorTeamReport.%s: %s%s",
+		key,
+		e.field,
+		e.reason,
+		cause)
+}
+
+var _ error = SupervisorTeamReportValidationError{}
+
+var _ interface {
+	Field() string
+	Reason() string
+	Key() bool
+	Cause() error
+	ErrorName() string
+} = SupervisorTeamReportValidationError{}

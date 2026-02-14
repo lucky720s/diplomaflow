@@ -82,6 +82,7 @@ type Repository interface {
 
 	// NEW: to create project at approve time (team-first)
 	GetTeamContext(ctx context.Context, teamID int64) (*TeamContext, error)
+	GetSupervisorTeamsReport(ctx context.Context, supervisorID int64) ([]*TeamFullDetails, int32 /*totalStudents*/, error)
 }
 
 type TopicRegistrationFilter struct {
@@ -982,4 +983,106 @@ func (r *repository) GetTeamContext(ctx context.Context, teamID int64) (*TeamCon
 		DepartmentID: t.DepartmentID,
 		LeaderUserID: leaderID,
 	}, nil
+}
+func (r *repository) GetSupervisorTeamsReport(ctx context.Context, supervisorID int64) ([]*TeamFullDetails, int32, error) {
+	if supervisorID <= 0 {
+		return []*TeamFullDetails{}, 0, fmt.Errorf("supervisor_id is required")
+	}
+
+	// 1) Список команд преподавателя + проектная инфа
+	var teams []*TeamFullDetails
+	teamsQuery := `
+		SELECT
+			t.id,
+			t.name,
+			COALESCE(p.id, 0)    as project_id,
+			COALESCE(p.title, '') as project_title,
+			COALESCE(p.current_state_name, '') as current_step,
+			COALESCE(p.status, 'active') as status,
+			COALESCE(a.supervisor_id, 0) as supervisor_id,
+			t.created_at,
+			t.updated_at
+		FROM admin_supervisor_assignments a
+		JOIN teams t ON t.id = a.team_id
+		LEFT JOIN projects p ON p.team_id = t.id
+		WHERE a.supervisor_id = ?
+		  AND t.deleted_at IS NULL
+		ORDER BY t.created_at DESC
+	`
+	if err := r.db.WithContext(ctx).Raw(teamsQuery, supervisorID).Scan(&teams).Error; err != nil {
+		return nil, 0, err
+	}
+
+	if len(teams) == 0 {
+		return []*TeamFullDetails{}, 0, nil
+	}
+
+	teamIDs := make([]int64, 0, len(teams))
+	for _, t := range teams {
+		if t != nil && t.ID > 0 {
+			teamIDs = append(teamIDs, t.ID)
+		}
+	}
+
+	// 2) Точное общее число студентов (distinct)
+	var total int64
+	totalQuery := `
+		SELECT COUNT(DISTINCT tm.user_id)
+		FROM team_members tm
+		WHERE tm.team_id IN (?)
+	`
+	if err := r.db.WithContext(ctx).Raw(totalQuery, teamIDs).Scan(&total).Error; err != nil {
+		return nil, 0, err
+	}
+
+	// 3) Участники всех команд одним запросом
+	type memberRow struct {
+		TeamID   int64     `gorm:"column:team_id"`
+		UserID   int64     `gorm:"column:user_id"`
+		FullName string    `gorm:"column:full_name"`
+		Email    string    `gorm:"column:email"`
+		Role     string    `gorm:"column:role"`
+		JoinedAt time.Time `gorm:"column:joined_at"`
+	}
+
+	var rows []*memberRow
+	membersQuery := `
+		SELECT
+			tm.team_id,
+			tm.user_id,
+			CONCAT(u.first_name, ' ', u.last_name) as full_name,
+			u.email,
+			tm.role,
+			tm.created_at as joined_at
+		FROM team_members tm
+		JOIN users u ON u.id = tm.user_id
+		WHERE tm.team_id IN (?)
+		ORDER BY tm.team_id ASC, tm.role DESC, tm.created_at ASC
+	`
+	if err := r.db.WithContext(ctx).Raw(membersQuery, teamIDs).Scan(&rows).Error; err != nil {
+		return nil, 0, err
+	}
+
+	mmap := make(map[int64][]*TeamMemberDetails, len(teamIDs))
+	for _, m := range rows {
+		if m == nil {
+			continue
+		}
+		mmap[m.TeamID] = append(mmap[m.TeamID], &TeamMemberDetails{
+			UserID:   m.UserID,
+			FullName: m.FullName,
+			Email:    m.Email,
+			Role:     m.Role,
+			JoinedAt: m.JoinedAt,
+		})
+	}
+
+	for _, t := range teams {
+		if t == nil {
+			continue
+		}
+		t.Members = mmap[t.ID]
+	}
+
+	return teams, int32(total), nil
 }
