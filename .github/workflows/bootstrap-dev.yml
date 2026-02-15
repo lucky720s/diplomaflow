@@ -12,8 +12,9 @@ permissions:
 
 env:
   ENV_NAME: dev
-  IMAGE_TAG: ${{ env.ENV_NAME }}-latest
+  IMAGE_TAG: dev-latest
   IMAGE_PREFIX: ghcr.io/${{ github.repository }}
+
 
 
 jobs:
