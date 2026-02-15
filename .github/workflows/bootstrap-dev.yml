@@ -24,6 +24,13 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
+      - name: Debug list files
+        run: |
+          pwd
+          ls -la
+          ls -la deploy || true
+          git status --porcelain
+
       - name: Copy deploy files to server
         uses: appleboy/scp-action@v0.1.7
         with:
@@ -31,12 +38,8 @@ jobs:
           username: ${{ secrets.SERVER_USER }}
           key: ${{ secrets.SSH_PRIVATE_KEY }}
           overwrite: true
-          source: |
-            compose.infra.yml
-            compose.app.deploy.yml
-            deploy/bootstrap.sh
-          target: |
-            /opt/diplomaflow_deploy_bundle
+          source: "compose.infra.yml,compose.app.deploy.yml,deploy/bootstrap.sh"
+          target: "/opt/diplomaflow_deploy_bundle"
 
       - name: Bootstrap via SSH (creates .env once)
         uses: appleboy/ssh-action@v1.0.3
@@ -54,7 +57,6 @@ jobs:
             sudo cp -f /opt/diplomaflow_deploy_bundle/deploy/bootstrap.sh /opt/diplomaflow_scripts/deploy/bootstrap.sh
             sudo chmod +x /opt/diplomaflow_scripts/deploy/bootstrap.sh
 
-            # Create /opt/diplomaflow_state/.env only if absent
             GHCR_USERNAME="${{ secrets.GHCR_USERNAME }}" \
             GHCR_TOKEN="${{ secrets.GHCR_TOKEN }}" \
             JWT_SECRET="${{ secrets.JWT_SECRET_DEV }}" \
