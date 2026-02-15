@@ -1,81 +1,136 @@
-#!/usr/bin/env bash
+#!/bin/bash
 set -euo pipefail
 
-# Usage:
-#   deploy.sh <IMAGE_PREFIX> <IMAGE_TAG>
-#
-# Optional env:
-#   GHCR_USERNAME, GHCR_TOKEN (if images are private)
-
-IMAGE_PREFIX="${1:?IMAGE_PREFIX required (e.g. ghcr.io/owner/repo)}"
-IMAGE_TAG="${2:?IMAGE_TAG required (e.g. git sha)}"
+APP_DIR="${1:?APP_DIR required}"
+PAT_TOKEN="${2:?PAT_TOKEN required}"
+JWT_SECRET="${3:?JWT_SECRET required}"
+POSTGRES_PASSWORD="${4:?POSTGRES_PASSWORD required}"
+REPO="${5:?REPO required}"
+BRANCH="${6:?BRANCH required}"
 
 PROJECT_NAME="diplomaflow"
 STATE_DIR="/opt/diplomaflow_state"
-DEPLOY_DIR="/opt/diplomaflow_deploy"
 ENV_FILE="${STATE_DIR}/.env"
 LOCK_FILE="${STATE_DIR}/deploy.lock"
 
-INFRA_FILE="${DEPLOY_DIR}/compose.infra.yml"
-APP_FILE="${DEPLOY_DIR}/compose.app.deploy.yml"
-
+export DOCKER_BUILDKIT=1
+export COMPOSE_DOCKER_CLI_BUILD=1
 export DOCKER_CLIENT_TIMEOUT=600
 export COMPOSE_HTTP_TIMEOUT=600
 
-log() { echo "==> $*"; }
+dc() {
+  docker compose -p "$PROJECT_NAME" --env-file "$ENV_FILE" "$@"
+}
+
+log() {
+  echo "==> $*"
+}
 
 require_cmd() {
   command -v "$1" >/dev/null 2>&1 || { echo "Missing required command: $1"; exit 1; }
 }
 
-dc() {
-  IMAGE_PREFIX="$IMAGE_PREFIX" IMAGE_TAG="$IMAGE_TAG" \
-  docker compose -p "$PROJECT_NAME" --env-file "$ENV_FILE" \
-    -f "$INFRA_FILE" -f "$APP_FILE" "$@"
-}
-
 log "Check required commands"
+require_cmd git
 require_cmd docker
-require_cmd flock
+require_cmd df
 require_cmd curl
 
 log "Ensure dirs"
-mkdir -p "$STATE_DIR" "$DEPLOY_DIR"
+mkdir -p "$APP_DIR" "$STATE_DIR"
 chmod 700 "$STATE_DIR"
 
-# Lock
+# Lock to avoid parallel deployments
 exec 9>"$LOCK_FILE"
 if ! flock -n 9; then
   echo "Another deployment is running (lock: $LOCK_FILE). Exiting."
   exit 1
 fi
 
-log "Ensure required files exist"
-test -f "$ENV_FILE" || { echo "Missing $ENV_FILE. Run bootstrap first."; exit 1; }
-test -f "$INFRA_FILE" || { echo "Missing $INFRA_FILE"; exit 1; }
-test -f "$APP_FILE" || { echo "Missing $APP_FILE"; exit 1; }
+log "Sync repository"
+cd "$APP_DIR"
+git config --global --add safe.directory "$APP_DIR"
 
-log "Optional: login to GHCR"
-if [[ -n "${GHCR_USERNAME:-}" && -n "${GHCR_TOKEN:-}" ]]; then
-  echo "$GHCR_TOKEN" | docker login ghcr.io -u "$GHCR_USERNAME" --password-stdin
+if [ -d ".git" ]; then
+  git remote set-url origin "https://${PAT_TOKEN}@github.com/${REPO}.git"
+  # Shallow fetch for speed (keeps repo small)
+  git fetch --depth=1 origin "$BRANCH"
+  git reset --hard "origin/${BRANCH}"
+  git clean -fd
+else
+  rm -rf "$APP_DIR"/* "$APP_DIR"/.[!.]* 2>/dev/null || true
+  git clone --depth=1 -b "$BRANCH" "https://${PAT_TOKEN}@github.com/${REPO}.git" .
 fi
 
+log "Create .env"
+umask 077
+cat > "$ENV_FILE" <<EOF
+ENV=dev
+GIN_MODE=release
+
+JWT_SECRET=${JWT_SECRET}
+
+POSTGRES_USER=diplomaflow
+POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
+POSTGRES_DB=diplomaflow
+
+# network_mode: host => сервисы ходят в Postgres/Redis по 127.0.0.1
+DATABASE_DSN=host=127.0.0.1 user=diplomaflow password=${POSTGRES_PASSWORD} dbname=diplomaflow port=5433 sslmode=disable TimeZone=UTC
+DATABASE_URL=postgres://diplomaflow:${POSTGRES_PASSWORD}@127.0.0.1:5433/diplomaflow?sslmode=disable
+
+REDIS_ADDR=127.0.0.1:6380
+
+ACCESS_TOKEN_TTL=15m
+REFRESH_TOKEN_TTL=720h
+EOF
+chmod 600 "$ENV_FILE"
+
 log "Validate compose"
-dc config >/dev/null
+dc config > /dev/null
 
-log "Pull new images"
-dc pull
+log "Disk usage before"
+df -h / | tail -1 || true
+docker system df || true
 
-log "Ensure infra is up"
+# IMPORTANT:
+# Do NOT prune builder cache / images before build. It makes every deploy rebuild from scratch.
+
+log "Build images (cached)"
+# parallel helps when you have many services
+dc build --parallel
+
+log "Start/ensure infra is up"
 dc up -d main_postgres redis
+
+log "Wait for postgres"
+for i in $(seq 1 60); do
+  if dc exec -T main_postgres pg_isready -h 127.0.0.1 -p 5433 -U diplomaflow >/dev/null 2>&1; then
+    echo "Postgres ready!"
+    break
+  fi
+  echo "Waiting for postgres... ($i/60)"
+  sleep 2
+done
+
+log "Wait for redis"
+for i in $(seq 1 30); do
+  if dc exec -T redis redis-cli -h 127.0.0.1 -p 6380 ping 2>/dev/null | grep -q PONG; then
+    echo "Redis ready!"
+    break
+  fi
+  echo "Waiting for redis... ($i/30)"
+  sleep 1
+done
 
 log "Run migrations"
 dc run --rm migrate
 
-log "Up services (no build)"
+log "Update/start all services (no full down)"
+# --build here is optional because we already built, but harmless.
+# If you prefer, replace with: dc up -d --no-build --remove-orphans
 dc up -d --no-build --remove-orphans
 
-log "Healthcheck gateway"
+log "Wait for gateway"
 for i in $(seq 1 30); do
   if curl -fsS "http://127.0.0.1:8080/healthz" >/dev/null 2>&1; then
     echo "Gateway OK"
@@ -85,5 +140,19 @@ for i in $(seq 1 30); do
   sleep 2
 done
 
-log "Done"
+log "Cleanup old docker data (keep cache for speed)"
+# Clean only OLD unused stuff to prevent disk growth but keep cache for fast deploys
+docker image prune -af --filter "until=168h" || true
+docker builder prune -af --filter "until=168h" || true
+docker container prune -f || true
+docker network prune -f || true
+# DO NOT prune volumes (Postgres data lives there)
+
+log "Status"
 dc ps || true
+
+log "Disk usage after"
+df -h / | tail -1 || true
+docker system df || true
+
+echo "Deployment completed!"
