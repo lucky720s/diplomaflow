@@ -24,12 +24,14 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Debug list files
+      - name: Debug: list expected files
         run: |
-          pwd
+          echo "ref=${GITHUB_REF} sha=${GITHUB_SHA}"
           ls -la
+          echo "--- deploy dir ---"
           ls -la deploy || true
-          git status --porcelain
+          echo "--- find compose files ---"
+          find . -maxdepth 2 -type f \( -name "compose.infra.yml" -o -name "compose.app.deploy.yml" -o -name "bootstrap.sh" \) -print
 
       - name: Copy deploy files to server
         uses: appleboy/scp-action@v0.1.7
@@ -38,7 +40,8 @@ jobs:
           username: ${{ secrets.SERVER_USER }}
           key: ${{ secrets.SSH_PRIVATE_KEY }}
           overwrite: true
-          source: "compose.infra.yml,compose.app.deploy.yml,deploy/bootstrap.sh"
+          debug: true
+          source: "./compose.infra.yml,./compose.app.deploy.yml,./deploy/bootstrap.sh"
           target: "/opt/diplomaflow_deploy_bundle"
 
       - name: Bootstrap via SSH (creates .env once)
