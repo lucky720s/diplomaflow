@@ -1215,3 +1215,45 @@ func (h *Handler) convertSupervisorRequestToProto(req *SupervisorRequestWithDeta
 
 	return pbReq
 }
+func (h *Handler) ListAvailableTeams(ctx context.Context, req *adminv1.ListAvailableTeamsRequest) (*adminv1.ListAvailableTeamsResponse, error) {
+	if req.DepartmentId == 0 {
+		return nil, status.Error(codes.InvalidArgument, "department_id is required")
+	}
+
+	teams, total, err := h.service.ListAvailableTeams(ctx, req.DepartmentId, req.Page, req.PageSize)
+	if err != nil {
+		h.logger.Error("ListAvailableTeams failed", zap.Error(err))
+		return nil, status.Errorf(codes.Internal, "failed to list available teams: %v", err)
+	}
+
+	pb := make([]*adminv1.AvailableTeam, 0, len(teams))
+	for _, t := range teams {
+		if t == nil {
+			continue
+		}
+		members := make([]*adminv1.TeamMemberInfo, 0, len(t.Members))
+		for _, m := range t.Members {
+			if m == nil {
+				continue
+			}
+			members = append(members, &adminv1.TeamMemberInfo{
+				UserId:   m.UserID,
+				FullName: m.FullName,
+				Email:    m.Email,
+				Role:     m.Role,
+			})
+		}
+		pb = append(pb, &adminv1.AvailableTeam{
+			Id:          t.ID,
+			Name:        t.Name,
+			MemberCount: t.MemberCount,
+			Members:     members,
+			CreatedAt:   timestamppb.New(t.CreatedAt),
+		})
+	}
+
+	return &adminv1.ListAvailableTeamsResponse{
+		Teams:      pb,
+		TotalCount: total,
+	}, nil
+}

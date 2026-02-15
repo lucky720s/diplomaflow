@@ -83,6 +83,7 @@ type Repository interface {
 	// NEW: to create project at approve time (team-first)
 	GetTeamContext(ctx context.Context, teamID int64) (*TeamContext, error)
 	GetSupervisorTeamsReport(ctx context.Context, supervisorID int64) ([]*TeamFullDetails, int32 /*totalStudents*/, error)
+	ListAvailableTeams(ctx context.Context, departmentID int64, limit, offset int) ([]*AvailableTeamData, int64, error)
 }
 
 type TopicRegistrationFilter struct {
@@ -1085,4 +1086,119 @@ func (r *repository) GetSupervisorTeamsReport(ctx context.Context, supervisorID 
 	}
 
 	return teams, int32(total), nil
+}
+func (r *repository) ListAvailableTeams(ctx context.Context, departmentID int64, limit, offset int) ([]*AvailableTeamData, int64, error) {
+	if limit <= 0 {
+		limit = 20
+	}
+	if offset < 0 {
+		offset = 0
+	}
+
+	// 1) total_count: команды кафедры без назначенного supervisor
+	var total int64
+	countQ := `
+		SELECT COUNT(*)
+		FROM teams t
+		LEFT JOIN admin_supervisor_assignments a ON a.team_id = t.id
+		WHERE t.department_id = ?
+		  AND t.deleted_at IS NULL
+		  AND a.team_id IS NULL
+		  AND NOT EXISTS (
+		    SELECT 1 FROM admin_supervisor_requests sr
+		    WHERE sr.team_id = t.id AND sr.status = 'approved'
+		  )
+	`
+	if err := r.db.WithContext(ctx).Raw(countQ, departmentID).Scan(&total).Error; err != nil {
+		return nil, 0, err
+	}
+	if total == 0 {
+		return []*AvailableTeamData{}, 0, nil
+	}
+
+	// 2) page teams
+	type teamRow struct {
+		ID        int64     `gorm:"column:id"`
+		Name      string    `gorm:"column:name"`
+		CreatedAt time.Time `gorm:"column:created_at"`
+	}
+	var rows []*teamRow
+
+	listQ := `
+		SELECT t.id, t.name, t.created_at
+		FROM teams t
+		LEFT JOIN admin_supervisor_assignments a ON a.team_id = t.id
+		WHERE t.department_id = ?
+		  AND t.deleted_at IS NULL
+		  AND a.team_id IS NULL
+		  AND NOT EXISTS (
+		    SELECT 1 FROM admin_supervisor_requests sr
+		    WHERE sr.team_id = t.id AND sr.status = 'approved'
+		  )
+		ORDER BY t.created_at DESC
+		LIMIT ? OFFSET ?
+	`
+	if err := r.db.WithContext(ctx).Raw(listQ, departmentID, limit, offset).Scan(&rows).Error; err != nil {
+		return nil, 0, err
+	}
+	if len(rows) == 0 {
+		return []*AvailableTeamData{}, total, nil
+	}
+
+	teamIDs := make([]int64, 0, len(rows))
+	for _, t := range rows {
+		teamIDs = append(teamIDs, t.ID)
+	}
+
+	// 3) members for all teams одним запросом
+	type memberRow struct {
+		TeamID   int64     `gorm:"column:team_id"`
+		UserID   int64     `gorm:"column:user_id"`
+		FullName string    `gorm:"column:full_name"`
+		Email    string    `gorm:"column:email"`
+		Role     string    `gorm:"column:role"`
+		JoinedAt time.Time `gorm:"column:joined_at"`
+	}
+	var mrows []*memberRow
+	membersQ := `
+		SELECT
+			tm.team_id,
+			tm.user_id,
+			CONCAT(u.first_name, ' ', u.last_name) as full_name,
+			u.email,
+			tm.role,
+			tm.created_at as joined_at
+		FROM team_members tm
+		JOIN users u ON u.id = tm.user_id
+		WHERE tm.team_id IN (?)
+		ORDER BY tm.team_id ASC, tm.role DESC, tm.created_at ASC
+	`
+	if err := r.db.WithContext(ctx).Raw(membersQ, teamIDs).Scan(&mrows).Error; err != nil {
+		return nil, 0, err
+	}
+
+	mmap := make(map[int64][]*TeamMemberDetails, len(teamIDs))
+	for _, m := range mrows {
+		mmap[m.TeamID] = append(mmap[m.TeamID], &TeamMemberDetails{
+			UserID:   m.UserID,
+			TeamID:   m.TeamID,
+			FullName: m.FullName,
+			Email:    m.Email,
+			Role:     m.Role,
+			JoinedAt: m.JoinedAt,
+		})
+	}
+
+	out := make([]*AvailableTeamData, 0, len(rows))
+	for _, t := range rows {
+		members := mmap[t.ID]
+		out = append(out, &AvailableTeamData{
+			ID:          t.ID,
+			Name:        t.Name,
+			CreatedAt:   t.CreatedAt,
+			Members:     members,
+			MemberCount: int32(len(members)),
+		})
+	}
+	return out, total, nil
 }

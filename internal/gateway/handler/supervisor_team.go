@@ -3,6 +3,7 @@ package handler
 import (
 	"net/http"
 	"strconv"
+	"time"
 
 	"github.com/gin-gonic/gin"
 	adminv1 "github.com/lucky720s/diplomaflow/pkg/protobuf/admin/v1"
@@ -60,4 +61,71 @@ func (h *Handler) CreateSupervisorRequestByTeam(c *gin.Context) {
 	})
 
 	c.JSON(http.StatusCreated, resp)
+}
+func (h *Handler) GetAvailableTeams(c *gin.Context) {
+	departmentID := c.GetInt64("departmentId")
+	if departmentID == 0 {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "department_id is required"})
+		return
+	}
+
+	page := int32(1)
+	pageSize := int32(20)
+	if v := c.Query("page"); v != "" {
+		if x, err := strconv.ParseInt(v, 10, 32); err == nil && x > 0 {
+			page = int32(x)
+		}
+	}
+	if v := c.Query("page_size"); v != "" {
+		if x, err := strconv.ParseInt(v, 10, 32); err == nil && x > 0 {
+			pageSize = int32(x)
+		}
+	}
+
+	resp, err := h.adminClient.ListAvailableTeams(c.Request.Context(), &adminv1.ListAvailableTeamsRequest{
+		DepartmentId: departmentID,
+		Page:         page,
+		PageSize:     pageSize,
+	})
+	if err != nil {
+		MapGRPCError(c, err)
+		return
+	}
+
+	teams := make([]gin.H, 0, len(resp.Teams))
+	for _, t := range resp.Teams {
+		if t == nil {
+			continue
+		}
+		members := make([]gin.H, 0, len(t.Members))
+		for _, m := range t.Members {
+			if m == nil {
+				continue
+			}
+			members = append(members, gin.H{
+				"user_id":   m.UserId,
+				"full_name": m.FullName,
+				"email":     m.Email,
+				"role":      m.Role,
+			})
+		}
+
+		createdAt := ""
+		if t.CreatedAt != nil {
+			createdAt = t.CreatedAt.AsTime().UTC().Format(time.RFC3339)
+		}
+
+		teams = append(teams, gin.H{
+			"id":           t.Id,
+			"name":         t.Name,
+			"member_count": t.MemberCount,
+			"members":      members,
+			"created_at":   createdAt,
+		})
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"teams":       teams,
+		"total_count": resp.TotalCount,
+	})
 }

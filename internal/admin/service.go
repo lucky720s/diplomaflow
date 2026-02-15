@@ -1202,3 +1202,15 @@ func (s *Service) ensureUserInTeam(ctx context.Context, teamID, userID int64) er
 	}
 	return status.Error(codes.PermissionDenied, "forbidden: user is not a member of the team")
 }
+func (s *Service) ListAvailableTeams(ctx context.Context, departmentID int64, page, pageSize int32) ([]*AvailableTeamData, int64, error) {
+	if pageSize <= 0 {
+		pageSize = 20
+	}
+	if page <= 0 {
+		page = 1
+	}
+	limit := int(pageSize)
+	offset := int((page - 1) * pageSize)
+
+	return s.repo.ListAvailableTeams(ctx, departmentID, limit, offset)
+}

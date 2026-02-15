@@ -343,6 +343,13 @@ type PreDefenseHistory struct {
 
 	CreatedAt time.Time
 }
+type AvailableTeamData struct {
+	ID          int64
+	Name        string
+	CreatedAt   time.Time
+	MemberCount int32
+	Members     []*TeamMemberDetails
+}
 
 // ==================== TableName overrides ====================
 

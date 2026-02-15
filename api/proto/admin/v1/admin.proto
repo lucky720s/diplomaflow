@@ -71,7 +71,7 @@ service AdminService {
   // ==================== Workflow Progress ====================
   rpc GetWorkflowProgress(GetWorkflowProgressRequest) returns (GetWorkflowProgressResponse);
   rpc ListPendingReviews(ListPendingReviewsRequest) returns (ListPendingReviewsResponse);
-
+  rpc ListAvailableTeams(ListAvailableTeamsRequest) returns (ListAvailableTeamsResponse);
 }
 
 // ==================== Topic Registration Messages ====================
@@ -963,4 +963,24 @@ message SupervisorTeamReport {
   string project_title = 6;
   string current_step = 7;
   string status = 8;
+}
+
+
+message ListAvailableTeamsRequest {
+  int64 department_id = 1;
+  int32 page = 2;
+  int32 page_size = 3;
+}
+
+message AvailableTeam {
+  int64 id = 1;
+  string name = 2;
+  int32 member_count = 3;
+  repeated TeamMemberInfo members = 4;
+  google.protobuf.Timestamp created_at = 5;
+}
+
+message ListAvailableTeamsResponse {
+  repeated AvailableTeam teams = 1;
+  int64 total_count = 2;
 }
