@@ -10,7 +10,7 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Debug: list expected files
+      - name: Debug list expected files
         run: |
           echo "ref=${GITHUB_REF} sha=${GITHUB_SHA}"
           ls -la
