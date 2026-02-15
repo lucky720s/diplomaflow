@@ -1,50 +1,132 @@
-name: CD - Deploy to Dev Server
+name: CD - Build Images + Deploy (dev)
 
 on:
   push:
-    branches:
-      - dev
+    branches: [ "dev" ]
   workflow_dispatch:
 
 concurrency:
   group: cd-dev
   cancel-in-progress: true
 
+permissions:
+  contents: read
+  packages: write
+
+env:
+  ENV_NAME: dev
+  IMAGE_TAG: ${{ github.sha }}
+  IMAGE_PREFIX: ghcr.io/${{ github.repository_owner }}/${{ github.event.repository.name }}
+
 jobs:
-  deploy:
+  build_and_push:
     runs-on: ubuntu-latest
-    timeout-minutes: 90
+    timeout-minutes: 60
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - svc: migrate
+            dockerfile: cmd/migrate/Dockerfile
+          - svc: api_gateway
+            dockerfile: cmd/api_gateway/Dockerfile
+          - svc: auth_service
+            dockerfile: cmd/auth_service/Dockerfile
+          - svc: university_service
+            dockerfile: cmd/university_service/Dockerfile
+          - svc: role_service
+            dockerfile: cmd/role_service/Dockerfile
+          - svc: notification_service
+            dockerfile: cmd/notification_service/Dockerfile
+          - svc: workflow_service
+            dockerfile: cmd/workflow_service/Dockerfile
+          - svc: project_service
+            dockerfile: cmd/project_service/Dockerfile
+          - svc: team_service
+            dockerfile: cmd/team_service/Dockerfile
+          - svc: file_service
+            dockerfile: cmd/file_service/Dockerfile
+          - svc: form_service
+            dockerfile: cmd/form_service/Dockerfile
+          - svc: admin_service
+            dockerfile: cmd/admin_service/Dockerfile
+          - svc: task_service
+            dockerfile: cmd/task_service/Dockerfile
 
     steps:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Copy deploy script to server
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Login to GHCR
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build and push ${{ matrix.svc }}
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: ${{ matrix.dockerfile }}
+          push: true
+          platforms: linux/amd64
+          tags: |
+            ${{ env.IMAGE_PREFIX }}-${{ matrix.svc }}:${{ env.IMAGE_TAG }}
+            ${{ env.IMAGE_PREFIX }}-${{ matrix.svc }}:${{ env.ENV_NAME }}-latest
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+  deploy:
+    needs: [ build_and_push ]
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    steps:
+      - name: Checkout (to get deploy files)
+        uses: actions/checkout@v4
+
+      - name: Copy deploy files to server
         uses: appleboy/scp-action@v0.1.7
         with:
           host: ${{ secrets.SERVER_HOST }}
           username: ${{ secrets.SERVER_USER }}
           key: ${{ secrets.SSH_PRIVATE_KEY }}
-          source: "deploy/deploy.sh"
-          target: "/opt/diplomaflow_scripts"
           overwrite: true
+          source: |
+            compose.infra.yml
+            compose.app.deploy.yml
+            deploy/deploy.sh
+            deploy/bootstrap.sh
+            deploy/cleanup.sh
+          target: |
+            /opt/diplomaflow_deploy_bundle
 
-      - name: Deploy via SSH
+      - name: Deploy via SSH (pull + migrate + up)
         uses: appleboy/ssh-action@v1.0.3
         with:
           host: ${{ secrets.SERVER_HOST }}
           username: ${{ secrets.SERVER_USER }}
           key: ${{ secrets.SSH_PRIVATE_KEY }}
-          command_timeout: 60m
+          command_timeout: 30m
           script: |
             set -euo pipefail
 
-            chmod +x /opt/diplomaflow_scripts/deploy/deploy.sh
+            # Place files
+            sudo mkdir -p /opt/diplomaflow_deploy /opt/diplomaflow_scripts/deploy
+            sudo cp -f /opt/diplomaflow_deploy_bundle/compose.infra.yml /opt/diplomaflow_deploy/compose.infra.yml
+            sudo cp -f /opt/diplomaflow_deploy_bundle/compose.app.deploy.yml /opt/diplomaflow_deploy/compose.app.deploy.yml
+            sudo cp -f /opt/diplomaflow_deploy_bundle/deploy/deploy.sh /opt/diplomaflow_scripts/deploy/deploy.sh
+            sudo cp -f /opt/diplomaflow_deploy_bundle/deploy/bootstrap.sh /opt/diplomaflow_scripts/deploy/bootstrap.sh
+            sudo cp -f /opt/diplomaflow_deploy_bundle/deploy/cleanup.sh /opt/diplomaflow_scripts/deploy/cleanup.sh
+            sudo chmod +x /opt/diplomaflow_scripts/deploy/*.sh
 
-            /opt/diplomaflow_scripts/deploy/deploy.sh \
-              "/opt/diplomaflow" \
-              "${{ secrets.PAT_TOKEN }}" \
-              "${{ secrets.JWT_SECRET_DEV }}" \
-              "${{ secrets.POSTGRES_PASSWORD_DEV }}" \
-              "${{ github.repository }}" \
-              "dev"
+            # Deploy (bootstrap must be run once manually)
+            GHCR_USERNAME="${{ secrets.GHCR_USERNAME }}" \
+            GHCR_TOKEN="${{ secrets.GHCR_TOKEN }}" \
+            sudo /opt/diplomaflow_scripts/deploy/deploy.sh \
+              "${{ env.IMAGE_PREFIX }}" \
+              "${{ env.IMAGE_TAG }}"
