@@ -48,3 +48,4 @@ jobs:
               "${{ secrets.POSTGRES_PASSWORD_DEV }}" \
               "${{ github.repository }}" \
               "dev"
+
