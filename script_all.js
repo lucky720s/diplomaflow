@@ -30,6 +30,8 @@ async function collectFiles(dir) {
                     item.name.endsWith(".mod") ||
                     item.name.endsWith(".work") ||
                     item.name.endsWith(".sum") ||
+                    item.name.endsWith(".pub") ||
+                    item.name.endsWith("loy") ||
                     item.name.endsWith(".exe")
                 ) continue;
 
@@ -37,7 +39,8 @@ async function collectFiles(dir) {
 
                 results.push({
                     path: fullPath,
-                    content
+                    content,
+                    size: Buffer.byteLength(content, "utf8")
                 });
             }
         }
@@ -51,8 +54,7 @@ async function readEnvFile(envPath) {
     try {
         const content = await fs.promises.readFile(envPath, "utf8");
         return content;
-    } catch (err) {
-        console.error("Ошибка при чтении .env файла:", err);
+    } catch {
         return null;
     }
 }
@@ -61,16 +63,8 @@ function normalizePath(filePath) {
     return filePath.split(path.sep).join('/');
 }
 
-(async () => {
-    const startDir = path.resolve("./");
-    const baseDir = path.resolve("./");
-    // const baseDir = path.resolve("internal/workflow");
-    const files = await collectFiles(baseDir);
-
-    let output = "=== Собранные файлы ===\n\n";
-
-    const envPath = path.join(baseDir, ".env");
-    const envContent = await readEnvFile(envPath);
+function buildOutput(header, envContent, files) {
+    let output = header + "\n\n";
 
     if (envContent) {
         output += "=== .env Файл ===\n";
@@ -84,24 +78,50 @@ function normalizePath(filePath) {
         output += `===== FILE CONTENT =====\n`;
         output += `${file.content}\n`;
         output += `===== FILE END =====\n\n`;
-        output += `SIZE: ${Buffer.byteLength(file.content, "utf8")} bytes\n`;
-
+        output += `SIZE: ${file.size} bytes\n\n`;
     }
 
+    return output;
+}
 
-    output = output
-        .split("\n")
-        .filter(line => line.trim() !== "")
-        .join("\n");
+(async () => {
+    const baseDir = path.resolve("./");
+    const files = await collectFiles(baseDir);
 
-    const txtPath = path.join(__dirname, "collected.txt");
+    const envPath = path.join(baseDir, ".env");
+    const envContent = await readEnvFile(envPath);
 
-    if (fs.existsSync(txtPath)) {
-        fs.unlinkSync(txtPath);
+    // Считаем общий размер
+    const totalSize = files.reduce((sum, f) => sum + f.size, 0);
+    const halfSize = totalSize / 2;
+
+    const part1 = [];
+    const part2 = [];
+
+    let currentSize = 0;
+
+    for (const file of files) {
+        if (currentSize < halfSize) {
+            part1.push(file);
+            currentSize += file.size;
+        } else {
+            part2.push(file);
+        }
     }
 
-    fs.writeFileSync(txtPath, output, "utf8");
+    const output1 = buildOutput("=== Собранные файлы (PART 1) ===", envContent, part1);
+    const output2 = buildOutput("=== Собранные файлы (PART 2) ===", null, part2);
 
-    console.log("Готово! Файл сохранён:");
-    console.log(txtPath);
+    const txtPath1 = path.join(__dirname, "collected1.txt");
+    const txtPath2 = path.join(__dirname, "collected2.txt");
+
+    if (fs.existsSync(txtPath1)) fs.unlinkSync(txtPath1);
+    if (fs.existsSync(txtPath2)) fs.unlinkSync(txtPath2);
+
+    fs.writeFileSync(txtPath1, output1, "utf8");
+    fs.writeFileSync(txtPath2, output2, "utf8");
+
+    console.log("Готово!");
+    console.log("Файл 1:", txtPath1);
+    console.log("Файл 2:", txtPath2);
 })();

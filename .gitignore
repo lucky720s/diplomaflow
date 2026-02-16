@@ -11,7 +11,8 @@ vendor
 testdata
 .idea/
 bin/
-collected.txt
+collected1.txt
+collected2.txt
 go.work
 go.work.sum
 1.txt

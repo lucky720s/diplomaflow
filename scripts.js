@@ -10,7 +10,7 @@ const DEFAULT_EXCLUDE_DIRS = new Set([
 
 const DEFAULT_EXCLUDE_FILES = new Set([
     "collected.txt",
-    "diplomaflow_deploy",      // PRIVATE KEY !!! [[1]]
+    "diplomaflow_deploy",
     "diplomaflow_deploy.pub",
 ]);
 
@@ -27,8 +27,7 @@ function isHidden(name) {
 }
 
 function shouldSkipByName(name) {
-    if (DEFAULT_EXCLUDE_FILES.has(name)) return true;
-    return false;
+    return DEFAULT_EXCLUDE_FILES.has(name);
 }
 
 function shouldSkipByExt(name) {
@@ -39,13 +38,13 @@ function shouldSkipByExt(name) {
 
 function shouldSkipBySuffix(name) {
     return (
-        name.endsWith(".pb.go") ||     // generated
-        name.endsWith("validate.go") || // generated
+        name.endsWith(".pb.go") ||
+        name.endsWith("validate.go") ||
         name.endsWith(".mod") ||
         name.endsWith(".sum") ||
         name.endsWith(".work") ||
-        name.endsWith(".js") ||       // чтобы не тащить сам скрипт в результаты
-        name.endsWith(".txt")         // чтобы не читать output
+        name.endsWith(".js") ||
+        name.endsWith(".txt")
     );
 }
 
@@ -53,7 +52,7 @@ async function safeReadUtf8(filePath) {
     try {
         return await fs.promises.readFile(filePath, "utf8");
     } catch {
-        return null; // бинарник/нечитаемо/нет доступа
+        return null;
     }
 }
 
@@ -121,21 +120,26 @@ async function listCmdServices(baseDir) {
     return items
         .filter((d) => d.isDirectory() && !isHidden(d.name))
         .map((d) => d.name)
-        .filter((name) => name !== "migrate"); // migrate обработаем отдельно как migrations.txt
+        .filter((name) => name !== "migrate");
 }
 
 function serviceToModule(serviceName) {
     if (serviceName === "api_gateway") return "gateway";
-    if (serviceName.endsWith("_service")) return serviceName.replace(/_service$/, "");
+    if (serviceName.endsWith("_service"))
+        return serviceName.replace(/_service$/, "");
     return null;
 }
 
-function makeServiceMatcher(baseDir, serviceName) {
+function makeServiceMatcher(serviceName) {
     const moduleName = serviceToModule(serviceName);
 
     const cmdPrefix = normalizePath(path.join("cmd", serviceName)) + "/";
-    const internalPrefix = moduleName ? normalizePath(path.join("internal", moduleName)) + "/" : null;
-    const protoPrefix = moduleName ? normalizePath(path.join("api", "proto", moduleName)) + "/" : null;
+    const internalPrefix = moduleName
+        ? normalizePath(path.join("internal", moduleName)) + "/"
+        : null;
+    const protoPrefix = moduleName
+        ? normalizePath(path.join("api", "proto", moduleName)) + "/"
+        : null;
 
     return (relPath) => {
         if (relPath.startsWith(cmdPrefix)) return true;
@@ -151,6 +155,27 @@ function makeMigrationsMatcher() {
     return (relPath) =>
         relPath.startsWith(migPrefix) ||
         relPath.startsWith(cmdMigratePrefix);
+}
+
+function makeArchitectureMatcher() {
+    const prefixes = [
+        "cd/",
+        "ci/",
+        "docker/",
+        "compose/",
+    ];
+
+    const singleFiles = new Set([
+        "deploy.sh",
+        "docker-compose.yml",
+        "docker-compose.yaml",
+        "Makefile",
+    ]);
+
+    return (relPath) => {
+        if (singleFiles.has(relPath)) return true;
+        return prefixes.some((p) => relPath.startsWith(p));
+    };
 }
 
 function formatBundle(title, files) {
@@ -183,44 +208,85 @@ async function ensureEmptyDir(dir) {
     const baseDir = path.resolve("./");
     const outDir = path.join(baseDir, "txt");
 
-    // 1) собрать все файлы один раз
     const allFiles = await collectAllFiles(baseDir);
-
-    // 2) найти сервисы по папкам cmd/*
     const services = await listCmdServices(baseDir);
 
-    // 3) подготовить папку txt/ (очищаем)
     await ensureEmptyDir(outDir);
 
-    // 4) migrations.txt
+    const usedPaths = new Set();
+
+    // migrations
     {
         const matcher = makeMigrationsMatcher();
         const files = allFiles.filter((f) => matcher(f.relPath));
+        files.forEach((f) => usedPaths.add(f.relPath));
+
         const body = formatBundle("migrations", files);
-        await fs.promises.writeFile(path.join(outDir, "migrations.txt"), body, "utf8");
+        await fs.promises.writeFile(
+            path.join(outDir, "migrations.txt"),
+            body,
+            "utf8"
+        );
     }
 
-    // 5) каждый сервис -> свой txt
-    // 5) каждый сервис -> свой txt
+    // services
     for (const svc of services) {
-        const matcher = makeServiceMatcher(baseDir, svc);
+        const matcher = makeServiceMatcher(svc);
         const files = allFiles.filter((f) => matcher(f.relPath));
+        files.forEach((f) => usedPaths.add(f.relPath));
+
         const body = formatBundle(svc, files);
-        await fs.promises.writeFile(path.join(outDir, `${svc}.txt`), body, "utf8");
+        await fs.promises.writeFile(
+            path.join(outDir, `${svc}.txt`),
+            body,
+            "utf8"
+        );
     }
 
-    // 6) index файл
+    // architecture
+    {
+        const matcher = makeArchitectureMatcher();
+        const files = allFiles.filter((f) => matcher(f.relPath));
+        files.forEach((f) => usedPaths.add(f.relPath));
+
+        const body = formatBundle("architecture", files);
+        await fs.promises.writeFile(
+            path.join(outDir, "architecture.txt"),
+            body,
+            "utf8"
+        );
+    }
+
+    // others
+    {
+        const files = allFiles.filter((f) => !usedPaths.has(f.relPath));
+        const body = formatBundle("others", files);
+        await fs.promises.writeFile(
+            path.join(outDir, "others.txt"),
+            body,
+            "utf8"
+        );
+    }
+
+    // index
     const indexLines = [];
     indexLines.push("=== generated txt bundles ===");
     indexLines.push(`baseDir: ${normalizePath(baseDir)}`);
     indexLines.push(`outDir: ${normalizePath(outDir)}`);
     indexLines.push("");
     indexLines.push(`services (${services.length}):`);
-    for (const svc of services) indexLines.push(`- ${svc} -> ${svc}.txt`);
+    for (const svc of services)
+        indexLines.push(`- ${svc} -> ${svc}.txt`);
     indexLines.push("");
     indexLines.push("- migrations -> migrations.txt");
+    indexLines.push("- architecture -> architecture.txt");
+    indexLines.push("- others -> others.txt");
 
-    await fs.promises.writeFile(path.join(outDir, "_index.txt"), indexLines.join("\n") + "\n", "utf8");
+    await fs.promises.writeFile(
+        path.join(outDir, "_index.txt"),
+        indexLines.join("\n") + "\n",
+        "utf8"
+    );
 
     console.log("Готово! Сгенерировано в папке:", outDir);
 })();
