@@ -451,13 +451,16 @@ type TeamData struct {
 }
 
 func (s *Service) ListAllTeams(ctx context.Context, req *ListAllTeamsRequest) ([]*TeamData, int64, error) {
-	resp, err := s.teamClient.ListTeams(ctx, &teamv1.ListTeamsRequest{
+	resp, err := s.teamClient.ListTeams(s.forwardCtx(ctx), &teamv1.ListTeamsRequest{
 		DepartmentId: req.DepartmentID,
 		Page:         req.Page,
 		PageSize:     req.PageSize,
 	})
 	if err != nil {
-		return nil, 0, fmt.Errorf("failed to list teams: %w", err)
+		if st, ok := status.FromError(err); ok {
+			return nil, 0, st.Err()
+		}
+		return nil, 0, status.Errorf(codes.Internal, "failed to list teams: %v", err)
 	}
 
 	var teams []*TeamData
@@ -1213,4 +1216,9 @@ func (s *Service) ListAvailableTeams(ctx context.Context, departmentID int64, pa
 	offset := int((page - 1) * pageSize)
 
 	return s.repo.ListAvailableTeams(ctx, departmentID, limit, offset)
+}
+func (s *Service) forwardCtx(ctx context.Context) context.Context {
+	in, _ := metadata.FromIncomingContext(ctx)
+	out := metadata.NewOutgoingContext(ctx, in.Copy())
+	return metadata.AppendToOutgoingContext(out, "x-internal-service", "admin_service")
 }
