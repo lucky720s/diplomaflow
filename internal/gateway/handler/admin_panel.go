@@ -1,11 +1,13 @@
 package handler
 
 import (
+	"context"
 	"net/http"
 	"strconv"
 
 	"github.com/gin-gonic/gin"
 	adminv1 "github.com/lucky720s/diplomaflow/pkg/protobuf/admin/v1"
+	"google.golang.org/grpc/metadata"
 )
 
 // ==================== Dashboard ====================
@@ -112,7 +114,7 @@ func (h *Handler) AdminListTeams(c *gin.Context) {
 		}
 	}
 
-	resp, err := h.adminClient.ListAllTeams(c.Request.Context(), &adminv1.ListAllTeamsRequest{
+	resp, err := h.adminClient.ListAllTeams(adminPanelCtx(c), &adminv1.ListAllTeamsRequest{
 		DepartmentId: departmentID,
 		Status:       c.Query("status"),
 		Search:       c.Query("search"),
@@ -726,4 +728,13 @@ func (h *Handler) CancelSupervisorRequest(c *gin.Context) {
 		return
 	}
 	c.JSON(http.StatusOK, resp)
+}
+func adminPanelCtx(c *gin.Context) context.Context {
+	return metadata.AppendToOutgoingContext(
+		c.Request.Context(),
+		"x-user-id", strconv.FormatInt(c.GetInt64("userId"), 10),
+		"x-user-role", c.GetString("role"),
+		"x-university-id", strconv.FormatInt(c.GetInt64("universityId"), 10),
+		"x-department-id", strconv.FormatInt(c.GetInt64("departmentId"), 10),
+	)
 }
