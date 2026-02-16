@@ -1,11 +1,13 @@
 package handler
 
 import (
+	"context"
 	"net/http"
 	"strconv"
 
 	"github.com/gin-gonic/gin"
 	workflowv1 "github.com/lucky720s/diplomaflow/pkg/protobuf/workflow/v1"
+	"google.golang.org/grpc/metadata"
 	"google.golang.org/protobuf/types/known/structpb"
 )
 
@@ -96,14 +98,13 @@ func (h *Handler) GetWorkflowFull(c *gin.Context) {
 func (h *Handler) GetAvailableTransitions(c *gin.Context) {
 	projectID, _ := strconv.ParseInt(c.Query("project_id"), 10, 64)
 	stateID, _ := strconv.ParseInt(c.Query("state_id"), 10, 64)
-	userID := c.GetInt64("userId")
-	userRole := c.GetString("role")
+	ctx := workflowCtx(c)
 
-	res, err := h.workflowClient.GetAvailableTransitions(c.Request.Context(), &workflowv1.GetAvailableTransitionsRequest{
+	res, err := h.workflowClient.GetAvailableTransitions(ctx, &workflowv1.GetAvailableTransitionsRequest{
 		ProjectId:      projectID,
 		CurrentStateId: stateID,
-		UserId:         userID,
-		UserRole:       userRole,
+		UserId:         c.GetInt64("userId"),
+		UserRole:       c.GetString("role"),
 	})
 	if err != nil {
 		MapGRPCError(c, err)
@@ -111,6 +112,7 @@ func (h *Handler) GetAvailableTransitions(c *gin.Context) {
 	}
 	c.JSON(http.StatusOK, res)
 }
+
 func (h *Handler) GetStepConfiguration(c *gin.Context) {
 	stateID, _ := strconv.ParseInt(c.Param("state_id"), 10, 64)
 	projectID, _ := strconv.ParseInt(c.Query("project_id"), 10, 64)
@@ -349,4 +351,18 @@ func (h *Handler) CreateStateAction(c *gin.Context) {
 		return
 	}
 	c.JSON(http.StatusCreated, res)
+}
+func workflowCtx(c *gin.Context) context.Context {
+	userID := c.GetInt64("userId")
+	role := c.GetString("role")
+	universityID := c.GetInt64("universityId")
+	departmentID := c.GetInt64("departmentId")
+
+	return metadata.AppendToOutgoingContext(
+		c.Request.Context(),
+		"x-user-id", strconv.FormatInt(userID, 10),
+		"x-user-role", role,
+		"x-university-id", strconv.FormatInt(universityID, 10),
+		"x-department-id", strconv.FormatInt(departmentID, 10),
+	)
 }
