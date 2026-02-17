@@ -45,6 +45,7 @@ func onboardingCtx(c *gin.Context) context.Context {
 	role := ginString(c, "role")
 	universityID := ginInt64(c, "universityId")
 	departmentID := ginInt64(c, "departmentId")
+	traceID := c.GetString("trace_id")
 
 	return metadata.AppendToOutgoingContext(
 		c.Request.Context(),
@@ -52,6 +53,7 @@ func onboardingCtx(c *gin.Context) context.Context {
 		"x-user-role", role,
 		"x-university-id", strconv.FormatInt(universityID, 10),
 		"x-department-id", strconv.FormatInt(departmentID, 10),
+		"x-trace-id", traceID,
 	)
 }
 

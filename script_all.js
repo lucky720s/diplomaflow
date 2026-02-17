@@ -135,5 +135,5 @@ function buildOutput(header, envContent, files) {
     console.log("Готово!");
     console.log("Файл 1:", txtPath1);
     console.log("Файл 2:", txtPath2);
-    console.log("Файл 3:", txtPath2);
+    console.log("Файл 3:", txtPath3);
 })();

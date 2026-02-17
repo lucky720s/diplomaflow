@@ -736,5 +736,6 @@ func adminPanelCtx(c *gin.Context) context.Context {
 		"x-user-role", c.GetString("role"),
 		"x-university-id", strconv.FormatInt(c.GetInt64("universityId"), 10),
 		"x-department-id", strconv.FormatInt(c.GetInt64("departmentId"), 10),
+		"x-trace-id", c.GetString("trace_id"),
 	)
 }

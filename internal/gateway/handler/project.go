@@ -7,7 +7,6 @@ import (
 	"github.com/gin-gonic/gin"
 	projectv1 "github.com/lucky720s/diplomaflow/pkg/protobuf/project/v1"
 	"golang.org/x/sync/errgroup"
-	"google.golang.org/grpc/metadata"
 	"google.golang.org/protobuf/types/known/structpb"
 )
 
@@ -56,9 +55,7 @@ func (h *Handler) GetProjectDetails(c *gin.Context) {
 		return
 	}
 
-	traceID := c.GetString("trace_id")
-	ctx := metadata.AppendToOutgoingContext(outgoingCtx(c), "x-trace-id", traceID)
-	g, ctx := errgroup.WithContext(ctx)
+	g, ctx := errgroup.WithContext(outgoingCtx(c))
 
 	var projectResp *projectv1.GetProjectResponse
 	var currentUserInfo map[string]interface{}

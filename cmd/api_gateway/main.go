@@ -1,6 +1,8 @@
 package main
 
 import (
+	"net/http"
+	"os"
 	"time"
 
 	"github.com/gin-gonic/gin"
@@ -9,6 +11,9 @@ import (
 	gatewayhealth "github.com/lucky720s/diplomaflow/internal/gateway/healthz"
 	"github.com/lucky720s/diplomaflow/internal/gateway/middleware"
 	"github.com/lucky720s/diplomaflow/pkg/logger"
+	"github.com/prometheus/client_golang/prometheus"
+	"github.com/prometheus/client_golang/prometheus/collectors"
+	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"github.com/redis/go-redis/v9"
 	"go.uber.org/zap"
 )
@@ -22,8 +27,6 @@ func main() {
 	log := logger.New(cfg.Env)
 	defer log.Sync()
 
-	// FAIL-FAST: JWT secret must be set via env in real deployments
-	// В config.yaml он может быть пустым, но в ENV он должен прийти обязательно.
 	if cfg.JWTSecret == "" {
 		log.Fatal("JWT_SECRET is required (gateway validates JWT locally)")
 	}
@@ -37,12 +40,20 @@ func main() {
 	rdb := redis.NewClient(&redis.Options{
 		Addr: cfg.RedisAddr,
 	})
+	registry := prometheus.NewRegistry()
+	middleware.MustRegisterGatewayMetrics(registry)
 
+	// + полезные базовые метрики процесса/Go runtime
+	registry.MustRegister(
+		collectors.NewGoCollector(),
+		collectors.NewProcessCollector(collectors.ProcessCollectorOpts{}),
+	)
 	router := gin.New()
 	router.Use(gin.Recovery())
 	router.Use(middleware.CorsMiddleware(cfg.AllowedOrigins))
 	router.Use(middleware.TraceIDMiddleware())
 	router.Use(middleware.RequestTimingMiddleware(log.Logger))
+	router.Use(middleware.MetricsMiddleware())
 
 	v1 := router.Group("/api/v1")
 	{
@@ -326,6 +337,20 @@ func main() {
 
 	router.GET("/readyz", checker.ReadyHandler(targets))
 
+	metricsPort := os.Getenv("METRICS_PORT")
+	if metricsPort == "" {
+		metricsPort = "9090"
+	}
+
+	mux := http.NewServeMux()
+	mux.Handle("/metrics", promhttp.HandlerFor(registry, promhttp.HandlerOpts{}))
+	metricsSrv := &http.Server{
+		Addr:    "127.0.0.1:" + metricsPort,
+		Handler: mux,
+	}
+	go func() {
+		_ = metricsSrv.ListenAndServe()
+	}()
 	log.Info("API Gateway starting", zap.String("port", cfg.Port))
 	if err := router.Run(":" + cfg.Port); err != nil {
 		log.Fatal("failed to start server", zap.Error(err))

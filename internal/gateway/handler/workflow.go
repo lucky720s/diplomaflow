@@ -357,6 +357,7 @@ func workflowCtx(c *gin.Context) context.Context {
 	role := c.GetString("role")
 	universityID := c.GetInt64("universityId")
 	departmentID := c.GetInt64("departmentId")
+	traceID := c.GetString("trace_id")
 
 	return metadata.AppendToOutgoingContext(
 		c.Request.Context(),
@@ -364,5 +365,6 @@ func workflowCtx(c *gin.Context) context.Context {
 		"x-user-role", role,
 		"x-university-id", strconv.FormatInt(universityID, 10),
 		"x-department-id", strconv.FormatInt(departmentID, 10),
+		"x-trace-id", traceID,
 	)
 }
