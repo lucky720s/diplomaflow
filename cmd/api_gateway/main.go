@@ -140,9 +140,9 @@ func main() {
 			projects.POST("/:id/actions", handler.PerformProjectAction)
 
 			// project-first flows тоже лучше закрыть admin-only, иначе можно обойти team-first
-			projects.POST("/:id/topic-registration", middleware.RBACMiddleware("admin"), handler.SubmitTopicRegistration)
-			projects.POST("/:id/supervisor-request", middleware.RBACMiddleware("admin"), handler.CreateSupervisorRequest)
-			projects.DELETE("/:id/supervisor-requests/:request_id", middleware.RBACMiddleware("admin"), handler.CancelSupervisorRequest)
+			projects.POST("/:id/topic-registration", handler.SubmitTopicRegistration)
+			projects.POST("/:id/supervisor-request", handler.CreateSupervisorRequest)
+			projects.DELETE("/:id/supervisor-requests/:request_id", handler.CancelSupervisorRequest)
 		}
 
 		teams := v1.Group("/teams")
