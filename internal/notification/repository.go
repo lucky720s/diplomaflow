@@ -14,6 +14,9 @@ type Repository interface {
 	Create(ctx context.Context, n *Notification) error
 	List(ctx context.Context, userID int64, onlyUnread bool, limit, offset int) ([]*Notification, int64, error)
 	MarkAsRead(ctx context.Context, id int64, userID int64) error
+
+	// NEW
+	Delete(ctx context.Context, id int64, userID int64) error
 }
 
 type repository struct {
@@ -32,6 +35,7 @@ func (r *repository) List(ctx context.Context, userID int64, onlyUnread bool, li
 	var notifications []*Notification
 	var total int64
 
+	// IMPORTANT: Notification has gorm.DeletedAt, so soft-deleted rows are filtered automatically
 	query := r.db.WithContext(ctx).Model(&Notification{}).Where("user_id = ?", userID)
 	if onlyUnread {
 		query = query.Where("is_read = ?", false)
@@ -53,6 +57,21 @@ func (r *repository) MarkAsRead(ctx context.Context, id int64, userID int64) err
 			"is_read":    true,
 			"updated_at": time.Now().UTC(),
 		})
+
+	if res.Error != nil {
+		return res.Error
+	}
+	if res.RowsAffected == 0 {
+		return ErrNotificationNotFound
+	}
+	return nil
+}
+
+func (r *repository) Delete(ctx context.Context, id int64, userID int64) error {
+	res := r.db.WithContext(ctx).
+		Where("id = ? AND user_id = ?", id, userID).
+		Delete(&Notification{})
+
 	if res.Error != nil {
 		return res.Error
 	}

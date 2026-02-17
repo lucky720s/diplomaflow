@@ -11,6 +11,9 @@ service NotificationService {
   rpc SendNotification (SendNotificationRequest) returns (SendNotificationResponse);
   rpc ListNotifications (ListNotificationsRequest) returns (ListNotificationsResponse);
   rpc MarkAsRead (MarkAsReadRequest) returns (google.protobuf.Empty);
+
+  // NEW: soft delete notification (deleted_at)
+  rpc DeleteNotification (DeleteNotificationRequest) returns (google.protobuf.Empty);
 }
 
 message SendNotificationRequest {
@@ -48,6 +51,11 @@ message ListNotificationsResponse {
 }
 
 message MarkAsReadRequest {
+  int64 notification_id = 1;
+  int64 user_id = 2;
+}
+
+message DeleteNotificationRequest {
   int64 notification_id = 1;
   int64 user_id = 2;
 }

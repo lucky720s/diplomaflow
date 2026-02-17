@@ -12,8 +12,8 @@ func (h *Handler) ListNotifications(c *gin.Context) {
 	userID := c.GetInt64("userId")
 	onlyUnread := c.Query("unread") == "true"
 
-	res, err := h.notificationClient.ListNotifications(c.Request.Context(), &notificationv1.ListNotificationsRequest{
-		UserId:     userID,
+	res, err := h.notificationClient.ListNotifications(outgoingCtx(c), &notificationv1.ListNotificationsRequest{
+		UserId:     userID, // будет дополнительно проверен на совпадение с x-user-id
 		OnlyUnread: onlyUnread,
 		Page:       1,
 		PageSize:   20,
@@ -35,7 +35,28 @@ func (h *Handler) MarkNotificationRead(c *gin.Context) {
 		return
 	}
 
-	_, err = h.notificationClient.MarkAsRead(c.Request.Context(), &notificationv1.MarkAsReadRequest{
+	_, err = h.notificationClient.MarkAsRead(outgoingCtx(c), &notificationv1.MarkAsReadRequest{
+		NotificationId: id,
+		UserId:         userID, // будет дополнительно проверен на совпадение с x-user-id
+	})
+	if err != nil {
+		MapGRPCError(c, err)
+		return
+	}
+	c.JSON(http.StatusOK, gin.H{"success": true})
+}
+
+func (h *Handler) DeleteNotification(c *gin.Context) {
+	userID := c.GetInt64("userId")
+	idStr := c.Param("id")
+
+	id, err := strconv.ParseInt(idStr, 10, 64)
+	if err != nil || id <= 0 {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid notification id"})
+		return
+	}
+
+	_, err = h.notificationClient.DeleteNotification(outgoingCtx(c), &notificationv1.DeleteNotificationRequest{
 		NotificationId: id,
 		UserId:         userID,
 	})
@@ -43,5 +64,6 @@ func (h *Handler) MarkNotificationRead(c *gin.Context) {
 		MapGRPCError(c, err)
 		return
 	}
+
 	c.JSON(http.StatusOK, gin.H{"success": true})
 }

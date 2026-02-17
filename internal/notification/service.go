@@ -48,3 +48,7 @@ func (s *Service) ListNotifications(ctx context.Context, userID int64, onlyUnrea
 func (s *Service) MarkAsRead(ctx context.Context, id, userID int64) error {
 	return s.repo.MarkAsRead(ctx, id, userID)
 }
+
+func (s *Service) DeleteNotification(ctx context.Context, id, userID int64) error {
+	return s.repo.Delete(ctx, id, userID)
+}

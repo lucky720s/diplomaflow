@@ -210,6 +210,7 @@ func main() {
 		{
 			notifications.GET("", handler.ListNotifications)
 			notifications.POST("/:id/read", handler.MarkNotificationRead)
+			notifications.DELETE("/:id", handler.DeleteNotification)
 		}
 
 		// NEW: onboarding status endpoint (BFF для фронта)
