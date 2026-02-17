@@ -11,17 +11,16 @@ import (
 	"github.com/lucky720s/diplomaflow/internal/gateway/handler"
 	grpc2 "github.com/lucky720s/diplomaflow/pkg/grpc"
 	"github.com/lucky720s/diplomaflow/pkg/logger"
-	v1_10 "github.com/lucky720s/diplomaflow/pkg/protobuf/admin/v1"
+	v1_9 "github.com/lucky720s/diplomaflow/pkg/protobuf/admin/v1"
 	"github.com/lucky720s/diplomaflow/pkg/protobuf/auth/v1"
-	v1_8 "github.com/lucky720s/diplomaflow/pkg/protobuf/file/v1"
-	v1_9 "github.com/lucky720s/diplomaflow/pkg/protobuf/form/v1"
-	v1_7 "github.com/lucky720s/diplomaflow/pkg/protobuf/notification/v1"
+	v1_7 "github.com/lucky720s/diplomaflow/pkg/protobuf/file/v1"
+	v1_8 "github.com/lucky720s/diplomaflow/pkg/protobuf/form/v1"
+	v1_6 "github.com/lucky720s/diplomaflow/pkg/protobuf/notification/v1"
 	v1_2 "github.com/lucky720s/diplomaflow/pkg/protobuf/project/v1"
-	v1_5 "github.com/lucky720s/diplomaflow/pkg/protobuf/role/v1"
-	v1_11 "github.com/lucky720s/diplomaflow/pkg/protobuf/task/v1"
+	v1_10 "github.com/lucky720s/diplomaflow/pkg/protobuf/task/v1"
 	v1_3 "github.com/lucky720s/diplomaflow/pkg/protobuf/team/v1"
 	v1_4 "github.com/lucky720s/diplomaflow/pkg/protobuf/university/v1"
-	v1_6 "github.com/lucky720s/diplomaflow/pkg/protobuf/workflow/v1"
+	v1_5 "github.com/lucky720s/diplomaflow/pkg/protobuf/workflow/v1"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
 	"time"
@@ -52,7 +51,7 @@ func InitializeApp(cfg *config.Config, log *logger.Logger) (*handler.Handler, fu
 		cleanup()
 		return nil, nil, err
 	}
-	roleServiceClient, cleanup5, err := ProvideRoleClient(cfg)
+	workflowServiceClient, cleanup5, err := ProvideWorkflowClient(cfg)
 	if err != nil {
 		cleanup4()
 		cleanup3()
@@ -60,7 +59,7 @@ func InitializeApp(cfg *config.Config, log *logger.Logger) (*handler.Handler, fu
 		cleanup()
 		return nil, nil, err
 	}
-	workflowServiceClient, cleanup6, err := ProvideWorkflowClient(cfg)
+	notificationServiceClient, cleanup6, err := ProvideNotificationClient(cfg)
 	if err != nil {
 		cleanup5()
 		cleanup4()
@@ -69,7 +68,7 @@ func InitializeApp(cfg *config.Config, log *logger.Logger) (*handler.Handler, fu
 		cleanup()
 		return nil, nil, err
 	}
-	notificationServiceClient, cleanup7, err := ProvideNotificationClient(cfg)
+	fileServiceClient, cleanup7, err := ProvideFileClient(cfg)
 	if err != nil {
 		cleanup6()
 		cleanup5()
@@ -79,7 +78,7 @@ func InitializeApp(cfg *config.Config, log *logger.Logger) (*handler.Handler, fu
 		cleanup()
 		return nil, nil, err
 	}
-	fileServiceClient, cleanup8, err := ProvideFileClient(cfg)
+	formServiceClient, cleanup8, err := ProvideFormClient(cfg)
 	if err != nil {
 		cleanup7()
 		cleanup6()
@@ -90,7 +89,7 @@ func InitializeApp(cfg *config.Config, log *logger.Logger) (*handler.Handler, fu
 		cleanup()
 		return nil, nil, err
 	}
-	formServiceClient, cleanup9, err := ProvideFormClient(cfg)
+	adminServiceClient, cleanup9, err := ProvideAdminClient(cfg)
 	if err != nil {
 		cleanup8()
 		cleanup7()
@@ -102,7 +101,7 @@ func InitializeApp(cfg *config.Config, log *logger.Logger) (*handler.Handler, fu
 		cleanup()
 		return nil, nil, err
 	}
-	adminServiceClient, cleanup10, err := ProvideAdminClient(cfg)
+	taskServiceClient, cleanup10, err := ProvideTaskClient(cfg)
 	if err != nil {
 		cleanup9()
 		cleanup8()
@@ -115,23 +114,8 @@ func InitializeApp(cfg *config.Config, log *logger.Logger) (*handler.Handler, fu
 		cleanup()
 		return nil, nil, err
 	}
-	taskServiceClient, cleanup11, err := ProvideTaskClient(cfg)
-	if err != nil {
-		cleanup10()
-		cleanup9()
-		cleanup8()
-		cleanup7()
-		cleanup6()
-		cleanup5()
-		cleanup4()
-		cleanup3()
-		cleanup2()
-		cleanup()
-		return nil, nil, err
-	}
-	handlerHandler := handler.NewHandler(authServiceClient, projectServiceClient, teamServiceClient, universityServiceClient, roleServiceClient, workflowServiceClient, notificationServiceClient, fileServiceClient, formServiceClient, adminServiceClient, taskServiceClient)
+	handlerHandler := handler.NewHandler(authServiceClient, projectServiceClient, teamServiceClient, universityServiceClient, workflowServiceClient, notificationServiceClient, fileServiceClient, formServiceClient, adminServiceClient, taskServiceClient)
 	return handlerHandler, func() {
-		cleanup11()
 		cleanup10()
 		cleanup9()
 		cleanup8()
@@ -189,58 +173,50 @@ func ProvideUniversityClient(cfg *config.Config) (v1_4.UniversityServiceClient, 
 	return v1_4.NewUniversityServiceClient(conn), cleanup, nil
 }
 
-func ProvideRoleClient(cfg *config.Config) (v1_5.RoleServiceClient, func(), error) {
-	conn, cleanup, err := provideConn(cfg.RoleServiceAddr)
-	if err != nil {
-		return nil, nil, err
-	}
-	return v1_5.NewRoleServiceClient(conn), cleanup, nil
-}
-
-func ProvideWorkflowClient(cfg *config.Config) (v1_6.WorkflowServiceClient, func(), error) {
+func ProvideWorkflowClient(cfg *config.Config) (v1_5.WorkflowServiceClient, func(), error) {
 	conn, cleanup, err := provideConn(cfg.WorkflowServiceAddr)
 	if err != nil {
 		return nil, nil, err
 	}
-	return v1_6.NewWorkflowServiceClient(conn), cleanup, nil
+	return v1_5.NewWorkflowServiceClient(conn), cleanup, nil
 }
 
-func ProvideNotificationClient(cfg *config.Config) (v1_7.NotificationServiceClient, func(), error) {
+func ProvideNotificationClient(cfg *config.Config) (v1_6.NotificationServiceClient, func(), error) {
 	conn, cleanup, err := provideConn(cfg.NotificationServiceAddr)
 	if err != nil {
 		return nil, nil, err
 	}
-	return v1_7.NewNotificationServiceClient(conn), cleanup, nil
+	return v1_6.NewNotificationServiceClient(conn), cleanup, nil
 }
 
-func ProvideFileClient(cfg *config.Config) (v1_8.FileServiceClient, func(), error) {
+func ProvideFileClient(cfg *config.Config) (v1_7.FileServiceClient, func(), error) {
 	conn, cleanup, err := provideConn(cfg.FileServiceAddr)
 	if err != nil {
 		return nil, nil, err
 	}
-	return v1_8.NewFileServiceClient(conn), cleanup, nil
+	return v1_7.NewFileServiceClient(conn), cleanup, nil
 }
 
-func ProvideFormClient(cfg *config.Config) (v1_9.FormServiceClient, func(), error) {
+func ProvideFormClient(cfg *config.Config) (v1_8.FormServiceClient, func(), error) {
 	conn, cleanup, err := provideConn(cfg.FormServiceAddr)
 	if err != nil {
 		return nil, nil, err
 	}
-	return v1_9.NewFormServiceClient(conn), cleanup, nil
+	return v1_8.NewFormServiceClient(conn), cleanup, nil
 }
 
-func ProvideAdminClient(cfg *config.Config) (v1_10.AdminServiceClient, func(), error) {
+func ProvideAdminClient(cfg *config.Config) (v1_9.AdminServiceClient, func(), error) {
 	conn, cleanup, err := provideConn(cfg.AdminServiceAddr)
 	if err != nil {
 		return nil, nil, err
 	}
-	return v1_10.NewAdminServiceClient(conn), cleanup, nil
+	return v1_9.NewAdminServiceClient(conn), cleanup, nil
 }
 
-func ProvideTaskClient(cfg *config.Config) (v1_11.TaskServiceClient, func(), error) {
+func ProvideTaskClient(cfg *config.Config) (v1_10.TaskServiceClient, func(), error) {
 	conn, cleanup, err := provideConn(cfg.TaskServiceAddr)
 	if err != nil {
 		return nil, nil, err
 	}
-	return v1_11.NewTaskServiceClient(conn), cleanup, nil
+	return v1_10.NewTaskServiceClient(conn), cleanup, nil
 }

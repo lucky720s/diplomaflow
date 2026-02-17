@@ -6,6 +6,8 @@ jwt:
   refresh_token_ttl: 720h
 database:
   dsn: ""
+services:
+  university_addr: "university_service:8081"
 allowed_origins:
   - "https://diplomaflow.kz"
   - "http://localhost:3000"

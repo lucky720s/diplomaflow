@@ -86,6 +86,9 @@ func main() {
 			admin.POST("/workflows/:id/activate", handler.SetActiveWorkflow)
 			admin.POST("/roles", handler.CreateRole)
 			admin.POST("/assign-role", handler.AssignRole)
+			admin.POST("/users/:id/department-roles", handler.AssignUserDepartmentRole)
+			admin.DELETE("/users/:id/department-roles/:role_id", handler.RevokeUserDepartmentRole)
+			admin.GET("/users/:id/department-roles", handler.ListUserDepartmentRoles)
 			admin.POST("/workflows/:id/clone", handler.CloneWorkflow)
 			admin.POST("/workflows/:id/version", handler.CreateNewVersion)
 			admin.POST("/workflows/:id/validate", handler.ValidateWorkflow)
@@ -306,7 +309,6 @@ func main() {
 		{Name: "task", Addr: cfg.TaskServiceAddr, ServiceName: "task.v1.TaskService"},
 		{Name: "team", Addr: cfg.TeamServiceAddr, ServiceName: "team.v1.TeamService"},
 		{Name: "university", Addr: cfg.UniversityServiceAddr, ServiceName: "university.v1.UniversityService"},
-		{Name: "role", Addr: cfg.RoleServiceAddr, ServiceName: "role.v1.RoleService"},
 		{Name: "workflow", Addr: cfg.WorkflowServiceAddr, ServiceName: "workflow.v1.WorkflowService"},
 		{Name: "notification", Addr: cfg.NotificationServiceAddr, ServiceName: "notification.v1.NotificationService"},
 		{Name: "file", Addr: cfg.FileServiceAddr, ServiceName: "file.v1.FileService"},

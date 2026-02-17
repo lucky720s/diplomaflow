@@ -7,7 +7,6 @@ import (
 	"time"
 
 	"github.com/lucky720s/diplomaflow/pkg/logger"
-	rolev1 "github.com/lucky720s/diplomaflow/pkg/protobuf/role/v1"
 	universityv1 "github.com/lucky720s/diplomaflow/pkg/protobuf/university/v1"
 	"go.uber.org/zap"
 	"gorm.io/gorm"
@@ -15,27 +14,30 @@ import (
 
 type Service struct {
 	repo       Repository
+	iamRepo    IAMRepository
 	jwtWrapper JwtWrapper
+
 	univClient universityv1.UniversityServiceClient
-	roleClient rolev1.RoleServiceClient
-	logger     *logger.Logger
+
+	logger *logger.Logger
 }
 
 func NewService(
 	repo Repository,
+	iamRepo IAMRepository,
 	jwtWrapper JwtWrapper,
 	univClient universityv1.UniversityServiceClient,
-	roleClient rolev1.RoleServiceClient,
 	log *logger.Logger,
 ) *Service {
 	return &Service{
 		repo:       repo,
+		iamRepo:    iamRepo,
 		jwtWrapper: jwtWrapper,
 		univClient: univClient,
-		roleClient: roleClient,
 		logger:     log,
 	}
 }
+
 func (s *Service) Register(ctx context.Context, email, password, firstName, lastName, role string, universityID, departmentID int64) (int64, error) {
 	existingUser, err := s.repo.GetByEmail(ctx, email)
 	if err == nil && existingUser != nil {
@@ -75,10 +77,18 @@ func (s *Service) Login(ctx context.Context, email, password, userAgent, ip stri
 	if !CheckPasswordHash(password, user.Password) {
 		return "", "", errors.New("invalid credentials")
 	}
-	accessToken, err := s.jwtWrapper.GenerateAccessToken(*user)
+
+	deptRoles, err := s.iamRepo.ListUserDepartmentRoleSlugs(ctx, user.ID, user.DepartmentID)
+	if err != nil {
+		s.logger.Warn("failed to load dept roles; continue without them", zap.Error(err))
+		deptRoles = []string{}
+	}
+
+	accessToken, err := s.jwtWrapper.GenerateAccessToken(*user, deptRoles)
 	if err != nil {
 		return "", "", err
 	}
+
 	rawUUID := s.jwtWrapper.GenerateRefreshTokenSecret()
 	tokenHash, err := HashToken(rawUUID)
 	if err != nil {
@@ -128,14 +138,23 @@ func (s *Service) RefreshToken(ctx context.Context, clientToken, userAgent, ip s
 	if storedToken.ExpiresAt.Before(time.Now()) {
 		return "", "", errors.New("refresh token expired")
 	}
+
 	user, err := s.repo.GetByID(ctx, storedToken.UserID)
 	if err != nil {
 		return "", "", err
 	}
-	if err := s.repo.RevokeRefreshToken(ctx, storedToken.ID); err != nil {
+
+	if err := s.repo.RevokeRefreshToken(ctx, storedToken.ID); err != nil { //nolint:govet
 		return "", "", err
 	}
-	newAccessToken, _ := s.jwtWrapper.GenerateAccessToken(*user)
+
+	deptRoles, err := s.iamRepo.ListUserDepartmentRoleSlugs(ctx, user.ID, user.DepartmentID)
+	if err != nil {
+		s.logger.Warn("failed to load dept roles; continue without them", zap.Error(err))
+		deptRoles = []string{}
+	}
+
+	newAccessToken, _ := s.jwtWrapper.GenerateAccessToken(*user, deptRoles)
 
 	newRawUUID := s.jwtWrapper.GenerateRefreshTokenSecret()
 	newHash, _ := HashToken(newRawUUID)
@@ -156,6 +175,7 @@ func (s *Service) RefreshToken(ctx context.Context, clientToken, userAgent, ip s
 
 	return newAccessToken, newClientToken, nil
 }
+
 func (s *Service) Validate(ctx context.Context, token string) (*JwtClaims, error) {
 	return s.jwtWrapper.ValidateToken(token)
 }
@@ -180,9 +200,11 @@ func (s *Service) ListUsers(ctx context.Context, universityID int64, departmentI
 
 	return s.repo.ListUsers(ctx, filter)
 }
+
 func (s *Service) ListSessions(ctx context.Context, userID int64) ([]*RefreshToken, error) {
 	return s.repo.ListActiveSessions(ctx, userID)
 }
+
 func (s *Service) RevokeSession(ctx context.Context, userID int64, sessionID uint64) error {
 	token, err := s.repo.GetRefreshTokenByID(ctx, sessionID)
 	if err != nil {
@@ -193,11 +215,14 @@ func (s *Service) RevokeSession(ctx context.Context, userID int64, sessionID uin
 	}
 	return s.repo.RevokeRefreshToken(ctx, sessionID)
 }
+
+// Base role change (single role in users.role)
 func (s *Service) AssignRole(ctx context.Context, userID int64, role string) error {
 	user, err := s.repo.GetByID(ctx, userID)
 	if err != nil {
 		return fmt.Errorf("user not found: %w", err)
 	}
+
 	validRoles := map[string]bool{
 		"student": true,
 		"teacher": true,
@@ -210,8 +235,8 @@ func (s *Service) AssignRole(ctx context.Context, userID int64, role string) err
 	user.Role = role
 	return s.repo.Update(ctx, user)
 }
+
 func (s *Service) BatchGetUserPreviews(ctx context.Context, ids []int64) ([]*User, error) {
-	// дедуп + лимит
 	uniq := make([]int64, 0, len(ids))
 	seen := make(map[int64]struct{}, len(ids))
 	for _, id := range ids {

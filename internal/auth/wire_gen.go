@@ -9,7 +9,6 @@ package auth
 import (
 	"github.com/lucky720s/diplomaflow/pkg/database"
 	"github.com/lucky720s/diplomaflow/pkg/logger"
-	v1_2 "github.com/lucky720s/diplomaflow/pkg/protobuf/role/v1"
 	"github.com/lucky720s/diplomaflow/pkg/protobuf/university/v1"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
@@ -25,22 +24,16 @@ func InitializeApp(cfg *Config, log *logger.Logger) (*Handler, func(), error) {
 		return nil, nil, err
 	}
 	authRepository := NewRepository(db)
+	authIAMRepository := NewIAMRepository(db)
 	jwtWrapper := ProvideJwtWrapper(cfg)
 	universityServiceClient, cleanup2, err := ProvideUniversityClient(cfg)
 	if err != nil {
 		cleanup()
 		return nil, nil, err
 	}
-	roleServiceClient, cleanup3, err := ProvideRoleClient(cfg)
-	if err != nil {
-		cleanup2()
-		cleanup()
-		return nil, nil, err
-	}
-	service := NewService(authRepository, jwtWrapper, universityServiceClient, roleServiceClient, log)
+	service := NewService(authRepository, authIAMRepository, jwtWrapper, universityServiceClient, log)
 	handler := NewHandler(service)
 	return handler, func() {
-		cleanup3()
 		cleanup2()
 		cleanup()
 	}, nil
@@ -59,18 +52,6 @@ func ProvideUniversityClient(cfg *Config) (v1.UniversityServiceClient, func(), e
 	}
 
 	client := v1.NewUniversityServiceClient(conn)
-	cleanup := func() { conn.Close() }
-
-	return client, cleanup, nil
-}
-
-func ProvideRoleClient(cfg *Config) (v1_2.RoleServiceClient, func(), error) {
-	conn, err := grpc.NewClient(cfg.Services.RoleAddr, grpc.WithTransportCredentials(insecure.NewCredentials()))
-	if err != nil {
-		return nil, nil, err
-	}
-
-	client := v1_2.NewRoleServiceClient(conn)
 	cleanup := func() { conn.Close() }
 
 	return client, cleanup, nil

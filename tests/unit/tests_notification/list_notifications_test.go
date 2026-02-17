@@ -10,6 +10,7 @@ import (
 	notificationv1 "github.com/lucky720s/diplomaflow/pkg/protobuf/notification/v1"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
+	"google.golang.org/grpc/metadata"
 )
 
 func TestService_ListNotifications(t *testing.T) {
@@ -51,7 +52,8 @@ func TestHandler_ListNotifications(t *testing.T) {
 		PageSize:   20,
 	}
 
-	resp, err := handler.ListNotifications(context.Background(), req)
+	ctx := metadata.NewIncomingContext(context.Background(), metadata.Pairs("x-user-id", "7"))
+	resp, err := handler.ListNotifications(ctx, req)
 
 	require.NoError(t, err)
 	require.Equal(t, int64(50), resp.TotalCount)

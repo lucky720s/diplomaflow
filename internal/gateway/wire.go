@@ -18,7 +18,6 @@ import (
 	formv1 "github.com/lucky720s/diplomaflow/pkg/protobuf/form/v1"
 	notificationv1 "github.com/lucky720s/diplomaflow/pkg/protobuf/notification/v1"
 	projectv1 "github.com/lucky720s/diplomaflow/pkg/protobuf/project/v1"
-	rolev1 "github.com/lucky720s/diplomaflow/pkg/protobuf/role/v1"
 	taskv1 "github.com/lucky720s/diplomaflow/pkg/protobuf/task/v1"
 	teamv1 "github.com/lucky720s/diplomaflow/pkg/protobuf/team/v1"
 	universityv1 "github.com/lucky720s/diplomaflow/pkg/protobuf/university/v1"
@@ -71,14 +70,6 @@ func ProvideUniversityClient(cfg *config.Config) (universityv1.UniversityService
 		return nil, nil, err
 	}
 	return universityv1.NewUniversityServiceClient(conn), cleanup, nil
-}
-
-func ProvideRoleClient(cfg *config.Config) (rolev1.RoleServiceClient, func(), error) {
-	conn, cleanup, err := provideConn(cfg.RoleServiceAddr)
-	if err != nil {
-		return nil, nil, err
-	}
-	return rolev1.NewRoleServiceClient(conn), cleanup, nil
 }
 
 func ProvideWorkflowClient(cfg *config.Config) (workflowv1.WorkflowServiceClient, func(), error) {
@@ -135,14 +126,13 @@ func InitializeApp(cfg *config.Config, log *logger.Logger) (*handler.Handler, fu
 		ProvideProjectClient,
 		ProvideTeamClient,
 		ProvideUniversityClient,
-		ProvideRoleClient,
 		ProvideWorkflowClient,
 		ProvideNotificationClient,
 		ProvideFileClient,
 		ProvideFormClient,
-		handler.NewHandler,
 		ProvideTaskClient,
 		ProvideAdminClient,
+		handler.NewHandler,
 	)
 	return &handler.Handler{}, nil, nil
 }

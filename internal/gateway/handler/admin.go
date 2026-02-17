@@ -1,13 +1,15 @@
 package handler
 
 import (
+	"context"
 	"net/http"
 	"strconv"
 
 	"github.com/gin-gonic/gin"
-	rolev1 "github.com/lucky720s/diplomaflow/pkg/protobuf/role/v1"
+	authv1 "github.com/lucky720s/diplomaflow/pkg/protobuf/auth/v1"
 	universityv1 "github.com/lucky720s/diplomaflow/pkg/protobuf/university/v1"
 	workflowv1 "github.com/lucky720s/diplomaflow/pkg/protobuf/workflow/v1"
+	"google.golang.org/grpc/metadata"
 )
 
 func (h *Handler) CreateUniversity(c *gin.Context) {
@@ -32,6 +34,7 @@ func (h *Handler) ListUniversities(c *gin.Context) {
 	}
 	c.JSON(http.StatusOK, res)
 }
+
 func (h *Handler) ListDepartments(c *gin.Context) {
 	uniIDStr := c.Param("id")
 	uniID, err := strconv.ParseInt(uniIDStr, 10, 64)
@@ -77,19 +80,34 @@ func (h *Handler) CreateWorkflow(c *gin.Context) {
 	c.JSON(http.StatusCreated, res)
 }
 
+// POST /api/v1/admin/roles
+// body: { "slug": "commission", "department_id": 123(optional) }
 func (h *Handler) CreateRole(c *gin.Context) {
-	var req rolev1.CreateRoleRequest
-	if err := c.ShouldBindJSON(&req); err != nil {
+	var body struct {
+		Slug         string `json:"slug" binding:"required"`
+		DepartmentID int64  `json:"department_id"`
+	}
+	if err := c.ShouldBindJSON(&body); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
-	res, err := h.roleClient.CreateRole(c.Request.Context(), &req)
+
+	departmentID := body.DepartmentID
+	if departmentID == 0 {
+		departmentID = c.GetInt64("departmentId")
+	}
+
+	res, err := h.authClient.CreateDepartmentRole(authIAMCtx(c), &authv1.CreateDepartmentRoleRequest{
+		DepartmentId: departmentID,
+		Slug:         body.Slug,
+	})
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		MapGRPCError(c, err)
 		return
 	}
 	c.JSON(http.StatusCreated, res)
 }
+
 func (h *Handler) GetUniversity(c *gin.Context) {
 	idStr := c.Param("id")
 	id, err := strconv.ParseInt(idStr, 10, 64)
@@ -108,10 +126,11 @@ func (h *Handler) GetUniversity(c *gin.Context) {
 	c.JSON(http.StatusOK, res)
 }
 
+// GET /api/v1/roles
 func (h *Handler) ListRoles(c *gin.Context) {
 	departmentID := c.GetInt64("departmentId")
 
-	res, err := h.roleClient.ListRoles(c.Request.Context(), &rolev1.ListRolesRequest{
+	res, err := h.authClient.ListDepartmentRoles(authIAMCtx(c), &authv1.ListDepartmentRolesRequest{
 		DepartmentId: departmentID,
 	})
 	if err != nil {
@@ -121,6 +140,7 @@ func (h *Handler) ListRoles(c *gin.Context) {
 	c.JSON(http.StatusOK, res)
 }
 
+// GET /api/v1/roles/:id
 func (h *Handler) GetRole(c *gin.Context) {
 	idStr := c.Param("id")
 	id, err := strconv.ParseInt(idStr, 10, 64)
@@ -129,7 +149,7 @@ func (h *Handler) GetRole(c *gin.Context) {
 		return
 	}
 
-	res, err := h.roleClient.GetRole(c.Request.Context(), &rolev1.GetRoleRequest{
+	res, err := h.authClient.GetDepartmentRole(authIAMCtx(c), &authv1.GetDepartmentRoleRequest{
 		RoleId: id,
 	})
 	if err != nil {
@@ -137,4 +157,8 @@ func (h *Handler) GetRole(c *gin.Context) {
 		return
 	}
 	c.JSON(http.StatusOK, res)
+}
+func authIAMCtx(c *gin.Context) context.Context {
+	ctx := outgoingCtx(c)
+	return metadata.AppendToOutgoingContext(ctx, "x-internal-service", "api_gateway")
 }

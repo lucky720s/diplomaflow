@@ -9,6 +9,7 @@ import (
 	notificationv1 "github.com/lucky720s/diplomaflow/pkg/protobuf/notification/v1"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
+	"google.golang.org/grpc/metadata"
 )
 
 func TestService_MarkAsRead(t *testing.T) {
@@ -37,7 +38,8 @@ func TestHandler_MarkAsRead(t *testing.T) {
 		UserId:         456,
 	}
 
-	resp, err := handler.MarkAsRead(context.Background(), req)
+	ctx := metadata.NewIncomingContext(context.Background(), metadata.Pairs("x-user-id", "456"))
+	resp, err := handler.MarkAsRead(ctx, req)
 
 	require.NoError(t, err)
 	require.NotNil(t, resp)

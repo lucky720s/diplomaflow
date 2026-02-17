@@ -7,7 +7,6 @@ import (
 	formv1 "github.com/lucky720s/diplomaflow/pkg/protobuf/form/v1"
 	notificationv1 "github.com/lucky720s/diplomaflow/pkg/protobuf/notification/v1"
 	projectv1 "github.com/lucky720s/diplomaflow/pkg/protobuf/project/v1"
-	rolev1 "github.com/lucky720s/diplomaflow/pkg/protobuf/role/v1"
 	taskv1 "github.com/lucky720s/diplomaflow/pkg/protobuf/task/v1"
 	teamv1 "github.com/lucky720s/diplomaflow/pkg/protobuf/team/v1"
 	universityv1 "github.com/lucky720s/diplomaflow/pkg/protobuf/university/v1"
@@ -19,7 +18,6 @@ type Handler struct {
 	projectClient      projectv1.ProjectServiceClient
 	teamClient         teamv1.TeamServiceClient
 	universityClient   universityv1.UniversityServiceClient
-	roleClient         rolev1.RoleServiceClient
 	workflowClient     workflowv1.WorkflowServiceClient
 	notificationClient notificationv1.NotificationServiceClient
 	fileClient         filev1.FileServiceClient
@@ -33,7 +31,6 @@ func NewHandler(
 	projectClient projectv1.ProjectServiceClient,
 	teamClient teamv1.TeamServiceClient,
 	universityClient universityv1.UniversityServiceClient,
-	roleClient rolev1.RoleServiceClient,
 	workflowClient workflowv1.WorkflowServiceClient,
 	notificationClient notificationv1.NotificationServiceClient,
 	fileClient filev1.FileServiceClient,
@@ -46,7 +43,6 @@ func NewHandler(
 		projectClient:      projectClient,
 		teamClient:         teamClient,
 		universityClient:   universityClient,
-		roleClient:         roleClient,
 		workflowClient:     workflowClient,
 		notificationClient: notificationClient,
 		fileClient:         fileClient,

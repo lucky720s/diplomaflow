@@ -10,13 +10,14 @@ import (
 
 type JwtClaims struct {
 	jwt.RegisteredClaims
-	Id           int64  `json:"Id"`
-	Email        string `json:"Email"`
-	Role         string `json:"Role"`
-	FirstName    string `json:"FirstName"`
-	LastName     string `json:"LastName"`
-	UniversityID int64  `json:"UniversityID"`
-	DepartmentID int64  `json:"DepartmentID"`
+	Id           int64    `json:"Id"`
+	Email        string   `json:"Email"`
+	Role         string   `json:"Role"` // base role: student|teacher|admin
+	DeptRoles    []string `json:"DeptRoles"`
+	FirstName    string   `json:"FirstName"`
+	LastName     string   `json:"LastName"`
+	UniversityID int64    `json:"UniversityID"`
+	DepartmentID int64    `json:"DepartmentID"`
 }
 
 func AuthMiddleware(secret string) gin.HandlerFunc {
@@ -39,7 +40,6 @@ func AuthMiddleware(secret string) gin.HandlerFunc {
 		token, err := jwt.ParseWithClaims(tokenString, claims, func(token *jwt.Token) (interface{}, error) {
 			return []byte(secret), nil
 		})
-
 		if err != nil || !token.Valid {
 			c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"error": "Invalid or expired token"})
 			return
@@ -47,6 +47,8 @@ func AuthMiddleware(secret string) gin.HandlerFunc {
 
 		c.Set("userId", claims.Id)
 		c.Set("role", claims.Role)
+		c.Set("deptRoles", claims.DeptRoles)
+
 		c.Set("firstName", claims.FirstName)
 		c.Set("lastName", claims.LastName)
 		c.Set("universityId", claims.UniversityID)
@@ -56,15 +58,31 @@ func AuthMiddleware(secret string) gin.HandlerFunc {
 		c.Next()
 	}
 }
+
 func RBACMiddleware(allowedRoles ...string) gin.HandlerFunc {
+	allowed := make(map[string]struct{}, len(allowedRoles))
+	for _, r := range allowedRoles {
+		allowed[r] = struct{}{}
+	}
+
 	return func(c *gin.Context) {
+		// 1) base role
 		role := c.GetString("role")
-		for _, r := range allowedRoles {
-			if role == r {
-				c.Next()
-				return
+		if _, ok := allowed[role]; ok {
+			c.Next()
+			return
+		}
+		if v, ok := c.Get("deptRoles"); ok && v != nil {
+			if arr, ok := v.([]string); ok {
+				for _, dr := range arr {
+					if _, ok := allowed[dr]; ok {
+						c.Next()
+						return
+					}
+				}
 			}
 		}
+
 		c.AbortWithStatusJSON(403, gin.H{"error": "forbidden"})
 	}
 }

@@ -1,7 +1,9 @@
 syntax = "proto3";
 
 package auth.v1;
+
 import "validate/validate.proto";
+
 option go_package = "github.com/lucky720s/diplomaflow/pkg/protobuf/auth/v1";
 
 service AuthService {
@@ -12,8 +14,27 @@ service AuthService {
   rpc RefreshToken (RefreshTokenRequest) returns (RefreshTokenResponse);
   rpc ListSessions (ListSessionsRequest) returns (ListSessionsResponse);
   rpc RevokeSession (RevokeSessionRequest) returns (RevokeSessionResponse);
+
+  // Base role (users.role): student|teacher|admin
   rpc AssignRole (AssignRoleRequest) returns (AssignRoleResponse);
+
+  // Internal
   rpc BatchGetUserPreviews(BatchGetUserPreviewsRequest) returns (BatchGetUserPreviewsResponse);
+
+  // =========================
+  // Dynamic department roles (directory + assignments)
+  // =========================
+
+  // Directory (CRUD)
+  rpc CreateDepartmentRole(CreateDepartmentRoleRequest) returns (CreateDepartmentRoleResponse);
+  rpc ListDepartmentRoles(ListDepartmentRolesRequest) returns (ListDepartmentRolesResponse);
+  rpc GetDepartmentRole(GetDepartmentRoleRequest) returns (GetDepartmentRoleResponse);
+  rpc DeleteDepartmentRole(DeleteDepartmentRoleRequest) returns (DeleteDepartmentRoleResponse);
+
+  // Assignments
+  rpc AssignDepartmentRole(AssignDepartmentRoleRequest) returns (AssignDepartmentRoleResponse);
+  rpc RevokeDepartmentRole(RevokeDepartmentRoleRequest) returns (RevokeDepartmentRoleResponse);
+  rpc ListUserDepartmentRoles(ListUserDepartmentRolesRequest) returns (ListUserDepartmentRolesResponse);
 }
 
 message RegisterRequest {
@@ -78,6 +99,7 @@ message ListUsersResponse {
   repeated UserPreview users = 1;
   int64 total_count = 2;
 }
+
 message RefreshTokenRequest {
   string refresh_token = 1;
   string user_agent = 2;
@@ -88,9 +110,11 @@ message RefreshTokenResponse {
   string access_token = 1;
   string refresh_token = 2;
 }
+
 message ListSessionsRequest {
   int64 user_id = 1;
 }
+
 message Session {
   uint64 id = 1;
   string user_agent = 2;
@@ -112,6 +136,7 @@ message RevokeSessionRequest {
 message RevokeSessionResponse {
   bool success = 1;
 }
+
 message AssignRoleRequest {
   int64 user_id = 1;
   string role = 2;
@@ -124,3 +149,81 @@ message AssignRoleResponse {
 
 message BatchGetUserPreviewsRequest { repeated int64 ids = 1; }
 message BatchGetUserPreviewsResponse { repeated UserPreview users = 1; }
+
+// =========================
+// Dynamic department roles
+// =========================
+
+message DepartmentRole {
+  int64 id = 1;
+  string slug = 2;
+  int64 department_id = 3;
+}
+
+message CreateDepartmentRoleRequest {
+  int64 department_id = 1 [(validate.rules).int64.gt = 0];
+  string slug = 2 [(validate.rules).string = {min_len: 3, max_len: 32, pattern: "^[a-z][a-z0-9_]{2,31}$"}];
+}
+
+message CreateDepartmentRoleResponse {
+  DepartmentRole role = 1;
+}
+
+message ListDepartmentRolesRequest {
+  int64 department_id = 1 [(validate.rules).int64.gt = 0];
+}
+
+message ListDepartmentRolesResponse {
+  repeated DepartmentRole roles = 1;
+}
+
+message GetDepartmentRoleRequest {
+  int64 role_id = 1 [(validate.rules).int64.gt = 0];
+}
+
+message GetDepartmentRoleResponse {
+  DepartmentRole role = 1;
+}
+
+message DeleteDepartmentRoleRequest {
+  int64 role_id = 1 [(validate.rules).int64.gt = 0];
+}
+
+message DeleteDepartmentRoleResponse {
+  bool success = 1;
+}
+
+// =========================
+// Assignments
+// =========================
+
+message AssignDepartmentRoleRequest {
+  int64 user_id = 1 [(validate.rules).int64.gt = 0];
+  int64 department_id = 2 [(validate.rules).int64.gt = 0];
+  int64 role_id = 3 [(validate.rules).int64.gt = 0];
+  string comment = 4;
+}
+
+message AssignDepartmentRoleResponse {
+  bool success = 1;
+}
+
+message RevokeDepartmentRoleRequest {
+  int64 user_id = 1 [(validate.rules).int64.gt = 0];
+  int64 department_id = 2 [(validate.rules).int64.gt = 0];
+  int64 role_id = 3 [(validate.rules).int64.gt = 0];
+  string comment = 4;
+}
+
+message RevokeDepartmentRoleResponse {
+  bool success = 1;
+}
+
+message ListUserDepartmentRolesRequest {
+  int64 user_id = 1 [(validate.rules).int64.gt = 0];
+  int64 department_id = 2 [(validate.rules).int64.gt = 0];
+}
+
+message ListUserDepartmentRolesResponse {
+  repeated string slugs = 1;
+}

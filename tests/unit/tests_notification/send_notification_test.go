@@ -9,6 +9,7 @@ import (
 	notificationv1 "github.com/lucky720s/diplomaflow/pkg/protobuf/notification/v1"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
+	"google.golang.org/grpc/metadata"
 )
 
 func TestService_SendNotification(t *testing.T) {
@@ -42,7 +43,8 @@ func TestHandler_SendNotification(t *testing.T) {
 		Type:    "alert",
 	}
 
-	resp, err := handler.SendNotification(context.Background(), req)
+	ctx := metadata.NewIncomingContext(context.Background(), metadata.Pairs("x-internal-service", "api_gateway"))
+	resp, err := handler.SendNotification(ctx, req)
 
 	require.NoError(t, err)
 	require.Equal(t, int64(999), resp.NotificationId)

@@ -46,7 +46,6 @@ help:
 	@echo   make test-file     - Run file service tests
 	@echo   make test-form     - Run form service tests
 	@echo   make test-notif    - Run notification tests
-	@echo   make test-role     - Run role service tests
 	@echo   make test-project  - Run project service tests
 	@echo   make test-workflow - Run workflow service tests
 	@echo   make coverage      - Tests with coverage report
@@ -93,7 +92,6 @@ tools:
 proto:
 	@if not exist "$(PROTO_OUT)\admin\v1" mkdir "$(PROTO_OUT)\admin\v1"
 	@if not exist "$(PROTO_OUT)\auth\v1" mkdir "$(PROTO_OUT)\auth\v1"
-	@if not exist "$(PROTO_OUT)\role\v1" mkdir "$(PROTO_OUT)\role\v1"
 	@if not exist "$(PROTO_OUT)\project\v1" mkdir "$(PROTO_OUT)\project\v1"
 	@if not exist "$(PROTO_OUT)\team\v1" mkdir "$(PROTO_OUT)\team\v1"
 	@if not exist "$(PROTO_OUT)\university\v1" mkdir "$(PROTO_OUT)\university\v1"
@@ -111,7 +109,6 @@ wire:
 	$(WIRE) gen ./internal/gateway
 	$(WIRE) gen ./internal/notification
 	$(WIRE) gen ./internal/project
-	$(WIRE) gen ./internal/role
 	$(WIRE) gen ./internal/task
 	$(WIRE) gen ./internal/team
 	$(WIRE) gen ./internal/university
@@ -136,9 +133,6 @@ test-form:
 test-notif:
 	go test -v ./tests/unit/tests_notification/...
 
-test-role:
-	go test -v ./tests/unit/tests_role/...
-
 test-project:
 	go test -v ./tests/unit/tests_project/...
 
@@ -161,7 +155,6 @@ build:
 	set CGO_ENABLED=0&& go build $(LDFLAGS) -o bin/form_service.exe ./cmd/form_service
 	set CGO_ENABLED=0&& go build $(LDFLAGS) -o bin/notification_service.exe ./cmd/notification_service
 	set CGO_ENABLED=0&& go build $(LDFLAGS) -o bin/project_service.exe ./cmd/project_service
-	set CGO_ENABLED=0&& go build $(LDFLAGS) -o bin/role_service.exe ./cmd/role_service
 	set CGO_ENABLED=0&& go build $(LDFLAGS) -o bin/task_service.exe ./cmd/task_service
 	set CGO_ENABLED=0&& go build $(LDFLAGS) -o bin/team_service.exe ./cmd/team_service
 	set CGO_ENABLED=0&& go build $(LDFLAGS) -o bin/university_service.exe ./cmd/university_service
@@ -177,7 +170,6 @@ build-linux:
 	set CGO_ENABLED=0&& set GOOS=linux&& set GOARCH=amd64&& go build $(LDFLAGS) -o bin/linux/form_service ./cmd/form_service
 	set CGO_ENABLED=0&& set GOOS=linux&& set GOARCH=amd64&& go build $(LDFLAGS) -o bin/linux/notification_service ./cmd/notification_service
 	set CGO_ENABLED=0&& set GOOS=linux&& set GOARCH=amd64&& go build $(LDFLAGS) -o bin/linux/project_service ./cmd/project_service
-	set CGO_ENABLED=0&& set GOOS=linux&& set GOARCH=amd64&& go build $(LDFLAGS) -o bin/linux/role_service ./cmd/role_service
 	set CGO_ENABLED=0&& set GOOS=linux&& set GOARCH=amd64&& go build $(LDFLAGS) -o bin/linux/team_service ./cmd/team_service
 	set CGO_ENABLED=0&& set GOOS=linux&& set GOARCH=amd64&& go build $(LDFLAGS) -o bin/linux/university_service ./cmd/university_service
 	set CGO_ENABLED=0&& set GOOS=linux&& set GOARCH=amd64&& go build $(LDFLAGS) -o bin/linux/workflow_service ./cmd/workflow_service

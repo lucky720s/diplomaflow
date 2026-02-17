@@ -11,7 +11,6 @@ x-service-addrs-host: &svc_addrs_host
   SERVICES_PROJECT_ADDR: 127.0.0.1:8083
   SERVICES_TEAM_ADDR: 127.0.0.1:8084
   SERVICES_WORKFLOW_ADDR: 127.0.0.1:8085
-  SERVICES_ROLE_ADDR: 127.0.0.1:8086
   SERVICES_NOTIFICATION_ADDR: 127.0.0.1:8087
   SERVICES_FILE_ADDR: 127.0.0.1:8088
   SERVICES_FORM_ADDR: 127.0.0.1:8089
@@ -104,25 +103,6 @@ services:
       start_period: 20s
     restart: unless-stopped
 
-  role_service:
-    build:
-      context: .
-      dockerfile: cmd/role_service/Dockerfile
-    network_mode: host
-    environment:
-      <<: *common_env
-      GRPC_PORT: "8086"
-    depends_on:
-      migrate:
-        condition: service_completed_successfully
-    healthcheck:
-      test: ["CMD", "grpc_health_probe", "-addr=127.0.0.1:8086", "-service=role.v1.RoleService"]
-      interval: 10s
-      timeout: 3s
-      retries: 15
-      start_period: 20s
-    restart: unless-stopped
-
   auth_service:
     build:
       context: .
@@ -135,17 +115,13 @@ services:
       JWT_SECRET: ${JWT_SECRET:?JWT_SECRET is required}
       ACCESS_TOKEN_TTL: ${ACCESS_TOKEN_TTL:-15m}
       REFRESH_TOKEN_TTL: ${REFRESH_TOKEN_TTL:-720h}
-      # Важно: auth_service читает services.university_addr / services.role_addr -> env сработает как override
       SERVICES_UNIVERSITY_ADDR: 127.0.0.1:8081
-      SERVICES_ROLE_ADDR: 127.0.0.1:8086
     depends_on:
       migrate:
         condition: service_completed_successfully
       redis:
         condition: service_healthy
       university_service:
-        condition: service_started
-      role_service:
         condition: service_started
     healthcheck:
       test: ["CMD", "grpc_health_probe", "-addr=127.0.0.1:8082", "-service=auth.v1.AuthService"]
@@ -335,7 +311,6 @@ services:
     environment:
       <<: *common_env
       GRPC_PORT: "8091"
-      # task_service читает services.auth_addr / services.team_addr / services.notification_addr / services.file_addr
       SERVICES_AUTH_ADDR: 127.0.0.1:8082
       SERVICES_TEAM_ADDR: 127.0.0.1:8084
       SERVICES_NOTIFICATION_ADDR: 127.0.0.1:8087

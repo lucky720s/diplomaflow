@@ -15,7 +15,6 @@ type Config struct {
 	ProjectServiceAddr      string   `mapstructure:"services_project_addr"`
 	TeamServiceAddr         string   `mapstructure:"services_team_addr"`
 	UniversityServiceAddr   string   `mapstructure:"services_university_addr"`
-	RoleServiceAddr         string   `mapstructure:"services_role_addr"`
 	WorkflowServiceAddr     string   `mapstructure:"services_workflow_addr"`
 	NotificationServiceAddr string   `mapstructure:"services_notification_addr"`
 	FileServiceAddr         string   `mapstructure:"services_file_addr"`
@@ -35,7 +34,6 @@ func Load(path string, cfg interface{}) error {
 	v.SetEnvKeyReplacer(strings.NewReplacer(".", "_"))
 
 	if err := v.ReadInConfig(); err != nil {
-		// для gateway конфиг файл обычно существует, но сделаем поведение мягким
 		if _, ok := err.(viper.ConfigFileNotFoundError); !ok {
 			return fmt.Errorf("read config: %w", err)
 		}
@@ -51,7 +49,6 @@ func Load(path string, cfg interface{}) error {
 	_ = v.BindEnv("services_team_addr", "SERVICES_TEAM_ADDR")
 	_ = v.BindEnv("services_task_addr", "SERVICES_TASK_ADDR")
 	_ = v.BindEnv("services_university_addr", "SERVICES_UNIVERSITY_ADDR")
-	_ = v.BindEnv("services_role_addr", "SERVICES_ROLE_ADDR")
 	_ = v.BindEnv("services_workflow_addr", "SERVICES_WORKFLOW_ADDR")
 	_ = v.BindEnv("services_notification_addr", "SERVICES_NOTIFICATION_ADDR")
 	_ = v.BindEnv("services_file_addr", "SERVICES_FILE_ADDR")

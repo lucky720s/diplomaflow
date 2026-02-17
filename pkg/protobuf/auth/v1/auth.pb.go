@@ -1206,6 +1206,746 @@ func (x *BatchGetUserPreviewsResponse) GetUsers() []*UserPreview {
 	return nil
 }
 
+type DepartmentRole struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Id            int64                  `protobuf:"varint,1,opt,name=id,proto3" json:"id,omitempty"`
+	Slug          string                 `protobuf:"bytes,2,opt,name=slug,proto3" json:"slug,omitempty"`
+	DepartmentId  int64                  `protobuf:"varint,3,opt,name=department_id,json=departmentId,proto3" json:"department_id,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *DepartmentRole) Reset() {
+	*x = DepartmentRole{}
+	mi := &file_auth_v1_auth_proto_msgTypes[20]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *DepartmentRole) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*DepartmentRole) ProtoMessage() {}
+
+func (x *DepartmentRole) ProtoReflect() protoreflect.Message {
+	mi := &file_auth_v1_auth_proto_msgTypes[20]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use DepartmentRole.ProtoReflect.Descriptor instead.
+func (*DepartmentRole) Descriptor() ([]byte, []int) {
+	return file_auth_v1_auth_proto_rawDescGZIP(), []int{20}
+}
+
+func (x *DepartmentRole) GetId() int64 {
+	if x != nil {
+		return x.Id
+	}
+	return 0
+}
+
+func (x *DepartmentRole) GetSlug() string {
+	if x != nil {
+		return x.Slug
+	}
+	return ""
+}
+
+func (x *DepartmentRole) GetDepartmentId() int64 {
+	if x != nil {
+		return x.DepartmentId
+	}
+	return 0
+}
+
+type CreateDepartmentRoleRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	DepartmentId  int64                  `protobuf:"varint,1,opt,name=department_id,json=departmentId,proto3" json:"department_id,omitempty"`
+	Slug          string                 `protobuf:"bytes,2,opt,name=slug,proto3" json:"slug,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *CreateDepartmentRoleRequest) Reset() {
+	*x = CreateDepartmentRoleRequest{}
+	mi := &file_auth_v1_auth_proto_msgTypes[21]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *CreateDepartmentRoleRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*CreateDepartmentRoleRequest) ProtoMessage() {}
+
+func (x *CreateDepartmentRoleRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_auth_v1_auth_proto_msgTypes[21]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use CreateDepartmentRoleRequest.ProtoReflect.Descriptor instead.
+func (*CreateDepartmentRoleRequest) Descriptor() ([]byte, []int) {
+	return file_auth_v1_auth_proto_rawDescGZIP(), []int{21}
+}
+
+func (x *CreateDepartmentRoleRequest) GetDepartmentId() int64 {
+	if x != nil {
+		return x.DepartmentId
+	}
+	return 0
+}
+
+func (x *CreateDepartmentRoleRequest) GetSlug() string {
+	if x != nil {
+		return x.Slug
+	}
+	return ""
+}
+
+type CreateDepartmentRoleResponse struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Role          *DepartmentRole        `protobuf:"bytes,1,opt,name=role,proto3" json:"role,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *CreateDepartmentRoleResponse) Reset() {
+	*x = CreateDepartmentRoleResponse{}
+	mi := &file_auth_v1_auth_proto_msgTypes[22]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *CreateDepartmentRoleResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*CreateDepartmentRoleResponse) ProtoMessage() {}
+
+func (x *CreateDepartmentRoleResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_auth_v1_auth_proto_msgTypes[22]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use CreateDepartmentRoleResponse.ProtoReflect.Descriptor instead.
+func (*CreateDepartmentRoleResponse) Descriptor() ([]byte, []int) {
+	return file_auth_v1_auth_proto_rawDescGZIP(), []int{22}
+}
+
+func (x *CreateDepartmentRoleResponse) GetRole() *DepartmentRole {
+	if x != nil {
+		return x.Role
+	}
+	return nil
+}
+
+type ListDepartmentRolesRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	DepartmentId  int64                  `protobuf:"varint,1,opt,name=department_id,json=departmentId,proto3" json:"department_id,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *ListDepartmentRolesRequest) Reset() {
+	*x = ListDepartmentRolesRequest{}
+	mi := &file_auth_v1_auth_proto_msgTypes[23]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ListDepartmentRolesRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ListDepartmentRolesRequest) ProtoMessage() {}
+
+func (x *ListDepartmentRolesRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_auth_v1_auth_proto_msgTypes[23]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ListDepartmentRolesRequest.ProtoReflect.Descriptor instead.
+func (*ListDepartmentRolesRequest) Descriptor() ([]byte, []int) {
+	return file_auth_v1_auth_proto_rawDescGZIP(), []int{23}
+}
+
+func (x *ListDepartmentRolesRequest) GetDepartmentId() int64 {
+	if x != nil {
+		return x.DepartmentId
+	}
+	return 0
+}
+
+type ListDepartmentRolesResponse struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Roles         []*DepartmentRole      `protobuf:"bytes,1,rep,name=roles,proto3" json:"roles,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *ListDepartmentRolesResponse) Reset() {
+	*x = ListDepartmentRolesResponse{}
+	mi := &file_auth_v1_auth_proto_msgTypes[24]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ListDepartmentRolesResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ListDepartmentRolesResponse) ProtoMessage() {}
+
+func (x *ListDepartmentRolesResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_auth_v1_auth_proto_msgTypes[24]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ListDepartmentRolesResponse.ProtoReflect.Descriptor instead.
+func (*ListDepartmentRolesResponse) Descriptor() ([]byte, []int) {
+	return file_auth_v1_auth_proto_rawDescGZIP(), []int{24}
+}
+
+func (x *ListDepartmentRolesResponse) GetRoles() []*DepartmentRole {
+	if x != nil {
+		return x.Roles
+	}
+	return nil
+}
+
+type GetDepartmentRoleRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	RoleId        int64                  `protobuf:"varint,1,opt,name=role_id,json=roleId,proto3" json:"role_id,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *GetDepartmentRoleRequest) Reset() {
+	*x = GetDepartmentRoleRequest{}
+	mi := &file_auth_v1_auth_proto_msgTypes[25]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *GetDepartmentRoleRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*GetDepartmentRoleRequest) ProtoMessage() {}
+
+func (x *GetDepartmentRoleRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_auth_v1_auth_proto_msgTypes[25]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use GetDepartmentRoleRequest.ProtoReflect.Descriptor instead.
+func (*GetDepartmentRoleRequest) Descriptor() ([]byte, []int) {
+	return file_auth_v1_auth_proto_rawDescGZIP(), []int{25}
+}
+
+func (x *GetDepartmentRoleRequest) GetRoleId() int64 {
+	if x != nil {
+		return x.RoleId
+	}
+	return 0
+}
+
+type GetDepartmentRoleResponse struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Role          *DepartmentRole        `protobuf:"bytes,1,opt,name=role,proto3" json:"role,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *GetDepartmentRoleResponse) Reset() {
+	*x = GetDepartmentRoleResponse{}
+	mi := &file_auth_v1_auth_proto_msgTypes[26]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *GetDepartmentRoleResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*GetDepartmentRoleResponse) ProtoMessage() {}
+
+func (x *GetDepartmentRoleResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_auth_v1_auth_proto_msgTypes[26]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use GetDepartmentRoleResponse.ProtoReflect.Descriptor instead.
+func (*GetDepartmentRoleResponse) Descriptor() ([]byte, []int) {
+	return file_auth_v1_auth_proto_rawDescGZIP(), []int{26}
+}
+
+func (x *GetDepartmentRoleResponse) GetRole() *DepartmentRole {
+	if x != nil {
+		return x.Role
+	}
+	return nil
+}
+
+type DeleteDepartmentRoleRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	RoleId        int64                  `protobuf:"varint,1,opt,name=role_id,json=roleId,proto3" json:"role_id,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *DeleteDepartmentRoleRequest) Reset() {
+	*x = DeleteDepartmentRoleRequest{}
+	mi := &file_auth_v1_auth_proto_msgTypes[27]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *DeleteDepartmentRoleRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*DeleteDepartmentRoleRequest) ProtoMessage() {}
+
+func (x *DeleteDepartmentRoleRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_auth_v1_auth_proto_msgTypes[27]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use DeleteDepartmentRoleRequest.ProtoReflect.Descriptor instead.
+func (*DeleteDepartmentRoleRequest) Descriptor() ([]byte, []int) {
+	return file_auth_v1_auth_proto_rawDescGZIP(), []int{27}
+}
+
+func (x *DeleteDepartmentRoleRequest) GetRoleId() int64 {
+	if x != nil {
+		return x.RoleId
+	}
+	return 0
+}
+
+type DeleteDepartmentRoleResponse struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Success       bool                   `protobuf:"varint,1,opt,name=success,proto3" json:"success,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *DeleteDepartmentRoleResponse) Reset() {
+	*x = DeleteDepartmentRoleResponse{}
+	mi := &file_auth_v1_auth_proto_msgTypes[28]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *DeleteDepartmentRoleResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*DeleteDepartmentRoleResponse) ProtoMessage() {}
+
+func (x *DeleteDepartmentRoleResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_auth_v1_auth_proto_msgTypes[28]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use DeleteDepartmentRoleResponse.ProtoReflect.Descriptor instead.
+func (*DeleteDepartmentRoleResponse) Descriptor() ([]byte, []int) {
+	return file_auth_v1_auth_proto_rawDescGZIP(), []int{28}
+}
+
+func (x *DeleteDepartmentRoleResponse) GetSuccess() bool {
+	if x != nil {
+		return x.Success
+	}
+	return false
+}
+
+type AssignDepartmentRoleRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	UserId        int64                  `protobuf:"varint,1,opt,name=user_id,json=userId,proto3" json:"user_id,omitempty"`
+	DepartmentId  int64                  `protobuf:"varint,2,opt,name=department_id,json=departmentId,proto3" json:"department_id,omitempty"`
+	RoleId        int64                  `protobuf:"varint,3,opt,name=role_id,json=roleId,proto3" json:"role_id,omitempty"`
+	Comment       string                 `protobuf:"bytes,4,opt,name=comment,proto3" json:"comment,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *AssignDepartmentRoleRequest) Reset() {
+	*x = AssignDepartmentRoleRequest{}
+	mi := &file_auth_v1_auth_proto_msgTypes[29]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *AssignDepartmentRoleRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*AssignDepartmentRoleRequest) ProtoMessage() {}
+
+func (x *AssignDepartmentRoleRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_auth_v1_auth_proto_msgTypes[29]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use AssignDepartmentRoleRequest.ProtoReflect.Descriptor instead.
+func (*AssignDepartmentRoleRequest) Descriptor() ([]byte, []int) {
+	return file_auth_v1_auth_proto_rawDescGZIP(), []int{29}
+}
+
+func (x *AssignDepartmentRoleRequest) GetUserId() int64 {
+	if x != nil {
+		return x.UserId
+	}
+	return 0
+}
+
+func (x *AssignDepartmentRoleRequest) GetDepartmentId() int64 {
+	if x != nil {
+		return x.DepartmentId
+	}
+	return 0
+}
+
+func (x *AssignDepartmentRoleRequest) GetRoleId() int64 {
+	if x != nil {
+		return x.RoleId
+	}
+	return 0
+}
+
+func (x *AssignDepartmentRoleRequest) GetComment() string {
+	if x != nil {
+		return x.Comment
+	}
+	return ""
+}
+
+type AssignDepartmentRoleResponse struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Success       bool                   `protobuf:"varint,1,opt,name=success,proto3" json:"success,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *AssignDepartmentRoleResponse) Reset() {
+	*x = AssignDepartmentRoleResponse{}
+	mi := &file_auth_v1_auth_proto_msgTypes[30]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *AssignDepartmentRoleResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*AssignDepartmentRoleResponse) ProtoMessage() {}
+
+func (x *AssignDepartmentRoleResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_auth_v1_auth_proto_msgTypes[30]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use AssignDepartmentRoleResponse.ProtoReflect.Descriptor instead.
+func (*AssignDepartmentRoleResponse) Descriptor() ([]byte, []int) {
+	return file_auth_v1_auth_proto_rawDescGZIP(), []int{30}
+}
+
+func (x *AssignDepartmentRoleResponse) GetSuccess() bool {
+	if x != nil {
+		return x.Success
+	}
+	return false
+}
+
+type RevokeDepartmentRoleRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	UserId        int64                  `protobuf:"varint,1,opt,name=user_id,json=userId,proto3" json:"user_id,omitempty"`
+	DepartmentId  int64                  `protobuf:"varint,2,opt,name=department_id,json=departmentId,proto3" json:"department_id,omitempty"`
+	RoleId        int64                  `protobuf:"varint,3,opt,name=role_id,json=roleId,proto3" json:"role_id,omitempty"`
+	Comment       string                 `protobuf:"bytes,4,opt,name=comment,proto3" json:"comment,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *RevokeDepartmentRoleRequest) Reset() {
+	*x = RevokeDepartmentRoleRequest{}
+	mi := &file_auth_v1_auth_proto_msgTypes[31]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *RevokeDepartmentRoleRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*RevokeDepartmentRoleRequest) ProtoMessage() {}
+
+func (x *RevokeDepartmentRoleRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_auth_v1_auth_proto_msgTypes[31]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use RevokeDepartmentRoleRequest.ProtoReflect.Descriptor instead.
+func (*RevokeDepartmentRoleRequest) Descriptor() ([]byte, []int) {
+	return file_auth_v1_auth_proto_rawDescGZIP(), []int{31}
+}
+
+func (x *RevokeDepartmentRoleRequest) GetUserId() int64 {
+	if x != nil {
+		return x.UserId
+	}
+	return 0
+}
+
+func (x *RevokeDepartmentRoleRequest) GetDepartmentId() int64 {
+	if x != nil {
+		return x.DepartmentId
+	}
+	return 0
+}
+
+func (x *RevokeDepartmentRoleRequest) GetRoleId() int64 {
+	if x != nil {
+		return x.RoleId
+	}
+	return 0
+}
+
+func (x *RevokeDepartmentRoleRequest) GetComment() string {
+	if x != nil {
+		return x.Comment
+	}
+	return ""
+}
+
+type RevokeDepartmentRoleResponse struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Success       bool                   `protobuf:"varint,1,opt,name=success,proto3" json:"success,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *RevokeDepartmentRoleResponse) Reset() {
+	*x = RevokeDepartmentRoleResponse{}
+	mi := &file_auth_v1_auth_proto_msgTypes[32]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *RevokeDepartmentRoleResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*RevokeDepartmentRoleResponse) ProtoMessage() {}
+
+func (x *RevokeDepartmentRoleResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_auth_v1_auth_proto_msgTypes[32]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use RevokeDepartmentRoleResponse.ProtoReflect.Descriptor instead.
+func (*RevokeDepartmentRoleResponse) Descriptor() ([]byte, []int) {
+	return file_auth_v1_auth_proto_rawDescGZIP(), []int{32}
+}
+
+func (x *RevokeDepartmentRoleResponse) GetSuccess() bool {
+	if x != nil {
+		return x.Success
+	}
+	return false
+}
+
+type ListUserDepartmentRolesRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	UserId        int64                  `protobuf:"varint,1,opt,name=user_id,json=userId,proto3" json:"user_id,omitempty"`
+	DepartmentId  int64                  `protobuf:"varint,2,opt,name=department_id,json=departmentId,proto3" json:"department_id,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *ListUserDepartmentRolesRequest) Reset() {
+	*x = ListUserDepartmentRolesRequest{}
+	mi := &file_auth_v1_auth_proto_msgTypes[33]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ListUserDepartmentRolesRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ListUserDepartmentRolesRequest) ProtoMessage() {}
+
+func (x *ListUserDepartmentRolesRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_auth_v1_auth_proto_msgTypes[33]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ListUserDepartmentRolesRequest.ProtoReflect.Descriptor instead.
+func (*ListUserDepartmentRolesRequest) Descriptor() ([]byte, []int) {
+	return file_auth_v1_auth_proto_rawDescGZIP(), []int{33}
+}
+
+func (x *ListUserDepartmentRolesRequest) GetUserId() int64 {
+	if x != nil {
+		return x.UserId
+	}
+	return 0
+}
+
+func (x *ListUserDepartmentRolesRequest) GetDepartmentId() int64 {
+	if x != nil {
+		return x.DepartmentId
+	}
+	return 0
+}
+
+type ListUserDepartmentRolesResponse struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Slugs         []string               `protobuf:"bytes,1,rep,name=slugs,proto3" json:"slugs,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *ListUserDepartmentRolesResponse) Reset() {
+	*x = ListUserDepartmentRolesResponse{}
+	mi := &file_auth_v1_auth_proto_msgTypes[34]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ListUserDepartmentRolesResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ListUserDepartmentRolesResponse) ProtoMessage() {}
+
+func (x *ListUserDepartmentRolesResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_auth_v1_auth_proto_msgTypes[34]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ListUserDepartmentRolesResponse.ProtoReflect.Descriptor instead.
+func (*ListUserDepartmentRolesResponse) Descriptor() ([]byte, []int) {
+	return file_auth_v1_auth_proto_rawDescGZIP(), []int{34}
+}
+
+func (x *ListUserDepartmentRolesResponse) GetSlugs() []string {
+	if x != nil {
+		return x.Slugs
+	}
+	return nil
+}
+
 var File_auth_v1_auth_proto protoreflect.FileDescriptor
 
 const file_auth_v1_auth_proto_rawDesc = "" +
@@ -1301,7 +2041,48 @@ const file_auth_v1_auth_proto_rawDesc = "" +
 	"\x1bBatchGetUserPreviewsRequest\x12\x10\n" +
 	"\x03ids\x18\x01 \x03(\x03R\x03ids\"J\n" +
 	"\x1cBatchGetUserPreviewsResponse\x12*\n" +
-	"\x05users\x18\x01 \x03(\v2\x14.auth.v1.UserPreviewR\x05users2\xb0\x05\n" +
+	"\x05users\x18\x01 \x03(\v2\x14.auth.v1.UserPreviewR\x05users\"Y\n" +
+	"\x0eDepartmentRole\x12\x0e\n" +
+	"\x02id\x18\x01 \x01(\x03R\x02id\x12\x12\n" +
+	"\x04slug\x18\x02 \x01(\tR\x04slug\x12#\n" +
+	"\rdepartment_id\x18\x03 \x01(\x03R\fdepartmentId\"\x82\x01\n" +
+	"\x1bCreateDepartmentRoleRequest\x12,\n" +
+	"\rdepartment_id\x18\x01 \x01(\x03B\a\xfaB\x04\"\x02 \x00R\fdepartmentId\x125\n" +
+	"\x04slug\x18\x02 \x01(\tB!\xfaB\x1er\x1c\x10\x03\x18 2\x16^[a-z][a-z0-9_]{2,31}$R\x04slug\"K\n" +
+	"\x1cCreateDepartmentRoleResponse\x12+\n" +
+	"\x04role\x18\x01 \x01(\v2\x17.auth.v1.DepartmentRoleR\x04role\"J\n" +
+	"\x1aListDepartmentRolesRequest\x12,\n" +
+	"\rdepartment_id\x18\x01 \x01(\x03B\a\xfaB\x04\"\x02 \x00R\fdepartmentId\"L\n" +
+	"\x1bListDepartmentRolesResponse\x12-\n" +
+	"\x05roles\x18\x01 \x03(\v2\x17.auth.v1.DepartmentRoleR\x05roles\"<\n" +
+	"\x18GetDepartmentRoleRequest\x12 \n" +
+	"\arole_id\x18\x01 \x01(\x03B\a\xfaB\x04\"\x02 \x00R\x06roleId\"H\n" +
+	"\x19GetDepartmentRoleResponse\x12+\n" +
+	"\x04role\x18\x01 \x01(\v2\x17.auth.v1.DepartmentRoleR\x04role\"?\n" +
+	"\x1bDeleteDepartmentRoleRequest\x12 \n" +
+	"\arole_id\x18\x01 \x01(\x03B\a\xfaB\x04\"\x02 \x00R\x06roleId\"8\n" +
+	"\x1cDeleteDepartmentRoleResponse\x12\x18\n" +
+	"\asuccess\x18\x01 \x01(\bR\asuccess\"\xa9\x01\n" +
+	"\x1bAssignDepartmentRoleRequest\x12 \n" +
+	"\auser_id\x18\x01 \x01(\x03B\a\xfaB\x04\"\x02 \x00R\x06userId\x12,\n" +
+	"\rdepartment_id\x18\x02 \x01(\x03B\a\xfaB\x04\"\x02 \x00R\fdepartmentId\x12 \n" +
+	"\arole_id\x18\x03 \x01(\x03B\a\xfaB\x04\"\x02 \x00R\x06roleId\x12\x18\n" +
+	"\acomment\x18\x04 \x01(\tR\acomment\"8\n" +
+	"\x1cAssignDepartmentRoleResponse\x12\x18\n" +
+	"\asuccess\x18\x01 \x01(\bR\asuccess\"\xa9\x01\n" +
+	"\x1bRevokeDepartmentRoleRequest\x12 \n" +
+	"\auser_id\x18\x01 \x01(\x03B\a\xfaB\x04\"\x02 \x00R\x06userId\x12,\n" +
+	"\rdepartment_id\x18\x02 \x01(\x03B\a\xfaB\x04\"\x02 \x00R\fdepartmentId\x12 \n" +
+	"\arole_id\x18\x03 \x01(\x03B\a\xfaB\x04\"\x02 \x00R\x06roleId\x12\x18\n" +
+	"\acomment\x18\x04 \x01(\tR\acomment\"8\n" +
+	"\x1cRevokeDepartmentRoleResponse\x12\x18\n" +
+	"\asuccess\x18\x01 \x01(\bR\asuccess\"p\n" +
+	"\x1eListUserDepartmentRolesRequest\x12 \n" +
+	"\auser_id\x18\x01 \x01(\x03B\a\xfaB\x04\"\x02 \x00R\x06userId\x12,\n" +
+	"\rdepartment_id\x18\x02 \x01(\x03B\a\xfaB\x04\"\x02 \x00R\fdepartmentId\"7\n" +
+	"\x1fListUserDepartmentRolesResponse\x12\x14\n" +
+	"\x05slugs\x18\x01 \x03(\tR\x05slugs2\xf0\n" +
+	"\n" +
 	"\vAuthService\x12?\n" +
 	"\bRegister\x12\x18.auth.v1.RegisterRequest\x1a\x19.auth.v1.RegisterResponse\x126\n" +
 	"\x05Login\x12\x15.auth.v1.LoginRequest\x1a\x16.auth.v1.LoginResponse\x12N\n" +
@@ -1312,7 +2093,14 @@ const file_auth_v1_auth_proto_rawDesc = "" +
 	"\rRevokeSession\x12\x1d.auth.v1.RevokeSessionRequest\x1a\x1e.auth.v1.RevokeSessionResponse\x12E\n" +
 	"\n" +
 	"AssignRole\x12\x1a.auth.v1.AssignRoleRequest\x1a\x1b.auth.v1.AssignRoleResponse\x12c\n" +
-	"\x14BatchGetUserPreviews\x12$.auth.v1.BatchGetUserPreviewsRequest\x1a%.auth.v1.BatchGetUserPreviewsResponseB7Z5github.com/lucky720s/diplomaflow/pkg/protobuf/auth/v1b\x06proto3"
+	"\x14BatchGetUserPreviews\x12$.auth.v1.BatchGetUserPreviewsRequest\x1a%.auth.v1.BatchGetUserPreviewsResponse\x12c\n" +
+	"\x14CreateDepartmentRole\x12$.auth.v1.CreateDepartmentRoleRequest\x1a%.auth.v1.CreateDepartmentRoleResponse\x12`\n" +
+	"\x13ListDepartmentRoles\x12#.auth.v1.ListDepartmentRolesRequest\x1a$.auth.v1.ListDepartmentRolesResponse\x12Z\n" +
+	"\x11GetDepartmentRole\x12!.auth.v1.GetDepartmentRoleRequest\x1a\".auth.v1.GetDepartmentRoleResponse\x12c\n" +
+	"\x14DeleteDepartmentRole\x12$.auth.v1.DeleteDepartmentRoleRequest\x1a%.auth.v1.DeleteDepartmentRoleResponse\x12c\n" +
+	"\x14AssignDepartmentRole\x12$.auth.v1.AssignDepartmentRoleRequest\x1a%.auth.v1.AssignDepartmentRoleResponse\x12c\n" +
+	"\x14RevokeDepartmentRole\x12$.auth.v1.RevokeDepartmentRoleRequest\x1a%.auth.v1.RevokeDepartmentRoleResponse\x12l\n" +
+	"\x17ListUserDepartmentRoles\x12'.auth.v1.ListUserDepartmentRolesRequest\x1a(.auth.v1.ListUserDepartmentRolesResponseB7Z5github.com/lucky720s/diplomaflow/pkg/protobuf/auth/v1b\x06proto3"
 
 var (
 	file_auth_v1_auth_proto_rawDescOnce sync.Once
@@ -1326,56 +2114,88 @@ func file_auth_v1_auth_proto_rawDescGZIP() []byte {
 	return file_auth_v1_auth_proto_rawDescData
 }
 
-var file_auth_v1_auth_proto_msgTypes = make([]protoimpl.MessageInfo, 20)
+var file_auth_v1_auth_proto_msgTypes = make([]protoimpl.MessageInfo, 35)
 var file_auth_v1_auth_proto_goTypes = []any{
-	(*RegisterRequest)(nil),              // 0: auth.v1.RegisterRequest
-	(*RegisterResponse)(nil),             // 1: auth.v1.RegisterResponse
-	(*LoginRequest)(nil),                 // 2: auth.v1.LoginRequest
-	(*LoginResponse)(nil),                // 3: auth.v1.LoginResponse
-	(*ValidateTokenRequest)(nil),         // 4: auth.v1.ValidateTokenRequest
-	(*ValidateTokenResponse)(nil),        // 5: auth.v1.ValidateTokenResponse
-	(*ListUsersRequest)(nil),             // 6: auth.v1.ListUsersRequest
-	(*UserPreview)(nil),                  // 7: auth.v1.UserPreview
-	(*ListUsersResponse)(nil),            // 8: auth.v1.ListUsersResponse
-	(*RefreshTokenRequest)(nil),          // 9: auth.v1.RefreshTokenRequest
-	(*RefreshTokenResponse)(nil),         // 10: auth.v1.RefreshTokenResponse
-	(*ListSessionsRequest)(nil),          // 11: auth.v1.ListSessionsRequest
-	(*Session)(nil),                      // 12: auth.v1.Session
-	(*ListSessionsResponse)(nil),         // 13: auth.v1.ListSessionsResponse
-	(*RevokeSessionRequest)(nil),         // 14: auth.v1.RevokeSessionRequest
-	(*RevokeSessionResponse)(nil),        // 15: auth.v1.RevokeSessionResponse
-	(*AssignRoleRequest)(nil),            // 16: auth.v1.AssignRoleRequest
-	(*AssignRoleResponse)(nil),           // 17: auth.v1.AssignRoleResponse
-	(*BatchGetUserPreviewsRequest)(nil),  // 18: auth.v1.BatchGetUserPreviewsRequest
-	(*BatchGetUserPreviewsResponse)(nil), // 19: auth.v1.BatchGetUserPreviewsResponse
+	(*RegisterRequest)(nil),                 // 0: auth.v1.RegisterRequest
+	(*RegisterResponse)(nil),                // 1: auth.v1.RegisterResponse
+	(*LoginRequest)(nil),                    // 2: auth.v1.LoginRequest
+	(*LoginResponse)(nil),                   // 3: auth.v1.LoginResponse
+	(*ValidateTokenRequest)(nil),            // 4: auth.v1.ValidateTokenRequest
+	(*ValidateTokenResponse)(nil),           // 5: auth.v1.ValidateTokenResponse
+	(*ListUsersRequest)(nil),                // 6: auth.v1.ListUsersRequest
+	(*UserPreview)(nil),                     // 7: auth.v1.UserPreview
+	(*ListUsersResponse)(nil),               // 8: auth.v1.ListUsersResponse
+	(*RefreshTokenRequest)(nil),             // 9: auth.v1.RefreshTokenRequest
+	(*RefreshTokenResponse)(nil),            // 10: auth.v1.RefreshTokenResponse
+	(*ListSessionsRequest)(nil),             // 11: auth.v1.ListSessionsRequest
+	(*Session)(nil),                         // 12: auth.v1.Session
+	(*ListSessionsResponse)(nil),            // 13: auth.v1.ListSessionsResponse
+	(*RevokeSessionRequest)(nil),            // 14: auth.v1.RevokeSessionRequest
+	(*RevokeSessionResponse)(nil),           // 15: auth.v1.RevokeSessionResponse
+	(*AssignRoleRequest)(nil),               // 16: auth.v1.AssignRoleRequest
+	(*AssignRoleResponse)(nil),              // 17: auth.v1.AssignRoleResponse
+	(*BatchGetUserPreviewsRequest)(nil),     // 18: auth.v1.BatchGetUserPreviewsRequest
+	(*BatchGetUserPreviewsResponse)(nil),    // 19: auth.v1.BatchGetUserPreviewsResponse
+	(*DepartmentRole)(nil),                  // 20: auth.v1.DepartmentRole
+	(*CreateDepartmentRoleRequest)(nil),     // 21: auth.v1.CreateDepartmentRoleRequest
+	(*CreateDepartmentRoleResponse)(nil),    // 22: auth.v1.CreateDepartmentRoleResponse
+	(*ListDepartmentRolesRequest)(nil),      // 23: auth.v1.ListDepartmentRolesRequest
+	(*ListDepartmentRolesResponse)(nil),     // 24: auth.v1.ListDepartmentRolesResponse
+	(*GetDepartmentRoleRequest)(nil),        // 25: auth.v1.GetDepartmentRoleRequest
+	(*GetDepartmentRoleResponse)(nil),       // 26: auth.v1.GetDepartmentRoleResponse
+	(*DeleteDepartmentRoleRequest)(nil),     // 27: auth.v1.DeleteDepartmentRoleRequest
+	(*DeleteDepartmentRoleResponse)(nil),    // 28: auth.v1.DeleteDepartmentRoleResponse
+	(*AssignDepartmentRoleRequest)(nil),     // 29: auth.v1.AssignDepartmentRoleRequest
+	(*AssignDepartmentRoleResponse)(nil),    // 30: auth.v1.AssignDepartmentRoleResponse
+	(*RevokeDepartmentRoleRequest)(nil),     // 31: auth.v1.RevokeDepartmentRoleRequest
+	(*RevokeDepartmentRoleResponse)(nil),    // 32: auth.v1.RevokeDepartmentRoleResponse
+	(*ListUserDepartmentRolesRequest)(nil),  // 33: auth.v1.ListUserDepartmentRolesRequest
+	(*ListUserDepartmentRolesResponse)(nil), // 34: auth.v1.ListUserDepartmentRolesResponse
 }
 var file_auth_v1_auth_proto_depIdxs = []int32{
 	7,  // 0: auth.v1.ListUsersResponse.users:type_name -> auth.v1.UserPreview
 	12, // 1: auth.v1.ListSessionsResponse.sessions:type_name -> auth.v1.Session
 	7,  // 2: auth.v1.BatchGetUserPreviewsResponse.users:type_name -> auth.v1.UserPreview
-	0,  // 3: auth.v1.AuthService.Register:input_type -> auth.v1.RegisterRequest
-	2,  // 4: auth.v1.AuthService.Login:input_type -> auth.v1.LoginRequest
-	4,  // 5: auth.v1.AuthService.ValidateToken:input_type -> auth.v1.ValidateTokenRequest
-	6,  // 6: auth.v1.AuthService.ListUsers:input_type -> auth.v1.ListUsersRequest
-	9,  // 7: auth.v1.AuthService.RefreshToken:input_type -> auth.v1.RefreshTokenRequest
-	11, // 8: auth.v1.AuthService.ListSessions:input_type -> auth.v1.ListSessionsRequest
-	14, // 9: auth.v1.AuthService.RevokeSession:input_type -> auth.v1.RevokeSessionRequest
-	16, // 10: auth.v1.AuthService.AssignRole:input_type -> auth.v1.AssignRoleRequest
-	18, // 11: auth.v1.AuthService.BatchGetUserPreviews:input_type -> auth.v1.BatchGetUserPreviewsRequest
-	1,  // 12: auth.v1.AuthService.Register:output_type -> auth.v1.RegisterResponse
-	3,  // 13: auth.v1.AuthService.Login:output_type -> auth.v1.LoginResponse
-	5,  // 14: auth.v1.AuthService.ValidateToken:output_type -> auth.v1.ValidateTokenResponse
-	8,  // 15: auth.v1.AuthService.ListUsers:output_type -> auth.v1.ListUsersResponse
-	10, // 16: auth.v1.AuthService.RefreshToken:output_type -> auth.v1.RefreshTokenResponse
-	13, // 17: auth.v1.AuthService.ListSessions:output_type -> auth.v1.ListSessionsResponse
-	15, // 18: auth.v1.AuthService.RevokeSession:output_type -> auth.v1.RevokeSessionResponse
-	17, // 19: auth.v1.AuthService.AssignRole:output_type -> auth.v1.AssignRoleResponse
-	19, // 20: auth.v1.AuthService.BatchGetUserPreviews:output_type -> auth.v1.BatchGetUserPreviewsResponse
-	12, // [12:21] is the sub-list for method output_type
-	3,  // [3:12] is the sub-list for method input_type
-	3,  // [3:3] is the sub-list for extension type_name
-	3,  // [3:3] is the sub-list for extension extendee
-	0,  // [0:3] is the sub-list for field type_name
+	20, // 3: auth.v1.CreateDepartmentRoleResponse.role:type_name -> auth.v1.DepartmentRole
+	20, // 4: auth.v1.ListDepartmentRolesResponse.roles:type_name -> auth.v1.DepartmentRole
+	20, // 5: auth.v1.GetDepartmentRoleResponse.role:type_name -> auth.v1.DepartmentRole
+	0,  // 6: auth.v1.AuthService.Register:input_type -> auth.v1.RegisterRequest
+	2,  // 7: auth.v1.AuthService.Login:input_type -> auth.v1.LoginRequest
+	4,  // 8: auth.v1.AuthService.ValidateToken:input_type -> auth.v1.ValidateTokenRequest
+	6,  // 9: auth.v1.AuthService.ListUsers:input_type -> auth.v1.ListUsersRequest
+	9,  // 10: auth.v1.AuthService.RefreshToken:input_type -> auth.v1.RefreshTokenRequest
+	11, // 11: auth.v1.AuthService.ListSessions:input_type -> auth.v1.ListSessionsRequest
+	14, // 12: auth.v1.AuthService.RevokeSession:input_type -> auth.v1.RevokeSessionRequest
+	16, // 13: auth.v1.AuthService.AssignRole:input_type -> auth.v1.AssignRoleRequest
+	18, // 14: auth.v1.AuthService.BatchGetUserPreviews:input_type -> auth.v1.BatchGetUserPreviewsRequest
+	21, // 15: auth.v1.AuthService.CreateDepartmentRole:input_type -> auth.v1.CreateDepartmentRoleRequest
+	23, // 16: auth.v1.AuthService.ListDepartmentRoles:input_type -> auth.v1.ListDepartmentRolesRequest
+	25, // 17: auth.v1.AuthService.GetDepartmentRole:input_type -> auth.v1.GetDepartmentRoleRequest
+	27, // 18: auth.v1.AuthService.DeleteDepartmentRole:input_type -> auth.v1.DeleteDepartmentRoleRequest
+	29, // 19: auth.v1.AuthService.AssignDepartmentRole:input_type -> auth.v1.AssignDepartmentRoleRequest
+	31, // 20: auth.v1.AuthService.RevokeDepartmentRole:input_type -> auth.v1.RevokeDepartmentRoleRequest
+	33, // 21: auth.v1.AuthService.ListUserDepartmentRoles:input_type -> auth.v1.ListUserDepartmentRolesRequest
+	1,  // 22: auth.v1.AuthService.Register:output_type -> auth.v1.RegisterResponse
+	3,  // 23: auth.v1.AuthService.Login:output_type -> auth.v1.LoginResponse
+	5,  // 24: auth.v1.AuthService.ValidateToken:output_type -> auth.v1.ValidateTokenResponse
+	8,  // 25: auth.v1.AuthService.ListUsers:output_type -> auth.v1.ListUsersResponse
+	10, // 26: auth.v1.AuthService.RefreshToken:output_type -> auth.v1.RefreshTokenResponse
+	13, // 27: auth.v1.AuthService.ListSessions:output_type -> auth.v1.ListSessionsResponse
+	15, // 28: auth.v1.AuthService.RevokeSession:output_type -> auth.v1.RevokeSessionResponse
+	17, // 29: auth.v1.AuthService.AssignRole:output_type -> auth.v1.AssignRoleResponse
+	19, // 30: auth.v1.AuthService.BatchGetUserPreviews:output_type -> auth.v1.BatchGetUserPreviewsResponse
+	22, // 31: auth.v1.AuthService.CreateDepartmentRole:output_type -> auth.v1.CreateDepartmentRoleResponse
+	24, // 32: auth.v1.AuthService.ListDepartmentRoles:output_type -> auth.v1.ListDepartmentRolesResponse
+	26, // 33: auth.v1.AuthService.GetDepartmentRole:output_type -> auth.v1.GetDepartmentRoleResponse
+	28, // 34: auth.v1.AuthService.DeleteDepartmentRole:output_type -> auth.v1.DeleteDepartmentRoleResponse
+	30, // 35: auth.v1.AuthService.AssignDepartmentRole:output_type -> auth.v1.AssignDepartmentRoleResponse
+	32, // 36: auth.v1.AuthService.RevokeDepartmentRole:output_type -> auth.v1.RevokeDepartmentRoleResponse
+	34, // 37: auth.v1.AuthService.ListUserDepartmentRoles:output_type -> auth.v1.ListUserDepartmentRolesResponse
+	22, // [22:38] is the sub-list for method output_type
+	6,  // [6:22] is the sub-list for method input_type
+	6,  // [6:6] is the sub-list for extension type_name
+	6,  // [6:6] is the sub-list for extension extendee
+	0,  // [0:6] is the sub-list for field type_name
 }
 
 func init() { file_auth_v1_auth_proto_init() }
@@ -1389,7 +2209,7 @@ func file_auth_v1_auth_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_auth_v1_auth_proto_rawDesc), len(file_auth_v1_auth_proto_rawDesc)),
 			NumEnums:      0,
-			NumMessages:   20,
+			NumMessages:   35,
 			NumExtensions: 0,
 			NumServices:   1,
 		},

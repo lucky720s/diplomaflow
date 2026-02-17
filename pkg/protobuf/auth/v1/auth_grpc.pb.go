@@ -19,15 +19,22 @@ import (
 const _ = grpc.SupportPackageIsVersion9
 
 const (
-	AuthService_Register_FullMethodName             = "/auth.v1.AuthService/Register"
-	AuthService_Login_FullMethodName                = "/auth.v1.AuthService/Login"
-	AuthService_ValidateToken_FullMethodName        = "/auth.v1.AuthService/ValidateToken"
-	AuthService_ListUsers_FullMethodName            = "/auth.v1.AuthService/ListUsers"
-	AuthService_RefreshToken_FullMethodName         = "/auth.v1.AuthService/RefreshToken"
-	AuthService_ListSessions_FullMethodName         = "/auth.v1.AuthService/ListSessions"
-	AuthService_RevokeSession_FullMethodName        = "/auth.v1.AuthService/RevokeSession"
-	AuthService_AssignRole_FullMethodName           = "/auth.v1.AuthService/AssignRole"
-	AuthService_BatchGetUserPreviews_FullMethodName = "/auth.v1.AuthService/BatchGetUserPreviews"
+	AuthService_Register_FullMethodName                = "/auth.v1.AuthService/Register"
+	AuthService_Login_FullMethodName                   = "/auth.v1.AuthService/Login"
+	AuthService_ValidateToken_FullMethodName           = "/auth.v1.AuthService/ValidateToken"
+	AuthService_ListUsers_FullMethodName               = "/auth.v1.AuthService/ListUsers"
+	AuthService_RefreshToken_FullMethodName            = "/auth.v1.AuthService/RefreshToken"
+	AuthService_ListSessions_FullMethodName            = "/auth.v1.AuthService/ListSessions"
+	AuthService_RevokeSession_FullMethodName           = "/auth.v1.AuthService/RevokeSession"
+	AuthService_AssignRole_FullMethodName              = "/auth.v1.AuthService/AssignRole"
+	AuthService_BatchGetUserPreviews_FullMethodName    = "/auth.v1.AuthService/BatchGetUserPreviews"
+	AuthService_CreateDepartmentRole_FullMethodName    = "/auth.v1.AuthService/CreateDepartmentRole"
+	AuthService_ListDepartmentRoles_FullMethodName     = "/auth.v1.AuthService/ListDepartmentRoles"
+	AuthService_GetDepartmentRole_FullMethodName       = "/auth.v1.AuthService/GetDepartmentRole"
+	AuthService_DeleteDepartmentRole_FullMethodName    = "/auth.v1.AuthService/DeleteDepartmentRole"
+	AuthService_AssignDepartmentRole_FullMethodName    = "/auth.v1.AuthService/AssignDepartmentRole"
+	AuthService_RevokeDepartmentRole_FullMethodName    = "/auth.v1.AuthService/RevokeDepartmentRole"
+	AuthService_ListUserDepartmentRoles_FullMethodName = "/auth.v1.AuthService/ListUserDepartmentRoles"
 )
 
 // AuthServiceClient is the client API for AuthService service.
@@ -41,8 +48,19 @@ type AuthServiceClient interface {
 	RefreshToken(ctx context.Context, in *RefreshTokenRequest, opts ...grpc.CallOption) (*RefreshTokenResponse, error)
 	ListSessions(ctx context.Context, in *ListSessionsRequest, opts ...grpc.CallOption) (*ListSessionsResponse, error)
 	RevokeSession(ctx context.Context, in *RevokeSessionRequest, opts ...grpc.CallOption) (*RevokeSessionResponse, error)
+	// Base role (users.role): student|teacher|admin
 	AssignRole(ctx context.Context, in *AssignRoleRequest, opts ...grpc.CallOption) (*AssignRoleResponse, error)
+	// Internal
 	BatchGetUserPreviews(ctx context.Context, in *BatchGetUserPreviewsRequest, opts ...grpc.CallOption) (*BatchGetUserPreviewsResponse, error)
+	// Directory (CRUD)
+	CreateDepartmentRole(ctx context.Context, in *CreateDepartmentRoleRequest, opts ...grpc.CallOption) (*CreateDepartmentRoleResponse, error)
+	ListDepartmentRoles(ctx context.Context, in *ListDepartmentRolesRequest, opts ...grpc.CallOption) (*ListDepartmentRolesResponse, error)
+	GetDepartmentRole(ctx context.Context, in *GetDepartmentRoleRequest, opts ...grpc.CallOption) (*GetDepartmentRoleResponse, error)
+	DeleteDepartmentRole(ctx context.Context, in *DeleteDepartmentRoleRequest, opts ...grpc.CallOption) (*DeleteDepartmentRoleResponse, error)
+	// Assignments
+	AssignDepartmentRole(ctx context.Context, in *AssignDepartmentRoleRequest, opts ...grpc.CallOption) (*AssignDepartmentRoleResponse, error)
+	RevokeDepartmentRole(ctx context.Context, in *RevokeDepartmentRoleRequest, opts ...grpc.CallOption) (*RevokeDepartmentRoleResponse, error)
+	ListUserDepartmentRoles(ctx context.Context, in *ListUserDepartmentRolesRequest, opts ...grpc.CallOption) (*ListUserDepartmentRolesResponse, error)
 }
 
 type authServiceClient struct {
@@ -143,6 +161,76 @@ func (c *authServiceClient) BatchGetUserPreviews(ctx context.Context, in *BatchG
 	return out, nil
 }
 
+func (c *authServiceClient) CreateDepartmentRole(ctx context.Context, in *CreateDepartmentRoleRequest, opts ...grpc.CallOption) (*CreateDepartmentRoleResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(CreateDepartmentRoleResponse)
+	err := c.cc.Invoke(ctx, AuthService_CreateDepartmentRole_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *authServiceClient) ListDepartmentRoles(ctx context.Context, in *ListDepartmentRolesRequest, opts ...grpc.CallOption) (*ListDepartmentRolesResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(ListDepartmentRolesResponse)
+	err := c.cc.Invoke(ctx, AuthService_ListDepartmentRoles_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *authServiceClient) GetDepartmentRole(ctx context.Context, in *GetDepartmentRoleRequest, opts ...grpc.CallOption) (*GetDepartmentRoleResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(GetDepartmentRoleResponse)
+	err := c.cc.Invoke(ctx, AuthService_GetDepartmentRole_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *authServiceClient) DeleteDepartmentRole(ctx context.Context, in *DeleteDepartmentRoleRequest, opts ...grpc.CallOption) (*DeleteDepartmentRoleResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(DeleteDepartmentRoleResponse)
+	err := c.cc.Invoke(ctx, AuthService_DeleteDepartmentRole_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *authServiceClient) AssignDepartmentRole(ctx context.Context, in *AssignDepartmentRoleRequest, opts ...grpc.CallOption) (*AssignDepartmentRoleResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(AssignDepartmentRoleResponse)
+	err := c.cc.Invoke(ctx, AuthService_AssignDepartmentRole_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *authServiceClient) RevokeDepartmentRole(ctx context.Context, in *RevokeDepartmentRoleRequest, opts ...grpc.CallOption) (*RevokeDepartmentRoleResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(RevokeDepartmentRoleResponse)
+	err := c.cc.Invoke(ctx, AuthService_RevokeDepartmentRole_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *authServiceClient) ListUserDepartmentRoles(ctx context.Context, in *ListUserDepartmentRolesRequest, opts ...grpc.CallOption) (*ListUserDepartmentRolesResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(ListUserDepartmentRolesResponse)
+	err := c.cc.Invoke(ctx, AuthService_ListUserDepartmentRoles_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // AuthServiceServer is the server API for AuthService service.
 // All implementations must embed UnimplementedAuthServiceServer
 // for forward compatibility.
@@ -154,8 +242,19 @@ type AuthServiceServer interface {
 	RefreshToken(context.Context, *RefreshTokenRequest) (*RefreshTokenResponse, error)
 	ListSessions(context.Context, *ListSessionsRequest) (*ListSessionsResponse, error)
 	RevokeSession(context.Context, *RevokeSessionRequest) (*RevokeSessionResponse, error)
+	// Base role (users.role): student|teacher|admin
 	AssignRole(context.Context, *AssignRoleRequest) (*AssignRoleResponse, error)
+	// Internal
 	BatchGetUserPreviews(context.Context, *BatchGetUserPreviewsRequest) (*BatchGetUserPreviewsResponse, error)
+	// Directory (CRUD)
+	CreateDepartmentRole(context.Context, *CreateDepartmentRoleRequest) (*CreateDepartmentRoleResponse, error)
+	ListDepartmentRoles(context.Context, *ListDepartmentRolesRequest) (*ListDepartmentRolesResponse, error)
+	GetDepartmentRole(context.Context, *GetDepartmentRoleRequest) (*GetDepartmentRoleResponse, error)
+	DeleteDepartmentRole(context.Context, *DeleteDepartmentRoleRequest) (*DeleteDepartmentRoleResponse, error)
+	// Assignments
+	AssignDepartmentRole(context.Context, *AssignDepartmentRoleRequest) (*AssignDepartmentRoleResponse, error)
+	RevokeDepartmentRole(context.Context, *RevokeDepartmentRoleRequest) (*RevokeDepartmentRoleResponse, error)
+	ListUserDepartmentRoles(context.Context, *ListUserDepartmentRolesRequest) (*ListUserDepartmentRolesResponse, error)
 	mustEmbedUnimplementedAuthServiceServer()
 }
 
@@ -192,6 +291,27 @@ func (UnimplementedAuthServiceServer) AssignRole(context.Context, *AssignRoleReq
 }
 func (UnimplementedAuthServiceServer) BatchGetUserPreviews(context.Context, *BatchGetUserPreviewsRequest) (*BatchGetUserPreviewsResponse, error) {
 	return nil, status.Error(codes.Unimplemented, "method BatchGetUserPreviews not implemented")
+}
+func (UnimplementedAuthServiceServer) CreateDepartmentRole(context.Context, *CreateDepartmentRoleRequest) (*CreateDepartmentRoleResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method CreateDepartmentRole not implemented")
+}
+func (UnimplementedAuthServiceServer) ListDepartmentRoles(context.Context, *ListDepartmentRolesRequest) (*ListDepartmentRolesResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method ListDepartmentRoles not implemented")
+}
+func (UnimplementedAuthServiceServer) GetDepartmentRole(context.Context, *GetDepartmentRoleRequest) (*GetDepartmentRoleResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method GetDepartmentRole not implemented")
+}
+func (UnimplementedAuthServiceServer) DeleteDepartmentRole(context.Context, *DeleteDepartmentRoleRequest) (*DeleteDepartmentRoleResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method DeleteDepartmentRole not implemented")
+}
+func (UnimplementedAuthServiceServer) AssignDepartmentRole(context.Context, *AssignDepartmentRoleRequest) (*AssignDepartmentRoleResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method AssignDepartmentRole not implemented")
+}
+func (UnimplementedAuthServiceServer) RevokeDepartmentRole(context.Context, *RevokeDepartmentRoleRequest) (*RevokeDepartmentRoleResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method RevokeDepartmentRole not implemented")
+}
+func (UnimplementedAuthServiceServer) ListUserDepartmentRoles(context.Context, *ListUserDepartmentRolesRequest) (*ListUserDepartmentRolesResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method ListUserDepartmentRoles not implemented")
 }
 func (UnimplementedAuthServiceServer) mustEmbedUnimplementedAuthServiceServer() {}
 func (UnimplementedAuthServiceServer) testEmbeddedByValue()                     {}
@@ -376,6 +496,132 @@ func _AuthService_BatchGetUserPreviews_Handler(srv interface{}, ctx context.Cont
 	return interceptor(ctx, in, info, handler)
 }
 
+func _AuthService_CreateDepartmentRole_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(CreateDepartmentRoleRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(AuthServiceServer).CreateDepartmentRole(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: AuthService_CreateDepartmentRole_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(AuthServiceServer).CreateDepartmentRole(ctx, req.(*CreateDepartmentRoleRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _AuthService_ListDepartmentRoles_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(ListDepartmentRolesRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(AuthServiceServer).ListDepartmentRoles(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: AuthService_ListDepartmentRoles_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(AuthServiceServer).ListDepartmentRoles(ctx, req.(*ListDepartmentRolesRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _AuthService_GetDepartmentRole_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetDepartmentRoleRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(AuthServiceServer).GetDepartmentRole(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: AuthService_GetDepartmentRole_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(AuthServiceServer).GetDepartmentRole(ctx, req.(*GetDepartmentRoleRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _AuthService_DeleteDepartmentRole_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(DeleteDepartmentRoleRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(AuthServiceServer).DeleteDepartmentRole(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: AuthService_DeleteDepartmentRole_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(AuthServiceServer).DeleteDepartmentRole(ctx, req.(*DeleteDepartmentRoleRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _AuthService_AssignDepartmentRole_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(AssignDepartmentRoleRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(AuthServiceServer).AssignDepartmentRole(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: AuthService_AssignDepartmentRole_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(AuthServiceServer).AssignDepartmentRole(ctx, req.(*AssignDepartmentRoleRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _AuthService_RevokeDepartmentRole_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(RevokeDepartmentRoleRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(AuthServiceServer).RevokeDepartmentRole(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: AuthService_RevokeDepartmentRole_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(AuthServiceServer).RevokeDepartmentRole(ctx, req.(*RevokeDepartmentRoleRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _AuthService_ListUserDepartmentRoles_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(ListUserDepartmentRolesRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(AuthServiceServer).ListUserDepartmentRoles(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: AuthService_ListUserDepartmentRoles_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(AuthServiceServer).ListUserDepartmentRoles(ctx, req.(*ListUserDepartmentRolesRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // AuthService_ServiceDesc is the grpc.ServiceDesc for AuthService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -418,6 +664,34 @@ var AuthService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "BatchGetUserPreviews",
 			Handler:    _AuthService_BatchGetUserPreviews_Handler,
+		},
+		{
+			MethodName: "CreateDepartmentRole",
+			Handler:    _AuthService_CreateDepartmentRole_Handler,
+		},
+		{
+			MethodName: "ListDepartmentRoles",
+			Handler:    _AuthService_ListDepartmentRoles_Handler,
+		},
+		{
+			MethodName: "GetDepartmentRole",
+			Handler:    _AuthService_GetDepartmentRole_Handler,
+		},
+		{
+			MethodName: "DeleteDepartmentRole",
+			Handler:    _AuthService_DeleteDepartmentRole_Handler,
+		},
+		{
+			MethodName: "AssignDepartmentRole",
+			Handler:    _AuthService_AssignDepartmentRole_Handler,
+		},
+		{
+			MethodName: "RevokeDepartmentRole",
+			Handler:    _AuthService_RevokeDepartmentRole_Handler,
+		},
+		{
+			MethodName: "ListUserDepartmentRoles",
+			Handler:    _AuthService_ListUserDepartmentRoles_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

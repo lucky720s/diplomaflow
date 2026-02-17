@@ -13,6 +13,5 @@ type Config struct {
 	} `mapstructure:"jwt"`
 	Services struct {
 		UniversityAddr string `mapstructure:"university_addr"`
-		RoleAddr       string `mapstructure:"role_addr"`
 	} `mapstructure:"services"`
 }
