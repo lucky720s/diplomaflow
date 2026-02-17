@@ -1,7 +1,6 @@
 package handler
 
 import (
-	"context"
 	"net/http"
 	"strconv"
 
@@ -11,16 +10,6 @@ import (
 	"google.golang.org/grpc/metadata"
 	"google.golang.org/protobuf/types/known/structpb"
 )
-
-func projectCtx(c *gin.Context) context.Context {
-	userID := c.GetInt64("userId")
-	role := c.GetString("role")
-	return metadata.AppendToOutgoingContext(
-		c.Request.Context(),
-		"x-user-id", strconv.FormatInt(userID, 10),
-		"x-user-role", role,
-	)
-}
 
 // NOTE: CreateProject endpoint лучше удалить из gateway (см. ниже патч роутинга).
 // Оставляю метод, чтобы сборка не падала, если где-то ещё на него ссылаются.
@@ -35,7 +24,7 @@ func (h *Handler) GetProject(c *gin.Context) {
 		return
 	}
 
-	res, err := h.projectClient.GetProject(projectCtx(c), &projectv1.GetProjectRequest{ProjectId: id})
+	res, err := h.projectClient.GetProject(outgoingCtx(c), &projectv1.GetProjectRequest{ProjectId: id})
 	if err != nil {
 		MapGRPCError(c, err)
 		return
@@ -50,7 +39,7 @@ func (h *Handler) GetStudentProjects(c *gin.Context) {
 		return
 	}
 
-	res, err := h.projectClient.GetStudentProjects(projectCtx(c), &projectv1.GetStudentProjectsRequest{
+	res, err := h.projectClient.GetStudentProjects(outgoingCtx(c), &projectv1.GetStudentProjectsRequest{
 		StudentId: studentID,
 	})
 	if err != nil {
@@ -68,7 +57,7 @@ func (h *Handler) GetProjectDetails(c *gin.Context) {
 	}
 
 	traceID := c.GetString("trace_id")
-	ctx := metadata.AppendToOutgoingContext(projectCtx(c), "x-trace-id", traceID)
+	ctx := metadata.AppendToOutgoingContext(outgoingCtx(c), "x-trace-id", traceID)
 	g, ctx := errgroup.WithContext(ctx)
 
 	var projectResp *projectv1.GetProjectResponse
@@ -110,7 +99,7 @@ func (h *Handler) ListProjects(c *gin.Context) {
 		req.StudentId = studentID
 	}
 
-	res, err := h.projectClient.GetStudentProjects(projectCtx(c), &req)
+	res, err := h.projectClient.GetStudentProjects(outgoingCtx(c), &req)
 	if err != nil {
 		MapGRPCError(c, err)
 		return
@@ -136,7 +125,7 @@ func (h *Handler) PerformProjectAction(c *gin.Context) {
 
 	payloadStruct, _ := structpb.NewStruct(req.Payload)
 
-	res, err := h.projectClient.PerformAction(projectCtx(c), &projectv1.PerformActionRequest{
+	res, err := h.projectClient.PerformAction(outgoingCtx(c), &projectv1.PerformActionRequest{
 		ProjectId:  projectID,
 		ActionName: req.ActionName,
 		Payload:    payloadStruct,

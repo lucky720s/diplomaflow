@@ -31,12 +31,95 @@ func (r *repository) Transaction(ctx context.Context, fn func(tx *gorm.DB) error
 	return r.db.WithContext(ctx).Transaction(fn)
 }
 
+// --- minimal rows for task tables (создаём из project_service транзакционно) ---
+
+type taskBoardRow struct {
+	ID          int64  `gorm:"primaryKey;column:id"`
+	TeamID      int64  `gorm:"column:team_id"`
+	ProjectID   int64  `gorm:"column:project_id"`
+	Name        string `gorm:"column:name"`
+	Description string `gorm:"column:description"`
+	CreatedBy   int64  `gorm:"column:created_by"`
+}
+
+func (taskBoardRow) TableName() string { return "task_boards" }
+
+type taskColumnRow struct {
+	ID           int64  `gorm:"primaryKey;column:id"`
+	BoardID      int64  `gorm:"column:board_id"`
+	Name         string `gorm:"column:name"`
+	Slug         string `gorm:"column:slug"`
+	Color        string `gorm:"column:color"`
+	OrderIndex   int32  `gorm:"column:order_index"`
+	IsDefault    bool   `gorm:"column:is_default"`
+	IsDoneColumn bool   `gorm:"column:is_done_column"`
+}
+
+func (taskColumnRow) TableName() string { return "task_columns" }
+
+type defaultColumn struct {
+	Name         string
+	Slug         string
+	Color        string
+	OrderIndex   int32
+	IsDefault    bool
+	IsDoneColumn bool
+}
+
+var defaultColumns = []defaultColumn{
+	{Name: "К выполнению", Slug: "todo", Color: "#6B7280", OrderIndex: 0, IsDefault: true, IsDoneColumn: false},
+	{Name: "В работе", Slug: "in_progress", Color: "#3B82F6", OrderIndex: 1, IsDefault: false, IsDoneColumn: false},
+	{Name: "На проверке", Slug: "review", Color: "#F59E0B", OrderIndex: 2, IsDefault: false, IsDoneColumn: false},
+	{Name: "Готово", Slug: "done", Color: "#10B981", OrderIndex: 3, IsDefault: false, IsDoneColumn: true},
+}
+
+func createBoardAndDefaultColumns(tx *gorm.DB, project *Project) error {
+	// создаём board с именем проекта
+	b := &taskBoardRow{
+		TeamID:      project.TeamID,
+		ProjectID:   project.ID,
+		Name:        project.Title,
+		Description: project.Description,
+		CreatedBy:   project.StudentID,
+	}
+
+	// settings/created_at/updated_at берём дефолтами БД (NOT NULL defaults) [[16]]
+	if err := tx.Omit("Settings").Create(b).Error; err != nil {
+		return err
+	}
+
+	// дефолтные колонки
+	for _, c := range defaultColumns {
+		row := &taskColumnRow{
+			BoardID:      b.ID,
+			Name:         c.Name,
+			Slug:         c.Slug,
+			Color:        c.Color,
+			OrderIndex:   c.OrderIndex,
+			IsDefault:    c.IsDefault,
+			IsDoneColumn: c.IsDoneColumn,
+		}
+		if err := tx.Create(row).Error; err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
 func (r *repository) CreateWithOutbox(ctx context.Context, project *Project, eventType string, topic string, payloadBase map[string]interface{}) error {
 	return r.db.WithContext(ctx).Transaction(func(tx *gorm.DB) error {
+		// 1) create project
 		if err := tx.Create(project).Error; err != nil {
 			return err
 		}
 
+		// 2) create task board + default columns (в той же транзакции)
+		if err := createBoardAndDefaultColumns(tx, project); err != nil {
+			return err
+		}
+
+		// 3) outbox
 		payloadBase["project_id"] = project.ID
 		payloadBytes, err := json.Marshal(payloadBase)
 		if err != nil {

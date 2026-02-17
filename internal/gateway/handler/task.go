@@ -1,22 +1,136 @@
 package handler
 
 import (
+	"errors"
 	"net/http"
 	"strconv"
 	"time"
 
 	"github.com/gin-gonic/gin"
+	projectv1 "github.com/lucky720s/diplomaflow/pkg/protobuf/project/v1"
 	taskv1 "github.com/lucky720s/diplomaflow/pkg/protobuf/task/v1"
 	teamv1 "github.com/lucky720s/diplomaflow/pkg/protobuf/team/v1"
 	"google.golang.org/protobuf/types/known/fieldmaskpb"
 	"google.golang.org/protobuf/types/known/timestamppb"
 )
 
+// ============== helpers ==============
+
+func (h *Handler) resolveProjectIDForStudent(c *gin.Context, userID int64) (int64, error) {
+	if userID <= 0 {
+		return 0, errors.New("user_id is required")
+	}
+
+	// Prefer matching by team_id (more stable than "first project")
+	teamResp, err := h.teamClient.GetMyTeam(outgoingCtx(c), &teamv1.GetMyTeamRequest{UserId: userID})
+	if err != nil {
+		return 0, err
+	}
+	if teamResp == nil || !teamResp.HasTeam || teamResp.Team == nil || teamResp.Team.TeamId == 0 {
+		return 0, errors.New("user has no team")
+	}
+	teamID := teamResp.Team.TeamId
+
+	projectsResp, err := h.projectClient.GetStudentProjects(outgoingCtx(c), &projectv1.GetStudentProjectsRequest{
+		StudentId: userID,
+	})
+	if err != nil {
+		return 0, err
+	}
+	if projectsResp == nil || len(projectsResp.Projects) == 0 {
+		return 0, errors.New("no projects found for student")
+	}
+
+	for _, p := range projectsResp.Projects {
+		if p != nil && p.TeamId == teamID && p.ProjectId > 0 {
+			return p.ProjectId, nil
+		}
+	}
+
+	// fallback: if only one project exists, return it
+	if len(projectsResp.Projects) == 1 && projectsResp.Projects[0] != nil && projectsResp.Projects[0].ProjectId > 0 {
+		return projectsResp.Projects[0].ProjectId, nil
+	}
+
+	return 0, errors.New("cannot resolve project for student")
+}
+
+func (h *Handler) resolveBoardID(c *gin.Context) (int64, error) {
+	// 1) explicit board_id
+	if b := c.Query("board_id"); b != "" {
+		boardID, err := strconv.ParseInt(b, 10, 64)
+		if err != nil || boardID <= 0 {
+			return 0, errors.New("invalid board_id")
+		}
+		return boardID, nil
+	}
+
+	// 2) explicit project_id
+	if p := c.Query("project_id"); p != "" {
+		projectID, err := strconv.ParseInt(p, 10, 64)
+		if err != nil || projectID <= 0 {
+			return 0, errors.New("invalid project_id")
+		}
+		br, err := h.taskClient.GetBoardByProject(c.Request.Context(), &taskv1.GetBoardByProjectRequest{
+			ProjectId: projectID,
+		})
+		if err != nil {
+			return 0, err
+		}
+		if br == nil || br.Board == nil || br.Board.Id <= 0 {
+			return 0, errors.New("board not found for project")
+		}
+		return br.Board.Id, nil
+	}
+
+	// 3) role-based fallback
+	userID := c.GetInt64("userId")
+	role := c.GetString("role")
+
+	if userID <= 0 {
+		return 0, errors.New("unauthorized")
+	}
+
+	switch role {
+	case "student":
+		projectID, err := h.resolveProjectIDForStudent(c, userID)
+		if err != nil {
+			return 0, err
+		}
+		br, err := h.taskClient.GetBoardByProject(c.Request.Context(), &taskv1.GetBoardByProjectRequest{
+			ProjectId: projectID,
+		})
+		if err != nil {
+			return 0, err
+		}
+		if br == nil || br.Board == nil || br.Board.Id <= 0 {
+			return 0, errors.New("board not found")
+		}
+		return br.Board.Id, nil
+
+	default: // teacher/admin/others
+		lr, err := h.taskClient.ListMyBoards(c.Request.Context(), &taskv1.ListMyBoardsRequest{
+			UserId: userID,
+			Role:   role,
+		})
+		if err != nil {
+			return 0, err
+		}
+		if lr == nil || len(lr.Boards) == 0 {
+			return 0, errors.New("no boards found")
+		}
+		if len(lr.Boards) == 1 && lr.Boards[0] != nil && lr.Boards[0].Id > 0 {
+			return lr.Boards[0].Id, nil
+		}
+		return 0, errors.New("multiple boards found; specify board_id or project_id")
+	}
+}
+
 // ==================== Board ====================
 
 func (h *Handler) GetBoard(c *gin.Context) {
 	boardID, err := strconv.ParseInt(c.Param("board_id"), 10, 64)
-	if err != nil {
+	if err != nil || boardID <= 0 {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid board id"})
 		return
 	}
@@ -38,10 +152,11 @@ func (h *Handler) GetBoard(c *gin.Context) {
 	c.JSON(http.StatusOK, resp)
 }
 
-func (h *Handler) GetBoardByTeam(c *gin.Context) {
-	teamID, err := strconv.ParseInt(c.Param("team_id"), 10, 64)
-	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid team id"})
+// GET /api/v1/boards/project/:project_id
+func (h *Handler) GetBoardByProject(c *gin.Context) {
+	projectID, err := strconv.ParseInt(c.Param("project_id"), 10, 64)
+	if err != nil || projectID <= 0 {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid project id"})
 		return
 	}
 
@@ -49,8 +164,8 @@ func (h *Handler) GetBoardByTeam(c *gin.Context) {
 	includeStats := c.Query("include_stats") == "true"
 	includeTasks := c.Query("include_tasks") == "true"
 
-	resp, err := h.taskClient.GetBoardByTeam(c.Request.Context(), &taskv1.GetBoardByTeamRequest{
-		TeamId:         teamID,
+	resp, err := h.taskClient.GetBoardByProject(c.Request.Context(), &taskv1.GetBoardByProjectRequest{
+		ProjectId:      projectID,
 		IncludeColumns: includeColumns,
 		IncludeStats:   includeStats,
 		IncludeTasks:   includeTasks,
@@ -62,39 +177,34 @@ func (h *Handler) GetBoardByTeam(c *gin.Context) {
 	c.JSON(http.StatusOK, resp)
 }
 
-func (h *Handler) CreateBoard(c *gin.Context) {
+// GET /api/v1/boards/my
+func (h *Handler) ListMyBoards(c *gin.Context) {
 	userID := c.GetInt64("userId")
-
-	var req struct {
-		TeamID               int64  `json:"team_id" binding:"required"`
-		ProjectID            int64  `json:"project_id"`
-		Name                 string `json:"name" binding:"required"`
-		Description          string `json:"description"`
-		CreateDefaultColumns bool   `json:"create_default_columns"`
-	}
-	if err := c.ShouldBindJSON(&req); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+	role := c.GetString("role")
+	if userID <= 0 {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "unauthorized"})
 		return
 	}
 
-	resp, err := h.taskClient.CreateBoard(c.Request.Context(), &taskv1.CreateBoardRequest{
-		TeamId:               req.TeamID,
-		ProjectId:            req.ProjectID,
-		Name:                 req.Name,
-		Description:          req.Description,
-		CreatedBy:            userID,
-		CreateDefaultColumns: req.CreateDefaultColumns,
+	includeColumns := c.Query("include_columns") == "true"
+	includeStats := c.Query("include_stats") == "true"
+
+	resp, err := h.taskClient.ListMyBoards(c.Request.Context(), &taskv1.ListMyBoardsRequest{
+		UserId:         userID,
+		Role:           role,
+		IncludeColumns: includeColumns,
+		IncludeStats:   includeStats,
 	})
 	if err != nil {
 		MapGRPCError(c, err)
 		return
 	}
-	c.JSON(http.StatusCreated, resp)
+	c.JSON(http.StatusOK, resp)
 }
 
 func (h *Handler) UpdateBoard(c *gin.Context) {
 	boardID, err := strconv.ParseInt(c.Param("board_id"), 10, 64)
-	if err != nil {
+	if err != nil || boardID <= 0 {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid board id"})
 		return
 	}
@@ -133,7 +243,7 @@ func (h *Handler) UpdateBoard(c *gin.Context) {
 
 func (h *Handler) ListColumns(c *gin.Context) {
 	boardID, err := strconv.ParseInt(c.Param("board_id"), 10, 64)
-	if err != nil {
+	if err != nil || boardID <= 0 {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid board id"})
 		return
 	}
@@ -153,7 +263,7 @@ func (h *Handler) ListColumns(c *gin.Context) {
 
 func (h *Handler) CreateColumn(c *gin.Context) {
 	boardID, err := strconv.ParseInt(c.Param("board_id"), 10, 64)
-	if err != nil {
+	if err != nil || boardID <= 0 {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid board id"})
 		return
 	}
@@ -191,7 +301,7 @@ func (h *Handler) CreateColumn(c *gin.Context) {
 
 func (h *Handler) UpdateColumn(c *gin.Context) {
 	columnID, err := strconv.ParseInt(c.Param("column_id"), 10, 64)
-	if err != nil {
+	if err != nil || columnID <= 0 {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid column id"})
 		return
 	}
@@ -225,7 +335,7 @@ func (h *Handler) UpdateColumn(c *gin.Context) {
 
 func (h *Handler) DeleteColumn(c *gin.Context) {
 	columnID, err := strconv.ParseInt(c.Param("column_id"), 10, 64)
-	if err != nil {
+	if err != nil || columnID <= 0 {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid column id"})
 		return
 	}
@@ -248,7 +358,7 @@ func (h *Handler) DeleteColumn(c *gin.Context) {
 
 func (h *Handler) ReorderColumns(c *gin.Context) {
 	boardID, err := strconv.ParseInt(c.Param("board_id"), 10, 64)
-	if err != nil {
+	if err != nil || boardID <= 0 {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid board id"})
 		return
 	}
@@ -317,7 +427,7 @@ func (h *Handler) CreateTask(c *gin.Context) {
 		WorkflowStepId:   req.WorkflowStepID,
 	}
 
-	// Парсим DueDate если указан
+	// Parse DueDate if provided
 	if req.DueDate != "" {
 		t, err := time.Parse(time.RFC3339, req.DueDate)
 		if err == nil {
@@ -335,7 +445,7 @@ func (h *Handler) CreateTask(c *gin.Context) {
 
 func (h *Handler) GetTask(c *gin.Context) {
 	taskID, err := strconv.ParseInt(c.Param("id"), 10, 64)
-	if err != nil {
+	if err != nil || taskID <= 0 {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid task id"})
 		return
 	}
@@ -352,7 +462,7 @@ func (h *Handler) GetTask(c *gin.Context) {
 
 func (h *Handler) UpdateTask(c *gin.Context) {
 	taskID, err := strconv.ParseInt(c.Param("id"), 10, 64)
-	if err != nil {
+	if err != nil || taskID <= 0 {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid task id"})
 		return
 	}
@@ -404,7 +514,7 @@ func (h *Handler) UpdateTask(c *gin.Context) {
 
 func (h *Handler) DeleteTask(c *gin.Context) {
 	taskID, err := strconv.ParseInt(c.Param("id"), 10, 64)
-	if err != nil {
+	if err != nil || taskID <= 0 {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid task id"})
 		return
 	}
@@ -468,7 +578,7 @@ func (h *Handler) ListTasks(c *gin.Context) {
 
 func (h *Handler) MoveTask(c *gin.Context) {
 	taskID, err := strconv.ParseInt(c.Param("id"), 10, 64)
-	if err != nil {
+	if err != nil || taskID <= 0 {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid task id"})
 		return
 	}
@@ -498,7 +608,7 @@ func (h *Handler) MoveTask(c *gin.Context) {
 
 func (h *Handler) ReorderTasks(c *gin.Context) {
 	columnID, err := strconv.ParseInt(c.Param("column_id"), 10, 64)
-	if err != nil {
+	if err != nil || columnID <= 0 {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid column id"})
 		return
 	}
@@ -526,7 +636,7 @@ func (h *Handler) ReorderTasks(c *gin.Context) {
 
 func (h *Handler) AssignTask(c *gin.Context) {
 	taskID, err := strconv.ParseInt(c.Param("id"), 10, 64)
-	if err != nil {
+	if err != nil || taskID <= 0 {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid task id"})
 		return
 	}
@@ -554,7 +664,7 @@ func (h *Handler) AssignTask(c *gin.Context) {
 
 func (h *Handler) UnassignTask(c *gin.Context) {
 	taskID, err := strconv.ParseInt(c.Param("id"), 10, 64)
-	if err != nil {
+	if err != nil || taskID <= 0 {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid task id"})
 		return
 	}
@@ -575,7 +685,7 @@ func (h *Handler) UnassignTask(c *gin.Context) {
 
 func (h *Handler) CreateTaskComment(c *gin.Context) {
 	taskID, err := strconv.ParseInt(c.Param("id"), 10, 64)
-	if err != nil {
+	if err != nil || taskID <= 0 {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid task id"})
 		return
 	}
@@ -605,7 +715,7 @@ func (h *Handler) CreateTaskComment(c *gin.Context) {
 
 func (h *Handler) ListTaskComments(c *gin.Context) {
 	taskID, err := strconv.ParseInt(c.Param("id"), 10, 64)
-	if err != nil {
+	if err != nil || taskID <= 0 {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid task id"})
 		return
 	}
@@ -632,7 +742,7 @@ func (h *Handler) ListTaskComments(c *gin.Context) {
 
 func (h *Handler) DeleteTaskComment(c *gin.Context) {
 	commentID, err := strconv.ParseInt(c.Param("comment_id"), 10, 64)
-	if err != nil {
+	if err != nil || commentID <= 0 {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid comment id"})
 		return
 	}
@@ -653,7 +763,7 @@ func (h *Handler) DeleteTaskComment(c *gin.Context) {
 
 func (h *Handler) GetBoardStats(c *gin.Context) {
 	boardID, err := strconv.ParseInt(c.Param("board_id"), 10, 64)
-	if err != nil {
+	if err != nil || boardID <= 0 {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid board id"})
 		return
 	}
@@ -741,41 +851,19 @@ func (h *Handler) GetUpcomingDeadlines(c *gin.Context) {
 	}
 
 	if boardID == 0 {
-		teamResp, err := h.teamClient.GetMyTeam(outgoingCtx(c), &teamv1.GetMyTeamRequest{
-			UserId: userID,
-		})
-
+		// Try to resolve board automatically:
+		// - use board_id or project_id if provided,
+		// - else by role fallback (student: team->project->board; teacher: list my boards)
+		bid, err := h.resolveBoardID(c)
 		if err != nil {
-			MapGRPCError(c, err)
-			return
-		}
-		if teamResp == nil || !teamResp.HasTeam || teamResp.Team == nil || teamResp.Team.TeamId == 0 {
+			// keep old behavior: return empty list instead of hard error
 			c.JSON(http.StatusOK, &taskv1.ListTasksResponse{
 				Tasks:      nil,
 				TotalCount: 0,
 			})
 			return
 		}
-
-		boardResp, err := h.taskClient.GetBoardByTeam(c.Request.Context(), &taskv1.GetBoardByTeamRequest{
-			TeamId: teamResp.Team.TeamId,
-		})
-		if err != nil {
-			c.JSON(http.StatusOK, &taskv1.ListTasksResponse{
-				Tasks:      nil,
-				TotalCount: 0,
-			})
-			return
-		}
-		if boardResp == nil || boardResp.Board == nil || boardResp.Board.Id == 0 {
-			c.JSON(http.StatusOK, &taskv1.ListTasksResponse{
-				Tasks:      nil,
-				TotalCount: 0,
-			})
-			return
-		}
-
-		boardID = boardResp.Board.Id
+		boardID = bid
 	}
 
 	resp, err := h.taskClient.GetUpcomingDeadlines(c.Request.Context(), &taskv1.GetUpcomingDeadlinesRequest{
@@ -796,7 +884,7 @@ func (h *Handler) GetUpcomingDeadlines(c *gin.Context) {
 
 func (h *Handler) GetTaskActivity(c *gin.Context) {
 	taskID, err := strconv.ParseInt(c.Param("id"), 10, 64)
-	if err != nil {
+	if err != nil || taskID <= 0 {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid task id"})
 		return
 	}
@@ -820,7 +908,7 @@ func (h *Handler) GetTaskActivity(c *gin.Context) {
 
 func (h *Handler) AddTaskWatcher(c *gin.Context) {
 	taskID, err := strconv.ParseInt(c.Param("id"), 10, 64)
-	if err != nil {
+	if err != nil || taskID <= 0 {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid task id"})
 		return
 	}
@@ -846,7 +934,7 @@ func (h *Handler) AddTaskWatcher(c *gin.Context) {
 
 func (h *Handler) RemoveTaskWatcher(c *gin.Context) {
 	taskID, err := strconv.ParseInt(c.Param("id"), 10, 64)
-	if err != nil {
+	if err != nil || taskID <= 0 {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid task id"})
 		return
 	}
@@ -872,7 +960,7 @@ func (h *Handler) RemoveTaskWatcher(c *gin.Context) {
 
 func (h *Handler) ListTaskWatchers(c *gin.Context) {
 	taskID, err := strconv.ParseInt(c.Param("id"), 10, 64)
-	if err != nil {
+	if err != nil || taskID <= 0 {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid task id"})
 		return
 	}

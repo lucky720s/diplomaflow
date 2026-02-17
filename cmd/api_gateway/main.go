@@ -256,12 +256,12 @@ func main() {
 		boards := v1.Group("/boards")
 		boards.Use(middleware.AuthMiddleware(cfg.JWTSecret))
 		{
-			boards.POST("", handler.CreateBoard)
+			boards.GET("/my", handler.ListMyBoards)
+			boards.GET("/project/:project_id", handler.GetBoardByProject)
+
 			boards.GET("/:board_id", handler.GetBoard)
 			boards.PATCH("/:board_id", handler.UpdateBoard)
 			boards.GET("/:board_id/stats", handler.GetBoardStats)
-
-			boards.GET("/team/:team_id", handler.GetBoardByTeam)
 
 			boards.GET("/:board_id/columns", handler.ListColumns)
 			boards.POST("/:board_id/columns", handler.CreateColumn)

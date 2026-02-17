@@ -20,7 +20,8 @@ type Repository interface {
 	// Board
 	CreateBoard(ctx context.Context, board *Board) error
 	GetBoard(ctx context.Context, id int64) (*Board, error)
-	GetBoardByTeam(ctx context.Context, teamID int64) (*Board, error)
+	GetBoardByProject(ctx context.Context, projectID int64) (*Board, error)
+	ListMyBoards(ctx context.Context, userID int64, role string) ([]*Board, error)
 	UpdateBoard(ctx context.Context, board *Board) error
 	DeleteBoard(ctx context.Context, id int64) error
 
@@ -122,6 +123,8 @@ func NewRepository(db *gorm.DB) Repository {
 	return &repository{db: db}
 }
 
+// ==================== Board ====================
+
 func (r *repository) CreateBoard(ctx context.Context, board *Board) error {
 	board.CreatedAt = time.Now()
 	board.UpdatedAt = time.Now()
@@ -136,12 +139,47 @@ func (r *repository) GetBoard(ctx context.Context, id int64) (*Board, error) {
 	return &board, nil
 }
 
-func (r *repository) GetBoardByTeam(ctx context.Context, teamID int64) (*Board, error) {
+func (r *repository) GetBoardByProject(ctx context.Context, projectID int64) (*Board, error) {
 	var board Board
-	if err := r.db.WithContext(ctx).Where("team_id = ? AND deleted_at IS NULL", teamID).First(&board).Error; err != nil {
+	if err := r.db.WithContext(ctx).
+		Where("project_id = ? AND deleted_at IS NULL", projectID).
+		First(&board).Error; err != nil {
 		return nil, err
 	}
 	return &board, nil
+}
+
+// ListMyBoards:
+// - student: доски проектов, где user либо владелец (projects.student_id), либо участник команды (team_members)
+// - teacher: доски проектов, где user научрук команды (admin_supervisor_assignments.team_id)
+// - admin: все доски
+func (r *repository) ListMyBoards(ctx context.Context, userID int64, role string) ([]*Board, error) {
+	var boards []*Board
+
+	q := r.db.WithContext(ctx).Model(&Board{}).
+		Where("task_boards.deleted_at IS NULL")
+
+	switch role {
+	case "teacher":
+		q = q.
+			Joins("JOIN admin_supervisor_assignments a ON a.team_id = task_boards.team_id").
+			Where("a.supervisor_id = ?", userID)
+
+	case "admin":
+		// all boards
+
+	default: // student (и любые прочие роли — как student)
+		q = q.
+			Joins("JOIN projects p ON p.id = task_boards.project_id").
+			Joins("LEFT JOIN team_members tm ON tm.team_id = task_boards.team_id AND tm.user_id = ?", userID).
+			Where("p.student_id = ? OR tm.user_id = ?", userID, userID).
+			Select("DISTINCT task_boards.*")
+	}
+
+	if err := q.Order("task_boards.created_at DESC").Find(&boards).Error; err != nil {
+		return nil, err
+	}
+	return boards, nil
 }
 
 func (r *repository) UpdateBoard(ctx context.Context, board *Board) error {
@@ -152,6 +190,8 @@ func (r *repository) UpdateBoard(ctx context.Context, board *Board) error {
 func (r *repository) DeleteBoard(ctx context.Context, id int64) error {
 	return r.db.WithContext(ctx).Delete(&Board{}, id).Error
 }
+
+// ==================== Columns ====================
 
 func (r *repository) CreateColumn(ctx context.Context, column *Column) error {
 	column.CreatedAt = time.Now()
@@ -234,6 +274,8 @@ func (r *repository) GetMaxColumnOrder(ctx context.Context, boardID int64) (int3
 	return *maxOrder, nil
 }
 
+// ==================== Task ====================
+
 func (r *repository) CreateTask(ctx context.Context, task *Task) error {
 	task.CreatedAt = time.Now()
 	task.UpdatedAt = time.Now()
@@ -289,12 +331,10 @@ func (r *repository) ListTasks(ctx context.Context, filter TaskFilter) ([]*Task,
 		query = query.Where("assignee_id IS NULL")
 	}
 
-	// Count
 	if err := query.Count(&total).Error; err != nil {
 		return nil, 0, err
 	}
 
-	// Sort
 	sortBy := "position"
 	if filter.SortBy != "" {
 		sortBy = filter.SortBy
@@ -305,7 +345,6 @@ func (r *repository) ListTasks(ctx context.Context, filter TaskFilter) ([]*Task,
 	}
 	query = query.Order(fmt.Sprintf("%s %s", sortBy, sortOrder))
 
-	// Pagination (Limit 0 = без лимита - нужно для DeleteColumn)
 	if filter.Limit > 0 {
 		query = query.Limit(filter.Limit).Offset(filter.Offset)
 	}
@@ -317,7 +356,6 @@ func (r *repository) ListTasks(ctx context.Context, filter TaskFilter) ([]*Task,
 // MoveTask - перемещает задачу
 func (r *repository) MoveTask(ctx context.Context, taskID, toColumnID int64, position int32) error {
 	return r.db.WithContext(ctx).Transaction(func(tx *gorm.DB) error {
-		// Получаем задачу
 		var task Task
 		if err := tx.First(&task, taskID).Error; err != nil {
 			return err
@@ -326,13 +364,11 @@ func (r *repository) MoveTask(ctx context.Context, taskID, toColumnID int64, pos
 		oldColumnID := task.ColumnID
 		oldPosition := task.Position
 
-		// Получаем целевую колонку для определения статуса
 		var toColumn Column
 		if err := tx.First(&toColumn, toColumnID).Error; err != nil {
 			return err
 		}
 
-		// Обновляем статус на основе колонки
 		newStatus := task.Status
 		switch toColumn.Slug {
 		case "todo":
@@ -346,39 +382,31 @@ func (r *repository) MoveTask(ctx context.Context, taskID, toColumnID int64, pos
 		}
 
 		if oldColumnID == toColumnID {
-			// Перемещение ВНУТРИ одной колонки
 			if oldPosition == position {
-				return nil // Позиция не изменилась
+				return nil
 			}
 
 			if oldPosition < position {
-				// Двигаем вниз: сдвигаем промежуточные задачи вверх
 				tx.Model(&Task{}).
 					Where("column_id = ? AND position > ? AND position <= ? AND id != ?",
 						toColumnID, oldPosition, position, taskID).
 					UpdateColumn("position", gorm.Expr("position - 1"))
 			} else {
-				// Двигаем вверх: сдвигаем промежуточные задачи вниз
 				tx.Model(&Task{}).
 					Where("column_id = ? AND position >= ? AND position < ? AND id != ?",
 						toColumnID, position, oldPosition, taskID).
 					UpdateColumn("position", gorm.Expr("position + 1"))
 			}
 		} else {
-			// Перемещение МЕЖДУ колонками
-
-			// 1. Сдвигаем задачи в старой колонке (закрываем дырку)
 			tx.Model(&Task{}).
 				Where("column_id = ? AND position > ?", oldColumnID, oldPosition).
 				UpdateColumn("position", gorm.Expr("position - 1"))
 
-			// 2. Сдвигаем задачи в новой колонке (освобождаем место)
 			tx.Model(&Task{}).
 				Where("column_id = ? AND position >= ?", toColumnID, position).
 				UpdateColumn("position", gorm.Expr("position + 1"))
 		}
 
-		// Обновляем саму задачу
 		updates := map[string]interface{}{
 			"column_id":  toColumnID,
 			"position":   position,
@@ -386,16 +414,13 @@ func (r *repository) MoveTask(ctx context.Context, taskID, toColumnID int64, pos
 			"updated_at": time.Now(),
 		}
 
-		// Если перемещаем в done - ставим completed_at
 		if toColumn.IsDoneColumn && task.CompletedAt == nil {
 			now := time.Now()
 			updates["completed_at"] = now
 		}
-		// Если перемещаем из done - убираем completed_at
 		if !toColumn.IsDoneColumn && task.CompletedAt != nil {
 			updates["completed_at"] = nil
 		}
-		// Если перемещаем в in_progress - ставим started_at
 		if toColumn.Slug == "in_progress" && task.StartedAt == nil {
 			now := time.Now()
 			updates["started_at"] = now
@@ -433,7 +458,7 @@ func (r *repository) GetMaxPosition(ctx context.Context, columnID int64) (int32,
 
 func (r *repository) BulkUpdateTasks(ctx context.Context, taskIDs []int64, updates map[string]interface{}) error {
 	if len(taskIDs) == 0 {
-		return nil // Пустой список - ничего не делаем
+		return nil
 	}
 	updates["updated_at"] = time.Now()
 	return r.db.WithContext(ctx).
@@ -497,7 +522,6 @@ func (r *repository) GetTasksCountsBatch(ctx context.Context, taskIDs []int64) (
 		Count  int64
 	}
 
-	// Comments - один запрос для всех задач
 	var commentCounts []countResult
 	r.db.WithContext(ctx).
 		Model(&Comment{}).
@@ -512,7 +536,6 @@ func (r *repository) GetTasksCountsBatch(ctx context.Context, taskIDs []int64) (
 		}
 	}
 
-	// Attachments - один запрос для всех задач
 	var attachmentCounts []countResult
 	r.db.WithContext(ctx).
 		Model(&Attachment{}).
@@ -527,7 +550,6 @@ func (r *repository) GetTasksCountsBatch(ctx context.Context, taskIDs []int64) (
 		}
 	}
 
-	// Watchers - один запрос для всех задач
 	var watcherCounts []countResult
 	r.db.WithContext(ctx).
 		Model(&Watcher{}).
@@ -544,6 +566,8 @@ func (r *repository) GetTasksCountsBatch(ctx context.Context, taskIDs []int64) (
 
 	return result, nil
 }
+
+// ==================== Comment ====================
 
 func (r *repository) CreateComment(ctx context.Context, comment *Comment) error {
 	comment.CreatedAt = time.Now()
@@ -619,6 +643,8 @@ func (r *repository) ListAttachments(ctx context.Context, taskID int64) ([]*Atta
 	return attachments, err
 }
 
+// ==================== Activity Log ====================
+
 func (r *repository) LogActivity(ctx context.Context, log *ActivityLog) error {
 	log.CreatedAt = time.Now()
 	return r.db.WithContext(ctx).Create(log).Error
@@ -643,6 +669,8 @@ func (r *repository) ListActivity(ctx context.Context, taskID int64, limit, offs
 
 	return logs, total, err
 }
+
+// ==================== Watcher ====================
 
 func (r *repository) AddWatcher(ctx context.Context, watcher *Watcher) error {
 	watcher.CreatedAt = time.Now()
@@ -672,33 +700,30 @@ func (r *repository) IsWatching(ctx context.Context, taskID, userID int64) (bool
 	return count > 0, err
 }
 
+// ==================== Stats ====================
+
 func (r *repository) GetBoardStats(ctx context.Context, boardID int64) (*BoardStats, error) {
 	stats := &BoardStats{
 		TasksByStatus:   make(map[string]int32),
 		TasksByPriority: make(map[string]int32),
 	}
 
-	// Total
 	var total int64
 	r.db.WithContext(ctx).Model(&Task{}).Where("board_id = ? AND deleted_at IS NULL", boardID).Count(&total)
 	stats.TotalTasks = int32(total)
 
-	// Completed
 	var completed int64
 	r.db.WithContext(ctx).Model(&Task{}).Where("board_id = ? AND status = ? AND deleted_at IS NULL", boardID, TaskStatusDone).Count(&completed)
 	stats.CompletedTasks = int32(completed)
 
-	// Overdue
 	var overdue int64
 	r.db.WithContext(ctx).Model(&Task{}).Where("board_id = ? AND due_date < ? AND status != ? AND deleted_at IS NULL", boardID, time.Now().Format("2006-01-02"), TaskStatusDone).Count(&overdue)
 	stats.OverdueTasks = int32(overdue)
 
-	// Without assignee
 	var noAssignee int64
 	r.db.WithContext(ctx).Model(&Task{}).Where("board_id = ? AND assignee_id IS NULL AND deleted_at IS NULL", boardID).Count(&noAssignee)
 	stats.TasksWithoutAssignee = int32(noAssignee)
 
-	// By status
 	type statusCount struct {
 		Status string
 		Count  int64
@@ -713,7 +738,6 @@ func (r *repository) GetBoardStats(ctx context.Context, boardID int64) (*BoardSt
 		stats.TasksByStatus[sc.Status] = int32(sc.Count)
 	}
 
-	// By priority
 	type priorityCount struct {
 		Priority string
 		Count    int64
@@ -784,6 +808,8 @@ func (r *repository) GetDailyStats(ctx context.Context, boardID int64, days int)
 	return stats, nil
 }
 
+// ==================== My Tasks ====================
+
 func (r *repository) GetMyTasks(ctx context.Context, userID int64, filter MyTasksFilter) ([]*Task, int64, error) {
 	var tasks []*Task
 	var total int64
@@ -795,7 +821,6 @@ func (r *repository) GetMyTasks(ctx context.Context, userID int64, filter MyTask
 	} else if filter.OnlyCreated {
 		query = query.Where("created_by = ?", userID)
 	} else {
-		// По умолчанию: назначенные + созданные
 		query = query.Where("assignee_id = ? OR created_by = ?", userID, userID)
 	}
 

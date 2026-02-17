@@ -42,11 +42,11 @@ func (h *Handler) GetBoard(ctx context.Context, req *taskv1.GetBoardRequest) (*t
 	}, nil
 }
 
-func (h *Handler) GetBoardByTeam(ctx context.Context, req *taskv1.GetBoardByTeamRequest) (*taskv1.GetBoardResponse, error) {
-	board, err := h.service.GetBoardByTeam(ctx, req.TeamId, req.IncludeColumns, req.IncludeStats)
+func (h *Handler) GetBoardByProject(ctx context.Context, req *taskv1.GetBoardByProjectRequest) (*taskv1.GetBoardResponse, error) {
+	board, err := h.service.GetBoardByProject(ctx, req.ProjectId, req.IncludeColumns, req.IncludeStats)
 	if err != nil {
-		h.logger.Error("GetBoardByTeam failed", zap.Error(err), zap.Int64("team_id", req.TeamId))
-		return nil, status.Errorf(codes.NotFound, "board not found for team: %v", err)
+		h.logger.Error("GetBoardByProject failed", zap.Error(err), zap.Int64("project_id", req.ProjectId))
+		return nil, status.Errorf(codes.NotFound, "board not found for project: %v", err)
 	}
 
 	return &taskv1.GetBoardResponse{
@@ -54,21 +54,18 @@ func (h *Handler) GetBoardByTeam(ctx context.Context, req *taskv1.GetBoardByTeam
 	}, nil
 }
 
-func (h *Handler) CreateBoard(ctx context.Context, req *taskv1.CreateBoardRequest) (*taskv1.Board, error) {
-	board, err := h.service.CreateBoard(ctx, &CreateBoardInput{
-		TeamID:               req.TeamId,
-		ProjectID:            req.ProjectId,
-		Name:                 req.Name,
-		Description:          req.Description,
-		CreatedBy:            req.CreatedBy,
-		CreateDefaultColumns: req.CreateDefaultColumns,
-	})
+func (h *Handler) ListMyBoards(ctx context.Context, req *taskv1.ListMyBoardsRequest) (*taskv1.ListMyBoardsResponse, error) {
+	boards, err := h.service.ListMyBoards(ctx, req.UserId, req.Role, req.IncludeColumns, req.IncludeStats)
 	if err != nil {
-		h.logger.Error("CreateBoard failed", zap.Error(err))
-		return nil, status.Errorf(codes.Internal, "failed to create board: %v", err)
+		h.logger.Error("ListMyBoards failed", zap.Error(err), zap.Int64("user_id", req.UserId), zap.String("role", req.Role))
+		return nil, status.Errorf(codes.Internal, "failed to list boards: %v", err)
 	}
 
-	return h.boardToProto(board), nil
+	out := &taskv1.ListMyBoardsResponse{}
+	for _, b := range boards {
+		out.Boards = append(out.Boards, h.boardToProto(b))
+	}
+	return out, nil
 }
 
 func (h *Handler) UpdateBoard(ctx context.Context, req *taskv1.UpdateBoardRequest) (*taskv1.Board, error) {
@@ -104,9 +101,7 @@ func (h *Handler) ListColumns(ctx context.Context, req *taskv1.ListColumnsReques
 		pbColumns = append(pbColumns, h.columnToProto(col))
 	}
 
-	return &taskv1.ListColumnsResponse{
-		Columns: pbColumns,
-	}, nil
+	return &taskv1.ListColumnsResponse{Columns: pbColumns}, nil
 }
 
 func (h *Handler) CreateColumn(ctx context.Context, req *taskv1.CreateColumnRequest) (*taskv1.Column, error) {
@@ -143,7 +138,6 @@ func (h *Handler) DeleteColumn(ctx context.Context, req *taskv1.DeleteColumnRequ
 		h.logger.Error("DeleteColumn failed", zap.Error(err))
 		return nil, status.Errorf(codes.Internal, "failed to delete column: %v", err)
 	}
-
 	return &emptypb.Empty{}, nil
 }
 
@@ -153,16 +147,13 @@ func (h *Handler) ReorderColumns(ctx context.Context, req *taskv1.ReorderColumns
 		return nil, status.Errorf(codes.Internal, "failed to reorder columns: %v", err)
 	}
 
-	// Возвращаем обновлённый список
 	columns, _ := h.service.ListColumns(ctx, req.BoardId)
 	var pbColumns []*taskv1.Column
 	for _, col := range columns {
 		pbColumns = append(pbColumns, h.columnToProto(col))
 	}
 
-	return &taskv1.ListColumnsResponse{
-		Columns: pbColumns,
-	}, nil
+	return &taskv1.ListColumnsResponse{Columns: pbColumns}, nil
 }
 
 // ==================== Tasks ====================
@@ -202,30 +193,26 @@ func (h *Handler) GetTask(ctx context.Context, req *taskv1.GetTaskRequest) (*tas
 		return nil, status.Errorf(codes.NotFound, "task not found: %v", err)
 	}
 
-	// Конвертируем комментарии
 	var pbComments []*taskv1.Comment
 	for _, c := range comments {
 		pbComments = append(pbComments, h.commentToProto(c))
 	}
 
-	// Конвертируем вложения
 	var pbAttachments []*taskv1.Attachment
 	for _, a := range attachments {
 		pbAttachments = append(pbAttachments, h.attachmentToProto(a))
 	}
 
-	// Конвертируем активность
 	var pbActivity []*taskv1.ActivityLogEntry
 	for _, act := range activity {
 		pbActivity = append(pbActivity, h.activityToProto(act))
 	}
 
-	// Конвертируем watchers
 	var pbWatchers []*taskv1.UserPreview
 	for _, w := range watchers {
 		pbWatchers = append(pbWatchers, &taskv1.UserPreview{
 			Id: w.UserID,
-			// TODO: загрузить данные пользователя
+			// TODO: обогатить через auth_service при необходимости
 		})
 	}
 
@@ -271,7 +258,6 @@ func (h *Handler) DeleteTask(ctx context.Context, req *taskv1.DeleteTaskRequest)
 		h.logger.Error("DeleteTask failed", zap.Error(err))
 		return nil, status.Errorf(codes.Internal, "failed to delete task: %v", err)
 	}
-
 	return &emptypb.Empty{}, nil
 }
 
@@ -490,9 +476,7 @@ func (h *Handler) ListAttachments(ctx context.Context, req *taskv1.ListAttachmen
 		pbAttachments = append(pbAttachments, h.attachmentToProto(a))
 	}
 
-	return &taskv1.ListAttachmentsResponse{
-		Attachments: pbAttachments,
-	}, nil
+	return &taskv1.ListAttachmentsResponse{Attachments: pbAttachments}, nil
 }
 
 // ==================== Activity ====================
@@ -546,18 +530,15 @@ func (h *Handler) ListWatchers(ctx context.Context, req *taskv1.ListWatchersRequ
 	for _, w := range watchers {
 		pbWatchers = append(pbWatchers, &taskv1.UserPreview{
 			Id: w.UserID,
-			// TODO: загрузить данные пользователя через auth_service
+			// TODO: обогатить через auth_service при необходимости
 		})
 	}
 
-	return &taskv1.ListWatchersResponse{
-		Watchers: pbWatchers,
-	}, nil
+	return &taskv1.ListWatchersResponse{Watchers: pbWatchers}, nil
 }
 
 // ==================== Dashboard & Stats ====================
 
-// Строка с GetBoardStatsRequest - исправить проверку флагов
 func (h *Handler) GetBoardStats(ctx context.Context, req *taskv1.GetBoardStatsRequest) (*taskv1.GetBoardStatsResponse, error) {
 	stats, err := h.service.GetBoardStats(ctx, req.BoardId)
 	if err != nil {
@@ -575,7 +556,6 @@ func (h *Handler) GetBoardStats(ctx context.Context, req *taskv1.GetBoardStatsRe
 		},
 	}
 
-	// Исправление: проверяем req.IncludeMemberStats
 	if req.IncludeMemberStats {
 		memberStats, _ := h.service.GetMemberStats(ctx, req.BoardId)
 		for _, ms := range memberStats {
@@ -591,7 +571,6 @@ func (h *Handler) GetBoardStats(ctx context.Context, req *taskv1.GetBoardStatsRe
 		}
 	}
 
-	// Исправление: проверяем req.IncludeDailyStats
 	if req.IncludeDailyStats {
 		dailyStats, _ := h.service.GetDailyStats(ctx, req.BoardId, 14)
 		for _, ds := range dailyStats {
@@ -599,6 +578,7 @@ func (h *Handler) GetBoardStats(ctx context.Context, req *taskv1.GetBoardStatsRe
 				Date:      ds.Date,
 				Created:   ds.Created,
 				Completed: ds.Completed,
+				Moved:     ds.Moved,
 			})
 		}
 	}
@@ -706,7 +686,6 @@ func (h *Handler) boardToProto(board *Board) *taskv1.Board {
 		UpdatedAt:   timestamppb.New(board.UpdatedAt),
 	}
 
-	// Парсим настройки
 	var settings BoardSettings
 	if board.Settings != nil {
 		_ = json.Unmarshal(board.Settings, &settings)
@@ -718,7 +697,6 @@ func (h *Handler) boardToProto(board *Board) *taskv1.Board {
 		}
 	}
 
-	// Конвертируем колонки
 	for _, col := range board.Columns {
 		pb.Columns = append(pb.Columns, h.columnToProto(&col))
 	}
@@ -773,39 +751,25 @@ func (h *Handler) taskToProto(task *Task) *taskv1.Task {
 		UpdatedAt:        timestamppb.New(task.UpdatedAt),
 	}
 
-	// Assignee
 	if task.AssigneeID != nil {
-		pb.Assignee = &taskv1.UserPreview{
-			Id: *task.AssigneeID,
-		}
+		pb.Assignee = &taskv1.UserPreview{Id: *task.AssigneeID}
 	}
 
-	// Created By
-	pb.CreatedBy = &taskv1.UserPreview{
-		Id: task.CreatedBy,
-	}
+	pb.CreatedBy = &taskv1.UserPreview{Id: task.CreatedBy}
 
-	// Due Date
 	if task.DueDate != nil {
 		pb.DueDate = timestamppb.New(*task.DueDate)
 	}
-
-	// Started At
 	if task.StartedAt != nil {
 		pb.StartedAt = timestamppb.New(*task.StartedAt)
 	}
-
-	// Completed At
 	if task.CompletedAt != nil {
 		pb.CompletedAt = timestamppb.New(*task.CompletedAt)
 	}
-
-	// Workflow Step
 	if task.WorkflowStepID != nil {
 		pb.WorkflowStepId = *task.WorkflowStepID
 	}
 
-	// Labels
 	var labels []string
 	if task.Labels != nil {
 		_ = json.Unmarshal(task.Labels, &labels)
@@ -835,7 +799,6 @@ func (h *Handler) commentToProto(comment *Comment) *taskv1.Comment {
 		pb.EditedAt = timestamppb.New(*comment.EditedAt)
 	}
 
-	// Mentions
 	var mentions []UserMention
 	if comment.Mentions != nil {
 		_ = json.Unmarshal(comment.Mentions, &mentions)
@@ -891,8 +854,8 @@ func (h *Handler) activityToProto(activity *ActivityLog) *taskv1.ActivityLogEntr
 
 // ==================== Enum Converters ====================
 
-func (h *Handler) statusToProto(status string) taskv1.TaskStatus {
-	switch status {
+func (h *Handler) statusToProto(statusStr string) taskv1.TaskStatus {
+	switch statusStr {
 	case TaskStatusTodo:
 		return taskv1.TaskStatus_TASK_STATUS_TODO
 	case TaskStatusInProgress:
@@ -921,8 +884,8 @@ func (h *Handler) statusFromProto(status taskv1.TaskStatus) string {
 	}
 }
 
-func (h *Handler) priorityToProto(priority string) taskv1.TaskPriority {
-	switch priority {
+func (h *Handler) priorityToProto(priorityStr string) taskv1.TaskPriority {
+	switch priorityStr {
 	case TaskPriorityLow:
 		return taskv1.TaskPriority_TASK_PRIORITY_LOW
 	case TaskPriorityMedium:

@@ -21,8 +21,8 @@ const _ = grpc.SupportPackageIsVersion9
 
 const (
 	TaskService_GetBoard_FullMethodName             = "/task.v1.TaskService/GetBoard"
-	TaskService_GetBoardByTeam_FullMethodName       = "/task.v1.TaskService/GetBoardByTeam"
-	TaskService_CreateBoard_FullMethodName          = "/task.v1.TaskService/CreateBoard"
+	TaskService_GetBoardByProject_FullMethodName    = "/task.v1.TaskService/GetBoardByProject"
+	TaskService_ListMyBoards_FullMethodName         = "/task.v1.TaskService/ListMyBoards"
 	TaskService_UpdateBoard_FullMethodName          = "/task.v1.TaskService/UpdateBoard"
 	TaskService_ListColumns_FullMethodName          = "/task.v1.TaskService/ListColumns"
 	TaskService_CreateColumn_FullMethodName         = "/task.v1.TaskService/CreateColumn"
@@ -65,8 +65,10 @@ const (
 type TaskServiceClient interface {
 	// ==================== Board ====================
 	GetBoard(ctx context.Context, in *GetBoardRequest, opts ...grpc.CallOption) (*GetBoardResponse, error)
-	GetBoardByTeam(ctx context.Context, in *GetBoardByTeamRequest, opts ...grpc.CallOption) (*GetBoardResponse, error)
-	CreateBoard(ctx context.Context, in *CreateBoardRequest, opts ...grpc.CallOption) (*Board, error)
+	// project-first
+	GetBoardByProject(ctx context.Context, in *GetBoardByProjectRequest, opts ...grpc.CallOption) (*GetBoardResponse, error)
+	// list boards for different roles (student/teacher/admin)
+	ListMyBoards(ctx context.Context, in *ListMyBoardsRequest, opts ...grpc.CallOption) (*ListMyBoardsResponse, error)
 	UpdateBoard(ctx context.Context, in *UpdateBoardRequest, opts ...grpc.CallOption) (*Board, error)
 	// ==================== Columns ====================
 	ListColumns(ctx context.Context, in *ListColumnsRequest, opts ...grpc.CallOption) (*ListColumnsResponse, error)
@@ -129,20 +131,20 @@ func (c *taskServiceClient) GetBoard(ctx context.Context, in *GetBoardRequest, o
 	return out, nil
 }
 
-func (c *taskServiceClient) GetBoardByTeam(ctx context.Context, in *GetBoardByTeamRequest, opts ...grpc.CallOption) (*GetBoardResponse, error) {
+func (c *taskServiceClient) GetBoardByProject(ctx context.Context, in *GetBoardByProjectRequest, opts ...grpc.CallOption) (*GetBoardResponse, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
 	out := new(GetBoardResponse)
-	err := c.cc.Invoke(ctx, TaskService_GetBoardByTeam_FullMethodName, in, out, cOpts...)
+	err := c.cc.Invoke(ctx, TaskService_GetBoardByProject_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
 	}
 	return out, nil
 }
 
-func (c *taskServiceClient) CreateBoard(ctx context.Context, in *CreateBoardRequest, opts ...grpc.CallOption) (*Board, error) {
+func (c *taskServiceClient) ListMyBoards(ctx context.Context, in *ListMyBoardsRequest, opts ...grpc.CallOption) (*ListMyBoardsResponse, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
-	out := new(Board)
-	err := c.cc.Invoke(ctx, TaskService_CreateBoard_FullMethodName, in, out, cOpts...)
+	out := new(ListMyBoardsResponse)
+	err := c.cc.Invoke(ctx, TaskService_ListMyBoards_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
 	}
@@ -477,8 +479,10 @@ func (c *taskServiceClient) GetUpcomingDeadlines(ctx context.Context, in *GetUpc
 type TaskServiceServer interface {
 	// ==================== Board ====================
 	GetBoard(context.Context, *GetBoardRequest) (*GetBoardResponse, error)
-	GetBoardByTeam(context.Context, *GetBoardByTeamRequest) (*GetBoardResponse, error)
-	CreateBoard(context.Context, *CreateBoardRequest) (*Board, error)
+	// project-first
+	GetBoardByProject(context.Context, *GetBoardByProjectRequest) (*GetBoardResponse, error)
+	// list boards for different roles (student/teacher/admin)
+	ListMyBoards(context.Context, *ListMyBoardsRequest) (*ListMyBoardsResponse, error)
 	UpdateBoard(context.Context, *UpdateBoardRequest) (*Board, error)
 	// ==================== Columns ====================
 	ListColumns(context.Context, *ListColumnsRequest) (*ListColumnsResponse, error)
@@ -534,11 +538,11 @@ type UnimplementedTaskServiceServer struct{}
 func (UnimplementedTaskServiceServer) GetBoard(context.Context, *GetBoardRequest) (*GetBoardResponse, error) {
 	return nil, status.Error(codes.Unimplemented, "method GetBoard not implemented")
 }
-func (UnimplementedTaskServiceServer) GetBoardByTeam(context.Context, *GetBoardByTeamRequest) (*GetBoardResponse, error) {
-	return nil, status.Error(codes.Unimplemented, "method GetBoardByTeam not implemented")
+func (UnimplementedTaskServiceServer) GetBoardByProject(context.Context, *GetBoardByProjectRequest) (*GetBoardResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method GetBoardByProject not implemented")
 }
-func (UnimplementedTaskServiceServer) CreateBoard(context.Context, *CreateBoardRequest) (*Board, error) {
-	return nil, status.Error(codes.Unimplemented, "method CreateBoard not implemented")
+func (UnimplementedTaskServiceServer) ListMyBoards(context.Context, *ListMyBoardsRequest) (*ListMyBoardsResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method ListMyBoards not implemented")
 }
 func (UnimplementedTaskServiceServer) UpdateBoard(context.Context, *UpdateBoardRequest) (*Board, error) {
 	return nil, status.Error(codes.Unimplemented, "method UpdateBoard not implemented")
@@ -675,38 +679,38 @@ func _TaskService_GetBoard_Handler(srv interface{}, ctx context.Context, dec fun
 	return interceptor(ctx, in, info, handler)
 }
 
-func _TaskService_GetBoardByTeam_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(GetBoardByTeamRequest)
+func _TaskService_GetBoardByProject_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetBoardByProjectRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(TaskServiceServer).GetBoardByTeam(ctx, in)
+		return srv.(TaskServiceServer).GetBoardByProject(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: TaskService_GetBoardByTeam_FullMethodName,
+		FullMethod: TaskService_GetBoardByProject_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(TaskServiceServer).GetBoardByTeam(ctx, req.(*GetBoardByTeamRequest))
+		return srv.(TaskServiceServer).GetBoardByProject(ctx, req.(*GetBoardByProjectRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
-func _TaskService_CreateBoard_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(CreateBoardRequest)
+func _TaskService_ListMyBoards_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(ListMyBoardsRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(TaskServiceServer).CreateBoard(ctx, in)
+		return srv.(TaskServiceServer).ListMyBoards(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: TaskService_CreateBoard_FullMethodName,
+		FullMethod: TaskService_ListMyBoards_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(TaskServiceServer).CreateBoard(ctx, req.(*CreateBoardRequest))
+		return srv.(TaskServiceServer).ListMyBoards(ctx, req.(*ListMyBoardsRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -1299,12 +1303,12 @@ var TaskService_ServiceDesc = grpc.ServiceDesc{
 			Handler:    _TaskService_GetBoard_Handler,
 		},
 		{
-			MethodName: "GetBoardByTeam",
-			Handler:    _TaskService_GetBoardByTeam_Handler,
+			MethodName: "GetBoardByProject",
+			Handler:    _TaskService_GetBoardByProject_Handler,
 		},
 		{
-			MethodName: "CreateBoard",
-			Handler:    _TaskService_CreateBoard_Handler,
+			MethodName: "ListMyBoards",
+			Handler:    _TaskService_ListMyBoards_Handler,
 		},
 		{
 			MethodName: "UpdateBoard",

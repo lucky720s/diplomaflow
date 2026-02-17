@@ -296,7 +296,7 @@ func (h *Handler) GetMyTeam(c *gin.Context) {
 	}
 
 	for _, sid := range candidates {
-		pr, perr := h.projectClient.GetStudentProjects(projectCtx(c), &projectv1.GetStudentProjectsRequest{
+		pr, perr := h.projectClient.GetStudentProjects(outgoingCtx(c), &projectv1.GetStudentProjectsRequest{
 			StudentId: sid,
 		})
 		if perr != nil || pr == nil {

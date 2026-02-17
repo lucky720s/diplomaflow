@@ -1947,31 +1947,31 @@ var _ interface {
 	ErrorName() string
 } = GetBoardRequestValidationError{}
 
-// Validate checks the field values on GetBoardByTeamRequest with the rules
+// Validate checks the field values on GetBoardByProjectRequest with the rules
 // defined in the proto definition for this message. If any rules are
 // violated, the first error encountered is returned, or nil if there are no violations.
-func (m *GetBoardByTeamRequest) Validate() error {
+func (m *GetBoardByProjectRequest) Validate() error {
 	return m.validate(false)
 }
 
-// ValidateAll checks the field values on GetBoardByTeamRequest with the rules
-// defined in the proto definition for this message. If any rules are
+// ValidateAll checks the field values on GetBoardByProjectRequest with the
+// rules defined in the proto definition for this message. If any rules are
 // violated, the result is a list of violation errors wrapped in
-// GetBoardByTeamRequestMultiError, or nil if none found.
-func (m *GetBoardByTeamRequest) ValidateAll() error {
+// GetBoardByProjectRequestMultiError, or nil if none found.
+func (m *GetBoardByProjectRequest) ValidateAll() error {
 	return m.validate(true)
 }
 
-func (m *GetBoardByTeamRequest) validate(all bool) error {
+func (m *GetBoardByProjectRequest) validate(all bool) error {
 	if m == nil {
 		return nil
 	}
 
 	var errors []error
 
-	if m.GetTeamId() <= 0 {
-		err := GetBoardByTeamRequestValidationError{
-			field:  "TeamId",
+	if m.GetProjectId() <= 0 {
+		err := GetBoardByProjectRequestValidationError{
+			field:  "ProjectId",
 			reason: "value must be greater than 0",
 		}
 		if !all {
@@ -1987,19 +1987,19 @@ func (m *GetBoardByTeamRequest) validate(all bool) error {
 	// no validation rules for IncludeTasks
 
 	if len(errors) > 0 {
-		return GetBoardByTeamRequestMultiError(errors)
+		return GetBoardByProjectRequestMultiError(errors)
 	}
 
 	return nil
 }
 
-// GetBoardByTeamRequestMultiError is an error wrapping multiple validation
-// errors returned by GetBoardByTeamRequest.ValidateAll() if the designated
+// GetBoardByProjectRequestMultiError is an error wrapping multiple validation
+// errors returned by GetBoardByProjectRequest.ValidateAll() if the designated
 // constraints aren't met.
-type GetBoardByTeamRequestMultiError []error
+type GetBoardByProjectRequestMultiError []error
 
 // Error returns a concatenation of all the error messages it wraps.
-func (m GetBoardByTeamRequestMultiError) Error() string {
+func (m GetBoardByProjectRequestMultiError) Error() string {
 	msgs := make([]string, 0, len(m))
 	for _, err := range m {
 		msgs = append(msgs, err.Error())
@@ -2008,11 +2008,11 @@ func (m GetBoardByTeamRequestMultiError) Error() string {
 }
 
 // AllErrors returns a list of validation violation errors.
-func (m GetBoardByTeamRequestMultiError) AllErrors() []error { return m }
+func (m GetBoardByProjectRequestMultiError) AllErrors() []error { return m }
 
-// GetBoardByTeamRequestValidationError is the validation error returned by
-// GetBoardByTeamRequest.Validate if the designated constraints aren't met.
-type GetBoardByTeamRequestValidationError struct {
+// GetBoardByProjectRequestValidationError is the validation error returned by
+// GetBoardByProjectRequest.Validate if the designated constraints aren't met.
+type GetBoardByProjectRequestValidationError struct {
 	field  string
 	reason string
 	cause  error
@@ -2020,24 +2020,24 @@ type GetBoardByTeamRequestValidationError struct {
 }
 
 // Field function returns field value.
-func (e GetBoardByTeamRequestValidationError) Field() string { return e.field }
+func (e GetBoardByProjectRequestValidationError) Field() string { return e.field }
 
 // Reason function returns reason value.
-func (e GetBoardByTeamRequestValidationError) Reason() string { return e.reason }
+func (e GetBoardByProjectRequestValidationError) Reason() string { return e.reason }
 
 // Cause function returns cause value.
-func (e GetBoardByTeamRequestValidationError) Cause() error { return e.cause }
+func (e GetBoardByProjectRequestValidationError) Cause() error { return e.cause }
 
 // Key function returns key value.
-func (e GetBoardByTeamRequestValidationError) Key() bool { return e.key }
+func (e GetBoardByProjectRequestValidationError) Key() bool { return e.key }
 
 // ErrorName returns error name.
-func (e GetBoardByTeamRequestValidationError) ErrorName() string {
-	return "GetBoardByTeamRequestValidationError"
+func (e GetBoardByProjectRequestValidationError) ErrorName() string {
+	return "GetBoardByProjectRequestValidationError"
 }
 
 // Error satisfies the builtin error interface
-func (e GetBoardByTeamRequestValidationError) Error() string {
+func (e GetBoardByProjectRequestValidationError) Error() string {
 	cause := ""
 	if e.cause != nil {
 		cause = fmt.Sprintf(" | caused by: %v", e.cause)
@@ -2049,14 +2049,14 @@ func (e GetBoardByTeamRequestValidationError) Error() string {
 	}
 
 	return fmt.Sprintf(
-		"invalid %sGetBoardByTeamRequest.%s: %s%s",
+		"invalid %sGetBoardByProjectRequest.%s: %s%s",
 		key,
 		e.field,
 		e.reason,
 		cause)
 }
 
-var _ error = GetBoardByTeamRequestValidationError{}
+var _ error = GetBoardByProjectRequestValidationError{}
 
 var _ interface {
 	Field() string
@@ -2064,7 +2064,7 @@ var _ interface {
 	Key() bool
 	Cause() error
 	ErrorName() string
-} = GetBoardByTeamRequestValidationError{}
+} = GetBoardByProjectRequestValidationError{}
 
 // Validate checks the field values on GetBoardResponse with the rules defined
 // in the proto definition for this message. If any rules are violated, the
@@ -2195,31 +2195,31 @@ var _ interface {
 	ErrorName() string
 } = GetBoardResponseValidationError{}
 
-// Validate checks the field values on CreateBoardRequest with the rules
+// Validate checks the field values on ListMyBoardsRequest with the rules
 // defined in the proto definition for this message. If any rules are
 // violated, the first error encountered is returned, or nil if there are no violations.
-func (m *CreateBoardRequest) Validate() error {
+func (m *ListMyBoardsRequest) Validate() error {
 	return m.validate(false)
 }
 
-// ValidateAll checks the field values on CreateBoardRequest with the rules
+// ValidateAll checks the field values on ListMyBoardsRequest with the rules
 // defined in the proto definition for this message. If any rules are
 // violated, the result is a list of violation errors wrapped in
-// CreateBoardRequestMultiError, or nil if none found.
-func (m *CreateBoardRequest) ValidateAll() error {
+// ListMyBoardsRequestMultiError, or nil if none found.
+func (m *ListMyBoardsRequest) ValidateAll() error {
 	return m.validate(true)
 }
 
-func (m *CreateBoardRequest) validate(all bool) error {
+func (m *ListMyBoardsRequest) validate(all bool) error {
 	if m == nil {
 		return nil
 	}
 
 	var errors []error
 
-	if m.GetTeamId() <= 0 {
-		err := CreateBoardRequestValidationError{
-			field:  "TeamId",
+	if m.GetUserId() <= 0 {
+		err := ListMyBoardsRequestValidationError{
+			field:  "UserId",
 			reason: "value must be greater than 0",
 		}
 		if !all {
@@ -2228,48 +2228,26 @@ func (m *CreateBoardRequest) validate(all bool) error {
 		errors = append(errors, err)
 	}
 
-	// no validation rules for ProjectId
+	// no validation rules for Role
 
-	if utf8.RuneCountInString(m.GetName()) < 1 {
-		err := CreateBoardRequestValidationError{
-			field:  "Name",
-			reason: "value length must be at least 1 runes",
-		}
-		if !all {
-			return err
-		}
-		errors = append(errors, err)
-	}
+	// no validation rules for IncludeColumns
 
-	// no validation rules for Description
-
-	if m.GetCreatedBy() <= 0 {
-		err := CreateBoardRequestValidationError{
-			field:  "CreatedBy",
-			reason: "value must be greater than 0",
-		}
-		if !all {
-			return err
-		}
-		errors = append(errors, err)
-	}
-
-	// no validation rules for CreateDefaultColumns
+	// no validation rules for IncludeStats
 
 	if len(errors) > 0 {
-		return CreateBoardRequestMultiError(errors)
+		return ListMyBoardsRequestMultiError(errors)
 	}
 
 	return nil
 }
 
-// CreateBoardRequestMultiError is an error wrapping multiple validation errors
-// returned by CreateBoardRequest.ValidateAll() if the designated constraints
-// aren't met.
-type CreateBoardRequestMultiError []error
+// ListMyBoardsRequestMultiError is an error wrapping multiple validation
+// errors returned by ListMyBoardsRequest.ValidateAll() if the designated
+// constraints aren't met.
+type ListMyBoardsRequestMultiError []error
 
 // Error returns a concatenation of all the error messages it wraps.
-func (m CreateBoardRequestMultiError) Error() string {
+func (m ListMyBoardsRequestMultiError) Error() string {
 	msgs := make([]string, 0, len(m))
 	for _, err := range m {
 		msgs = append(msgs, err.Error())
@@ -2278,11 +2256,11 @@ func (m CreateBoardRequestMultiError) Error() string {
 }
 
 // AllErrors returns a list of validation violation errors.
-func (m CreateBoardRequestMultiError) AllErrors() []error { return m }
+func (m ListMyBoardsRequestMultiError) AllErrors() []error { return m }
 
-// CreateBoardRequestValidationError is the validation error returned by
-// CreateBoardRequest.Validate if the designated constraints aren't met.
-type CreateBoardRequestValidationError struct {
+// ListMyBoardsRequestValidationError is the validation error returned by
+// ListMyBoardsRequest.Validate if the designated constraints aren't met.
+type ListMyBoardsRequestValidationError struct {
 	field  string
 	reason string
 	cause  error
@@ -2290,24 +2268,24 @@ type CreateBoardRequestValidationError struct {
 }
 
 // Field function returns field value.
-func (e CreateBoardRequestValidationError) Field() string { return e.field }
+func (e ListMyBoardsRequestValidationError) Field() string { return e.field }
 
 // Reason function returns reason value.
-func (e CreateBoardRequestValidationError) Reason() string { return e.reason }
+func (e ListMyBoardsRequestValidationError) Reason() string { return e.reason }
 
 // Cause function returns cause value.
-func (e CreateBoardRequestValidationError) Cause() error { return e.cause }
+func (e ListMyBoardsRequestValidationError) Cause() error { return e.cause }
 
 // Key function returns key value.
-func (e CreateBoardRequestValidationError) Key() bool { return e.key }
+func (e ListMyBoardsRequestValidationError) Key() bool { return e.key }
 
 // ErrorName returns error name.
-func (e CreateBoardRequestValidationError) ErrorName() string {
-	return "CreateBoardRequestValidationError"
+func (e ListMyBoardsRequestValidationError) ErrorName() string {
+	return "ListMyBoardsRequestValidationError"
 }
 
 // Error satisfies the builtin error interface
-func (e CreateBoardRequestValidationError) Error() string {
+func (e ListMyBoardsRequestValidationError) Error() string {
 	cause := ""
 	if e.cause != nil {
 		cause = fmt.Sprintf(" | caused by: %v", e.cause)
@@ -2319,14 +2297,14 @@ func (e CreateBoardRequestValidationError) Error() string {
 	}
 
 	return fmt.Sprintf(
-		"invalid %sCreateBoardRequest.%s: %s%s",
+		"invalid %sListMyBoardsRequest.%s: %s%s",
 		key,
 		e.field,
 		e.reason,
 		cause)
 }
 
-var _ error = CreateBoardRequestValidationError{}
+var _ error = ListMyBoardsRequestValidationError{}
 
 var _ interface {
 	Field() string
@@ -2334,7 +2312,143 @@ var _ interface {
 	Key() bool
 	Cause() error
 	ErrorName() string
-} = CreateBoardRequestValidationError{}
+} = ListMyBoardsRequestValidationError{}
+
+// Validate checks the field values on ListMyBoardsResponse with the rules
+// defined in the proto definition for this message. If any rules are
+// violated, the first error encountered is returned, or nil if there are no violations.
+func (m *ListMyBoardsResponse) Validate() error {
+	return m.validate(false)
+}
+
+// ValidateAll checks the field values on ListMyBoardsResponse with the rules
+// defined in the proto definition for this message. If any rules are
+// violated, the result is a list of violation errors wrapped in
+// ListMyBoardsResponseMultiError, or nil if none found.
+func (m *ListMyBoardsResponse) ValidateAll() error {
+	return m.validate(true)
+}
+
+func (m *ListMyBoardsResponse) validate(all bool) error {
+	if m == nil {
+		return nil
+	}
+
+	var errors []error
+
+	for idx, item := range m.GetBoards() {
+		_, _ = idx, item
+
+		if all {
+			switch v := interface{}(item).(type) {
+			case interface{ ValidateAll() error }:
+				if err := v.ValidateAll(); err != nil {
+					errors = append(errors, ListMyBoardsResponseValidationError{
+						field:  fmt.Sprintf("Boards[%v]", idx),
+						reason: "embedded message failed validation",
+						cause:  err,
+					})
+				}
+			case interface{ Validate() error }:
+				if err := v.Validate(); err != nil {
+					errors = append(errors, ListMyBoardsResponseValidationError{
+						field:  fmt.Sprintf("Boards[%v]", idx),
+						reason: "embedded message failed validation",
+						cause:  err,
+					})
+				}
+			}
+		} else if v, ok := interface{}(item).(interface{ Validate() error }); ok {
+			if err := v.Validate(); err != nil {
+				return ListMyBoardsResponseValidationError{
+					field:  fmt.Sprintf("Boards[%v]", idx),
+					reason: "embedded message failed validation",
+					cause:  err,
+				}
+			}
+		}
+
+	}
+
+	if len(errors) > 0 {
+		return ListMyBoardsResponseMultiError(errors)
+	}
+
+	return nil
+}
+
+// ListMyBoardsResponseMultiError is an error wrapping multiple validation
+// errors returned by ListMyBoardsResponse.ValidateAll() if the designated
+// constraints aren't met.
+type ListMyBoardsResponseMultiError []error
+
+// Error returns a concatenation of all the error messages it wraps.
+func (m ListMyBoardsResponseMultiError) Error() string {
+	msgs := make([]string, 0, len(m))
+	for _, err := range m {
+		msgs = append(msgs, err.Error())
+	}
+	return strings.Join(msgs, "; ")
+}
+
+// AllErrors returns a list of validation violation errors.
+func (m ListMyBoardsResponseMultiError) AllErrors() []error { return m }
+
+// ListMyBoardsResponseValidationError is the validation error returned by
+// ListMyBoardsResponse.Validate if the designated constraints aren't met.
+type ListMyBoardsResponseValidationError struct {
+	field  string
+	reason string
+	cause  error
+	key    bool
+}
+
+// Field function returns field value.
+func (e ListMyBoardsResponseValidationError) Field() string { return e.field }
+
+// Reason function returns reason value.
+func (e ListMyBoardsResponseValidationError) Reason() string { return e.reason }
+
+// Cause function returns cause value.
+func (e ListMyBoardsResponseValidationError) Cause() error { return e.cause }
+
+// Key function returns key value.
+func (e ListMyBoardsResponseValidationError) Key() bool { return e.key }
+
+// ErrorName returns error name.
+func (e ListMyBoardsResponseValidationError) ErrorName() string {
+	return "ListMyBoardsResponseValidationError"
+}
+
+// Error satisfies the builtin error interface
+func (e ListMyBoardsResponseValidationError) Error() string {
+	cause := ""
+	if e.cause != nil {
+		cause = fmt.Sprintf(" | caused by: %v", e.cause)
+	}
+
+	key := ""
+	if e.key {
+		key = "key for "
+	}
+
+	return fmt.Sprintf(
+		"invalid %sListMyBoardsResponse.%s: %s%s",
+		key,
+		e.field,
+		e.reason,
+		cause)
+}
+
+var _ error = ListMyBoardsResponseValidationError{}
+
+var _ interface {
+	Field() string
+	Reason() string
+	Key() bool
+	Cause() error
+	ErrorName() string
+} = ListMyBoardsResponseValidationError{}
 
 // Validate checks the field values on UpdateBoardRequest with the rules
 // defined in the proto definition for this message. If any rules are

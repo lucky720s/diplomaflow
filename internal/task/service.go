@@ -9,7 +9,6 @@ import (
 
 	teamv1 "github.com/lucky720s/diplomaflow/pkg/protobuf/team/v1"
 	"go.uber.org/zap"
-	"gorm.io/gorm"
 )
 
 // Service - бизнес-логика для task_service
@@ -30,70 +29,6 @@ func NewService(repo Repository, teamClient teamv1.TeamServiceClient, logger *za
 
 // ==================== Board ====================
 
-// CreateBoardInput - входные данные для создания доски
-type CreateBoardInput struct {
-	TeamID               int64
-	ProjectID            int64
-	Name                 string
-	Description          string
-	CreatedBy            int64
-	CreateDefaultColumns bool
-}
-
-// CreateBoard - создает доску для команды
-func (s *Service) CreateBoard(ctx context.Context, input *CreateBoardInput) (*Board, error) {
-	// Проверяем, нет ли уже доски для этой команды
-	existing, err := s.repo.GetBoardByTeam(ctx, input.TeamID)
-	if err == nil && existing != nil {
-		return nil, errors.New("board already exists for this team")
-	}
-
-	// Настройки по умолчанию
-	settings := BoardSettings{
-		DefaultColumn:      "todo",
-		AllowCustomColumns: false,
-		ShowCompleted:      true,
-		Labels:             []string{"backend", "frontend", "docs", "research", "urgent"},
-	}
-	settingsJSON, _ := json.Marshal(settings)
-
-	board := &Board{
-		TeamID:      input.TeamID,
-		ProjectID:   input.ProjectID,
-		Name:        input.Name,
-		Description: input.Description,
-		Settings:    settingsJSON,
-		CreatedBy:   input.CreatedBy,
-	}
-
-	if err := s.repo.CreateBoard(ctx, board); err != nil {
-		s.logger.Error("Failed to create board", zap.Error(err))
-		return nil, fmt.Errorf("failed to create board: %w", err)
-	}
-
-	// Создаём стандартные колонки
-	if input.CreateDefaultColumns {
-		for _, col := range DefaultColumns {
-			column := &Column{
-				BoardID:      board.ID,
-				Name:         col.Name,
-				Slug:         col.Slug,
-				Color:        col.Color,
-				OrderIndex:   col.OrderIndex,
-				IsDefault:    col.IsDefault,
-				IsDoneColumn: col.IsDoneColumn,
-			}
-			if err := s.repo.CreateColumn(ctx, column); err != nil {
-				s.logger.Error("Failed to create default column", zap.Error(err), zap.String("slug", col.Slug))
-			}
-		}
-	}
-
-	s.logger.Info("Board created", zap.Int64("board_id", board.ID), zap.Int64("team_id", input.TeamID))
-	return board, nil
-}
-
-// GetBoard - получает доску по ID
 func (s *Service) GetBoard(ctx context.Context, boardID int64, includeColumns, includeStats bool) (*Board, error) {
 	board, err := s.repo.GetBoard(ctx, boardID)
 	if err != nil {
@@ -115,14 +50,18 @@ func (s *Service) GetBoard(ctx context.Context, boardID int64, includeColumns, i
 		}
 	}
 
+	if includeStats {
+		// сейчас stats отдаём отдельным RPC (GetBoardStats), но флаг оставляем для совместимости
+		_ = includeStats
+	}
+
 	return board, nil
 }
 
-// GetBoardByTeam - получает доску по ID команды
-func (s *Service) GetBoardByTeam(ctx context.Context, teamID int64, includeColumns, includeStats bool) (*Board, error) {
-	board, err := s.repo.GetBoardByTeam(ctx, teamID)
+func (s *Service) GetBoardByProject(ctx context.Context, projectID int64, includeColumns, includeStats bool) (*Board, error) {
+	board, err := s.repo.GetBoardByProject(ctx, projectID)
 	if err != nil {
-		return nil, fmt.Errorf("board not found for team: %w", err)
+		return nil, fmt.Errorf("board not found for project: %w", err)
 	}
 
 	if includeColumns {
@@ -140,10 +79,45 @@ func (s *Service) GetBoardByTeam(ctx context.Context, teamID int64, includeColum
 		}
 	}
 
+	if includeStats {
+		_ = includeStats
+	}
+
 	return board, nil
 }
 
-// UpdateBoard - обновляет доску
+func (s *Service) ListMyBoards(ctx context.Context, userID int64, role string, includeColumns, includeStats bool) ([]*Board, error) {
+	boards, err := s.repo.ListMyBoards(ctx, userID, role)
+	if err != nil {
+		return nil, err
+	}
+
+	if includeColumns {
+		for _, b := range boards {
+			if b == nil {
+				continue
+			}
+			cols, err2 := s.repo.ListColumns(ctx, b.ID)
+			if err2 != nil {
+				continue
+			}
+			counts, _ := s.repo.GetColumnTaskCounts(ctx, b.ID)
+			for _, c := range cols {
+				if count, ok := counts[c.ID]; ok {
+					c.TaskCount = count
+				}
+				b.Columns = append(b.Columns, *c)
+			}
+		}
+	}
+
+	if includeStats {
+		_ = includeStats
+	}
+
+	return boards, nil
+}
+
 func (s *Service) UpdateBoard(ctx context.Context, boardID int64, name, description string, settings *BoardSettings) (*Board, error) {
 	board, err := s.repo.GetBoard(ctx, boardID)
 	if err != nil {
@@ -168,29 +142,8 @@ func (s *Service) UpdateBoard(ctx context.Context, boardID int64, name, descript
 	return board, nil
 }
 
-// GetOrCreateBoardForTeam - получает или создаёт доску для команды
-func (s *Service) GetOrCreateBoardForTeam(ctx context.Context, teamID, projectID, createdBy int64) (*Board, error) {
-	board, err := s.repo.GetBoardByTeam(ctx, teamID)
-	if err == nil {
-		return board, nil
-	}
-
-	if errors.Is(err, gorm.ErrRecordNotFound) {
-		return s.CreateBoard(ctx, &CreateBoardInput{
-			TeamID:               teamID,
-			ProjectID:            projectID,
-			Name:                 "Задачи команды",
-			CreatedBy:            createdBy,
-			CreateDefaultColumns: true,
-		})
-	}
-
-	return nil, err
-}
-
 // ==================== Columns ====================
 
-// CreateColumnInput - входные данные для создания колонки
 type CreateColumnInput struct {
 	BoardID      int64
 	Name         string
@@ -202,7 +155,6 @@ type CreateColumnInput struct {
 	IsDefault    bool
 }
 
-// CreateColumn - создает колонку
 func (s *Service) CreateColumn(ctx context.Context, input *CreateColumnInput) (*Column, error) {
 	_, err := s.repo.GetBoard(ctx, input.BoardID)
 	if err != nil {
@@ -221,7 +173,6 @@ func (s *Service) CreateColumn(ctx context.Context, input *CreateColumnInput) (*
 		color = "#6B7280"
 	}
 
-	// Если новая колонка is_default - снимаем флаг со старой
 	if input.IsDefault {
 		columns, _ := s.repo.ListColumns(ctx, input.BoardID)
 		for _, col := range columns {
@@ -232,7 +183,6 @@ func (s *Service) CreateColumn(ctx context.Context, input *CreateColumnInput) (*
 		}
 	}
 
-	// Если новая колонка is_done_column - снимаем флаг со старых
 	if input.IsDoneColumn {
 		columns, _ := s.repo.ListColumns(ctx, input.BoardID)
 		for _, col := range columns {
@@ -263,7 +213,6 @@ func (s *Service) CreateColumn(ctx context.Context, input *CreateColumnInput) (*
 	return column, nil
 }
 
-// ListColumns - список колонок доски
 func (s *Service) ListColumns(ctx context.Context, boardID int64) ([]*Column, error) {
 	columns, err := s.repo.ListColumns(ctx, boardID)
 	if err != nil {
@@ -280,7 +229,6 @@ func (s *Service) ListColumns(ctx context.Context, boardID int64) ([]*Column, er
 	return columns, nil
 }
 
-// UpdateColumn - обновляет колонку (без isDoneColumn для совместимости с handler)
 func (s *Service) UpdateColumn(ctx context.Context, columnID int64, name, description, color string, wipLimit int32) (*Column, error) {
 	column, err := s.repo.GetColumn(ctx, columnID)
 	if err != nil {
@@ -308,7 +256,6 @@ func (s *Service) UpdateColumn(ctx context.Context, columnID int64, name, descri
 	return column, nil
 }
 
-// DeleteColumn - удаляет колонку с корректным перемещением задач
 func (s *Service) DeleteColumn(ctx context.Context, columnID, moveTasksToColumnID int64) error {
 	column, err := s.repo.GetColumn(ctx, columnID)
 	if err != nil {
@@ -354,7 +301,6 @@ func (s *Service) DeleteColumn(ctx context.Context, columnID, moveTasksToColumnI
 			}
 		}
 
-		// Собираем ID задач
 		taskIDs := make([]int64, 0, len(tasks))
 		for _, task := range tasks {
 			taskIDs = append(taskIDs, task.ID)
@@ -362,7 +308,6 @@ func (s *Service) DeleteColumn(ctx context.Context, columnID, moveTasksToColumnI
 
 		maxPos, _ := s.repo.GetMaxPosition(ctx, moveTasksToColumnID)
 
-		// Перемещаем задачи
 		if err := s.repo.BulkUpdateTasks(ctx, taskIDs, map[string]interface{}{
 			"column_id": moveTasksToColumnID,
 		}); err != nil {
@@ -389,14 +334,12 @@ func (s *Service) DeleteColumn(ctx context.Context, columnID, moveTasksToColumnI
 	return nil
 }
 
-// ReorderColumns - изменяет порядок колонок
 func (s *Service) ReorderColumns(ctx context.Context, boardID int64, columnIDs []int64) error {
 	return s.repo.ReorderColumns(ctx, boardID, columnIDs)
 }
 
 // ==================== Tasks ====================
 
-// CreateTaskInput - входные данные для создания задачи
 type CreateTaskInput struct {
 	BoardID          int64
 	Title            string
@@ -411,7 +354,6 @@ type CreateTaskInput struct {
 	WorkflowStepID   int64
 }
 
-// CreateTask - создает задачу с проверкой WIP-лимита
 func (s *Service) CreateTask(ctx context.Context, input *CreateTaskInput) (*Task, error) {
 	board, err := s.repo.GetBoard(ctx, input.BoardID)
 	if err != nil {
@@ -439,7 +381,6 @@ func (s *Service) CreateTask(ctx context.Context, input *CreateTaskInput) (*Task
 		targetColumn = col
 	}
 
-	// Проверка WIP-лимита
 	if targetColumn.WIPLimit > 0 {
 		counts, err := s.repo.GetColumnTaskCounts(ctx, board.ID)
 		if err != nil {
@@ -494,7 +435,6 @@ func (s *Service) CreateTask(ctx context.Context, input *CreateTaskInput) (*Task
 	return task, nil
 }
 
-// GetTask - получает задачу с деталями
 func (s *Service) GetTask(ctx context.Context, taskID int64) (*Task, []*Comment, []*Attachment, []*ActivityLog, []*Watcher, error) {
 	task, err := s.repo.GetTask(ctx, taskID)
 	if err != nil {
@@ -518,7 +458,6 @@ func (s *Service) GetTask(ctx context.Context, taskID int64) (*Task, []*Comment,
 	return task, recentComments, attachmentsList, activityList, watchersList, nil
 }
 
-// UpdateTaskInput - входные данные для обновления задачи
 type UpdateTaskInput struct {
 	TaskID           int64
 	Title            string
@@ -532,7 +471,6 @@ type UpdateTaskInput struct {
 	UpdatedBy        int64
 }
 
-// UpdateTask - обновляет задачу
 func (s *Service) UpdateTask(ctx context.Context, input *UpdateTaskInput) (*Task, error) {
 	task, err := s.repo.GetTask(ctx, input.TaskID)
 	if err != nil {
@@ -590,7 +528,6 @@ func (s *Service) UpdateTask(ctx context.Context, input *UpdateTaskInput) (*Task
 	return task, nil
 }
 
-// DeleteTask - удаляет задачу с проверкой прав через team_service
 func (s *Service) DeleteTask(ctx context.Context, taskID, deletedBy int64) error {
 	task, err := s.repo.GetTask(ctx, taskID)
 	if err != nil {
@@ -600,19 +537,16 @@ func (s *Service) DeleteTask(ctx context.Context, taskID, deletedBy int64) error
 	canDelete := false
 	reason := ""
 
-	// 1. Создатель задачи
 	if task.CreatedBy == deletedBy {
 		canDelete = true
 		reason = "creator"
 	}
 
-	// 2. Assignee
 	if !canDelete && task.AssigneeID != nil && *task.AssigneeID == deletedBy {
 		canDelete = true
 		reason = "assignee"
 	}
 
-	// 3. Лидер команды (через team_service)
 	if !canDelete && s.teamClient != nil {
 		board, _ := s.repo.GetBoard(ctx, task.BoardID)
 		if board != nil {
@@ -653,7 +587,6 @@ func (s *Service) DeleteTask(ctx context.Context, taskID, deletedBy int64) error
 	return nil
 }
 
-// ListTasks - список задач с фильтрацией (batch-оптимизация)
 func (s *Service) ListTasks(ctx context.Context, filter TaskFilter) ([]*Task, int64, error) {
 	tasks, total, err := s.repo.ListTasks(ctx, filter)
 	if err != nil {
@@ -690,7 +623,6 @@ func (s *Service) ListTasks(ctx context.Context, filter TaskFilter) ([]*Task, in
 	return tasks, total, nil
 }
 
-// MoveTask - перемещает задачу с проверкой WIP-лимита
 func (s *Service) MoveTask(ctx context.Context, taskID, toColumnID int64, position int32, movedBy int64) (*Task, error) {
 	task, err := s.repo.GetTask(ctx, taskID)
 	if err != nil {
@@ -709,7 +641,6 @@ func (s *Service) MoveTask(ctx context.Context, taskID, toColumnID int64, positi
 		return nil, errors.New("cannot move task to column on different board")
 	}
 
-	// Проверка WIP-лимита
 	if oldColumnID != toColumnID && newColumn.WIPLimit > 0 {
 		counts, err := s.repo.GetColumnTaskCounts(ctx, newColumn.BoardID)
 		if err != nil {
@@ -741,7 +672,6 @@ func (s *Service) MoveTask(ctx context.Context, taskID, toColumnID int64, positi
 	return s.repo.GetTask(ctx, taskID)
 }
 
-// ReorderTasks - изменяет порядок задач с валидацией
 func (s *Service) ReorderTasks(ctx context.Context, columnID int64, taskIDs []int64) error {
 	if len(taskIDs) == 0 {
 		return nil
@@ -792,7 +722,6 @@ func (s *Service) ReorderTasks(ctx context.Context, columnID int64, taskIDs []in
 	return s.repo.ReorderTasks(ctx, columnID, taskIDs)
 }
 
-// AssignTask - назначает задачу с проверкой членства через team_service
 func (s *Service) AssignTask(ctx context.Context, taskID, assigneeID, assignedBy int64) (*Task, error) {
 	task, err := s.repo.GetTask(ctx, taskID)
 	if err != nil {
@@ -804,17 +733,11 @@ func (s *Service) AssignTask(ctx context.Context, taskID, assigneeID, assignedBy
 		return nil, fmt.Errorf("board not found: %w", err)
 	}
 
-	// Проверка членства в команде через team_service
 	if s.teamClient != nil {
 		teamResp, err := s.teamClient.GetTeam(ctx, &teamv1.GetTeamRequest{
 			TeamId: board.TeamID,
 		})
-		if err != nil {
-			s.logger.Warn("Failed to get team for membership check",
-				zap.Error(err),
-				zap.Int64("team_id", board.TeamID))
-			// Продолжаем без проверки если team_service недоступен
-		} else {
+		if err == nil {
 			isMember := false
 			for _, member := range teamResp.Members {
 				if member.UserId == assigneeID {
@@ -822,19 +745,10 @@ func (s *Service) AssignTask(ctx context.Context, taskID, assigneeID, assignedBy
 					break
 				}
 			}
-
 			if !isMember {
 				return nil, fmt.Errorf("user %d is not a member of team %d", assigneeID, board.TeamID)
 			}
-
-			s.logger.Debug("Team membership verified",
-				zap.Int64("user_id", assigneeID),
-				zap.Int64("team_id", board.TeamID))
 		}
-	} else {
-		s.logger.Warn("Team client is nil, skipping membership check",
-			zap.Int64("task_id", taskID),
-			zap.Int64("assignee_id", assigneeID))
 	}
 
 	oldAssignee := ""
@@ -851,15 +765,9 @@ func (s *Service) AssignTask(ctx context.Context, taskID, assigneeID, assignedBy
 	s.logTaskActivity(ctx, taskID, assignedBy, ActionAssigned, "assignee", oldAssignee, fmt.Sprintf("%d", assigneeID))
 	_ = s.repo.AddWatcher(ctx, &Watcher{TaskID: taskID, UserID: assigneeID})
 
-	s.logger.Info("Task assigned",
-		zap.Int64("task_id", taskID),
-		zap.Int64("assignee_id", assigneeID),
-		zap.Int64("assigned_by", assignedBy))
-
 	return task, nil
 }
 
-// UnassignTask - снимает назначение
 func (s *Service) UnassignTask(ctx context.Context, taskID, unassignedBy int64) (*Task, error) {
 	task, err := s.repo.GetTask(ctx, taskID)
 	if err != nil {
@@ -878,13 +786,11 @@ func (s *Service) UnassignTask(ctx context.Context, taskID, unassignedBy int64) 
 	}
 
 	s.logTaskActivity(ctx, taskID, unassignedBy, ActionUnassigned, "assignee", oldAssignee, "")
-
 	return task, nil
 }
 
 // ==================== Comments ====================
 
-// CreateCommentInput - входные данные для создания комментария
 type CreateCommentInput struct {
 	TaskID         int64
 	AuthorID       int64
@@ -892,7 +798,6 @@ type CreateCommentInput struct {
 	MentionUserIDs []int64
 }
 
-// CreateComment - создает комментарий
 func (s *Service) CreateComment(ctx context.Context, input *CreateCommentInput) (*Comment, error) {
 	_, err := s.repo.GetTask(ctx, input.TaskID)
 	if err != nil {
@@ -922,7 +827,6 @@ func (s *Service) CreateComment(ctx context.Context, input *CreateCommentInput) 
 	return comment, nil
 }
 
-// UpdateComment - обновляет комментарий
 func (s *Service) UpdateComment(ctx context.Context, commentID int64, content string, updatedBy int64) (*Comment, error) {
 	comment, err := s.repo.GetComment(ctx, commentID)
 	if err != nil {
@@ -942,7 +846,6 @@ func (s *Service) UpdateComment(ctx context.Context, commentID int64, content st
 	return comment, nil
 }
 
-// DeleteComment - удаляет комментарий
 func (s *Service) DeleteComment(ctx context.Context, commentID, deletedBy int64) error {
 	comment, err := s.repo.GetComment(ctx, commentID)
 	if err != nil {
@@ -956,7 +859,6 @@ func (s *Service) DeleteComment(ctx context.Context, commentID, deletedBy int64)
 	return s.repo.DeleteComment(ctx, commentID)
 }
 
-// ListComments - список комментариев задачи
 func (s *Service) ListComments(ctx context.Context, taskID int64, page, pageSize int32) ([]*Comment, int64, error) {
 	if pageSize <= 0 {
 		pageSize = 20
@@ -965,13 +867,11 @@ func (s *Service) ListComments(ctx context.Context, taskID int64, page, pageSize
 	if offset < 0 {
 		offset = 0
 	}
-
 	return s.repo.ListComments(ctx, taskID, int(pageSize), offset)
 }
 
 // ==================== Attachments ====================
 
-// AddAttachmentInput - входные данные для добавления вложения
 type AddAttachmentInput struct {
 	TaskID     int64
 	FileID     string
@@ -981,7 +881,6 @@ type AddAttachmentInput struct {
 	UploadedBy int64
 }
 
-// AddAttachment - добавляет вложение
 func (s *Service) AddAttachment(ctx context.Context, input *AddAttachmentInput) (*Attachment, error) {
 	_, err := s.repo.GetTask(ctx, input.TaskID)
 	if err != nil {
@@ -1004,7 +903,6 @@ func (s *Service) AddAttachment(ctx context.Context, input *AddAttachmentInput) 
 	return attachment, nil
 }
 
-// RemoveAttachment - удаляет вложение
 func (s *Service) RemoveAttachment(ctx context.Context, attachmentID, removedBy int64) error {
 	attachment, err := s.repo.GetAttachment(ctx, attachmentID)
 	if err != nil {
@@ -1018,14 +916,12 @@ func (s *Service) RemoveAttachment(ctx context.Context, attachmentID, removedBy 
 	return s.repo.DeleteAttachment(ctx, attachmentID)
 }
 
-// ListAttachments - список вложений задачи
 func (s *Service) ListAttachments(ctx context.Context, taskID int64) ([]*Attachment, error) {
 	return s.repo.ListAttachments(ctx, taskID)
 }
 
 // ==================== Activity ====================
 
-// GetTaskActivity - история изменений задачи
 func (s *Service) GetTaskActivity(ctx context.Context, taskID int64, page, pageSize int32) ([]*ActivityLog, int64, error) {
 	if pageSize <= 0 {
 		pageSize = 20
@@ -1034,11 +930,9 @@ func (s *Service) GetTaskActivity(ctx context.Context, taskID int64, page, pageS
 	if offset < 0 {
 		offset = 0
 	}
-
 	return s.repo.ListActivity(ctx, taskID, int(pageSize), offset)
 }
 
-// logTaskActivity - вспомогательный метод для логирования
 func (s *Service) logTaskActivity(ctx context.Context, taskID, actorID int64, action, fieldName, oldValue, newValue string) {
 	log := &ActivityLog{
 		TaskID:    taskID,
@@ -1055,39 +949,32 @@ func (s *Service) logTaskActivity(ctx context.Context, taskID, actorID int64, ac
 
 // ==================== Watchers ====================
 
-// AddWatcher - добавляет наблюдателя
 func (s *Service) AddWatcher(ctx context.Context, taskID, userID int64) error {
 	isWatching, _ := s.repo.IsWatching(ctx, taskID, userID)
 	if isWatching {
 		return nil
 	}
-
 	return s.repo.AddWatcher(ctx, &Watcher{TaskID: taskID, UserID: userID})
 }
 
-// RemoveWatcher - удаляет наблюдателя
 func (s *Service) RemoveWatcher(ctx context.Context, taskID, userID int64) error {
 	return s.repo.RemoveWatcher(ctx, taskID, userID)
 }
 
-// ListWatchers - список наблюдателей
 func (s *Service) ListWatchers(ctx context.Context, taskID int64) ([]*Watcher, error) {
 	return s.repo.ListWatchers(ctx, taskID)
 }
 
 // ==================== Stats ====================
 
-// GetBoardStats - статистика доски
 func (s *Service) GetBoardStats(ctx context.Context, boardID int64) (*BoardStats, error) {
 	return s.repo.GetBoardStats(ctx, boardID)
 }
 
-// GetMemberStats - статистика по участникам
 func (s *Service) GetMemberStats(ctx context.Context, boardID int64) ([]*MemberStats, error) {
 	return s.repo.GetMemberStats(ctx, boardID)
 }
 
-// GetDailyStats - статистика за период
 func (s *Service) GetDailyStats(ctx context.Context, boardID int64, days int) ([]*DailyStats, error) {
 	if days <= 0 {
 		days = 14
@@ -1097,12 +984,10 @@ func (s *Service) GetDailyStats(ctx context.Context, boardID int64, days int) ([
 
 // ==================== My Tasks ====================
 
-// GetMyTasks - мои задачи
 func (s *Service) GetMyTasks(ctx context.Context, userID int64, filter MyTasksFilter) ([]*Task, int64, error) {
 	return s.repo.GetMyTasks(ctx, userID, filter)
 }
 
-// GetOverdueTasks - просроченные задачи
 func (s *Service) GetOverdueTasks(ctx context.Context, boardID int64, assigneeID *int64, page, pageSize int32) ([]*Task, int64, error) {
 	if pageSize <= 0 {
 		pageSize = 20
@@ -1111,11 +996,9 @@ func (s *Service) GetOverdueTasks(ctx context.Context, boardID int64, assigneeID
 	if offset < 0 {
 		offset = 0
 	}
-
 	return s.repo.GetOverdueTasks(ctx, boardID, assigneeID, int(pageSize), offset)
 }
 
-// GetUpcomingDeadlines - задачи с приближающимися дедлайнами
 func (s *Service) GetUpcomingDeadlines(ctx context.Context, boardID int64, userID *int64, daysAhead int, page, pageSize int32) ([]*Task, int64, error) {
 	if pageSize <= 0 {
 		pageSize = 20
@@ -1127,13 +1010,11 @@ func (s *Service) GetUpcomingDeadlines(ctx context.Context, boardID int64, userI
 	if offset < 0 {
 		offset = 0
 	}
-
 	return s.repo.GetUpcomingDeadlines(ctx, boardID, userID, daysAhead, int(pageSize), offset)
 }
 
 // ==================== Bulk Operations ====================
 
-// BulkUpdateTasksInput - входные данные для массового обновления
 type BulkUpdateTasksInput struct {
 	TaskIDs      []int64
 	AssigneeID   int64
@@ -1144,7 +1025,6 @@ type BulkUpdateTasksInput struct {
 	UpdatedBy    int64
 }
 
-// BulkUpdateTasks - массовое обновление с проверкой WIP-лимита
 func (s *Service) BulkUpdateTasks(ctx context.Context, input *BulkUpdateTasksInput) ([]*Task, error) {
 	if len(input.TaskIDs) == 0 {
 		return nil, errors.New("task_ids cannot be empty")
@@ -1205,17 +1085,13 @@ func (s *Service) BulkUpdateTasks(ctx context.Context, input *BulkUpdateTasksInp
 		}
 	}
 
-	s.logger.Info("Bulk update completed",
-		zap.Int("tasks_count", len(input.TaskIDs)),
-		zap.Int64("updated_by", input.UpdatedBy))
-
 	return result, nil
 }
 
-// BulkDeleteTasks - массовое удаление задач
 func (s *Service) BulkDeleteTasks(ctx context.Context, taskIDs []int64, deletedBy int64) error {
 	if len(taskIDs) == 0 {
 		return errors.New("task_ids cannot be empty")
 	}
+	_ = deletedBy
 	return s.repo.BulkDeleteTasks(ctx, taskIDs)
 }

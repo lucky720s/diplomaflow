@@ -93,35 +93,47 @@ function buildOutput(header, envContent, files) {
 
     // Считаем общий размер
     const totalSize = files.reduce((sum, f) => sum + f.size, 0);
-    const halfSize = totalSize / 2;
+
+    const thirdSize = totalSize / 3;
+    const twoThirdSize = thirdSize * 2;
 
     const part1 = [];
     const part2 = [];
+    const part3 = [];
 
     let currentSize = 0;
 
     for (const file of files) {
-        if (currentSize < halfSize) {
+        if (currentSize < thirdSize) {
             part1.push(file);
-            currentSize += file.size;
-        } else {
+        } else if (currentSize < twoThirdSize) {
             part2.push(file);
+        } else {
+            part3.push(file);
         }
+
+        currentSize += file.size;
     }
+
 
     const output1 = buildOutput("=== Собранные файлы (PART 1) ===", envContent, part1);
     const output2 = buildOutput("=== Собранные файлы (PART 2) ===", null, part2);
+    const output3 = buildOutput("=== Собранные файлы (PART 3) ===", null, part3);
 
     const txtPath1 = path.join(__dirname, "collected1.txt");
     const txtPath2 = path.join(__dirname, "collected2.txt");
+    const txtPath3 = path.join(__dirname, "collected3.txt");
 
     if (fs.existsSync(txtPath1)) fs.unlinkSync(txtPath1);
     if (fs.existsSync(txtPath2)) fs.unlinkSync(txtPath2);
+    if (fs.existsSync(txtPath3)) fs.unlinkSync(txtPath3);
 
     fs.writeFileSync(txtPath1, output1, "utf8");
     fs.writeFileSync(txtPath2, output2, "utf8");
+    fs.writeFileSync(txtPath3, output3, "utf8");
 
     console.log("Готово!");
     console.log("Файл 1:", txtPath1);
     console.log("Файл 2:", txtPath2);
+    console.log("Файл 3:", txtPath2);
 })();

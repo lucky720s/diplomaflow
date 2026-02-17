@@ -9,12 +9,12 @@ import (
 
 // ==================== Board ====================
 
-// Board - Kanban доска команды
+// Board - Kanban доска проекта (team_id хранится для join’ов/проверок)
 type Board struct {
-	ID          int64          `gorm:"primaryKey"`
-	TeamID      int64          `gorm:"uniqueIndex;not null"`
-	ProjectID   int64          `gorm:"index"`
-	Name        string         `gorm:"size:255;not null;default:'Доска задач'"`
+	ID          int64 `gorm:"primaryKey"`
+	TeamID      int64 `gorm:"index;not null"`
+	ProjectID   int64 `gorm:"uniqueIndex;not null"`
+	Name        string
 	Description string         `gorm:"type:text"`
 	Settings    datatypes.JSON `gorm:"type:jsonb;default:'{}'"`
 	CreatedBy   int64          `gorm:"not null"`
@@ -68,28 +68,33 @@ func (Column) TableName() string {
 
 // Task - задача
 type Task struct {
-	ID               int64      `gorm:"primaryKey"`
-	BoardID          int64      `gorm:"index;not null"`
-	ColumnID         int64      `gorm:"index;not null"`
-	Title            string     `gorm:"size:500;not null"`
-	Description      string     `gorm:"type:text"`
-	Status           string     `gorm:"size:30;not null;default:'todo'"`
-	Priority         string     `gorm:"size:20;not null;default:'medium'"`
-	AssigneeID       *int64     `gorm:"index"`
-	CreatedBy        int64      `gorm:"index;not null"`
-	DueDate          *time.Time `gorm:"type:date"`
-	DueTime          *string    `gorm:"type:time"`
-	StartedAt        *time.Time
-	CompletedAt      *time.Time
+	ID          int64 `gorm:"primaryKey"`
+	BoardID     int64 `gorm:"index;not null"`
+	ColumnID    int64 `gorm:"index;not null"`
+	Title       string
+	Description string `gorm:"type:text"`
+
+	Status   string `gorm:"size:30;not null;default:'todo'"`
+	Priority string `gorm:"size:20;not null;default:'medium'"`
+
+	AssigneeID *int64 `gorm:"index"`
+	CreatedBy  int64  `gorm:"index;not null"`
+
+	DueDate     *time.Time `gorm:"type:date"`
+	DueTime     *string    `gorm:"type:time"`
+	StartedAt   *time.Time
+	CompletedAt *time.Time
+
 	EstimatedMinutes int32          `gorm:"default:0"`
 	ActualMinutes    int32          `gorm:"default:0"`
 	Position         int32          `gorm:"not null;default:0"`
 	WorkflowStepID   *int64         `gorm:"index"`
 	Labels           datatypes.JSON `gorm:"type:jsonb;default:'[]'"`
 	CustomFields     datatypes.JSON `gorm:"type:jsonb;default:'{}'"`
-	CreatedAt        time.Time
-	UpdatedAt        time.Time
-	DeletedAt        gorm.DeletedAt `gorm:"index"`
+
+	CreatedAt time.Time
+	UpdatedAt time.Time
+	DeletedAt gorm.DeletedAt `gorm:"index"`
 
 	// Computed fields (not stored)
 	CommentsCount    int32 `gorm:"-"`
@@ -106,10 +111,10 @@ func (Task) TableName() string {
 
 // Comment - комментарий к задаче
 type Comment struct {
-	ID        int64          `gorm:"primaryKey"`
-	TaskID    int64          `gorm:"index;not null"`
-	AuthorID  int64          `gorm:"index;not null"`
-	Content   string         `gorm:"type:text;not null"`
+	ID        int64 `gorm:"primaryKey"`
+	TaskID    int64 `gorm:"index;not null"`
+	AuthorID  int64 `gorm:"index;not null"`
+	Content   string
 	Mentions  datatypes.JSON `gorm:"type:jsonb;default:'[]'"`
 	EditedAt  *time.Time
 	CreatedAt time.Time
@@ -150,13 +155,13 @@ func (Attachment) TableName() string {
 
 // ActivityLog - запись в логе активности
 type ActivityLog struct {
-	ID        int64          `gorm:"primaryKey"`
-	TaskID    int64          `gorm:"index;not null"`
-	ActorID   int64          `gorm:"index;not null"`
-	Action    string         `gorm:"size:50;not null"`
-	FieldName string         `gorm:"size:100"`
-	OldValue  string         `gorm:"type:text"`
-	NewValue  string         `gorm:"type:text"`
+	ID        int64 `gorm:"primaryKey"`
+	TaskID    int64 `gorm:"index;not null"`
+	ActorID   int64 `gorm:"index;not null"`
+	Action    string
+	FieldName string
+	OldValue  string
+	NewValue  string
 	Metadata  datatypes.JSON `gorm:"type:jsonb;default:'{}'"`
 	CreatedAt time.Time
 }
@@ -181,7 +186,6 @@ func (Watcher) TableName() string {
 
 // ==================== Enums ====================
 
-// Task Status
 const (
 	TaskStatusTodo       = "todo"
 	TaskStatusInProgress = "in_progress"
@@ -189,7 +193,6 @@ const (
 	TaskStatusDone       = "done"
 )
 
-// Task Priority
 const (
 	TaskPriorityLow    = "low"
 	TaskPriorityMedium = "medium"
@@ -197,7 +200,6 @@ const (
 	TaskPriorityUrgent = "urgent"
 )
 
-// Activity Actions
 const (
 	ActionCreated      = "created"
 	ActionUpdated      = "updated"
@@ -211,7 +213,6 @@ const (
 
 // ==================== DTOs ====================
 
-// UserPreview - краткая информация о пользователе
 type UserPreview struct {
 	ID        int64
 	FullName  string
@@ -219,7 +220,6 @@ type UserPreview struct {
 	AvatarURL string
 }
 
-// BoardStats - статистика доски
 type BoardStats struct {
 	TotalTasks           int32
 	CompletedTasks       int32
@@ -229,7 +229,6 @@ type BoardStats struct {
 	TasksByPriority      map[string]int32
 }
 
-// MemberStats - статистика по участнику
 type MemberStats struct {
 	User            *UserPreview
 	AssignedTasks   int32
@@ -238,7 +237,6 @@ type MemberStats struct {
 	InProgressTasks int32
 }
 
-// DailyStats - статистика за день
 type DailyStats struct {
 	Date      string
 	Created   int32
@@ -246,7 +244,7 @@ type DailyStats struct {
 	Moved     int32
 }
 
-// Default columns for new boards
+// Default columns for new boards (на случай восстановления/ремонта)
 var DefaultColumns = []Column{
 	{Name: "К выполнению", Slug: "todo", Color: "#6B7280", OrderIndex: 0, IsDefault: true, IsDoneColumn: false},
 	{Name: "В работе", Slug: "in_progress", Color: "#3B82F6", OrderIndex: 1, IsDefault: false, IsDoneColumn: false},
