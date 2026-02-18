@@ -70,6 +70,7 @@ services:
       PORT: "8080"
       REDIS_ADDR: 127.0.0.1:6380
       JWT_SECRET: ${JWT_SECRET:?JWT_SECRET is required}
+      METRICS_PORT: ${METRICS_PORT:-9091}
       <<: *svc_addrs_host
     depends_on:
       redis:
