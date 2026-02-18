@@ -47,5 +47,6 @@ jobs:
               "${{ secrets.JWT_SECRET_DEV }}" \
               "${{ secrets.POSTGRES_PASSWORD_DEV }}" \
               "${{ github.repository }}" \
-              "dev"
+              "dev" \
+              "${{ secrets.GRAFANA_ADMIN_PASSWORD_DEV }}"
 

@@ -7,6 +7,7 @@ JWT_SECRET="${3:?JWT_SECRET required}"
 POSTGRES_PASSWORD="${4:?POSTGRES_PASSWORD required}"
 REPO="${5:?REPO required}"
 BRANCH="${6:?BRANCH required}"
+GRAFANA_ADMIN_PASSWORD="${7:?GRAFANA_ADMIN_PASSWORD is required}"
 
 PROJECT_NAME="diplomaflow"
 STATE_DIR="/opt/diplomaflow_state"
@@ -65,6 +66,8 @@ fi
 log "Create .env"
 umask 077
 cat > "$ENV_FILE" <<EOF
+METRICS_PORT=9091
+GRAFANA_ADMIN_PASSWORD=${GRAFANA_ADMIN_PASSWORD}
 ENV=dev
 GIN_MODE=release
 
