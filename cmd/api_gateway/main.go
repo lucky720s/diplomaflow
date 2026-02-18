@@ -352,6 +352,9 @@ func main() {
 		_ = metricsSrv.ListenAndServe()
 	}()
 	log.Info("API Gateway starting", zap.String("port", cfg.Port))
+	for _, r := range router.Routes() {
+		middleware.SetRouteExists(r.Method, r.Path)
+	}
 	if err := router.Run(":" + cfg.Port); err != nil {
 		log.Fatal("failed to start server", zap.Error(err))
 	}

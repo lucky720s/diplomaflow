@@ -25,10 +25,18 @@ var (
 		},
 		[]string{"method", "path", "status"},
 	)
+
+	gatewayRouteInfo = prometheus.NewGaugeVec(
+		prometheus.GaugeOpts{
+			Name: "gateway_route_info",
+			Help: "Static list of api_gateway routes (1 = exists). Used to show 0-values in dashboards.",
+		},
+		[]string{"method", "path"},
+	)
 )
 
 func MustRegisterGatewayMetrics(reg prometheus.Registerer) {
-	reg.MustRegister(httpRequestsTotal, httpRequestDuration)
+	reg.MustRegister(httpRequestsTotal, httpRequestDuration, gatewayRouteInfo)
 }
 
 func MetricsMiddleware() gin.HandlerFunc {
@@ -47,4 +55,8 @@ func MetricsMiddleware() gin.HandlerFunc {
 		httpRequestsTotal.WithLabelValues(method, path, status).Inc()
 		httpRequestDuration.WithLabelValues(method, path, status).Observe(time.Since(start).Seconds())
 	}
+}
+
+func SetRouteExists(method, path string) {
+	gatewayRouteInfo.WithLabelValues(method, path).Set(1)
 }
