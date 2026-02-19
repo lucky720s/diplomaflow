@@ -186,7 +186,7 @@ func (s *Service) CreateTeam(
 		s.notifyBestEffort(ctx, memberID,
 			"Приглашение в команду",
 			fmt.Sprintf("Вас пригласили в команду \"%s\". Откройте приглашения, чтобы принять/отклонить.", team.Name),
-			"/dashboard/invites",
+			"/dashboard/team",
 			"team_invite",
 		)
 	}
