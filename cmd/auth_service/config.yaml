@@ -2,7 +2,7 @@ env: "local"
 grpc_port: 8082
 jwt:
   secret: ""
-  access_token_ttl: 15m
+  access_token_ttl: 24h
   refresh_token_ttl: 720h
 database:
   dsn: ""
