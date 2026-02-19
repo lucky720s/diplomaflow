@@ -20,6 +20,9 @@ func NewRepository(db *gorm.DB) Repository {
 }
 
 func (r *repository) SaveMetadata(ctx context.Context, meta *FileMetadata) error {
+	if meta.ProjectID != nil && *meta.ProjectID == 0 {
+		meta.ProjectID = nil
+	}
 	return r.db.WithContext(ctx).Create(meta).Error
 }
 

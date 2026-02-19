@@ -57,17 +57,24 @@ func (s *Service) StartUpload(fileName string) (id string, tempPath string, fina
 	return id, tempPath, finalPath, f, nil
 }
 
-func (s *Service) CommitUpload(ctx context.Context, id, tempPath, finalPath string, userID, projectID int64, originalName, fileType string, size int64) error {
-	// rename temp -> final (atomic on same filesystem)
+func (s *Service) CommitUpload(ctx context.Context, id, tempPath, finalPath string,
+	userID, projectID int64, originalName, fileType string, size int64) error {
+
 	if err := os.Rename(tempPath, finalPath); err != nil {
 		_ = os.Remove(tempPath)
 		return fmt.Errorf("rename temp to final: %w", err)
 	}
 
+	// Конвертируем 0 → nil
+	var pid *int64
+	if projectID != 0 {
+		pid = &projectID
+	}
+
 	meta := &FileMetadata{
 		ID:        id,
 		UserID:    userID,
-		ProjectID: projectID,
+		ProjectID: pid,
 		FileName:  originalName,
 		FileType:  fileType,
 		Size:      size,
@@ -75,7 +82,6 @@ func (s *Service) CommitUpload(ctx context.Context, id, tempPath, finalPath stri
 	}
 
 	if err := s.repo.SaveMetadata(ctx, meta); err != nil {
-		// rollback file if metadata failed
 		_ = os.Remove(finalPath)
 		return fmt.Errorf("save metadata: %w", err)
 	}
