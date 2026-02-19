@@ -271,3 +271,59 @@ func (h *Handler) ExecuteTransition(ctx context.Context, req *workflowv1.Execute
 		ExecutedActions: res.ExecutedActionNames,
 	}, nil
 }
+func (h *Handler) CanExecuteTransition(ctx context.Context, req *workflowv1.CanExecuteTransitionRequest) (*workflowv1.CanExecuteTransitionResponse, error) {
+	if req.ProjectId <= 0 || req.TransitionId <= 0 {
+		return nil, status.Error(codes.InvalidArgument, "project_id and transition_id are required")
+	}
+
+	ci := getCaller(ctx)
+
+	snap, err := h.projectClient.GetProjectRuntime(
+		withInternalProjectCtx(ctx, ci),
+		&projectv1.GetProjectRuntimeRequest{ProjectId: req.ProjectId},
+	)
+	if err != nil {
+		return nil, status.Errorf(codes.Internal, "get project runtime: %v", err)
+	}
+
+	projectData := map[string]interface{}{}
+	if snap.Data != nil {
+		projectData = snap.Data.AsMap()
+	}
+
+	userID := ci.UserID
+	userRole := ci.UserRole
+	if ci.InternalSvc != "" {
+		if req.UserId > 0 {
+			userID = req.UserId
+		}
+		if req.UserRole != "" {
+			userRole = req.UserRole
+		}
+	}
+
+	currentStateID := req.CurrentStateId
+	if currentStateID == 0 {
+		currentStateID = snap.CurrentStateId
+	}
+
+	available, err := h.eng.GetAvailableTransitions(ctx, req.ProjectId, currentStateID, userID, userRole, projectData)
+	if err != nil {
+		return nil, status.Errorf(codes.Internal, "get transitions: %v", err)
+	}
+
+	for _, at := range available {
+		if at.Transition != nil && at.Transition.ID == req.TransitionId {
+			return &workflowv1.CanExecuteTransitionResponse{
+				CanExecute:          at.CanExecute,
+				BlockedReason:       at.BlockedReason,
+				MissingRequirements: at.MissingRequirements,
+			}, nil
+		}
+	}
+
+	return &workflowv1.CanExecuteTransitionResponse{
+		CanExecute:    false,
+		BlockedReason: "transition not available from current state",
+	}, nil
+}

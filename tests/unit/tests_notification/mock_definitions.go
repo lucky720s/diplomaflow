@@ -39,9 +39,15 @@ func (m *MockRepository) MarkAsRead(ctx context.Context, id int64, userID int64)
 	args := m.Called(ctx, id, userID)
 	return args.Error(0)
 }
+
 func (m *MockRepository) Delete(ctx context.Context, id int64, userID int64) error {
 	args := m.Called(ctx, id, userID)
 	return args.Error(0)
+}
+
+func (m *MockRepository) MarkAllAsRead(ctx context.Context, userID int64) (int64, error) {
+	args := m.Called(ctx, userID)
+	return args.Get(0).(int64), args.Error(1)
 }
 
 type MockNotificationService struct {
@@ -77,7 +83,13 @@ func (m *MockNotificationService) MarkAsRead(ctx context.Context, id, userID int
 	args := m.Called(ctx, id, userID)
 	return args.Error(0)
 }
+
 func (m *MockNotificationService) DeleteNotification(ctx context.Context, id, userID int64) error {
 	args := m.Called(ctx, id, userID)
 	return args.Error(0)
+}
+
+func (m *MockNotificationService) MarkAllAsRead(ctx context.Context, userID int64) (int64, error) {
+	args := m.Called(ctx, userID)
+	return args.Get(0).(int64), args.Error(1)
 }

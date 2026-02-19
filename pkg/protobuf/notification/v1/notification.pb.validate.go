@@ -850,3 +850,211 @@ var _ interface {
 	Cause() error
 	ErrorName() string
 } = DeleteNotificationRequestValidationError{}
+
+// Validate checks the field values on MarkAllAsReadRequest with the rules
+// defined in the proto definition for this message. If any rules are
+// violated, the first error encountered is returned, or nil if there are no violations.
+func (m *MarkAllAsReadRequest) Validate() error {
+	return m.validate(false)
+}
+
+// ValidateAll checks the field values on MarkAllAsReadRequest with the rules
+// defined in the proto definition for this message. If any rules are
+// violated, the result is a list of violation errors wrapped in
+// MarkAllAsReadRequestMultiError, or nil if none found.
+func (m *MarkAllAsReadRequest) ValidateAll() error {
+	return m.validate(true)
+}
+
+func (m *MarkAllAsReadRequest) validate(all bool) error {
+	if m == nil {
+		return nil
+	}
+
+	var errors []error
+
+	// no validation rules for UserId
+
+	if len(errors) > 0 {
+		return MarkAllAsReadRequestMultiError(errors)
+	}
+
+	return nil
+}
+
+// MarkAllAsReadRequestMultiError is an error wrapping multiple validation
+// errors returned by MarkAllAsReadRequest.ValidateAll() if the designated
+// constraints aren't met.
+type MarkAllAsReadRequestMultiError []error
+
+// Error returns a concatenation of all the error messages it wraps.
+func (m MarkAllAsReadRequestMultiError) Error() string {
+	msgs := make([]string, 0, len(m))
+	for _, err := range m {
+		msgs = append(msgs, err.Error())
+	}
+	return strings.Join(msgs, "; ")
+}
+
+// AllErrors returns a list of validation violation errors.
+func (m MarkAllAsReadRequestMultiError) AllErrors() []error { return m }
+
+// MarkAllAsReadRequestValidationError is the validation error returned by
+// MarkAllAsReadRequest.Validate if the designated constraints aren't met.
+type MarkAllAsReadRequestValidationError struct {
+	field  string
+	reason string
+	cause  error
+	key    bool
+}
+
+// Field function returns field value.
+func (e MarkAllAsReadRequestValidationError) Field() string { return e.field }
+
+// Reason function returns reason value.
+func (e MarkAllAsReadRequestValidationError) Reason() string { return e.reason }
+
+// Cause function returns cause value.
+func (e MarkAllAsReadRequestValidationError) Cause() error { return e.cause }
+
+// Key function returns key value.
+func (e MarkAllAsReadRequestValidationError) Key() bool { return e.key }
+
+// ErrorName returns error name.
+func (e MarkAllAsReadRequestValidationError) ErrorName() string {
+	return "MarkAllAsReadRequestValidationError"
+}
+
+// Error satisfies the builtin error interface
+func (e MarkAllAsReadRequestValidationError) Error() string {
+	cause := ""
+	if e.cause != nil {
+		cause = fmt.Sprintf(" | caused by: %v", e.cause)
+	}
+
+	key := ""
+	if e.key {
+		key = "key for "
+	}
+
+	return fmt.Sprintf(
+		"invalid %sMarkAllAsReadRequest.%s: %s%s",
+		key,
+		e.field,
+		e.reason,
+		cause)
+}
+
+var _ error = MarkAllAsReadRequestValidationError{}
+
+var _ interface {
+	Field() string
+	Reason() string
+	Key() bool
+	Cause() error
+	ErrorName() string
+} = MarkAllAsReadRequestValidationError{}
+
+// Validate checks the field values on MarkAllAsReadResponse with the rules
+// defined in the proto definition for this message. If any rules are
+// violated, the first error encountered is returned, or nil if there are no violations.
+func (m *MarkAllAsReadResponse) Validate() error {
+	return m.validate(false)
+}
+
+// ValidateAll checks the field values on MarkAllAsReadResponse with the rules
+// defined in the proto definition for this message. If any rules are
+// violated, the result is a list of violation errors wrapped in
+// MarkAllAsReadResponseMultiError, or nil if none found.
+func (m *MarkAllAsReadResponse) ValidateAll() error {
+	return m.validate(true)
+}
+
+func (m *MarkAllAsReadResponse) validate(all bool) error {
+	if m == nil {
+		return nil
+	}
+
+	var errors []error
+
+	// no validation rules for UpdatedCount
+
+	if len(errors) > 0 {
+		return MarkAllAsReadResponseMultiError(errors)
+	}
+
+	return nil
+}
+
+// MarkAllAsReadResponseMultiError is an error wrapping multiple validation
+// errors returned by MarkAllAsReadResponse.ValidateAll() if the designated
+// constraints aren't met.
+type MarkAllAsReadResponseMultiError []error
+
+// Error returns a concatenation of all the error messages it wraps.
+func (m MarkAllAsReadResponseMultiError) Error() string {
+	msgs := make([]string, 0, len(m))
+	for _, err := range m {
+		msgs = append(msgs, err.Error())
+	}
+	return strings.Join(msgs, "; ")
+}
+
+// AllErrors returns a list of validation violation errors.
+func (m MarkAllAsReadResponseMultiError) AllErrors() []error { return m }
+
+// MarkAllAsReadResponseValidationError is the validation error returned by
+// MarkAllAsReadResponse.Validate if the designated constraints aren't met.
+type MarkAllAsReadResponseValidationError struct {
+	field  string
+	reason string
+	cause  error
+	key    bool
+}
+
+// Field function returns field value.
+func (e MarkAllAsReadResponseValidationError) Field() string { return e.field }
+
+// Reason function returns reason value.
+func (e MarkAllAsReadResponseValidationError) Reason() string { return e.reason }
+
+// Cause function returns cause value.
+func (e MarkAllAsReadResponseValidationError) Cause() error { return e.cause }
+
+// Key function returns key value.
+func (e MarkAllAsReadResponseValidationError) Key() bool { return e.key }
+
+// ErrorName returns error name.
+func (e MarkAllAsReadResponseValidationError) ErrorName() string {
+	return "MarkAllAsReadResponseValidationError"
+}
+
+// Error satisfies the builtin error interface
+func (e MarkAllAsReadResponseValidationError) Error() string {
+	cause := ""
+	if e.cause != nil {
+		cause = fmt.Sprintf(" | caused by: %v", e.cause)
+	}
+
+	key := ""
+	if e.key {
+		key = "key for "
+	}
+
+	return fmt.Sprintf(
+		"invalid %sMarkAllAsReadResponse.%s: %s%s",
+		key,
+		e.field,
+		e.reason,
+		cause)
+}
+
+var _ error = MarkAllAsReadResponseValidationError{}
+
+var _ interface {
+	Field() string
+	Reason() string
+	Key() bool
+	Cause() error
+	ErrorName() string
+} = MarkAllAsReadResponseValidationError{}

@@ -14,8 +14,7 @@ type Repository interface {
 	Create(ctx context.Context, n *Notification) error
 	List(ctx context.Context, userID int64, onlyUnread bool, limit, offset int) ([]*Notification, int64, error)
 	MarkAsRead(ctx context.Context, id int64, userID int64) error
-
-	// NEW
+	MarkAllAsRead(ctx context.Context, userID int64) (int64, error)
 	Delete(ctx context.Context, id int64, userID int64) error
 }
 
@@ -79,4 +78,11 @@ func (r *repository) Delete(ctx context.Context, id int64, userID int64) error {
 		return ErrNotificationNotFound
 	}
 	return nil
+}
+func (r *repository) MarkAllAsRead(ctx context.Context, userID int64) (int64, error) {
+	result := r.db.WithContext(ctx).
+		Model(&Notification{}).
+		Where("user_id = ? AND is_read = ? AND deleted_at IS NULL", userID, false).
+		Update("is_read", true)
+	return result.RowsAffected, result.Error
 }

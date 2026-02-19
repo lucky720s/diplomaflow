@@ -34,7 +34,13 @@ func (p *EmailPlugin) ConfigSchema() json.RawMessage {
 
 func (p *EmailPlugin) Validate(config map[string]interface{}) error { return nil }
 func (p *EmailPlugin) Execute(ctx context.Context, actx *plugins.ActionContext) *plugins.ActionResult {
-	return &plugins.ActionResult{Success: true, Data: map[string]interface{}{"status": "sent"}}
+	return &plugins.ActionResult{
+		Success: true,
+		Data: map[string]interface{}{
+			"status": "stub",
+			"reason": "email plugin not yet implemented",
+		},
+	}
 }
 func (p *EmailPlugin) Rollback(ctx context.Context, actx *plugins.ActionContext) error { return nil }
 
@@ -63,7 +69,13 @@ func (p *ReminderPlugin) ConfigSchema() json.RawMessage {
 
 func (p *ReminderPlugin) Validate(config map[string]interface{}) error { return nil }
 func (p *ReminderPlugin) Execute(ctx context.Context, actx *plugins.ActionContext) *plugins.ActionResult {
-	return &plugins.ActionResult{Success: true}
+	return &plugins.ActionResult{
+		Success: true,
+		Data: map[string]interface{}{
+			"status": "stub",
+			"reason": "reminder plugin not yet implemented",
+		},
+	}
 }
 func (p *ReminderPlugin) Rollback(ctx context.Context, actx *plugins.ActionContext) error { return nil }
 
@@ -92,7 +104,13 @@ func (p *TurnitinPlugin) ConfigSchema() json.RawMessage {
 
 func (p *TurnitinPlugin) Validate(config map[string]interface{}) error { return nil }
 func (p *TurnitinPlugin) Execute(ctx context.Context, actx *plugins.ActionContext) *plugins.ActionResult {
-	return &plugins.ActionResult{Success: true}
+	return &plugins.ActionResult{
+		Success: true,
+		Data: map[string]interface{}{
+			"status": "stub",
+			"reason": "turnitin plugin not yet implemented",
+		},
+	}
 }
 func (p *TurnitinPlugin) Rollback(ctx context.Context, actx *plugins.ActionContext) error { return nil }
 
@@ -122,7 +140,13 @@ func (p *FileValidationPlugin) ConfigSchema() json.RawMessage {
 
 func (p *FileValidationPlugin) Validate(config map[string]interface{}) error { return nil }
 func (p *FileValidationPlugin) Execute(ctx context.Context, actx *plugins.ActionContext) *plugins.ActionResult {
-	return &plugins.ActionResult{Success: true}
+	return &plugins.ActionResult{
+		Success: true,
+		Data: map[string]interface{}{
+			"status": "stub",
+			"reason": "file validation plugin not yet implemented",
+		},
+	}
 }
 func (p *FileValidationPlugin) Rollback(ctx context.Context, actx *plugins.ActionContext) error {
 	return nil
@@ -153,7 +177,13 @@ func (p *FormValidationPlugin) ConfigSchema() json.RawMessage {
 
 func (p *FormValidationPlugin) Validate(config map[string]interface{}) error { return nil }
 func (p *FormValidationPlugin) Execute(ctx context.Context, actx *plugins.ActionContext) *plugins.ActionResult {
-	return &plugins.ActionResult{Success: true}
+	return &plugins.ActionResult{
+		Success: true,
+		Data: map[string]interface{}{
+			"status": "stub",
+			"reason": "form validation plugin not yet implemented",
+		},
+	}
 }
 func (p *FormValidationPlugin) Rollback(ctx context.Context, actx *plugins.ActionContext) error {
 	return nil
@@ -194,7 +224,13 @@ func (p *GradeCalculationPlugin) ConfigSchema() json.RawMessage {
 
 func (p *GradeCalculationPlugin) Validate(config map[string]interface{}) error { return nil }
 func (p *GradeCalculationPlugin) Execute(ctx context.Context, actx *plugins.ActionContext) *plugins.ActionResult {
-	return &plugins.ActionResult{Success: true, Data: map[string]interface{}{"grade": 0}}
+	return &plugins.ActionResult{
+		Success: true,
+		Data: map[string]interface{}{
+			"status": "stub",
+			"reason": "grade calculation plugin not yet implemented",
+		},
+	}
 }
 func (p *GradeCalculationPlugin) Rollback(ctx context.Context, actx *plugins.ActionContext) error {
 	return nil
@@ -225,8 +261,15 @@ func (p *DocumentGeneratorPlugin) ConfigSchema() json.RawMessage {
 
 func (p *DocumentGeneratorPlugin) Validate(config map[string]interface{}) error { return nil }
 func (p *DocumentGeneratorPlugin) Execute(ctx context.Context, actx *plugins.ActionContext) *plugins.ActionResult {
-	return &plugins.ActionResult{Success: true}
+	return &plugins.ActionResult{
+		Success: true,
+		Data: map[string]interface{}{
+			"status": "stub",
+			"reason": "document generator plugin not yet implemented",
+		},
+	}
 }
+
 func (p *DocumentGeneratorPlugin) Rollback(ctx context.Context, actx *plugins.ActionContext) error {
 	return nil
 }
@@ -259,6 +302,12 @@ func (p *WebhookPlugin) ConfigSchema() json.RawMessage {
 
 func (p *WebhookPlugin) Validate(config map[string]interface{}) error { return nil }
 func (p *WebhookPlugin) Execute(ctx context.Context, actx *plugins.ActionContext) *plugins.ActionResult {
-	return &plugins.ActionResult{Success: true}
+	return &plugins.ActionResult{
+		Success: true,
+		Data: map[string]interface{}{
+			"status": "stub",
+			"reason": "webhook plugin not yet implemented",
+		},
+	}
 }
 func (p *WebhookPlugin) Rollback(ctx context.Context, actx *plugins.ActionContext) error { return nil }

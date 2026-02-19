@@ -17,6 +17,10 @@ var (
 	ErrCannotLeaveAsLast = errors.New("cannot leave team as last member without deleting")
 )
 
+type TeamInviteWithTeam struct {
+	TeamInvite
+	TeamName string
+}
 type Repository interface {
 	Create(ctx context.Context, team *Team) error
 	GetByID(ctx context.Context, id int64) (*Team, error)
@@ -52,6 +56,9 @@ type Repository interface {
 
 	// Lock
 	SetCompositionLocked(ctx context.Context, teamID int64, locked bool, lockedAt *time.Time) error
+	GetPendingInvitesWithTeams(ctx context.Context, userID int64) ([]*TeamInviteWithTeam, error)
+	GetMembersByTeamIDs(ctx context.Context, teamIDs []int64) (map[int64][]*TeamMember, error)
+	GetUsersInTeams(ctx context.Context, userIDs []int64) (map[int64]bool, error)
 }
 
 type repository struct {
@@ -290,4 +297,39 @@ func (r *repository) SetCompositionLocked(ctx context.Context, teamID int64, loc
 			"composition_locked_at": lockedAt,
 			"updated_at":            time.Now(),
 		}).Error
+}
+func (r *repository) GetPendingInvitesWithTeams(ctx context.Context, userID int64) ([]*TeamInviteWithTeam, error) {
+	var results []*TeamInviteWithTeam
+	err := r.db.WithContext(ctx).
+		Table("team_invites").
+		Select("team_invites.*, teams.name as team_name").
+		Joins("LEFT JOIN teams ON teams.id = team_invites.team_id").
+		Where("team_invites.user_id = ? AND team_invites.status = ?", userID, InviteStatusPending).
+		Scan(&results).Error
+	return results, err
+}
+func (r *repository) GetMembersByTeamIDs(ctx context.Context, teamIDs []int64) (map[int64][]*TeamMember, error) {
+	var members []*TeamMember
+	err := r.db.WithContext(ctx).
+		Where("team_id IN ?", teamIDs).
+		Order("role DESC, created_at ASC").
+		Find(&members).Error
+	if err != nil {
+		return nil, err
+	}
+
+	result := make(map[int64][]*TeamMember)
+	for _, m := range members {
+		result[m.TeamID] = append(result[m.TeamID], m)
+	}
+	return result, nil
+}
+func (r *repository) GetUsersInTeams(ctx context.Context, userIDs []int64) (map[int64]bool, error) {
+	var members []*TeamMember
+	err := r.db.WithContext(ctx).Where("user_id IN ?", userIDs).Find(&members).Error
+	result := make(map[int64]bool)
+	for _, m := range members {
+		result[m.UserID] = true
+	}
+	return result, err
 }

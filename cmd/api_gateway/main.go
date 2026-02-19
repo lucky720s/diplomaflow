@@ -224,6 +224,7 @@ func main() {
 		{
 			notifications.GET("", handler.ListNotifications)
 			notifications.POST("/:id/read", handler.MarkNotificationRead)
+			notifications.POST("/read-all", handler.MarkAllNotificationsRead)
 			notifications.DELETE("/:id", handler.DeleteNotification)
 		}
 

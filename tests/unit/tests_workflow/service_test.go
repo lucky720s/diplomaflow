@@ -85,12 +85,9 @@ func (m *MockRepository) DeactivateWorkflowsForDepartment(ctx context.Context, d
 	return args.Error(0)
 }
 
-func (m *MockRepository) SetActiveWorkflow(ctx context.Context, workflowID int64) (*workflow.Workflow, error) {
+func (m *MockRepository) SetActiveWorkflow(ctx context.Context, workflowID int64) error {
 	args := m.Called(ctx, workflowID)
-	if args.Get(0) == nil {
-		return nil, args.Error(1)
-	}
-	return args.Get(0).(*workflow.Workflow), args.Error(1)
+	return args.Error(0)
 }
 
 // State methods

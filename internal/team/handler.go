@@ -116,6 +116,29 @@ func (h *Handler) GetTeam(ctx context.Context, req *teamv1.GetTeamRequest) (*tea
 	if req.TeamId <= 0 {
 		return nil, status.Error(codes.InvalidArgument, "team_id is required")
 	}
+	if svc := getInternalService(ctx); svc != "" {
+		switch svc {
+		case "admin_service", "workflow_service", "project_service":
+			// OK
+		default:
+			return nil, status.Error(codes.PermissionDenied, "forbidden")
+		}
+	} else {
+		userID := getRequesterID(ctx)
+		if userID == 0 {
+			return nil, status.Error(codes.Unauthenticated, "unauthorized")
+		}
+		role := getUserRole(ctx)
+		if role != "admin" {
+			isMember, err := h.service.IsUserInSpecificTeam(ctx, userID, req.TeamId)
+			if err != nil {
+				return nil, status.Errorf(codes.Internal, "check membership: %v", err)
+			}
+			if !isMember {
+				return nil, status.Error(codes.PermissionDenied, "you are not a member of this team")
+			}
+		}
+	}
 	team, members, err := h.service.GetTeam(ctx, req.TeamId)
 	if err != nil {
 		return nil, mapError(err)
@@ -213,14 +236,11 @@ func (h *Handler) UpdateTeam(ctx context.Context, req *teamv1.UpdateTeamRequest)
 	if err != nil {
 		return nil, err
 	}
-
-	team, err := h.service.UpdateTeam(ctx, req.Team.Id, req.Team.Name, userID)
+	team, members, err := h.service.UpdateTeamFull(ctx, req.Team.Id, req.Team.Name, userID)
 	if err != nil {
-		h.logger.Error("UpdateTeam failed", zap.Error(err))
 		return nil, mapError(err)
 	}
 
-	members, _ := h.service.repo.GetMembers(ctx, team.ID)
 	pbMembers := make([]*teamv1.TeamMember, 0, len(members))
 	for _, m := range members {
 		pbMembers = append(pbMembers, &teamv1.TeamMember{UserId: m.UserID, Role: m.Role})
@@ -354,22 +374,17 @@ func (h *Handler) GetMyInvites(ctx context.Context, req *teamv1.GetMyInvitesRequ
 		return nil, status.Error(codes.PermissionDenied, "forbidden")
 	}
 
-	invites, err := h.service.GetMyInvites(ctx, userID)
+	invitesWithTeams, err := h.service.GetPendingInvitesWithTeams(ctx, userID)
 	if err != nil {
 		return nil, mapError(err)
 	}
 
-	pbInvites := make([]*teamv1.Invite, 0, len(invites))
-	for _, inv := range invites {
-		team, _ := h.service.repo.GetByID(ctx, inv.TeamID)
-		teamName := ""
-		if team != nil {
-			teamName = team.Name
-		}
+	pbInvites := make([]*teamv1.Invite, 0, len(invitesWithTeams))
+	for _, inv := range invitesWithTeams {
 		pbInvites = append(pbInvites, &teamv1.Invite{
 			Id:        inv.ID,
 			TeamId:    inv.TeamID,
-			TeamName:  teamName,
+			TeamName:  inv.TeamName,
 			InviterId: inv.InviterID,
 			Status:    inv.Status,
 		})
@@ -408,13 +423,9 @@ func (h *Handler) GetAvailableStudents(ctx context.Context, req *teamv1.GetAvail
 	}
 	_ = userID
 
-	// По логике платформы — это для студентов/лидера команды.
-	// Если хочешь разрешить admin — добавь role == "admin".
 	if role != "student" && role != "admin" {
 		return nil, status.Error(codes.PermissionDenied, "forbidden")
 	}
-
-	// НЕ доверяем req.UniversityId/DepartmentId: берём из metadata
 	users, err := h.service.GetAvailableStudents(ctx, univID, deptID, req.ExcludeUserId)
 	if err != nil {
 		return nil, mapError(err)
@@ -437,7 +448,6 @@ func (h *Handler) ListTeams(ctx context.Context, req *teamv1.ListTeamsRequest) (
 	if err != nil {
 		return nil, err
 	}
-	// чтобы студент не сканировал все команды: по умолчанию ограничиваем своим dept
 	departmentID := req.DepartmentId
 	if role != "admin" {
 		departmentID = deptID
@@ -447,10 +457,15 @@ func (h *Handler) ListTeams(ctx context.Context, req *teamv1.ListTeamsRequest) (
 	if err != nil {
 		return nil, mapError(err)
 	}
+	teamIDs := make([]int64, 0, len(teams))
+	for _, t := range teams {
+		teamIDs = append(teamIDs, t.ID)
+	}
+	membersMap, _ := h.service.GetMembersByTeamIDs(ctx, teamIDs)
 
 	pbTeams := make([]*teamv1.Team, 0, len(teams))
 	for _, t := range teams {
-		members, _ := h.service.repo.GetMembers(ctx, t.ID)
+		members := membersMap[t.ID]
 		pbMembers := make([]*teamv1.TeamMember, 0, len(members))
 		for _, m := range members {
 			pbMembers = append(pbMembers, &teamv1.TeamMember{UserId: m.UserID, Role: m.Role})

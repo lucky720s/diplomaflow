@@ -421,7 +421,7 @@ func (h *Handler) AssignSupervisor(ctx context.Context, req *adminv1.AssignSuper
 
 	actorID := getActorIDFromContext(ctx)
 	if actorID == 0 {
-		actorID = int64(1) // fallback (not ideal)
+		return nil, status.Error(codes.Unauthenticated, "actor_id is required for audit trail")
 	}
 
 	err := h.service.AssignSupervisor(ctx, req.TeamId, req.SupervisorId, actorID)

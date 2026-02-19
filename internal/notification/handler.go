@@ -18,6 +18,7 @@ type NotificationUseCase interface {
 	ListNotifications(ctx context.Context, userID int64, onlyUnread bool, page, pageSize int32) ([]*Notification, int64, error)
 	MarkAsRead(ctx context.Context, id, userID int64) error
 	DeleteNotification(ctx context.Context, id, userID int64) error
+	MarkAllAsRead(ctx context.Context, userID int64) (int64, error)
 }
 
 type Handler struct {
@@ -164,4 +165,20 @@ func (h *Handler) DeleteNotification(ctx context.Context, req *notificationv1.De
 	}
 
 	return &emptypb.Empty{}, nil
+}
+func (h *Handler) MarkAllAsRead(ctx context.Context, req *notificationv1.MarkAllAsReadRequest) (*notificationv1.MarkAllAsReadResponse, error) {
+	userID, ok := userIDFromMD(ctx)
+	if !ok {
+		return nil, status.Error(codes.Unauthenticated, "missing x-user-id")
+	}
+	if userID == 0 {
+		return nil, status.Error(codes.Unauthenticated, "unauthorized")
+	}
+	count, err := h.service.MarkAllAsRead(ctx, userID)
+	if err != nil {
+		return nil, status.Errorf(codes.Internal, "failed to mark all as read: %v", err)
+	}
+	return &notificationv1.MarkAllAsReadResponse{
+		UpdatedCount: int32(count),
+	}, nil
 }

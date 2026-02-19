@@ -1,5 +1,3 @@
-// internal/workflow/handler.go
-
 package workflow
 
 import (
@@ -285,7 +283,7 @@ func (h *Handler) DeleteState(ctx context.Context, req *workflowv1.DeleteStateRe
 }
 
 func (h *Handler) ReorderStates(ctx context.Context, req *workflowv1.ReorderStatesRequest) (*workflowv1.ListStatesResponse, error) {
-	if err := h.service.repo.ReorderStates(ctx, req.WorkflowId, req.StateIds); err != nil {
+	if err := h.service.ReorderStates(ctx, req.WorkflowId, req.StateIds); err != nil {
 		return nil, status.Errorf(codes.Internal, "failed to reorder states: %v", err)
 	}
 
@@ -426,7 +424,6 @@ func (h *Handler) GetNextState(ctx context.Context, req *workflowv1.GetNextState
 }
 
 func (h *Handler) GetAvailableTransitions(ctx context.Context, req *workflowv1.GetAvailableTransitionsRequest) (*workflowv1.GetAvailableTransitionsResponse, error) {
-	// NOTE: runtimegrpc overrides this in production path.
 	transitions, err := h.service.repo.GetTransitionsFromState(ctx, req.CurrentStateId)
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, "failed to get transitions: %v", err)
@@ -688,19 +685,13 @@ func (h *Handler) GetTeamConfiguration(ctx context.Context, req *workflowv1.GetT
 
 	return resp, nil
 }
-
 func (h *Handler) CanExecuteTransition(ctx context.Context, req *workflowv1.CanExecuteTransitionRequest) (*workflowv1.CanExecuteTransitionResponse, error) {
-	// TODO: Implement with engine integration
-	return &workflowv1.CanExecuteTransitionResponse{
-		CanExecute:    true,
-		BlockedReason: "",
-	}, nil
+	return nil, status.Error(codes.Unimplemented, "use runtime handler")
 }
 
 func (h *Handler) GetDepartmentWorkflowConfig(ctx context.Context, req *workflowv1.GetDepartmentWorkflowConfigRequest) (*workflowv1.DepartmentWorkflowConfigResponse, error) {
 	config, err := h.service.GetDepartmentWorkflowConfiguration(ctx, req.DepartmentId, req.AcademicYear)
 	if err != nil {
-		// Senior: if no active workflow, return NotFound (not Internal)
 		if errors.Is(err, ErrWorkflowNotFound) {
 			return nil, status.Error(codes.NotFound, "no active workflow for department")
 		}

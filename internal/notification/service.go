@@ -2,9 +2,11 @@ package notification
 
 import (
 	"context"
+	"errors"
 	"time"
 
 	"github.com/lucky720s/diplomaflow/pkg/logger"
+	"go.uber.org/zap"
 )
 
 type Service struct {
@@ -51,4 +53,16 @@ func (s *Service) MarkAsRead(ctx context.Context, id, userID int64) error {
 
 func (s *Service) DeleteNotification(ctx context.Context, id, userID int64) error {
 	return s.repo.Delete(ctx, id, userID)
+}
+func (s *Service) MarkAllAsRead(ctx context.Context, userID int64) (int64, error) {
+	if userID <= 0 {
+		return 0, errors.New("user_id is required")
+	}
+	count, err := s.repo.MarkAllAsRead(ctx, userID)
+	if err != nil {
+		s.logger.Error("MarkAllAsRead failed", zap.Int64("user_id", userID), zap.Error(err))
+		return 0, err
+	}
+	s.logger.Info("All notifications marked as read", zap.Int64("user_id", userID), zap.Int64("count", count))
+	return count, nil
 }

@@ -409,21 +409,49 @@ func (s *Service) ListStudents(ctx context.Context, req *ListStudentsRequest) ([
 		return nil, 0, fmt.Errorf("failed to list students: %w", err)
 	}
 
-	var students []*StudentData
+	// Build student list first (no N+1 gRPC calls)
+	students := make([]*StudentData, 0, len(resp.Users))
 	for _, u := range resp.Users {
-		student := &StudentData{
+		students = append(students, &StudentData{
 			ID:        u.Id,
 			Email:     u.Email,
 			FirstName: u.FirstName,
 			LastName:  u.LastName,
-		}
+		})
+	}
 
-		teamResp, err := s.teamClient.GetMyTeam(ctx, &teamv1.GetMyTeamRequest{UserId: u.Id})
-		if err == nil && teamResp.HasTeam {
-			student.TeamID = teamResp.Team.TeamId
-			student.TeamName = teamResp.Team.Name
+	// Best-effort: enrich with team info using ListTeams (single call)
+	// For MVP this is acceptable; for production consider a batch endpoint
+	if req.DepartmentID > 0 && len(students) > 0 {
+		teamsResp, tErr := s.teamClient.ListTeams(s.forwardCtx(ctx), &teamv1.ListTeamsRequest{
+			DepartmentId: req.DepartmentID,
+			Page:         1,
+			PageSize:     500, // reasonable upper bound for a department
+		})
+		if tErr == nil && teamsResp != nil {
+			// Build userID -> team mapping from all teams' members
+			userTeamMap := make(map[int64]*TeamData)
+			for _, t := range teamsResp.Teams {
+				if t == nil {
+					continue
+				}
+				for _, m := range t.Members {
+					if m != nil && m.UserId > 0 {
+						userTeamMap[m.UserId] = &TeamData{
+							ID:   t.Id,
+							Name: t.Name,
+						}
+					}
+				}
+			}
+			// Enrich students
+			for _, s := range students {
+				if td, ok := userTeamMap[s.ID]; ok {
+					s.TeamID = td.ID
+					s.TeamName = td.Name
+				}
+			}
 		}
-		students = append(students, student)
 	}
 
 	return students, resp.TotalCount, nil
@@ -499,15 +527,28 @@ func (s *Service) ListSupervisors(ctx context.Context, departmentID, universityI
 		return nil, 0, fmt.Errorf("failed to list supervisors: %w", err)
 	}
 
+	teacherIDs := make([]int64, 0, len(resp.Users))
+	for _, u := range resp.Users {
+		teacherIDs = append(teacherIDs, u.Id)
+	}
+	teamCounts := make(map[int64]int32)
+	if len(teacherIDs) > 0 {
+		batchCounts, err := s.repo.BatchCountTeamsBySupervisors(ctx, teacherIDs)
+		if err == nil {
+			for id, cnt := range batchCounts {
+				teamCounts[id] = int32(cnt)
+			}
+		}
+	}
+
 	var supervisors []*SupervisorData
 	for _, u := range resp.Users {
-		teamsCount, _ := s.repo.CountTeamsBySupervisor(ctx, u.Id)
 		supervisors = append(supervisors, &SupervisorData{
 			ID:         u.Id,
 			FullName:   u.FirstName + " " + u.LastName,
 			Email:      u.Email,
 			Position:   "Teacher",
-			TeamsCount: int32(teamsCount),
+			TeamsCount: teamCounts[u.Id],
 			MaxTeams:   5,
 		})
 	}

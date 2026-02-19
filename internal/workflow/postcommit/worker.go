@@ -5,10 +5,12 @@ import (
 	"crypto/sha1"
 	"encoding/hex"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"strings"
 	"time"
 
+	"github.com/jackc/pgconn"
 	"github.com/lucky720s/diplomaflow/internal/workflow"
 	"github.com/lucky720s/diplomaflow/internal/workflow/plugins"
 	projectv1 "github.com/lucky720s/diplomaflow/pkg/protobuf/project/v1"
@@ -464,6 +466,10 @@ func makeDedupKey(kind string, projectID, transitionID int64, trigger string, ac
 func isUniqueViolation(err error) bool {
 	if err == nil {
 		return false
+	}
+	var pgErr *pgconn.PgError
+	if errors.As(err, &pgErr) {
+		return pgErr.Code == "23505"
 	}
 	s := err.Error()
 	return strings.Contains(s, "duplicate key") ||

@@ -459,6 +459,94 @@ func (x *DeleteNotificationRequest) GetUserId() int64 {
 	return 0
 }
 
+type MarkAllAsReadRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	UserId        int64                  `protobuf:"varint,1,opt,name=user_id,json=userId,proto3" json:"user_id,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *MarkAllAsReadRequest) Reset() {
+	*x = MarkAllAsReadRequest{}
+	mi := &file_notification_v1_notification_proto_msgTypes[7]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *MarkAllAsReadRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*MarkAllAsReadRequest) ProtoMessage() {}
+
+func (x *MarkAllAsReadRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_notification_v1_notification_proto_msgTypes[7]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use MarkAllAsReadRequest.ProtoReflect.Descriptor instead.
+func (*MarkAllAsReadRequest) Descriptor() ([]byte, []int) {
+	return file_notification_v1_notification_proto_rawDescGZIP(), []int{7}
+}
+
+func (x *MarkAllAsReadRequest) GetUserId() int64 {
+	if x != nil {
+		return x.UserId
+	}
+	return 0
+}
+
+type MarkAllAsReadResponse struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	UpdatedCount  int32                  `protobuf:"varint,1,opt,name=updated_count,json=updatedCount,proto3" json:"updated_count,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *MarkAllAsReadResponse) Reset() {
+	*x = MarkAllAsReadResponse{}
+	mi := &file_notification_v1_notification_proto_msgTypes[8]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *MarkAllAsReadResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*MarkAllAsReadResponse) ProtoMessage() {}
+
+func (x *MarkAllAsReadResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_notification_v1_notification_proto_msgTypes[8]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use MarkAllAsReadResponse.ProtoReflect.Descriptor instead.
+func (*MarkAllAsReadResponse) Descriptor() ([]byte, []int) {
+	return file_notification_v1_notification_proto_rawDescGZIP(), []int{8}
+}
+
+func (x *MarkAllAsReadResponse) GetUpdatedCount() int32 {
+	if x != nil {
+		return x.UpdatedCount
+	}
+	return 0
+}
+
 var File_notification_v1_notification_proto protoreflect.FileDescriptor
 
 const file_notification_v1_notification_proto_rawDesc = "" +
@@ -496,13 +584,18 @@ const file_notification_v1_notification_proto_rawDesc = "" +
 	"\auser_id\x18\x02 \x01(\x03R\x06userId\"]\n" +
 	"\x19DeleteNotificationRequest\x12'\n" +
 	"\x0fnotification_id\x18\x01 \x01(\x03R\x0enotificationId\x12\x17\n" +
-	"\auser_id\x18\x02 \x01(\x03R\x06userId2\x8e\x03\n" +
+	"\auser_id\x18\x02 \x01(\x03R\x06userId\"/\n" +
+	"\x14MarkAllAsReadRequest\x12\x17\n" +
+	"\auser_id\x18\x01 \x01(\x03R\x06userId\"<\n" +
+	"\x15MarkAllAsReadResponse\x12#\n" +
+	"\rupdated_count\x18\x01 \x01(\x05R\fupdatedCount2\xee\x03\n" +
 	"\x13NotificationService\x12g\n" +
 	"\x10SendNotification\x12(.notification.v1.SendNotificationRequest\x1a).notification.v1.SendNotificationResponse\x12j\n" +
 	"\x11ListNotifications\x12).notification.v1.ListNotificationsRequest\x1a*.notification.v1.ListNotificationsResponse\x12H\n" +
 	"\n" +
 	"MarkAsRead\x12\".notification.v1.MarkAsReadRequest\x1a\x16.google.protobuf.Empty\x12X\n" +
-	"\x12DeleteNotification\x12*.notification.v1.DeleteNotificationRequest\x1a\x16.google.protobuf.EmptyB?Z=github.com/lucky720s/diplomaflow/pkg/protobuf/notification/v1b\x06proto3"
+	"\x12DeleteNotification\x12*.notification.v1.DeleteNotificationRequest\x1a\x16.google.protobuf.Empty\x12^\n" +
+	"\rMarkAllAsRead\x12%.notification.v1.MarkAllAsReadRequest\x1a&.notification.v1.MarkAllAsReadResponseB?Z=github.com/lucky720s/diplomaflow/pkg/protobuf/notification/v1b\x06proto3"
 
 var (
 	file_notification_v1_notification_proto_rawDescOnce sync.Once
@@ -516,7 +609,7 @@ func file_notification_v1_notification_proto_rawDescGZIP() []byte {
 	return file_notification_v1_notification_proto_rawDescData
 }
 
-var file_notification_v1_notification_proto_msgTypes = make([]protoimpl.MessageInfo, 7)
+var file_notification_v1_notification_proto_msgTypes = make([]protoimpl.MessageInfo, 9)
 var file_notification_v1_notification_proto_goTypes = []any{
 	(*SendNotificationRequest)(nil),   // 0: notification.v1.SendNotificationRequest
 	(*SendNotificationResponse)(nil),  // 1: notification.v1.SendNotificationResponse
@@ -525,25 +618,29 @@ var file_notification_v1_notification_proto_goTypes = []any{
 	(*ListNotificationsResponse)(nil), // 4: notification.v1.ListNotificationsResponse
 	(*MarkAsReadRequest)(nil),         // 5: notification.v1.MarkAsReadRequest
 	(*DeleteNotificationRequest)(nil), // 6: notification.v1.DeleteNotificationRequest
-	(*timestamppb.Timestamp)(nil),     // 7: google.protobuf.Timestamp
-	(*emptypb.Empty)(nil),             // 8: google.protobuf.Empty
+	(*MarkAllAsReadRequest)(nil),      // 7: notification.v1.MarkAllAsReadRequest
+	(*MarkAllAsReadResponse)(nil),     // 8: notification.v1.MarkAllAsReadResponse
+	(*timestamppb.Timestamp)(nil),     // 9: google.protobuf.Timestamp
+	(*emptypb.Empty)(nil),             // 10: google.protobuf.Empty
 }
 var file_notification_v1_notification_proto_depIdxs = []int32{
-	7, // 0: notification.v1.Notification.created_at:type_name -> google.protobuf.Timestamp
-	3, // 1: notification.v1.ListNotificationsResponse.notifications:type_name -> notification.v1.Notification
-	0, // 2: notification.v1.NotificationService.SendNotification:input_type -> notification.v1.SendNotificationRequest
-	2, // 3: notification.v1.NotificationService.ListNotifications:input_type -> notification.v1.ListNotificationsRequest
-	5, // 4: notification.v1.NotificationService.MarkAsRead:input_type -> notification.v1.MarkAsReadRequest
-	6, // 5: notification.v1.NotificationService.DeleteNotification:input_type -> notification.v1.DeleteNotificationRequest
-	1, // 6: notification.v1.NotificationService.SendNotification:output_type -> notification.v1.SendNotificationResponse
-	4, // 7: notification.v1.NotificationService.ListNotifications:output_type -> notification.v1.ListNotificationsResponse
-	8, // 8: notification.v1.NotificationService.MarkAsRead:output_type -> google.protobuf.Empty
-	8, // 9: notification.v1.NotificationService.DeleteNotification:output_type -> google.protobuf.Empty
-	6, // [6:10] is the sub-list for method output_type
-	2, // [2:6] is the sub-list for method input_type
-	2, // [2:2] is the sub-list for extension type_name
-	2, // [2:2] is the sub-list for extension extendee
-	0, // [0:2] is the sub-list for field type_name
+	9,  // 0: notification.v1.Notification.created_at:type_name -> google.protobuf.Timestamp
+	3,  // 1: notification.v1.ListNotificationsResponse.notifications:type_name -> notification.v1.Notification
+	0,  // 2: notification.v1.NotificationService.SendNotification:input_type -> notification.v1.SendNotificationRequest
+	2,  // 3: notification.v1.NotificationService.ListNotifications:input_type -> notification.v1.ListNotificationsRequest
+	5,  // 4: notification.v1.NotificationService.MarkAsRead:input_type -> notification.v1.MarkAsReadRequest
+	6,  // 5: notification.v1.NotificationService.DeleteNotification:input_type -> notification.v1.DeleteNotificationRequest
+	7,  // 6: notification.v1.NotificationService.MarkAllAsRead:input_type -> notification.v1.MarkAllAsReadRequest
+	1,  // 7: notification.v1.NotificationService.SendNotification:output_type -> notification.v1.SendNotificationResponse
+	4,  // 8: notification.v1.NotificationService.ListNotifications:output_type -> notification.v1.ListNotificationsResponse
+	10, // 9: notification.v1.NotificationService.MarkAsRead:output_type -> google.protobuf.Empty
+	10, // 10: notification.v1.NotificationService.DeleteNotification:output_type -> google.protobuf.Empty
+	8,  // 11: notification.v1.NotificationService.MarkAllAsRead:output_type -> notification.v1.MarkAllAsReadResponse
+	7,  // [7:12] is the sub-list for method output_type
+	2,  // [2:7] is the sub-list for method input_type
+	2,  // [2:2] is the sub-list for extension type_name
+	2,  // [2:2] is the sub-list for extension extendee
+	0,  // [0:2] is the sub-list for field type_name
 }
 
 func init() { file_notification_v1_notification_proto_init() }
@@ -557,7 +654,7 @@ func file_notification_v1_notification_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_notification_v1_notification_proto_rawDesc), len(file_notification_v1_notification_proto_rawDesc)),
 			NumEnums:      0,
-			NumMessages:   7,
+			NumMessages:   9,
 			NumExtensions: 0,
 			NumServices:   1,
 		},

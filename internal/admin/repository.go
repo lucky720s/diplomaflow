@@ -84,6 +84,7 @@ type Repository interface {
 	GetTeamContext(ctx context.Context, teamID int64) (*TeamContext, error)
 	GetSupervisorTeamsReport(ctx context.Context, supervisorID int64) ([]*TeamFullDetails, int32 /*totalStudents*/, error)
 	ListAvailableTeams(ctx context.Context, departmentID int64, limit, offset int) ([]*AvailableTeamData, int64, error)
+	BatchCountTeamsBySupervisors(ctx context.Context, supervisorIDs []int64) (map[int64]int64, error)
 }
 
 type TopicRegistrationFilter struct {
@@ -1201,4 +1202,30 @@ func (r *repository) ListAvailableTeams(ctx context.Context, departmentID int64,
 		})
 	}
 	return out, total, nil
+}
+func (r *repository) BatchCountTeamsBySupervisors(ctx context.Context, supervisorIDs []int64) (map[int64]int64, error) {
+	if len(supervisorIDs) == 0 {
+		return map[int64]int64{}, nil
+	}
+
+	type row struct {
+		SupervisorID int64 `gorm:"column:supervisor_id"`
+		Count        int64 `gorm:"column:cnt"`
+	}
+	var rows []row
+	err := r.db.WithContext(ctx).
+		Table("admin_supervisor_assignments").
+		Select("supervisor_id, COUNT(*) as cnt").
+		Where("supervisor_id IN ?", supervisorIDs).
+		Group("supervisor_id").
+		Scan(&rows).Error
+	if err != nil {
+		return nil, err
+	}
+
+	result := make(map[int64]int64, len(rows))
+	for _, r := range rows {
+		result[r.SupervisorID] = r.Count
+	}
+	return result, nil
 }

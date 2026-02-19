@@ -28,8 +28,6 @@ var (
 	ErrForbiddenRole         = errors.New("only students can join by code")
 )
 
-var inviteAlphabet = []byte("0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz")
-
 type Service struct {
 	repo               Repository
 	authClient         authv1.AuthServiceClient
@@ -422,10 +420,6 @@ func (s *Service) RemoveMember(ctx context.Context, teamID int64, userID int64, 
 	return nil
 }
 
-func (s *Service) GetMyInvites(ctx context.Context, userID int64) ([]*TeamInvite, error) {
-	return s.repo.GetPendingInvites(ctx, userID)
-}
-
 func (s *Service) RespondToInvite(ctx context.Context, inviteID int64, userID int64, accept bool) error {
 	invite, err := s.repo.GetInvite(ctx, inviteID)
 	if err != nil {
@@ -495,10 +489,19 @@ func (s *Service) GetAvailableStudents(ctx context.Context, universityID int64, 
 		return nil, err
 	}
 
+	// Batch check
+	userIDs := make([]int64, 0, len(resp.Users))
+	for _, u := range resp.Users {
+		userIDs = append(userIDs, u.Id)
+	}
+	inTeamMap, err := s.repo.GetUsersInTeams(ctx, userIDs)
+	if err != nil {
+		return nil, err
+	}
+
 	available := make([]*authv1.UserPreview, 0, len(resp.Users))
 	for _, user := range resp.Users {
-		inTeam, _ := s.repo.IsUserInTeam(ctx, user.Id)
-		if !inTeam {
+		if !inTeamMap[user.Id] {
 			available = append(available, user)
 		}
 	}
@@ -531,14 +534,28 @@ func (s *Service) validateLeader(ctx context.Context, teamID int64, userID int64
 }
 
 func generateInviteCode() (string, error) {
-	const n = 6
-	b := make([]byte, n)
-	rb := make([]byte, n)
-	if _, err := rand.Read(rb); err != nil {
-		return "", err
-	}
-	for i := 0; i < n; i++ {
-		b[i] = inviteAlphabet[int(rb[i])%len(inviteAlphabet)]
+	const inviteAlphabet = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789"
+	const alphaLen = byte(len(inviteAlphabet)) // 62
+	const maxUnbiased = 248
+
+	b := make([]byte, 6)
+	buf := make([]byte, 8)
+	idx := len(buf)
+
+	for i := 0; i < 6; {
+		if idx >= len(buf) {
+			if _, err := rand.Read(buf); err != nil {
+				return "", err
+			}
+			idx = 0
+		}
+		rb := buf[idx]
+		idx++
+		if rb >= maxUnbiased {
+			continue
+		}
+		b[i] = inviteAlphabet[rb%alphaLen]
+		i++
 	}
 	return string(b), nil
 }
@@ -686,4 +703,24 @@ func (s *Service) ensureTeamNotFull(ctx context.Context, teamID int64) error {
 		return ErrTeamFull
 	}
 	return nil
+}
+func (s *Service) UpdateTeamFull(ctx context.Context, teamID int64, name string, requesterID int64) (*Team, []*TeamMember, error) {
+	team, err := s.UpdateTeam(ctx, teamID, name, requesterID)
+	if err != nil {
+		return nil, nil, err
+	}
+	members, err := s.repo.GetMembers(ctx, team.ID)
+	if err != nil {
+		return nil, nil, err
+	}
+	return team, members, nil
+}
+func (s *Service) GetPendingInvitesWithTeams(ctx context.Context, userID int64) ([]*TeamInviteWithTeam, error) {
+	return s.repo.GetPendingInvitesWithTeams(ctx, userID)
+}
+func (s *Service) IsUserInSpecificTeam(ctx context.Context, userID, teamID int64) (bool, error) {
+	return s.repo.IsUserInSpecificTeam(ctx, userID, teamID)
+}
+func (s *Service) GetMembersByTeamIDs(ctx context.Context, teamIDs []int64) (map[int64][]*TeamMember, error) {
+	return s.repo.GetMembersByTeamIDs(ctx, teamIDs)
 }

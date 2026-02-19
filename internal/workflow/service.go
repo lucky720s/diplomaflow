@@ -635,3 +635,7 @@ type TransitionCondition struct {
 	Operator string      `json:"operator"`
 	Value    interface{} `json:"value"`
 }
+
+func (s *Service) ReorderStates(ctx context.Context, workflowID int64, stateIDs []int64) error {
+	return s.repo.ReorderStates(ctx, workflowID, stateIDs)
+}
