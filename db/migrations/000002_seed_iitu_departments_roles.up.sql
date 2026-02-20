@@ -42,7 +42,8 @@ INSERT INTO roles (name, department_id) VALUES
                                             ('Supervisor', v_pi_id),
                                             ('Norm Control Reviewer', v_pi_id),
                                             ('Economics Reviewer', v_pi_id),
-                                            ('Commission Member', v_pi_id)
+                                            ('Commission Member', v_pi_id),
+                                            ('Reviewer of topic', v_pi_id)
     ON CONFLICT (name, department_id) DO NOTHING;
 END $$;
 
