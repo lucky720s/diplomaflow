@@ -193,9 +193,11 @@ func (s *Service) SubmitTopicRegistration(ctx context.Context, req *SubmitTopicR
 	if err == nil && existing != nil {
 		switch existing.Status {
 		case StatusPending:
-			return nil, errors.New("заявка уже на рассмотрении")
+			return nil, status.Error(codes.AlreadyExists,
+				"у команды уже есть заявление на рассмотрении")
 		case StatusApproved:
-			return nil, errors.New("тема уже утверждена для этой команды")
+			return nil, status.Error(codes.AlreadyExists,
+				"тема уже утверждена для этой команды")
 		case StatusRejected:
 			// ===== РАЗРЕШАЕМ ПЕРЕПОДАЧУ =====
 			// Rejected → можно подать заново. Не блокируем.
