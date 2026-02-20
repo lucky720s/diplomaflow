@@ -6,12 +6,9 @@ import (
 
 	"github.com/gin-gonic/gin"
 	projectv1 "github.com/lucky720s/diplomaflow/pkg/protobuf/project/v1"
-	"golang.org/x/sync/errgroup"
 	"google.golang.org/protobuf/types/known/structpb"
 )
 
-// NOTE: CreateProject endpoint лучше удалить из gateway (см. ниже патч роутинга).
-// Оставляю метод, чтобы сборка не падала, если где-то ещё на него ссылаются.
 func (h *Handler) CreateProject(c *gin.Context) {
 	c.JSON(http.StatusForbidden, gin.H{"error": "project creation is not available via gateway; use supervisor approve/claim flow"})
 }
@@ -46,45 +43,6 @@ func (h *Handler) GetStudentProjects(c *gin.Context) {
 		return
 	}
 	c.JSON(http.StatusOK, res)
-}
-
-func (h *Handler) GetProjectDetails(c *gin.Context) {
-	projectID, err := strconv.ParseInt(c.Param("id"), 10, 64)
-	if err != nil || projectID <= 0 {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid project id"})
-		return
-	}
-
-	g, ctx := errgroup.WithContext(outgoingCtx(c))
-
-	var projectResp *projectv1.GetProjectResponse
-	var currentUserInfo map[string]interface{}
-
-	g.Go(func() error {
-		var e error
-		projectResp, e = h.projectClient.GetProject(ctx, &projectv1.GetProjectRequest{ProjectId: projectID})
-		return e
-	})
-
-	userID := c.GetInt64("userId")
-	g.Go(func() error {
-		currentUserInfo = map[string]interface{}{
-			"id":     userID,
-			"role":   c.GetString("role"),
-			"status": "active",
-		}
-		return nil
-	})
-
-	if err := g.Wait(); err != nil {
-		MapGRPCError(c, err)
-		return
-	}
-
-	c.JSON(http.StatusOK, gin.H{
-		"project": projectResp,
-		"viewer":  currentUserInfo,
-	})
 }
 
 func (h *Handler) ListProjects(c *gin.Context) {

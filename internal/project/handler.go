@@ -231,8 +231,7 @@ func (h *Handler) PerformAction(ctx context.Context, req *projectv1.PerformActio
 }
 
 func (h *Handler) GetProjectRuntime(ctx context.Context, req *projectv1.GetProjectRuntimeRequest) (*projectv1.GetProjectRuntimeResponse, error) {
-	// runtime API: internal-only
-	if err := requireInternal(ctx, "workflow_service", "admin_service"); err != nil {
+	if err := requireInternal(ctx, "workflow_service", "admin_service", "api_gateway"); err != nil {
 		return nil, err
 	}
 
