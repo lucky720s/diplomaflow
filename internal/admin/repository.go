@@ -233,14 +233,14 @@ func (r *repository) ListTopicRegistrations(ctx context.Context, filter TopicReg
 	query := r.db.WithContext(ctx).Model(&TopicRegistration{})
 
 	if filter.DepartmentID > 0 {
-		query = query.Where("department_id = ?", filter.DepartmentID)
+		query = query.Joins("JOIN projects p ON p.id = admin_topic_registrations.project_id").
+			Where("p.department_id = ?", filter.DepartmentID)
 	}
 	if filter.Status != "" {
-		query = query.Where("status = ?", filter.Status)
+		query = query.Where("admin_topic_registrations.status = ?", filter.Status)
 	}
-
 	if filter.SupervisorID > 0 {
-		query = query.Where("supervisor_id = ?", filter.SupervisorID)
+		query = query.Where("admin_topic_registrations.supervisor_id = ?", filter.SupervisorID)
 	}
 
 	var total int64
@@ -250,7 +250,7 @@ func (r *repository) ListTopicRegistrations(ctx context.Context, filter TopicReg
 
 	var registrations []*TopicRegistration
 	err := query.
-		Order("created_at DESC").
+		Order("admin_topic_registrations.created_at DESC").
 		Limit(filter.Limit).
 		Offset(filter.Offset).
 		Find(&registrations).Error
