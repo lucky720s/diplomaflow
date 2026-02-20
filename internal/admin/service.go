@@ -267,7 +267,8 @@ func (s *Service) ReviewTopicRegistration(ctx context.Context, req *ReviewTopicR
 		return nil, errors.New("topic registration has no project_id (data inconsistent)")
 	}
 	if reg.Status != StatusPending && reg.Status != StatusRevisionRequested {
-		return nil, errors.New("заявление не может быть рассмотрено в текущем статусе")
+		return nil, status.Error(codes.FailedPrecondition,
+			"заявление не может быть рассмотрено в текущем статусе")
 	}
 
 	actorID, actorRole := s.callerFromContext(ctx, req.ReviewerID, "commission")
@@ -836,7 +837,8 @@ func (s *Service) CreateSupervisorRequest(ctx context.Context, req *CreateSuperv
 		return nil, fmt.Errorf("failed to check pending requests: %w", err)
 	}
 	if hasPending {
-		return nil, errors.New("у команды уже есть активный запрос к супервайзеру")
+		return nil, status.Error(codes.AlreadyExists,
+			"у команды уже есть активный запрос к супервайзеру")
 	}
 
 	hasApproved, err := s.repo.HasApprovedSupervisor(ctx, teamID)
@@ -844,7 +846,8 @@ func (s *Service) CreateSupervisorRequest(ctx context.Context, req *CreateSuperv
 		return nil, fmt.Errorf("failed to check approved supervisor: %w", err)
 	}
 	if hasApproved {
-		return nil, errors.New("у команды уже есть утверждённый научный руководитель")
+		return nil, status.Error(codes.AlreadyExists,
+			"у команды уже есть утверждённый научный руководитель")
 	}
 
 	expiresAt := time.Now().Add(7 * 24 * time.Hour)
@@ -1026,10 +1029,12 @@ func (s *Service) RespondToSupervisorRequest(ctx context.Context, req *RespondTo
 	}
 
 	if supervisorReq.SupervisorID != req.SupervisorID {
-		return nil, errors.New("вы не можете ответить на этот запрос")
+		return nil, status.Error(codes.PermissionDenied,
+			"вы не можете ответить на этот запрос")
 	}
 	if supervisorReq.Status != SupervisorRequestStatusPending {
-		return nil, errors.New("запрос уже обработан")
+		return nil, status.Error(codes.FailedPrecondition,
+			"запрос уже обработан")
 	}
 
 	now := time.Now()

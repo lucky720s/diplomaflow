@@ -453,14 +453,18 @@ func (h *Handler) SubmitTopicRegistration(ctx context.Context, req *adminv1.Subm
 
 	reg, err := h.service.SubmitTopicRegistration(ctx, &SubmitTopicRegistrationRequest{
 		ProjectID:        req.ProjectId,
-		TeamID:           req.TeamId, // optional (0 allowed)
+		TeamID:           req.TeamId,
 		ProposedTopic:    req.ProposedTopic,
 		TopicDescription: req.TopicDescription,
 		SupervisorID:     req.SupervisorId,
 		SubmittedBy:      req.SubmittedBy,
 	})
 	if err != nil {
-		return nil, status.Errorf(codes.Internal, "failed to submit topic registration: %v", err)
+		if _, ok := status.FromError(err); ok {
+			return nil, err
+		}
+		return nil, status.Errorf(codes.Internal,
+			"failed to submit topic registration: %v", err)
 	}
 
 	return &adminv1.SubmitTopicRegistrationResponse{
@@ -589,9 +593,12 @@ func (h *Handler) ReviewTopicRegistration(ctx context.Context, req *adminv1.Revi
 		RejectionReason: req.RejectionReason,
 	})
 	if err != nil {
-		return nil, status.Errorf(codes.Internal, "failed to review topic registration: %v", err)
+		if _, ok := status.FromError(err); ok {
+			return nil, err
+		}
+		return nil, status.Errorf(codes.Internal,
+			"failed to review topic registration: %v", err)
 	}
-
 	pbReg := &adminv1.TopicRegistrationInfo{
 		Id:               reg.ID,
 		TeamId:           reg.TeamID,
@@ -739,6 +746,9 @@ func (h *Handler) ReviewSubmission(ctx context.Context, req *adminv1.ReviewSubmi
 		Grade:        req.Grade,
 	})
 	if err != nil {
+		if _, ok := status.FromError(err); ok {
+			return nil, err
+		}
 		return nil, status.Errorf(codes.Internal, "failed to review submission: %v", err)
 	}
 
@@ -1095,6 +1105,9 @@ func (h *Handler) RespondToSupervisorRequest(ctx context.Context, req *adminv1.R
 	})
 	if err != nil {
 		h.logger.Error("RespondToSupervisorRequest failed", zap.Error(err))
+		if _, ok := status.FromError(err); ok {
+			return nil, err
+		}
 		return nil, status.Errorf(codes.Internal, "failed to respond to supervisor request: %v", err)
 	}
 

@@ -21,19 +21,21 @@ func MapGRPCError(c *gin.Context, err error) {
 	case codes.OK:
 		httpStatus = http.StatusOK
 	case codes.InvalidArgument:
-		httpStatus = http.StatusBadRequest // 400
+		httpStatus = http.StatusBadRequest
 	case codes.NotFound:
-		httpStatus = http.StatusNotFound // 404
+		httpStatus = http.StatusNotFound
 	case codes.AlreadyExists:
-		httpStatus = http.StatusConflict // 409
+		httpStatus = http.StatusConflict
 	case codes.PermissionDenied:
-		httpStatus = http.StatusForbidden // 403
+		httpStatus = http.StatusForbidden
 	case codes.Unauthenticated:
-		httpStatus = http.StatusUnauthorized // 401
+		httpStatus = http.StatusUnauthorized
+	case codes.FailedPrecondition:
+		httpStatus = http.StatusBadRequest
 	case codes.DeadlineExceeded:
-		httpStatus = http.StatusGatewayTimeout // 504
+		httpStatus = http.StatusGatewayTimeout
 	case codes.Unavailable:
-		httpStatus = http.StatusServiceUnavailable // 503
+		httpStatus = http.StatusServiceUnavailable
 	}
 
 	c.JSON(httpStatus, gin.H{
