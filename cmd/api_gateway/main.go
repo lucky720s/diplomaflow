@@ -171,6 +171,8 @@ func main() {
 			projects.POST("/:id/supervisor-request", handler.CreateSupervisorRequest)
 			projects.DELETE("/:id/supervisor-requests/:request_id", handler.CancelSupervisorRequest)
 			projects.GET("/:id/my-grades", handler.GetProjectGradesForStudent)
+			projects.GET("/:id/grades", handler.GetProjectGradesForStudent)
+
 		}
 
 		teams := v1.Group("/teams")
@@ -314,18 +316,31 @@ func main() {
 		{
 			forms.POST("", handler.SubmitForm)
 		}
+		topicRegs := v1.Group("/topic-registrations")
+		topicRegs.Use(middleware.AuthMiddleware(cfg.JWTSecret))
+		topicRegs.Use(middleware.RBACMiddleware("teacher", "admin", "commission", "tech_support"))
+		{
+			topicRegs.POST("/:id/review", handler.ReviewTopicRegistration)
+		}
 
+		// /api/v1/supervisors  (для всех авторизованных)
 		supervisors := v1.Group("/supervisors")
 		supervisors.Use(middleware.AuthMiddleware(cfg.JWTSecret))
-		supervisors.Use(middleware.RBACMiddleware("teacher", "admin"))
 		{
-			supervisors.GET("/my-requests", handler.ListMySupervisorRequests)
-			supervisors.POST("/requests/:id/respond", handler.RespondToSupervisorRequest)
-			supervisors.POST("/teams/:team_id/claim", handler.TeacherClaimTeam)
-			supervisors.GET("/available-teams", handler.GetAvailableTeams)
-			supervisors.GET("/topic-registrations", handler.ListSupervisorTopicRegistrations)
-			supervisors.GET("/submissions", handler.ListSupervisorSubmissions)
+			supervisors.GET("", handler.ListSupervisors)
 		}
+		supervisorsPanel := supervisors.Group("")
+		supervisorsPanel.Use(middleware.RBACMiddleware("teacher", "admin"))
+		{
+			supervisorsPanel.GET("/my-requests", handler.ListMySupervisorRequests)
+			supervisorsPanel.POST("/requests/:id/respond", handler.RespondToSupervisorRequest)
+			supervisorsPanel.POST("/teams/:team_id/claim", handler.TeacherClaimTeam)
+			supervisorsPanel.GET("/available-teams", handler.GetAvailableTeams)
+			supervisorsPanel.GET("/topic-registrations", handler.ListSupervisorTopicRegistrations)
+			supervisorsPanel.GET("/submissions", handler.ListSupervisorSubmissions)
+			supervisorsPanel.POST("/topic-registrations/:id/review", handler.ReviewTopicRegistration)
+		}
+
 	}
 
 	checker := gatewayhealth.NewChecker(rdb, 2*time.Second)

@@ -6,7 +6,9 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"math/rand"
 	"net/http"
+	"strings"
 	"time"
 
 	"github.com/lucky720s/diplomaflow/internal/workflow/plugins"
@@ -25,7 +27,7 @@ func NewAntiplagiatPlugin() *AntiplagiatPlugin {
 func (p *AntiplagiatPlugin) ID() string   { return "CHECK_ANTIPLAGIAT" }
 func (p *AntiplagiatPlugin) Name() string { return "Проверка на антиплагиат" }
 func (p *AntiplagiatPlugin) Description() string {
-	return "Отправляет документ на проверку оригинальности"
+	return "Отправляет документ на проверку оригинальности. При отсутствии API-ключа возвращает mock-результат."
 }
 func (p *AntiplagiatPlugin) Category() string   { return plugins.CategoryExternal }
 func (p *AntiplagiatPlugin) IsReversible() bool { return false }
@@ -42,7 +44,7 @@ func (p *AntiplagiatPlugin) ConfigSchema() json.RawMessage {
 			},
 			"api_key": {
 				"type": "string",
-				"title": "API ключ",
+				"title": "API ключ (пусто = mock режим)",
 				"format": "password"
 			},
 			"min_score": {
@@ -65,6 +67,12 @@ func (p *AntiplagiatPlugin) ConfigSchema() json.RawMessage {
 			"callback_url": {
 				"type": "string",
 				"title": "URL для callback (опционально)"
+			},
+			"mock_mode": {
+				"type": "string",
+				"title": "Режим mock: auto (если нет ключа), always, never",
+				"enum": ["auto", "always", "never"],
+				"default": "auto"
 			}
 		}
 	}`)
@@ -81,8 +89,78 @@ func (p *AntiplagiatPlugin) Validate(config map[string]interface{}) error {
 	return nil
 }
 
+// shouldMock определяет, нужно ли использовать mock-режим.
+// Три стратегии через config["mock_mode"]:
+//   - "auto"   (default): mock если api_key пустой
+//   - "always": всегда mock (для dev/staging)
+//   - "never":  никогда mock (для prod, упадёт если нет ключа)
+func (p *AntiplagiatPlugin) shouldMock(actx *plugins.ActionContext) bool {
+	mode := "auto"
+	if m, ok := actx.Config["mock_mode"].(string); ok && m != "" {
+		mode = strings.ToLower(strings.TrimSpace(m))
+	}
+
+	switch mode {
+	case "always":
+		return true
+	case "never":
+		return false
+	default: // "auto"
+		apiKey, _ := actx.Config["api_key"].(string)
+		return strings.TrimSpace(apiKey) == ""
+	}
+}
+
+func (p *AntiplagiatPlugin) executeMock(actx *plugins.ActionContext) *plugins.ActionResult {
+	minScore := 70.0
+	if ms, ok := actx.Config["min_score"].(float64); ok {
+		minScore = ms
+	}
+
+	// Детерминированный seed на основе project_id для воспроизводимости в тестах,
+	// но с добавлением времени для реалистичности
+	src := rand.NewSource(actx.ProjectID*31 + time.Now().UnixNano()%1000)
+	rng := rand.New(src)
+
+	// Score в диапазоне 70-95 (реалистичный для дипломных работ)
+	score := 70 + rng.Intn(26)
+
+	checkStatus := "pass"
+	if float64(score) < minScore {
+		checkStatus = "fail"
+	}
+
+	autoReject, _ := actx.Config["auto_reject"].(bool)
+
+	return &plugins.ActionResult{
+		Success: checkStatus == "pass" || !autoReject,
+		Data: map[string]interface{}{
+			"score":      score,
+			"min_score":  minScore,
+			"status":     checkStatus,
+			"report_url": fmt.Sprintf("http://mock-antiplagiat/reports/project-%d", actx.ProjectID),
+			"check_id":   fmt.Sprintf("mock-%d-%d", actx.ProjectID, time.Now().Unix()),
+			"service":    "antiplagiat",
+			"mock":       true,
+			"project_id": actx.ProjectID,
+			"checked_at": time.Now().UTC().Format(time.RFC3339),
+			"details": map[string]interface{}{
+				"sources_found":   rng.Intn(5),
+				"internet_score":  score - rng.Intn(10),
+				"database_score":  score + rng.Intn(6),
+				"processing_time": fmt.Sprintf("%dms", 200+rng.Intn(800)),
+			},
+		},
+	}
+}
+
 func (p *AntiplagiatPlugin) Execute(ctx context.Context, actx *plugins.ActionContext) *plugins.ActionResult {
-	// Получаем конфиг
+	// ===== MOCK CHECK (гибкий, конфигурируемый) =====
+	if p.shouldMock(actx) {
+		return p.executeMock(actx)
+	}
+
+	// ===== REAL API CALL =====
 	serviceURL := "https://api.antiplagiat.ru"
 	if url, ok := actx.Config["service_url"].(string); ok && url != "" {
 		serviceURL = url
@@ -93,12 +171,11 @@ func (p *AntiplagiatPlugin) Execute(ctx context.Context, actx *plugins.ActionCon
 		documentField = df
 	}
 
-	minScore := actx.Config["min_score"].(float64)
+	minScore, _ := actx.Config["min_score"].(float64)
 
 	// Получаем файл из данных проекта
 	fileID, ok := actx.ProjectData[documentField].(string)
 	if !ok {
-		// Пробуем как int
 		if fid, ok := actx.ProjectData[documentField].(float64); ok {
 			fileID = fmt.Sprint(int64(fid))
 		} else {
@@ -109,7 +186,6 @@ func (p *AntiplagiatPlugin) Execute(ctx context.Context, actx *plugins.ActionCon
 		}
 	}
 
-	// Формируем запрос
 	callbackURL := fmt.Sprintf("/api/v1/webhooks/antiplagiat/projects/%d", actx.ProjectID)
 	if cb, ok := actx.Config["callback_url"].(string); ok && cb != "" {
 		callbackURL = cb
@@ -139,7 +215,7 @@ func (p *AntiplagiatPlugin) Execute(ctx context.Context, actx *plugins.ActionCon
 			Success:     false,
 			Error:       err,
 			ShouldRetry: true,
-			RetryAfter:  300, // 5 минут
+			RetryAfter:  300,
 		}
 	}
 	defer resp.Body.Close()
@@ -165,11 +241,12 @@ func (p *AntiplagiatPlugin) Execute(ctx context.Context, actx *plugins.ActionCon
 			"status":     "pending",
 			"min_score":  minScore,
 			"service":    "antiplagiat",
+			"mock":       false,
 			"project_id": actx.ProjectID,
 		},
 	}
 }
 
 func (p *AntiplagiatPlugin) Rollback(ctx context.Context, actx *plugins.ActionContext) error {
-	return nil // Нельзя откатить внешнюю проверку
+	return nil
 }

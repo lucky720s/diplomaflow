@@ -4,9 +4,12 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"os"
+	"path/filepath"
 	"time"
 
 	"github.com/lucky720s/diplomaflow/internal/workflow/plugins"
+	godocx "github.com/lukasjarosch/go-docx"
 )
 
 // =============== Email Plugin ===============
@@ -444,6 +447,7 @@ func (p *GradeCalculationPlugin) Rollback(ctx context.Context, actx *plugins.Act
 }
 
 // =============== Document Generator Plugin ===============
+
 type DocumentGeneratorPlugin struct{}
 
 func NewDocumentGeneratorPlugin() *DocumentGeneratorPlugin { return &DocumentGeneratorPlugin{} }
@@ -463,12 +467,22 @@ func (p *DocumentGeneratorPlugin) ConfigSchema() json.RawMessage {
 			"template_name": {
 				"type": "string",
 				"title": "Имя шаблона (без .docx)",
-				"description": "Файл шаблона из папки templates/"
+				"description": "Файл шаблона из папки templates/docx/"
 			},
 			"output_filename": {
 				"type": "string",
 				"title": "Имя выходного файла",
 				"default": "generated_document.docx"
+			},
+			"templates_dir": {
+				"type": "string",
+				"title": "Путь к папке шаблонов",
+				"default": "templates/docx"
+			},
+			"output_dir": {
+				"type": "string",
+				"title": "Путь к папке выходных файлов",
+				"default": "/tmp/diplomaflow/generated"
 			},
 			"placeholders": {
 				"type": "object",
@@ -501,37 +515,42 @@ func (p *DocumentGeneratorPlugin) Execute(ctx context.Context, actx *plugins.Act
 		outputFilename = of
 	}
 
-	// Собираем данные для подстановки из project_data
-	replacements := map[string]string{}
-
-	// Стандартные поля
-	standardFields := map[string]string{
-		"{ProjectID}":    fmt.Sprintf("%d", actx.ProjectID),
-		"{StateID}":      fmt.Sprintf("%d", actx.StateID),
-		"{Date}":         time.Now().Format("02.01.2006"),
-		"{DateTime}":     time.Now().Format("02.01.2006 15:04"),
-		"{AcademicYear}": getCurrentAcademicYear(),
+	templatesDir := "templates/docx"
+	if td, ok := actx.Config["templates_dir"].(string); ok && td != "" {
+		templatesDir = td
 	}
-	for k, v := range standardFields {
-		replacements[k] = v
+
+	outputDir := "/tmp/diplomaflow/generated"
+	if od, ok := actx.Config["output_dir"].(string); ok && od != "" {
+		outputDir = od
+	}
+
+	// ===== Собираем replacements =====
+	replacements := godocx.PlaceholderMap{
+		"ProjectID":    fmt.Sprintf("%d", actx.ProjectID),
+		"StateID":      fmt.Sprintf("%d", actx.StateID),
+		"Date":         time.Now().Format("02.01.2006"),
+		"DateTime":     time.Now().Format("02.01.2006 15:04"),
+		"AcademicYear": getCurrentAcademicYear(),
 	}
 
 	// Данные из project_data
 	projectDataFields := map[string]string{
-		"{StudentName}":    "student_name",
-		"{StudentID}":      "student_id",
-		"{TeamName}":       "team_name",
-		"{Topic}":          "topic",
-		"{TopicRU}":        "topic_ru",
-		"{TopicKZ}":        "topic_kz",
-		"{TopicEN}":        "topic_en",
-		"{SupervisorName}": "supervisor_name",
-		"{DepartmentName}": "department_name",
+		"StudentName":    "student_name",
+		"StudentID":      "student_id",
+		"TeamName":       "team_name",
+		"Topic":          "topic",
+		"TopicRU":        "topic_ru",
+		"TopicKZ":        "topic_kz",
+		"TopicEN":        "topic_en",
+		"SupervisorName": "supervisor_name",
+		"DepartmentName": "department_name",
+		"GroupName":      "group_name",
 	}
 
 	for placeholder, dataKey := range projectDataFields {
 		if val, ok := actx.ProjectData[dataKey]; ok {
-			if strVal, ok := val.(string); ok {
+			if strVal, ok := val.(string); ok && strVal != "" {
 				replacements[placeholder] = strVal
 			}
 		}
@@ -543,31 +562,79 @@ func (p *DocumentGeneratorPlugin) Execute(ctx context.Context, actx *plugins.Act
 			if dataKey, ok := dataKeyRaw.(string); ok {
 				if val, ok := actx.ProjectData[dataKey]; ok {
 					if strVal, ok := val.(string); ok {
-						replacements["{"+placeholder+"}"] = strVal
+						replacements[placeholder] = strVal
 					}
 				}
 			}
 		}
 	}
 
-	// NOTE: Реальная генерация .docx требует:
-	// 1. Открыть шаблон: doc, err := docx.Open(templatePath)
-	// 2. Заменить плейсхолдеры: doc.ReplaceAll(replacements)
-	// 3. Сохранить: doc.WriteToFile(outputPath)
-	// 4. Загрузить в file_service через gRPC streaming
-	// 5. Получить file_id
-	//
-	// Пока возвращаем успех с метаданными (stub для интеграции):
+	// ===== Проверяем наличие шаблона =====
+	templatePath := filepath.Join(templatesDir, templateName+".docx")
+	if _, err := os.Stat(templatePath); os.IsNotExist(err) {
+		return &plugins.ActionResult{
+			Success: true,
+			Data: map[string]interface{}{
+				"template_name":   templateName,
+				"template_path":   templatePath,
+				"output_filename": outputFilename,
+				"replacements":    replacementsToMap(replacements),
+				"status":          "template_not_found",
+				"message":         fmt.Sprintf("Template '%s' not found at '%s'. Document generation skipped. Place the template and retry.", templateName, templatePath),
+				"generated_at":    time.Now().UTC().Format(time.RFC3339),
+			},
+		}
+	}
+
+	// ===== Генерация DOCX =====
+	doc, err := godocx.Open(templatePath)
+	if err != nil {
+		return &plugins.ActionResult{
+			Success: false,
+			Error:   fmt.Errorf("failed to open template '%s': %w", templatePath, err),
+		}
+	}
+
+	if err := doc.ReplaceAll(replacements); err != nil {
+		return &plugins.ActionResult{
+			Success: false,
+			Error:   fmt.Errorf("failed to replace placeholders: %w", err),
+		}
+	}
+
+	// Создаём output директорию
+	if err := os.MkdirAll(outputDir, 0755); err != nil {
+		return &plugins.ActionResult{
+			Success: false,
+			Error:   fmt.Errorf("failed to create output dir '%s': %w", outputDir, err),
+		}
+	}
+
+	// Уникальное имя файла: project_id + timestamp
+	uniqueName := fmt.Sprintf("p%d_%d_%s", actx.ProjectID, time.Now().Unix(), outputFilename)
+	outputPath := filepath.Join(outputDir, uniqueName)
+
+	if err := doc.WriteToFile(outputPath); err != nil {
+		return &plugins.ActionResult{
+			Success: false,
+			Error:   fmt.Errorf("failed to write document to '%s': %w", outputPath, err),
+		}
+	}
+
+	// TODO (Phase 2): Upload to file_service via gRPC streaming and get file_id
+	// fileID, err := uploadToFileService(ctx, outputPath, actx.ProjectID)
 
 	return &plugins.ActionResult{
 		Success: true,
 		Data: map[string]interface{}{
 			"template_name":   templateName,
-			"output_filename": outputFilename,
-			"replacements":    replacements,
-			"status":          "document_generation_prepared",
-			"message":         "Document generation data prepared. Full generation requires docx library integration.",
+			"output_filename": uniqueName,
+			"output_path":     outputPath,
+			"replacements":    replacementsToMap(replacements),
+			"status":          "generated",
+			"message":         "Document generated successfully",
 			"generated_at":    time.Now().UTC().Format(time.RFC3339),
+			// "file_id": fileID, // Phase 2
 		},
 	}
 }
@@ -576,11 +643,24 @@ func (p *DocumentGeneratorPlugin) Rollback(ctx context.Context, actx *plugins.Ac
 	return nil
 }
 
+func replacementsToMap(pm godocx.PlaceholderMap) map[string]string {
+	result := make(map[string]string, len(pm))
+	for k, v := range pm {
+		switch val := v.(type) {
+		case string:
+			result[k] = val
+		default:
+			result[k] = fmt.Sprintf("%v", v)
+		}
+	}
+	return result
+}
+
 func getCurrentAcademicYear() string {
 	now := time.Now()
 	year := now.Year()
 	month := now.Month()
-	if month >= 9 { // September onwards
+	if month >= time.September {
 		return fmt.Sprintf("%d-%d", year, year+1)
 	}
 	return fmt.Sprintf("%d-%d", year-1, year)
