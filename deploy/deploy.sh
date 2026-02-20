@@ -54,7 +54,6 @@ git config --global --add safe.directory "$APP_DIR"
 
 if [ -d ".git" ]; then
   git remote set-url origin "https://${PAT_TOKEN}@github.com/${REPO}.git"
-  # Shallow fetch for speed (keeps repo small)
   git fetch --depth=1 origin "$BRANCH"
   git reset --hard "origin/${BRANCH}"
   git clean -fd
@@ -77,7 +76,6 @@ POSTGRES_USER=diplomaflow
 POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
 POSTGRES_DB=diplomaflow
 
-# network_mode: host => сервисы ходят в Postgres/Redis по 127.0.0.1
 DATABASE_DSN=host=127.0.0.1 user=diplomaflow password=${POSTGRES_PASSWORD} dbname=diplomaflow port=5433 sslmode=disable TimeZone=UTC
 DATABASE_URL=postgres://diplomaflow:${POSTGRES_PASSWORD}@127.0.0.1:5433/diplomaflow?sslmode=disable
 
@@ -95,11 +93,7 @@ log "Disk usage before"
 df -h / | tail -1 || true
 docker system df || true
 
-# IMPORTANT:
-# Do NOT prune builder cache / images before build. It makes every deploy rebuild from scratch.
-
 log "Build images (cached)"
-# parallel helps when you have many services
 dc build --parallel
 
 log "Start/ensure infra is up"
@@ -128,9 +122,7 @@ done
 log "Run migrations"
 dc run --rm migrate
 
-log "Update/start all services (no full down)"
-# --build here is optional because we already built, but harmless.
-# If you prefer, replace with: dc up -d --no-build --remove-orphans
+log "Update/start all services"
 dc up -d --no-build --remove-orphans
 
 log "Wait for gateway"
@@ -143,13 +135,27 @@ for i in $(seq 1 30); do
   sleep 2
 done
 
-log "Cleanup old docker data (keep cache for speed)"
-# Clean only OLD unused stuff to prevent disk growth but keep cache for fast deploys
-docker image prune -af --filter "until=168h" || true
-docker builder prune -af --filter "until=168h" || true
+# ============================================================
+# CLEANUP — агрессивная, но безопасная очистка ПОСЛЕ деплоя
+# ============================================================
+log "Cleanup: dangling images (old builds)"
+docker image prune -f || true
+
+log "Cleanup: build cache older than 24h (keep recent for speed)"
+docker builder prune -af --filter "until=24h" || true
+
+log "Cleanup: stopped containers"
 docker container prune -f || true
+
+log "Cleanup: unused networks"
 docker network prune -f || true
-# DO NOT prune volumes (Postgres data lives there)
+
+# Удаляем ВСЕ образы без контейнеров, старше 24 часов
+# Это убьёт старые версии сервисов, но оставит текущие (они привязаны к контейнерам)
+log "Cleanup: unused images older than 24h"
+docker image prune -af --filter "until=24h" || true
+
+# DO NOT prune volumes — Postgres data, file_uploads, grafana, prometheus живут там!
 
 log "Status"
 dc ps || true

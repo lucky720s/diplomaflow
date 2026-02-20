@@ -4,7 +4,6 @@ x-common-env: &common_env
   ENV: ${ENV:-production}
   DATABASE_DSN: ${DATABASE_DSN:?DATABASE_DSN is required}
 
-# Для network_mode: host — все межсервисные вызовы только через 127.0.0.1:<port>
 x-service-addrs-host: &svc_addrs_host
   SERVICES_AUTH_ADDR: 127.0.0.1:8082
   SERVICES_UNIVERSITY_ADDR: 127.0.0.1:8081
@@ -17,16 +16,27 @@ x-service-addrs-host: &svc_addrs_host
   SERVICES_ADMIN_ADDR: 127.0.0.1:8090
   SERVICES_TASK_ADDR: 127.0.0.1:8091
 
+# ============================================================
+# Лимит логов — предотвращает рост /var/lib/docker/containers/
+# Максимум 30 МБ на сервис (3 файла × 10 МБ)
+# ============================================================
+x-logging: &default-logging
+  driver: "json-file"
+  options:
+    max-size: "10m"
+    max-file: "3"
+
 services:
   main_postgres:
     image: postgres:16-alpine
     network_mode: host
+    logging: *default-logging
     environment:
       POSTGRES_USER: ${POSTGRES_USER:-diplomaflow}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?POSTGRES_PASSWORD is required}
       POSTGRES_DB: ${POSTGRES_DB:-diplomaflow}
-      PGPORT: "5433"          # НЕ ТРОГАЕМ
-    command: -p 5433          # НЕ ТРОГАЕМ
+      PGPORT: "5433"
+    command: -p 5433
     volumes:
       - pg_data:/var/lib/postgresql/data
     healthcheck:
@@ -39,6 +49,7 @@ services:
   redis:
     image: redis:7-alpine
     network_mode: host
+    logging: *default-logging
     command: redis-server --port 6380
     healthcheck:
       test: ["CMD", "redis-cli", "-h", "127.0.0.1", "-p", "6380", "ping"]
@@ -52,6 +63,7 @@ services:
       context: .
       dockerfile: cmd/migrate/Dockerfile
     network_mode: host
+    logging: *default-logging
     depends_on:
       main_postgres:
         condition: service_healthy
@@ -65,6 +77,7 @@ services:
       context: .
       dockerfile: cmd/api_gateway/Dockerfile
     network_mode: host
+    logging: *default-logging
     environment:
       ENV: ${ENV:-production}
       PORT: "8080"
@@ -90,6 +103,7 @@ services:
       context: .
       dockerfile: cmd/university_service/Dockerfile
     network_mode: host
+    logging: *default-logging
     environment:
       <<: *common_env
       GRPC_PORT: "8081"
@@ -109,6 +123,7 @@ services:
       context: .
       dockerfile: cmd/auth_service/Dockerfile
     network_mode: host
+    logging: *default-logging
     environment:
       <<: *common_env
       GRPC_PORT: "8082"
@@ -137,6 +152,7 @@ services:
       context: .
       dockerfile: cmd/notification_service/Dockerfile
     network_mode: host
+    logging: *default-logging
     environment:
       <<: *common_env
       GRPC_PORT: "8087"
@@ -156,10 +172,10 @@ services:
       context: .
       dockerfile: cmd/workflow_service/Dockerfile
     network_mode: host
+    logging: *default-logging
     environment:
       <<: *common_env
       GRPC_PORT: "8085"
-      # workflow_service читает services.notification_addr / services.project_addr
       SERVICES_NOTIFICATION_ADDR: 127.0.0.1:8087
       SERVICES_PROJECT_ADDR: 127.0.0.1:8083
       SERVICES_TEAM_ADDR: 127.0.0.1:8084
@@ -181,10 +197,10 @@ services:
       context: .
       dockerfile: cmd/project_service/Dockerfile
     network_mode: host
+    logging: *default-logging
     environment:
       <<: *common_env
       GRPC_PORT: "8083"
-      # project_service читает services.workflow_addr / services.notification_addr
       SERVICES_WORKFLOW_ADDR: 127.0.0.1:8085
       SERVICES_NOTIFICATION_ADDR: 127.0.0.1:8087
     depends_on:
@@ -207,10 +223,10 @@ services:
       context: .
       dockerfile: cmd/team_service/Dockerfile
     network_mode: host
+    logging: *default-logging
     environment:
       <<: *common_env
       GRPC_PORT: "8084"
-      # team_service читает services.auth_addr / services.workflow_addr / services.notification_addr
       SERVICES_AUTH_ADDR: 127.0.0.1:8082
       SERVICES_WORKFLOW_ADDR: 127.0.0.1:8085
       SERVICES_NOTIFICATION_ADDR: 127.0.0.1:8087
@@ -236,6 +252,7 @@ services:
       context: .
       dockerfile: cmd/file_service/Dockerfile
     network_mode: host
+    logging: *default-logging
     environment:
       <<: *common_env
       GRPC_PORT: "8088"
@@ -258,6 +275,7 @@ services:
       context: .
       dockerfile: cmd/form_service/Dockerfile
     network_mode: host
+    logging: *default-logging
     environment:
       <<: *common_env
       GRPC_PORT: "8089"
@@ -277,10 +295,10 @@ services:
       context: .
       dockerfile: cmd/admin_service/Dockerfile
     network_mode: host
+    logging: *default-logging
     environment:
       <<: *common_env
       GRPC_PORT: "8090"
-      # admin_service читает services.auth_addr / services.project_addr / services.team_addr / services.workflow_addr
       SERVICES_AUTH_ADDR: 127.0.0.1:8082
       SERVICES_PROJECT_ADDR: 127.0.0.1:8083
       SERVICES_TEAM_ADDR: 127.0.0.1:8084
@@ -309,6 +327,7 @@ services:
       context: .
       dockerfile: cmd/task_service/Dockerfile
     network_mode: host
+    logging: *default-logging
     environment:
       <<: *common_env
       GRPC_PORT: "8091"
@@ -334,9 +353,11 @@ services:
       retries: 15
       start_period: 20s
     restart: unless-stopped
+
   prometheus:
     image: prom/prometheus:v2.55.1
     network_mode: host
+    logging: *default-logging
     volumes:
       - ./deploy/prometheus.yml:/etc/prometheus/prometheus.yml:ro
       - prom_data:/prometheus
@@ -347,6 +368,7 @@ services:
   grafana:
     image: grafana/grafana:11.3.0
     network_mode: host
+    logging: *default-logging
     environment:
       - GF_SECURITY_ADMIN_USER=admin
       - GF_SECURITY_ADMIN_PASSWORD=${GRAFANA_ADMIN_PASSWORD:?GRAFANA_ADMIN_PASSWORD is required}
@@ -356,10 +378,8 @@ services:
       - ./deploy/grafana/dashboards:/var/lib/grafana/dashboards:ro
     restart: unless-stopped
 
-
 volumes:
   pg_data:
   file_uploads:
   prom_data:
   grafana_data:
-
