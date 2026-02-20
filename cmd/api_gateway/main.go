@@ -143,6 +143,19 @@ func main() {
 			adminPanel.GET("/supervisor-requests", handler.ListAllSupervisorRequests)
 			adminPanel.GET("/supervisor-requests/:id", handler.GetSupervisorRequestDetails)
 			adminPanel.POST("/supervisor-requests/:id/respond", handler.RespondToSupervisorRequest)
+
+			// ==================== Pre-Defense ====================
+			adminPanel.POST("/pre-defenses/submit", handler.SubmitPreDefenseGW)
+			adminPanel.GET("/pre-defenses", handler.ListPreDefenseSubmissionsGW)
+			adminPanel.GET("/pre-defenses/schedule", handler.ListScheduledPreDefensesGW)
+			adminPanel.GET("/pre-defenses/:id", handler.GetPreDefenseSubmissionGW)
+			adminPanel.POST("/pre-defenses/:id/schedule", handler.SchedulePreDefenseGW)
+			adminPanel.POST("/pre-defenses/:id/grade", handler.GradePreDefenseGW)
+			adminPanel.POST("/pre-defenses/:id/complete", handler.CompletePreDefenseGW)
+			adminPanel.POST("/pre-defenses/:id/reschedule", handler.ReschedulePreDefenseGW)
+			adminPanel.POST("/pre-defenses/:id/commission", handler.AddPreDefenseCommissionMemberGW)
+			adminPanel.DELETE("/pre-defenses/:id/commission/:user_id", handler.RemovePreDefenseCommissionMemberGW)
+
 		}
 
 		projects := v1.Group("/projects")
@@ -157,6 +170,7 @@ func main() {
 			projects.POST("/:id/topic-registration", handler.SubmitTopicRegistration)
 			projects.POST("/:id/supervisor-request", handler.CreateSupervisorRequest)
 			projects.DELETE("/:id/supervisor-requests/:request_id", handler.CancelSupervisorRequest)
+			projects.GET("/:id/my-grades", handler.GetProjectGradesForStudent)
 		}
 
 		teams := v1.Group("/teams")

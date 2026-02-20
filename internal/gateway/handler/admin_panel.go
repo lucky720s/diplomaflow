@@ -7,6 +7,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 	adminv1 "github.com/lucky720s/diplomaflow/pkg/protobuf/admin/v1"
+	projectv1 "github.com/lucky720s/diplomaflow/pkg/protobuf/project/v1"
 	"google.golang.org/grpc/metadata"
 )
 
@@ -21,7 +22,7 @@ func (h *Handler) GetAdminDashboard(c *gin.Context) {
 		}
 	}
 
-	resp, err := h.adminClient.GetDashboard(c.Request.Context(), &adminv1.GetDashboardRequest{
+	resp, err := h.adminClient.GetDashboard(adminPanelCtx(c), &adminv1.GetDashboardRequest{
 		DepartmentId: departmentID,
 	})
 	if err != nil {
@@ -33,7 +34,7 @@ func (h *Handler) GetAdminDashboard(c *gin.Context) {
 
 func (h *Handler) GetDepartmentStats(c *gin.Context) {
 	departmentID := c.GetInt64("departmentId")
-	resp, err := h.adminClient.GetDepartmentStats(c.Request.Context(), &adminv1.GetDepartmentStatsRequest{
+	resp, err := h.adminClient.GetDepartmentStats(adminPanelCtx(c), &adminv1.GetDepartmentStatsRequest{
 		DepartmentId: departmentID,
 	})
 	if err != nil {
@@ -63,7 +64,7 @@ func (h *Handler) AdminListStudents(c *gin.Context) {
 		}
 	}
 
-	resp, err := h.adminClient.ListStudents(c.Request.Context(), &adminv1.ListStudentsRequest{
+	resp, err := h.adminClient.ListStudents(adminPanelCtx(c), &adminv1.ListStudentsRequest{
 		DepartmentId:    departmentID,
 		UniversityId:    universityID,
 		Search:          c.Query("search"),
@@ -85,7 +86,7 @@ func (h *Handler) AdminGetStudent(c *gin.Context) {
 		return
 	}
 
-	resp, err := h.adminClient.GetStudent(c.Request.Context(), &adminv1.GetStudentRequest{
+	resp, err := h.adminClient.GetStudent(adminPanelCtx(c), &adminv1.GetStudentRequest{
 		StudentId: studentID,
 	})
 	if err != nil {
@@ -135,7 +136,7 @@ func (h *Handler) AdminGetTeamDetails(c *gin.Context) {
 		return
 	}
 
-	resp, err := h.adminClient.GetTeamDetails(c.Request.Context(), &adminv1.GetTeamDetailsRequest{
+	resp, err := h.adminClient.GetTeamDetails(adminPanelCtx(c), &adminv1.GetTeamDetailsRequest{
 		TeamId: teamID,
 	})
 	if err != nil {
@@ -162,7 +163,7 @@ func (h *Handler) AdminUpdateTeam(c *gin.Context) {
 		return
 	}
 
-	resp, err := h.adminClient.UpdateTeamAdmin(c.Request.Context(), &adminv1.UpdateTeamAdminRequest{
+	resp, err := h.adminClient.UpdateTeamAdmin(adminPanelCtx(c), &adminv1.UpdateTeamAdminRequest{
 		TeamId:       teamID,
 		Name:         req.Name,
 		SupervisorId: req.SupervisorID,
@@ -187,7 +188,7 @@ func (h *Handler) AdminDeleteTeam(c *gin.Context) {
 	}
 	_ = c.ShouldBindJSON(&req)
 
-	_, err = h.adminClient.DeleteTeamAdmin(c.Request.Context(), &adminv1.DeleteTeamAdminRequest{
+	_, err = h.adminClient.DeleteTeamAdmin(adminPanelCtx(c), &adminv1.DeleteTeamAdminRequest{
 		TeamId: teamID,
 		Reason: req.Reason,
 	})
@@ -208,7 +209,7 @@ func (h *Handler) ListSupervisors(c *gin.Context) {
 	page := int32(1)
 	pageSize := int32(20)
 
-	resp, err := h.adminClient.ListSupervisors(c.Request.Context(), &adminv1.ListSupervisorsRequest{
+	resp, err := h.adminClient.ListSupervisors(adminPanelCtx(c), &adminv1.ListSupervisorsRequest{
 		DepartmentId: departmentID,
 		UniversityId: universityID,
 		Page:         page,
@@ -231,7 +232,7 @@ func (h *Handler) AssignSupervisor(c *gin.Context) {
 		return
 	}
 
-	resp, err := h.adminClient.AssignSupervisor(c.Request.Context(), &adminv1.AssignSupervisorRequest{
+	resp, err := h.adminClient.AssignSupervisor(adminPanelCtx(c), &adminv1.AssignSupervisorRequest{
 		TeamId:       req.TeamID,
 		SupervisorId: req.SupervisorID,
 	})
@@ -264,7 +265,7 @@ func (h *Handler) SubmitTopicRegistration(c *gin.Context) {
 		return
 	}
 
-	resp, err := h.adminClient.SubmitTopicRegistration(c.Request.Context(), &adminv1.SubmitTopicRegistrationRequest{
+	resp, err := h.adminClient.SubmitTopicRegistration(adminPanelCtx(c), &adminv1.SubmitTopicRegistrationRequest{
 		ProjectId:        projectID,
 		TeamId:           0, // optional; admin_service resolves via project runtime
 		ProposedTopic:    req.ProposedTopic,
@@ -296,7 +297,7 @@ func (h *Handler) ListTopicRegistrations(c *gin.Context) {
 		}
 	}
 
-	resp, err := h.adminClient.ListTopicRegistrations(c.Request.Context(), &adminv1.ListTopicRegistrationsRequest{
+	resp, err := h.adminClient.ListTopicRegistrations(adminPanelCtx(c), &adminv1.ListTopicRegistrationsRequest{
 		DepartmentId: departmentID,
 		Status:       status,
 		SupervisorId: supervisorID,
@@ -313,7 +314,7 @@ func (h *Handler) ListTopicRegistrations(c *gin.Context) {
 func (h *Handler) GetTopicRegistration(c *gin.Context) {
 	registrationID := c.Param("id")
 
-	resp, err := h.adminClient.GetTopicRegistration(c.Request.Context(), &adminv1.GetTopicRegistrationRequest{
+	resp, err := h.adminClient.GetTopicRegistration(adminPanelCtx(c), &adminv1.GetTopicRegistrationRequest{
 		RegistrationId: registrationID,
 	})
 	if err != nil {
@@ -337,7 +338,7 @@ func (h *Handler) ReviewTopicRegistration(c *gin.Context) {
 		return
 	}
 
-	resp, err := h.adminClient.ReviewTopicRegistration(c.Request.Context(), &adminv1.ReviewTopicRegistrationRequest{
+	resp, err := h.adminClient.ReviewTopicRegistration(adminPanelCtx(c), &adminv1.ReviewTopicRegistrationRequest{
 		RegistrationId:  registrationID,
 		ReviewerId:      reviewerID,
 		Action:          req.Action,
@@ -378,7 +379,7 @@ func (h *Handler) ListSubmissions(c *gin.Context) {
 		}
 	}
 
-	resp, err := h.adminClient.ListSubmissions(c.Request.Context(), &adminv1.ListSubmissionsRequest{
+	resp, err := h.adminClient.ListSubmissions(adminPanelCtx(c), &adminv1.ListSubmissionsRequest{
 		DepartmentId: departmentID,
 		StepId:       stepID,
 		TeamId:       teamID,
@@ -397,7 +398,7 @@ func (h *Handler) ListSubmissions(c *gin.Context) {
 func (h *Handler) GetSubmission(c *gin.Context) {
 	submissionID := c.Param("id")
 
-	resp, err := h.adminClient.GetSubmission(c.Request.Context(), &adminv1.GetSubmissionRequest{
+	resp, err := h.adminClient.GetSubmission(adminPanelCtx(c), &adminv1.GetSubmissionRequest{
 		SubmissionId: submissionID,
 	})
 	if err != nil {
@@ -422,7 +423,7 @@ func (h *Handler) ReviewSubmission(c *gin.Context) {
 		return
 	}
 
-	resp, err := h.adminClient.ReviewSubmission(c.Request.Context(), &adminv1.ReviewSubmissionRequest{
+	resp, err := h.adminClient.ReviewSubmission(adminPanelCtx(c), &adminv1.ReviewSubmissionRequest{
 		SubmissionId: submissionID,
 		ReviewerId:   reviewerID,
 		Action:       req.Action,
@@ -446,7 +447,7 @@ func (h *Handler) GetProjectGrades(c *gin.Context) {
 		return
 	}
 
-	resp, err := h.adminClient.GetProjectGrades(c.Request.Context(), &adminv1.GetProjectGradesRequest{
+	resp, err := h.adminClient.GetProjectGrades(adminPanelCtx(c), &adminv1.GetProjectGradesRequest{
 		ProjectId: projectID,
 	})
 	if err != nil {
@@ -475,7 +476,7 @@ func (h *Handler) SetStepGrade(c *gin.Context) {
 		return
 	}
 
-	resp, err := h.adminClient.SetStepGrade(c.Request.Context(), &adminv1.SetStepGradeRequest{
+	resp, err := h.adminClient.SetStepGrade(adminPanelCtx(c), &adminv1.SetStepGradeRequest{
 		ProjectId: projectID,
 		StepId:    req.StepID,
 		Grade:     req.Grade,
@@ -500,7 +501,7 @@ func (h *Handler) GetWorkflowProgress(c *gin.Context) {
 		workflowID, _ = strconv.ParseInt(w, 10, 64)
 	}
 
-	resp, err := h.adminClient.GetWorkflowProgress(c.Request.Context(), &adminv1.GetWorkflowProgressRequest{
+	resp, err := h.adminClient.GetWorkflowProgress(adminPanelCtx(c), &adminv1.GetWorkflowProgressRequest{
 		DepartmentId: departmentID,
 		WorkflowId:   workflowID,
 	})
@@ -523,7 +524,7 @@ func (h *Handler) ListPendingReviews(c *gin.Context) {
 		}
 	}
 
-	resp, err := h.adminClient.ListPendingReviews(c.Request.Context(), &adminv1.ListPendingReviewsRequest{
+	resp, err := h.adminClient.ListPendingReviews(adminPanelCtx(c), &adminv1.ListPendingReviewsRequest{
 		DepartmentId: departmentID,
 		Page:         page,
 		PageSize:     pageSize,
@@ -558,7 +559,7 @@ func (h *Handler) CreateSupervisorRequest(c *gin.Context) {
 		return
 	}
 
-	resp, err := h.adminClient.CreateSupervisorRequest(c.Request.Context(), &adminv1.CreateSupervisorRequestReq{
+	resp, err := h.adminClient.CreateSupervisorRequest(adminPanelCtx(c), &adminv1.CreateSupervisorRequestReq{
 		ProjectId:     projectID,
 		TeamId:        0, // optional; admin_service resolves via project runtime
 		SupervisorId:  req.SupervisorID,
@@ -599,7 +600,7 @@ func (h *Handler) ListAllSupervisorRequests(c *gin.Context) {
 		}
 	}
 
-	resp, err := h.adminClient.ListSupervisorRequests(c.Request.Context(), &adminv1.ListSupervisorRequestsReq{
+	resp, err := h.adminClient.ListSupervisorRequests(adminPanelCtx(c), &adminv1.ListSupervisorRequestsReq{
 		DepartmentId: departmentID,
 		SupervisorId: supervisorID,
 		TeamId:       teamID,
@@ -623,7 +624,7 @@ func (h *Handler) GetSupervisorRequestDetails(c *gin.Context) {
 		return
 	}
 
-	resp, err := h.adminClient.GetSupervisorRequest(c.Request.Context(), &adminv1.GetSupervisorRequestReq{
+	resp, err := h.adminClient.GetSupervisorRequest(adminPanelCtx(c), &adminv1.GetSupervisorRequestReq{
 		RequestId: requestID,
 	})
 	if err != nil {
@@ -649,7 +650,7 @@ func (h *Handler) RespondToSupervisorRequest(c *gin.Context) {
 		return
 	}
 
-	resp, err := h.adminClient.RespondToSupervisorRequest(c.Request.Context(), &adminv1.RespondToSupervisorRequestReq{
+	resp, err := h.adminClient.RespondToSupervisorRequest(adminPanelCtx(c), &adminv1.RespondToSupervisorRequestReq{
 		RequestId:    requestID,
 		SupervisorId: supervisorID,
 		Action:       req.Action,
@@ -676,7 +677,7 @@ func (h *Handler) ListMySupervisorRequests(c *gin.Context) {
 		}
 	}
 
-	resp, err := h.adminClient.ListMySupervisorRequests(c.Request.Context(), &adminv1.ListMySupervisorRequestsReq{
+	resp, err := h.adminClient.ListMySupervisorRequests(adminPanelCtx(c), &adminv1.ListMySupervisorRequestsReq{
 		SupervisorId: supervisorID,
 		Status:       c.Query("status"),
 		Page:         page,
@@ -728,7 +729,7 @@ func (h *Handler) CancelSupervisorRequest(c *gin.Context) {
 	}
 	_ = c.ShouldBindJSON(&req)
 
-	resp, err := h.adminClient.CancelSupervisorRequest(c.Request.Context(), &adminv1.CancelSupervisorRequestReq{
+	resp, err := h.adminClient.CancelSupervisorRequest(adminPanelCtx(c), &adminv1.CancelSupervisorRequestReq{
 		RequestId:   requestID,
 		CancelledBy: userID,
 		Reason:      req.Reason,
@@ -739,6 +740,7 @@ func (h *Handler) CancelSupervisorRequest(c *gin.Context) {
 	}
 	c.JSON(http.StatusOK, resp)
 }
+
 func adminPanelCtx(c *gin.Context) context.Context {
 	return metadata.AppendToOutgoingContext(
 		c.Request.Context(),
@@ -748,4 +750,47 @@ func adminPanelCtx(c *gin.Context) context.Context {
 		"x-department-id", strconv.FormatInt(c.GetInt64("departmentId"), 10),
 		"x-trace-id", c.GetString("trace_id"),
 	)
+}
+
+// GetProjectGradesForStudent - endpoint для студента, чтобы видеть свои оценки
+func (h *Handler) GetProjectGradesForStudent(c *gin.Context) {
+	userID := c.GetInt64("userId")
+	projectID, err := strconv.ParseInt(c.Param("id"), 10, 64)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid project id"})
+		return
+	}
+
+	// Проверяем, что студент имеет доступ к этому проекту
+	projectsResp, projErr := h.projectClient.GetStudentProjects(outgoingCtx(c), &projectv1.GetStudentProjectsRequest{
+		StudentId: userID,
+	})
+	if projErr != nil {
+		MapGRPCError(c, projErr)
+		return
+	}
+
+	hasAccess := false
+	if projectsResp != nil {
+		for _, p := range projectsResp.Projects {
+			if p != nil && p.ProjectId == projectID {
+				hasAccess = true
+				break
+			}
+		}
+	}
+
+	if !hasAccess {
+		c.JSON(http.StatusForbidden, gin.H{"error": "you don't have access to this project's grades"})
+		return
+	}
+
+	resp, err := h.adminClient.GetProjectGrades(adminPanelCtx(c), &adminv1.GetProjectGradesRequest{
+		ProjectId: projectID,
+	})
+	if err != nil {
+		MapGRPCError(c, err)
+		return
+	}
+	c.JSON(http.StatusOK, resp)
 }

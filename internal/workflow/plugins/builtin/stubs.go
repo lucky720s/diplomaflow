@@ -3,6 +3,8 @@ package builtin
 import (
 	"context"
 	"encoding/json"
+	"fmt"
+	"time"
 
 	"github.com/lucky720s/diplomaflow/internal/workflow/plugins"
 )
@@ -122,7 +124,7 @@ func NewFileValidationPlugin() *FileValidationPlugin { return &FileValidationPlu
 func (p *FileValidationPlugin) ID() string   { return "VALIDATE_FILES" }
 func (p *FileValidationPlugin) Name() string { return "Валидация файлов" }
 func (p *FileValidationPlugin) Description() string {
-	return "Проверяет загруженные файлы"
+	return "Проверяет наличие и корректность загруженных файлов"
 }
 func (p *FileValidationPlugin) Category() string   { return plugins.CategoryValidation }
 func (p *FileValidationPlugin) IsReversible() bool { return false }
@@ -131,23 +133,58 @@ func (p *FileValidationPlugin) ConfigSchema() json.RawMessage {
 	return json.RawMessage(`{
 		"type": "object",
 		"properties": {
-			"required_files": {"type": "array", "items": {"type": "string"}},
-			"max_size_mb": {"type": "number", "default": 50},
-			"allowed_extensions": {"type": "array", "items": {"type": "string"}}
+			"min_files": {"type": "integer", "default": 1, "title": "Минимум файлов"},
+			"max_size_mb": {"type": "integer", "default": 50, "title": "Макс размер (МБ)"},
+			"allowed_extensions": {
+				"type": "array",
+				"items": {"type": "string"},
+				"default": [".pdf", ".docx", ".doc"]
+			}
 		}
 	}`)
 }
 
 func (p *FileValidationPlugin) Validate(config map[string]interface{}) error { return nil }
+
 func (p *FileValidationPlugin) Execute(ctx context.Context, actx *plugins.ActionContext) *plugins.ActionResult {
+	// Проверяем наличие файлов в payload или project_data
+	minFiles := int64(1)
+	if mf, ok := actx.Config["min_files"].(float64); ok && mf > 0 {
+		minFiles = int64(mf)
+	}
+
+	// Проверяем file_ids в payload
+	var fileIDs []interface{}
+	if actx.Payload != nil {
+		if ids, ok := actx.Payload["file_ids"].([]interface{}); ok {
+			fileIDs = ids
+		}
+	}
+
+	// Также проверяем в project_data
+	if len(fileIDs) == 0 {
+		stateKey := fmt.Sprintf("files_state_%d", actx.StateID)
+		if ids, ok := actx.ProjectData[stateKey].([]interface{}); ok {
+			fileIDs = ids
+		}
+	}
+
+	if int64(len(fileIDs)) < minFiles {
+		return &plugins.ActionResult{
+			Success: false,
+			Error:   fmt.Errorf("требуется минимум %d файл(ов), загружено: %d", minFiles, len(fileIDs)),
+		}
+	}
+
 	return &plugins.ActionResult{
 		Success: true,
 		Data: map[string]interface{}{
-			"status": "stub",
-			"reason": "file validation plugin not yet implemented",
+			"validated":   true,
+			"files_count": len(fileIDs),
 		},
 	}
 }
+
 func (p *FileValidationPlugin) Rollback(ctx context.Context, actx *plugins.ActionContext) error {
 	return nil
 }
@@ -157,10 +194,10 @@ type FormValidationPlugin struct{}
 
 func NewFormValidationPlugin() *FormValidationPlugin { return &FormValidationPlugin{} }
 
-func (p *FormValidationPlugin) ID() string   { return "VALIDATE_FORM" }
+func (p *FormValidationPlugin) ID() string   { return "VALIDATE_DATA" }
 func (p *FormValidationPlugin) Name() string { return "Валидация формы" }
 func (p *FormValidationPlugin) Description() string {
-	return "Проверяет данные формы"
+	return "Проверяет, что форма была заполнена для текущего этапа"
 }
 func (p *FormValidationPlugin) Category() string   { return plugins.CategoryValidation }
 func (p *FormValidationPlugin) IsReversible() bool { return false }
@@ -169,22 +206,70 @@ func (p *FormValidationPlugin) ConfigSchema() json.RawMessage {
 	return json.RawMessage(`{
 		"type": "object",
 		"properties": {
-			"form_id": {"type": "string"},
-			"required_fields": {"type": "array", "items": {"type": "string"}}
+			"require_all_fields": {"type": "boolean", "default": true},
+			"form_id": {"type": "string", "title": "ID формы (опционально)"}
 		}
 	}`)
 }
 
 func (p *FormValidationPlugin) Validate(config map[string]interface{}) error { return nil }
+
 func (p *FormValidationPlugin) Execute(ctx context.Context, actx *plugins.ActionContext) *plugins.ActionResult {
+	// Проверяем наличие form_submission в project_data
+	// form_service при SubmitForm сохраняет данные в form_submissions таблицу
+	// Фронтенд должен сначала вызвать SubmitForm, потом PerformAction
+	// Плагин проверяет что в project_data есть маркер заполненной формы
+
+	projectID := actx.ProjectID
+	stateID := actx.StateID
+
+	// Вариант 1: Проверяем через project_data (если form_service пишет туда)
+	formKey := fmt.Sprintf("form_submitted_state_%d", stateID)
+	if val, ok := actx.ProjectData[formKey]; ok {
+		if submitted, ok := val.(bool); ok && submitted {
+			return &plugins.ActionResult{
+				Success: true,
+				Data: map[string]interface{}{
+					"validated":  true,
+					"project_id": projectID,
+					"state_id":   stateID,
+				},
+			}
+		}
+	}
+
+	// Вариант 2: Проверяем наличие любого form_submission_id в данных
+	formSubmissionKey := fmt.Sprintf("form_submission_id_state_%d", stateID)
+	if submissionID, ok := actx.ProjectData[formSubmissionKey]; ok && submissionID != nil && submissionID != "" {
+		return &plugins.ActionResult{
+			Success: true,
+			Data: map[string]interface{}{
+				"validated":     true,
+				"submission_id": submissionID,
+			},
+		}
+	}
+
+	// Вариант 3: Проверяем через payload (фронт передаёт submission_id в payload при PerformAction)
+	if actx.Payload != nil {
+		if submissionID, ok := actx.Payload["form_submission_id"]; ok && submissionID != nil {
+			return &plugins.ActionResult{
+				Success: true,
+				Data: map[string]interface{}{
+					"validated":     true,
+					"submission_id": submissionID,
+					"source":        "payload",
+				},
+			}
+		}
+	}
+
 	return &plugins.ActionResult{
-		Success: true,
-		Data: map[string]interface{}{
-			"status": "stub",
-			"reason": "form validation plugin not yet implemented",
-		},
+		Success: false,
+		Error:   fmt.Errorf("форма не заполнена для этапа %d проекта %d. Сначала заполните и отправьте форму", stateID, projectID),
 	}
 }
+
 func (p *FormValidationPlugin) Rollback(ctx context.Context, actx *plugins.ActionContext) error {
 	return nil
 }
@@ -195,43 +280,165 @@ type GradeCalculationPlugin struct{}
 func NewGradeCalculationPlugin() *GradeCalculationPlugin { return &GradeCalculationPlugin{} }
 
 func (p *GradeCalculationPlugin) ID() string   { return "CALCULATE_GRADE" }
-func (p *GradeCalculationPlugin) Name() string { return "Расчёт оценки" }
+func (p *GradeCalculationPlugin) Name() string { return "Расчёт итоговой оценки" }
 func (p *GradeCalculationPlugin) Description() string {
-	return "Вычисляет итоговую оценку"
+	return "Автоматически рассчитывает итоговую оценку на основе оценок за этапы"
 }
 func (p *GradeCalculationPlugin) Category() string   { return plugins.CategoryGrading }
-func (p *GradeCalculationPlugin) IsReversible() bool { return true }
+func (p *GradeCalculationPlugin) IsReversible() bool { return false }
 
 func (p *GradeCalculationPlugin) ConfigSchema() json.RawMessage {
 	return json.RawMessage(`{
 		"type": "object",
 		"properties": {
-			"scale": {"type": "string", "enum": ["5", "100", "ECTS"], "default": "5"},
-			"passing_score": {"type": "number", "default": 50},
-			"components": {
-				"type": "array",
-				"items": {
-					"type": "object",
-					"properties": {
-						"name": {"type": "string"},
-						"weight": {"type": "number"}
-					}
+			"weights": {
+				"type": "object",
+				"title": "Веса оценок",
+				"description": "Ключ - имя этапа, значение - вес (0.0-1.0)",
+				"default": {
+					"norm_control": 0.10,
+					"supervisor_review": 0.10,
+					"pre_defense": 0.20,
+					"defense": 0.60
 				}
+			},
+			"passing_grade": {
+				"type": "integer",
+				"title": "Проходной балл",
+				"default": 50
+			},
+			"rounding": {
+				"type": "string",
+				"enum": ["round", "floor", "ceil"],
+				"default": "round"
 			}
 		}
 	}`)
 }
 
-func (p *GradeCalculationPlugin) Validate(config map[string]interface{}) error { return nil }
+func (p *GradeCalculationPlugin) Validate(config map[string]interface{}) error {
+	return nil
+}
+
 func (p *GradeCalculationPlugin) Execute(ctx context.Context, actx *plugins.ActionContext) *plugins.ActionResult {
+	// Получаем веса из конфига
+	weights := map[string]float64{
+		"norm_control":      0.10,
+		"supervisor_review": 0.10,
+		"pre_defense":       0.20,
+		"defense":           0.60,
+	}
+
+	if w, ok := actx.Config["weights"].(map[string]interface{}); ok {
+		for k, v := range w {
+			if fv, ok := v.(float64); ok {
+				weights[k] = fv
+			}
+		}
+	}
+
+	passingGrade := 50.0
+	if pg, ok := actx.Config["passing_grade"].(float64); ok {
+		passingGrade = pg
+	}
+
+	// Собираем оценки из project_data
+	// Оценки хранятся в project_data.grades как map[step_name]grade
+	grades := map[string]float64{}
+	if gradesRaw, ok := actx.ProjectData["grades"].(map[string]interface{}); ok {
+		for k, v := range gradesRaw {
+			switch gv := v.(type) {
+			case float64:
+				grades[k] = gv
+			case int:
+				grades[k] = float64(gv)
+			case int64:
+				grades[k] = float64(gv)
+			}
+		}
+	}
+
+	// Рассчитываем взвешенную оценку
+	var totalScore float64
+	var totalWeight float64
+	gradeDetails := map[string]interface{}{}
+
+	for stepName, weight := range weights {
+		if grade, ok := grades[stepName]; ok {
+			weightedGrade := grade * weight
+			totalScore += weightedGrade
+			totalWeight += weight
+			gradeDetails[stepName] = map[string]interface{}{
+				"grade":          grade,
+				"weight":         weight,
+				"weighted_grade": weightedGrade,
+			}
+		}
+	}
+
+	var finalGrade float64
+	if totalWeight > 0 {
+		finalGrade = totalScore / totalWeight
+	}
+
+	// Округление
+	rounding := "round"
+	if r, ok := actx.Config["rounding"].(string); ok {
+		rounding = r
+	}
+
+	var finalGradeInt int32
+	switch rounding {
+	case "floor":
+		finalGradeInt = int32(finalGrade)
+	case "ceil":
+		finalGradeInt = int32(finalGrade + 0.999)
+	default: // round
+		finalGradeInt = int32(finalGrade + 0.5)
+	}
+
+	passed := float64(finalGradeInt) >= passingGrade
+
+	// Определяем буквенную оценку
+	letterGrade := "F"
+	switch {
+	case finalGradeInt >= 95:
+		letterGrade = "A"
+	case finalGradeInt >= 90:
+		letterGrade = "A-"
+	case finalGradeInt >= 85:
+		letterGrade = "B+"
+	case finalGradeInt >= 80:
+		letterGrade = "B"
+	case finalGradeInt >= 75:
+		letterGrade = "B-"
+	case finalGradeInt >= 70:
+		letterGrade = "C+"
+	case finalGradeInt >= 65:
+		letterGrade = "C"
+	case finalGradeInt >= 60:
+		letterGrade = "C-"
+	case finalGradeInt >= 55:
+		letterGrade = "D+"
+	case finalGradeInt >= 50:
+		letterGrade = "D"
+	}
+
 	return &plugins.ActionResult{
 		Success: true,
 		Data: map[string]interface{}{
-			"status": "stub",
-			"reason": "grade calculation plugin not yet implemented",
+			"final_grade":       finalGradeInt,
+			"final_grade_exact": finalGrade,
+			"letter_grade":      letterGrade,
+			"passed":            passed,
+			"passing_grade":     passingGrade,
+			"total_weight_used": totalWeight,
+			"grade_details":     gradeDetails,
+			"calculated_at":     time.Now().UTC().Format(time.RFC3339),
 		},
 	}
 }
+
 func (p *GradeCalculationPlugin) Rollback(ctx context.Context, actx *plugins.ActionContext) error {
 	return nil
 }
@@ -244,34 +451,139 @@ func NewDocumentGeneratorPlugin() *DocumentGeneratorPlugin { return &DocumentGen
 func (p *DocumentGeneratorPlugin) ID() string   { return "GENERATE_DOCUMENT" }
 func (p *DocumentGeneratorPlugin) Name() string { return "Генерация документа" }
 func (p *DocumentGeneratorPlugin) Description() string {
-	return "Генерирует документ по шаблону"
+	return "Генерирует документ из шаблона .docx с подстановкой данных проекта"
 }
 func (p *DocumentGeneratorPlugin) Category() string   { return plugins.CategoryDocument }
-func (p *DocumentGeneratorPlugin) IsReversible() bool { return true }
+func (p *DocumentGeneratorPlugin) IsReversible() bool { return false }
 
 func (p *DocumentGeneratorPlugin) ConfigSchema() json.RawMessage {
 	return json.RawMessage(`{
 		"type": "object",
 		"properties": {
-			"template_id": {"type": "string"},
-			"output_format": {"type": "string", "enum": ["pdf", "docx"], "default": "pdf"}
-		}
+			"template_name": {
+				"type": "string",
+				"title": "Имя шаблона (без .docx)",
+				"description": "Файл шаблона из папки templates/"
+			},
+			"output_filename": {
+				"type": "string",
+				"title": "Имя выходного файла",
+				"default": "generated_document.docx"
+			},
+			"placeholders": {
+				"type": "object",
+				"title": "Дополнительные плейсхолдеры",
+				"description": "Ключ = плейсхолдер в шаблоне, значение = ключ из project_data"
+			}
+		},
+		"required": ["template_name"]
 	}`)
 }
 
-func (p *DocumentGeneratorPlugin) Validate(config map[string]interface{}) error { return nil }
+func (p *DocumentGeneratorPlugin) Validate(config map[string]interface{}) error {
+	if _, ok := config["template_name"]; !ok {
+		return fmt.Errorf("template_name is required")
+	}
+	return nil
+}
+
 func (p *DocumentGeneratorPlugin) Execute(ctx context.Context, actx *plugins.ActionContext) *plugins.ActionResult {
+	templateName, _ := actx.Config["template_name"].(string)
+	if templateName == "" {
+		return &plugins.ActionResult{
+			Success: false,
+			Error:   fmt.Errorf("template_name is not configured"),
+		}
+	}
+
+	outputFilename := "generated_document.docx"
+	if of, ok := actx.Config["output_filename"].(string); ok && of != "" {
+		outputFilename = of
+	}
+
+	// Собираем данные для подстановки из project_data
+	replacements := map[string]string{}
+
+	// Стандартные поля
+	standardFields := map[string]string{
+		"{ProjectID}":    fmt.Sprintf("%d", actx.ProjectID),
+		"{StateID}":      fmt.Sprintf("%d", actx.StateID),
+		"{Date}":         time.Now().Format("02.01.2006"),
+		"{DateTime}":     time.Now().Format("02.01.2006 15:04"),
+		"{AcademicYear}": getCurrentAcademicYear(),
+	}
+	for k, v := range standardFields {
+		replacements[k] = v
+	}
+
+	// Данные из project_data
+	projectDataFields := map[string]string{
+		"{StudentName}":    "student_name",
+		"{StudentID}":      "student_id",
+		"{TeamName}":       "team_name",
+		"{Topic}":          "topic",
+		"{TopicRU}":        "topic_ru",
+		"{TopicKZ}":        "topic_kz",
+		"{TopicEN}":        "topic_en",
+		"{SupervisorName}": "supervisor_name",
+		"{DepartmentName}": "department_name",
+	}
+
+	for placeholder, dataKey := range projectDataFields {
+		if val, ok := actx.ProjectData[dataKey]; ok {
+			if strVal, ok := val.(string); ok {
+				replacements[placeholder] = strVal
+			}
+		}
+	}
+
+	// Дополнительные плейсхолдеры из конфига
+	if customPlaceholders, ok := actx.Config["placeholders"].(map[string]interface{}); ok {
+		for placeholder, dataKeyRaw := range customPlaceholders {
+			if dataKey, ok := dataKeyRaw.(string); ok {
+				if val, ok := actx.ProjectData[dataKey]; ok {
+					if strVal, ok := val.(string); ok {
+						replacements["{"+placeholder+"}"] = strVal
+					}
+				}
+			}
+		}
+	}
+
+	// NOTE: Реальная генерация .docx требует:
+	// 1. Открыть шаблон: doc, err := docx.Open(templatePath)
+	// 2. Заменить плейсхолдеры: doc.ReplaceAll(replacements)
+	// 3. Сохранить: doc.WriteToFile(outputPath)
+	// 4. Загрузить в file_service через gRPC streaming
+	// 5. Получить file_id
+	//
+	// Пока возвращаем успех с метаданными (stub для интеграции):
+
 	return &plugins.ActionResult{
 		Success: true,
 		Data: map[string]interface{}{
-			"status": "stub",
-			"reason": "document generator plugin not yet implemented",
+			"template_name":   templateName,
+			"output_filename": outputFilename,
+			"replacements":    replacements,
+			"status":          "document_generation_prepared",
+			"message":         "Document generation data prepared. Full generation requires docx library integration.",
+			"generated_at":    time.Now().UTC().Format(time.RFC3339),
 		},
 	}
 }
 
 func (p *DocumentGeneratorPlugin) Rollback(ctx context.Context, actx *plugins.ActionContext) error {
 	return nil
+}
+
+func getCurrentAcademicYear() string {
+	now := time.Now()
+	year := now.Year()
+	month := now.Month()
+	if month >= 9 { // September onwards
+		return fmt.Sprintf("%d-%d", year, year+1)
+	}
+	return fmt.Sprintf("%d-%d", year-1, year)
 }
 
 // =============== Webhook Plugin ===============

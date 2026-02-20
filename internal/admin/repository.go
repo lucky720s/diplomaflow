@@ -85,6 +85,21 @@ type Repository interface {
 	GetSupervisorTeamsReport(ctx context.Context, supervisorID int64) ([]*TeamFullDetails, int32 /*totalStudents*/, error)
 	ListAvailableTeams(ctx context.Context, departmentID int64, limit, offset int) ([]*AvailableTeamData, int64, error)
 	BatchCountTeamsBySupervisors(ctx context.Context, supervisorIDs []int64) (map[int64]int64, error)
+
+	// Pre-Defense
+	CreatePreDefenseSubmission(ctx context.Context, sub *PreDefenseSubmission) error
+	GetPreDefenseSubmission(ctx context.Context, id string) (*PreDefenseSubmission, error)
+	UpdatePreDefenseSubmission(ctx context.Context, sub *PreDefenseSubmission) error
+	ListPreDefenseSubmissions(ctx context.Context, filter PreDefenseFilter) ([]*PreDefenseSubmission, int64, error)
+	ListScheduledPreDefenses(ctx context.Context, filter ScheduleFilter) ([]*PreDefenseSubmission, error)
+	AddCommissionMember(ctx context.Context, member *PreDefenseCommissionMember) error
+	RemoveCommissionMember(ctx context.Context, submissionID string, userID int64) error
+	GetCommissionMembers(ctx context.Context, submissionID string) ([]PreDefenseCommissionMember, error)
+	UpdateCommissionMemberGrade(ctx context.Context, submissionID string, userID int64, grade int32, comment string) error
+	AddPreDefenseDocument(ctx context.Context, doc *PreDefenseDocument) error
+	GetPreDefenseDocuments(ctx context.Context, submissionID string) ([]PreDefenseDocument, error)
+	AddPreDefenseHistory(ctx context.Context, entry *PreDefenseHistory) error
+	GetPreDefenseHistory(ctx context.Context, submissionID string) ([]*PreDefenseHistory, error)
 }
 
 type TopicRegistrationFilter struct {
@@ -640,6 +655,37 @@ func (r *repository) GetDashboardStats(ctx context.Context, departmentID int64) 
 		Where("sr.status = ? AND t.department_id = ?", SupervisorRequestStatusPending, departmentID).
 		Count(&pendingSupReq)
 	stats.PendingSupervisorRequests = int32(pendingSupReq)
+	// ==================== Pre-Defense Stats ====================
+
+	// Pending pre-defenses
+	var pendingPreDefenses int64
+	r.db.WithContext(ctx).
+		Table("admin_pre_defense_submissions pds").
+		Joins("JOIN projects p ON p.id = pds.project_id").
+		Where("pds.status = ? AND p.department_id = ?", "pending", departmentID).
+		Count(&pendingPreDefenses)
+	stats.PendingPreDefenses = int32(pendingPreDefenses)
+
+	// Scheduled pre-defenses
+	var scheduledPreDefenses int64
+	r.db.WithContext(ctx).
+		Table("admin_pre_defense_submissions pds").
+		Joins("JOIN projects p ON p.id = pds.project_id").
+		Where("pds.status = ? AND p.department_id = ?", "scheduled", departmentID).
+		Count(&scheduledPreDefenses)
+	stats.ScheduledPreDefenses = int32(scheduledPreDefenses)
+
+	now := time.Now()
+	weekStart := now.AddDate(0, 0, -int(now.Weekday()))
+	weekEnd := weekStart.AddDate(0, 0, 7)
+	var preDefensesThisWeek int64
+	r.db.WithContext(ctx).
+		Table("admin_pre_defense_submissions pds").
+		Joins("JOIN projects p ON p.id = pds.project_id").
+		Where("pds.scheduled_date >= ? AND pds.scheduled_date < ? AND p.department_id = ?",
+			weekStart, weekEnd, departmentID).
+		Count(&preDefensesThisWeek)
+	stats.PreDefensesThisWeek = int32(preDefensesThisWeek)
 
 	return stats, nil
 }

@@ -254,95 +254,6 @@ type SupervisorRequestWithDetails struct {
 	RequesterName   string
 }
 
-// ==================== PRE-DEFENSE (align to migration 000010) ====================
-// Сейчас pre-defense в handler/service не реализован полностью,
-// но модели должны соответствовать БД, чтобы будущая реализация не ломалась.
-
-type PreDefenseSubmission struct {
-	ID string `gorm:"primaryKey;size:36"` // UUID as string
-
-	TeamID    int64 `gorm:"index;not null"`
-	ProjectID int64 `gorm:"index;not null"`
-
-	SupervisorID *int64 `gorm:"index"`
-	SubmittedBy  int64  `gorm:"not null"`
-
-	Status string `gorm:"size:30;default:'pending';index"`
-
-	ScheduledDate *time.Time `gorm:"index"`
-	ScheduledTime string     `gorm:"size:10"`
-	Location      string     `gorm:"size:255"`
-	MeetingLink   string     `gorm:"size:500"`
-
-	DurationMinutes int32 `gorm:"default:30"`
-
-	Grade        *int32 `gorm:""`
-	GradeComment string `gorm:"type:text"`
-	GradedBy     *int64
-	GradedAt     *time.Time
-
-	Result        string `gorm:"size:30"`
-	ResultComment string `gorm:"type:text"`
-
-	// В миграции recommendations TEXT[].
-	// Без дополнительной обвязки будем хранить как JSON в будущей миграции/реализации.
-	// Сейчас не используем, поэтому не мапим на колонку.
-	Recommendations datatypes.JSON `gorm:"-"`
-
-	SubmittedAt time.Time
-	CompletedAt *time.Time
-
-	CreatedAt time.Time
-	UpdatedAt time.Time
-
-	// Relations (соответствуют миграции)
-	Commission []PreDefenseCommissionMember `gorm:"foreignKey:SubmissionID;references:ID"`
-	Documents  []PreDefenseDocument         `gorm:"foreignKey:SubmissionID;references:ID"`
-	History    []PreDefenseHistory          `gorm:"foreignKey:SubmissionID;references:ID"`
-}
-
-type PreDefenseCommissionMember struct {
-	ID           int64  `gorm:"primaryKey"`
-	SubmissionID string `gorm:"index;not null;size:36"`
-	UserID       int64  `gorm:"index;not null"`
-	Role         string `gorm:"size:30;not null"` // chairman, member, secretary
-
-	IsPresent       bool `gorm:"default:false"`
-	IndividualGrade *int32
-	Comment         string `gorm:"type:text"`
-
-	CreatedAt time.Time
-}
-
-type PreDefenseDocument struct {
-	ID string `gorm:"primaryKey;size:36"` // UUID string (migration 000010)
-
-	SubmissionID string `gorm:"index;not null;size:36"`
-
-	FileName    string `gorm:"size:255;not null"`
-	FileType    string `gorm:"size:50"`
-	DisplayName string `gorm:"size:255"`
-	Size        int64
-	DownloadURL string `gorm:"size:500"`
-
-	UploadedBy *int64
-	UploadedAt time.Time
-
-	CreatedAt time.Time
-}
-
-type PreDefenseHistory struct {
-	ID           int64  `gorm:"primaryKey"`
-	SubmissionID string `gorm:"index;not null;size:36"`
-
-	Action   string `gorm:"size:50;not null"`
-	ActorID  int64  `gorm:"not null"`
-	OldValue string `gorm:"type:text"`
-	NewValue string `gorm:"type:text"`
-	Comment  string `gorm:"type:text"`
-
-	CreatedAt time.Time
-}
 type AvailableTeamData struct {
 	ID          int64
 	Name        string
@@ -364,12 +275,6 @@ func (AdminActivity) TableName() string           { return "admin_activities" }
 
 func (SupervisorRequest) TableName() string        { return "admin_supervisor_requests" }
 func (SupervisorRequestHistory) TableName() string { return "admin_supervisor_request_history" }
-
-// pre-defense tables (migration 000010)
-func (PreDefenseSubmission) TableName() string       { return "admin_pre_defense_submissions" }
-func (PreDefenseCommissionMember) TableName() string { return "admin_pre_defense_commission" }
-func (PreDefenseDocument) TableName() string         { return "admin_pre_defense_documents" }
-func (PreDefenseHistory) TableName() string          { return "admin_pre_defense_history" }
 
 // ==================== Status constants ====================
 
