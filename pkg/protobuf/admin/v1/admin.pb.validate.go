@@ -515,6 +515,8 @@ func (m *ListTopicRegistrationsRequest) validate(all bool) error {
 
 	// no validation rules for PageSize
 
+	// no validation rules for SupervisorId
+
 	if len(errors) > 0 {
 		return ListTopicRegistrationsRequestMultiError(errors)
 	}
@@ -12040,6 +12042,8 @@ func (m *ListSubmissionsRequest) validate(all bool) error {
 	// no validation rules for Page
 
 	// no validation rules for PageSize
+
+	// no validation rules for ReviewerId
 
 	if len(errors) > 0 {
 		return ListSubmissionsRequestMultiError(errors)

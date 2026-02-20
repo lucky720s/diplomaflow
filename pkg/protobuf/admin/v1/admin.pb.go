@@ -346,9 +346,10 @@ func (x *SubmitTopicRegistrationResponse) GetMessage() string {
 type ListTopicRegistrationsRequest struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	DepartmentId  int64                  `protobuf:"varint,1,opt,name=department_id,json=departmentId,proto3" json:"department_id,omitempty"`
-	Status        string                 `protobuf:"bytes,2,opt,name=status,proto3" json:"status,omitempty"` // pending, approved, rejected, all
+	Status        string                 `protobuf:"bytes,2,opt,name=status,proto3" json:"status,omitempty"`
 	Page          int32                  `protobuf:"varint,3,opt,name=page,proto3" json:"page,omitempty"`
 	PageSize      int32                  `protobuf:"varint,4,opt,name=page_size,json=pageSize,proto3" json:"page_size,omitempty"`
+	SupervisorId  int64                  `protobuf:"varint,5,opt,name=supervisor_id,json=supervisorId,proto3" json:"supervisor_id,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -407,6 +408,13 @@ func (x *ListTopicRegistrationsRequest) GetPage() int32 {
 func (x *ListTopicRegistrationsRequest) GetPageSize() int32 {
 	if x != nil {
 		return x.PageSize
+	}
+	return 0
+}
+
+func (x *ListTopicRegistrationsRequest) GetSupervisorId() int64 {
+	if x != nil {
+		return x.SupervisorId
 	}
 	return 0
 }
@@ -6339,6 +6347,7 @@ type ListSubmissionsRequest struct {
 	TeamId        int64                  `protobuf:"varint,4,opt,name=team_id,json=teamId,proto3" json:"team_id,omitempty"`
 	Page          int32                  `protobuf:"varint,5,opt,name=page,proto3" json:"page,omitempty"`
 	PageSize      int32                  `protobuf:"varint,6,opt,name=page_size,json=pageSize,proto3" json:"page_size,omitempty"`
+	ReviewerId    int64                  `protobuf:"varint,7,opt,name=reviewer_id,json=reviewerId,proto3" json:"reviewer_id,omitempty"` // ← ДОБАВИТЬ
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -6411,6 +6420,13 @@ func (x *ListSubmissionsRequest) GetPage() int32 {
 func (x *ListSubmissionsRequest) GetPageSize() int32 {
 	if x != nil {
 		return x.PageSize
+	}
+	return 0
+}
+
+func (x *ListSubmissionsRequest) GetReviewerId() int64 {
+	if x != nil {
+		return x.ReviewerId
 	}
 	return 0
 }
@@ -8393,12 +8409,13 @@ const file_admin_v1_admin_proto_rawDesc = "" +
 	"\x1fSubmitTopicRegistrationResponse\x12\x18\n" +
 	"\asuccess\x18\x01 \x01(\bR\asuccess\x12'\n" +
 	"\x0fregistration_id\x18\x02 \x01(\tR\x0eregistrationId\x12\x18\n" +
-	"\amessage\x18\x03 \x01(\tR\amessage\"\x8d\x01\n" +
+	"\amessage\x18\x03 \x01(\tR\amessage\"\xb2\x01\n" +
 	"\x1dListTopicRegistrationsRequest\x12#\n" +
 	"\rdepartment_id\x18\x01 \x01(\x03R\fdepartmentId\x12\x16\n" +
 	"\x06status\x18\x02 \x01(\tR\x06status\x12\x12\n" +
 	"\x04page\x18\x03 \x01(\x05R\x04page\x12\x1b\n" +
-	"\tpage_size\x18\x04 \x01(\x05R\bpageSize\"\x88\x01\n" +
+	"\tpage_size\x18\x04 \x01(\x05R\bpageSize\x12#\n" +
+	"\rsupervisor_id\x18\x05 \x01(\x03R\fsupervisorId\"\x88\x01\n" +
 	"\x1eListTopicRegistrationsResponse\x12E\n" +
 	"\rregistrations\x18\x01 \x03(\v2\x1f.admin.v1.TopicRegistrationInfoR\rregistrations\x12\x1f\n" +
 	"\vtotal_count\x18\x02 \x01(\x03R\n" +
@@ -8919,14 +8936,16 @@ const file_admin_v1_admin_proto_rawDesc = "" +
 	"\x06reason\x18\x04 \x01(\tR\x06reason\"^\n" +
 	"(RemovePreDefenseCommissionMemberResponse\x12\x18\n" +
 	"\asuccess\x18\x01 \x01(\bR\asuccess\x12\x18\n" +
-	"\amessage\x18\x02 \x01(\tR\amessage\"\xb8\x01\n" +
+	"\amessage\x18\x02 \x01(\tR\amessage\"\xd9\x01\n" +
 	"\x16ListSubmissionsRequest\x12#\n" +
 	"\rdepartment_id\x18\x01 \x01(\x03R\fdepartmentId\x12\x17\n" +
 	"\astep_id\x18\x02 \x01(\x03R\x06stepId\x12\x16\n" +
 	"\x06status\x18\x03 \x01(\tR\x06status\x12\x17\n" +
 	"\ateam_id\x18\x04 \x01(\x03R\x06teamId\x12\x12\n" +
 	"\x04page\x18\x05 \x01(\x05R\x04page\x12\x1b\n" +
-	"\tpage_size\x18\x06 \x01(\x05R\bpageSize\"v\n" +
+	"\tpage_size\x18\x06 \x01(\x05R\bpageSize\x12\x1f\n" +
+	"\vreviewer_id\x18\a \x01(\x03R\n" +
+	"reviewerId\"v\n" +
 	"\x17ListSubmissionsResponse\x12:\n" +
 	"\vsubmissions\x18\x01 \x03(\v2\x18.admin.v1.SubmissionInfoR\vsubmissions\x12\x1f\n" +
 	"\vtotal_count\x18\x02 \x01(\x03R\n" +

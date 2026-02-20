@@ -89,6 +89,7 @@ type Repository interface {
 
 type TopicRegistrationFilter struct {
 	DepartmentID int64
+	SupervisorID int64
 	TeamID       int64
 	Status       string
 	Limit        int
@@ -99,6 +100,7 @@ type SubmissionFilter struct {
 	DepartmentID int64
 	StepID       int64
 	TeamID       int64
+	ReviewerID   int64
 	Status       string
 	Limit        int
 	Offset       int
@@ -228,33 +230,32 @@ func (r *repository) GetTopicRegistrationByTeam(ctx context.Context, teamID int6
 }
 
 func (r *repository) ListTopicRegistrations(ctx context.Context, filter TopicRegistrationFilter) ([]*TopicRegistration, int64, error) {
-	var regs []*TopicRegistration
-	var total int64
-
 	query := r.db.WithContext(ctx).Model(&TopicRegistration{})
-	if filter.TeamID > 0 {
-		query = query.Where("team_id = ?", filter.TeamID)
+
+	if filter.DepartmentID > 0 {
+		query = query.Where("department_id = ?", filter.DepartmentID)
 	}
-	if filter.Status != "" && filter.Status != "all" {
+	if filter.Status != "" {
 		query = query.Where("status = ?", filter.Status)
 	}
-	if filter.DepartmentID > 0 {
-		// department filter through projects
-		query = query.Joins("JOIN projects p ON p.id = admin_topic_registrations.project_id").
-			Where("p.department_id = ?", filter.DepartmentID)
+
+	if filter.SupervisorID > 0 {
+		query = query.Where("supervisor_id = ?", filter.SupervisorID)
 	}
 
+	var total int64
 	if err := query.Count(&total).Error; err != nil {
 		return nil, 0, err
 	}
 
+	var registrations []*TopicRegistration
 	err := query.
 		Order("created_at DESC").
 		Limit(filter.Limit).
 		Offset(filter.Offset).
-		Find(&regs).Error
+		Find(&registrations).Error
 
-	return regs, total, err
+	return registrations, total, err
 }
 
 func (r *repository) UpdateTopicRegistration(ctx context.Context, reg *TopicRegistration) error {
@@ -322,6 +323,9 @@ func (r *repository) ListSubmissions(ctx context.Context, filter SubmissionFilte
 	if filter.DepartmentID > 0 {
 		query = query.Joins("JOIN projects p ON p.id = admin_submissions.project_id").
 			Where("p.department_id = ?", filter.DepartmentID)
+	}
+	if filter.ReviewerID > 0 {
+		query = query.Where("reviewer_id = ?", filter.ReviewerID)
 	}
 
 	if err := query.Count(&total).Error; err != nil {

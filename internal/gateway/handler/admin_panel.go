@@ -283,6 +283,10 @@ func (h *Handler) SubmitTopicRegistration(c *gin.Context) {
 func (h *Handler) ListTopicRegistrations(c *gin.Context) {
 	departmentID := c.GetInt64("departmentId")
 	status := c.Query("status")
+	var supervisorID int64
+	if s := c.Query("supervisor_id"); s != "" {
+		supervisorID, _ = strconv.ParseInt(s, 10, 64)
+	}
 
 	page := int32(1)
 	pageSize := int32(20)
@@ -295,6 +299,7 @@ func (h *Handler) ListTopicRegistrations(c *gin.Context) {
 	resp, err := h.adminClient.ListTopicRegistrations(c.Request.Context(), &adminv1.ListTopicRegistrationsRequest{
 		DepartmentId: departmentID,
 		Status:       status,
+		SupervisorId: supervisorID,
 		Page:         page,
 		PageSize:     pageSize,
 	})
@@ -352,13 +357,18 @@ func (h *Handler) ReviewTopicRegistration(c *gin.Context) {
 func (h *Handler) ListSubmissions(c *gin.Context) {
 	departmentID := c.GetInt64("departmentId")
 
-	var stepID, teamID int64
+	var stepID, teamID, reviewerID int64
 	if s := c.Query("step_id"); s != "" {
 		stepID, _ = strconv.ParseInt(s, 10, 64)
 	}
 	if t := c.Query("team_id"); t != "" {
 		teamID, _ = strconv.ParseInt(t, 10, 64)
 	}
+	// ===== ДОБАВИТЬ =====
+	if r := c.Query("reviewer_id"); r != "" {
+		reviewerID, _ = strconv.ParseInt(r, 10, 64)
+	}
+	// ===== КОНЕЦ =====
 
 	page := int32(1)
 	pageSize := int32(20)
@@ -373,6 +383,7 @@ func (h *Handler) ListSubmissions(c *gin.Context) {
 		StepId:       stepID,
 		TeamId:       teamID,
 		Status:       c.Query("status"),
+		ReviewerId:   reviewerID,
 		Page:         page,
 		PageSize:     pageSize,
 	})
@@ -380,7 +391,6 @@ func (h *Handler) ListSubmissions(c *gin.Context) {
 		MapGRPCError(c, err)
 		return
 	}
-
 	c.JSON(http.StatusOK, resp)
 }
 

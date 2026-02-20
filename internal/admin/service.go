@@ -191,11 +191,18 @@ func (s *Service) SubmitTopicRegistration(ctx context.Context, req *SubmitTopicR
 
 	existing, err := s.repo.GetTopicRegistrationByTeam(ctx, teamID)
 	if err == nil && existing != nil {
-		if existing.Status == StatusPending {
-			return nil, errors.New("у команды уже есть заявление на рассмотрении")
-		}
-		if existing.Status == StatusApproved {
+		switch existing.Status {
+		case StatusPending:
+			return nil, errors.New("заявка уже на рассмотрении")
+		case StatusApproved:
 			return nil, errors.New("тема уже утверждена для этой команды")
+		case StatusRejected:
+			// ===== РАЗРЕШАЕМ ПЕРЕПОДАЧУ =====
+			// Rejected → можно подать заново. Не блокируем.
+			// Опционально: помечаем старую заявку как superseded
+			// _ = s.repo.MarkTopicRegistrationSuperseded(ctx, existing.ID)
+		default:
+			// Неизвестный статус — пропускаем (fail-open)
 		}
 	}
 

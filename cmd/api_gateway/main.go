@@ -309,6 +309,8 @@ func main() {
 			supervisors.POST("/requests/:id/respond", handler.RespondToSupervisorRequest)
 			supervisors.POST("/teams/:team_id/claim", handler.TeacherClaimTeam)
 			supervisors.GET("/available-teams", handler.GetAvailableTeams)
+			supervisors.GET("/topic-registrations", handler.ListSupervisorTopicRegistrations)
+			supervisors.GET("/submissions", handler.ListSupervisorSubmissions)
 		}
 	}
 

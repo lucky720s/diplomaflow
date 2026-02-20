@@ -157,7 +157,15 @@ func (h *Handler) GetMe(c *gin.Context) {
 	role := c.GetString("role")
 	universityID := c.GetInt64("universityId")
 	departmentID := c.GetInt64("departmentId")
-
+	var deptRoles []string
+	if v, ok := c.Get("deptRoles"); ok && v != nil {
+		if arr, ok := v.([]string); ok {
+			deptRoles = arr
+		}
+	}
+	if deptRoles == nil {
+		deptRoles = []string{}
+	}
 	c.JSON(http.StatusOK, gin.H{
 		"id":            userID,
 		"email":         email,
@@ -166,5 +174,6 @@ func (h *Handler) GetMe(c *gin.Context) {
 		"last_name":     lastName,
 		"university_id": universityID,
 		"department_id": departmentID,
+		"dept_roles":    deptRoles,
 	})
 }

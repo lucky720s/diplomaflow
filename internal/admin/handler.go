@@ -483,6 +483,7 @@ func (h *Handler) ListTopicRegistrations(ctx context.Context, req *adminv1.ListT
 	filter := TopicRegistrationFilter{
 		DepartmentID: req.DepartmentId,
 		Status:       req.Status,
+		SupervisorID: req.SupervisorId,
 		Limit:        pageSize,
 		Offset:       (page - 1) * pageSize,
 	}
@@ -633,6 +634,7 @@ func (h *Handler) ListSubmissions(ctx context.Context, req *adminv1.ListSubmissi
 		DepartmentID: req.DepartmentId,
 		StepID:       req.StepId,
 		TeamID:       req.TeamId,
+		ReviewerID:   req.ReviewerId,
 		Status:       req.Status,
 		Limit:        pageSize,
 		Offset:       (page - 1) * pageSize,
