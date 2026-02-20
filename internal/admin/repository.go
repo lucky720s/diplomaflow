@@ -310,22 +310,21 @@ func (r *repository) ListSubmissions(ctx context.Context, filter SubmissionFilte
 
 	query := r.db.WithContext(ctx).Model(&Submission{})
 
-	// StepID == state_id
 	if filter.StepID > 0 {
-		query = query.Where("state_id = ?", filter.StepID)
+		query = query.Where("admin_submissions.state_id = ?", filter.StepID)
 	}
 	if filter.TeamID > 0 {
-		query = query.Where("team_id = ?", filter.TeamID)
+		query = query.Where("admin_submissions.team_id = ?", filter.TeamID)
 	}
 	if filter.Status != "" && filter.Status != "all" {
-		query = query.Where("status = ?", filter.Status)
+		query = query.Where("admin_submissions.status = ?", filter.Status) // ✅ FIX
 	}
 	if filter.DepartmentID > 0 {
 		query = query.Joins("JOIN projects p ON p.id = admin_submissions.project_id").
 			Where("p.department_id = ?", filter.DepartmentID)
 	}
 	if filter.ReviewerID > 0 {
-		query = query.Where("reviewer_id = ?", filter.ReviewerID)
+		query = query.Where("admin_submissions.reviewer_id = ?", filter.ReviewerID)
 	}
 
 	if err := query.Count(&total).Error; err != nil {
@@ -333,7 +332,7 @@ func (r *repository) ListSubmissions(ctx context.Context, filter SubmissionFilte
 	}
 
 	err := query.
-		Order("created_at DESC").
+		Order("admin_submissions.created_at DESC").
 		Limit(filter.Limit).
 		Offset(filter.Offset).
 		Find(&submissions).Error
