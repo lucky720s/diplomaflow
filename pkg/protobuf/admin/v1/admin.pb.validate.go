@@ -15825,3 +15825,239 @@ var _ interface {
 	Cause() error
 	ErrorName() string
 } = ListAvailableTeamsResponseValidationError{}
+
+// Validate checks the field values on SubmitDocumentRequest with the rules
+// defined in the proto definition for this message. If any rules are
+// violated, the first error encountered is returned, or nil if there are no violations.
+func (m *SubmitDocumentRequest) Validate() error {
+	return m.validate(false)
+}
+
+// ValidateAll checks the field values on SubmitDocumentRequest with the rules
+// defined in the proto definition for this message. If any rules are
+// violated, the result is a list of violation errors wrapped in
+// SubmitDocumentRequestMultiError, or nil if none found.
+func (m *SubmitDocumentRequest) ValidateAll() error {
+	return m.validate(true)
+}
+
+func (m *SubmitDocumentRequest) validate(all bool) error {
+	if m == nil {
+		return nil
+	}
+
+	var errors []error
+
+	if m.GetProjectId() <= 0 {
+		err := SubmitDocumentRequestValidationError{
+			field:  "ProjectId",
+			reason: "value must be greater than 0",
+		}
+		if !all {
+			return err
+		}
+		errors = append(errors, err)
+	}
+
+	if m.GetSubmittedBy() <= 0 {
+		err := SubmitDocumentRequestValidationError{
+			field:  "SubmittedBy",
+			reason: "value must be greater than 0",
+		}
+		if !all {
+			return err
+		}
+		errors = append(errors, err)
+	}
+
+	// no validation rules for Comment
+
+	if len(errors) > 0 {
+		return SubmitDocumentRequestMultiError(errors)
+	}
+
+	return nil
+}
+
+// SubmitDocumentRequestMultiError is an error wrapping multiple validation
+// errors returned by SubmitDocumentRequest.ValidateAll() if the designated
+// constraints aren't met.
+type SubmitDocumentRequestMultiError []error
+
+// Error returns a concatenation of all the error messages it wraps.
+func (m SubmitDocumentRequestMultiError) Error() string {
+	msgs := make([]string, 0, len(m))
+	for _, err := range m {
+		msgs = append(msgs, err.Error())
+	}
+	return strings.Join(msgs, "; ")
+}
+
+// AllErrors returns a list of validation violation errors.
+func (m SubmitDocumentRequestMultiError) AllErrors() []error { return m }
+
+// SubmitDocumentRequestValidationError is the validation error returned by
+// SubmitDocumentRequest.Validate if the designated constraints aren't met.
+type SubmitDocumentRequestValidationError struct {
+	field  string
+	reason string
+	cause  error
+	key    bool
+}
+
+// Field function returns field value.
+func (e SubmitDocumentRequestValidationError) Field() string { return e.field }
+
+// Reason function returns reason value.
+func (e SubmitDocumentRequestValidationError) Reason() string { return e.reason }
+
+// Cause function returns cause value.
+func (e SubmitDocumentRequestValidationError) Cause() error { return e.cause }
+
+// Key function returns key value.
+func (e SubmitDocumentRequestValidationError) Key() bool { return e.key }
+
+// ErrorName returns error name.
+func (e SubmitDocumentRequestValidationError) ErrorName() string {
+	return "SubmitDocumentRequestValidationError"
+}
+
+// Error satisfies the builtin error interface
+func (e SubmitDocumentRequestValidationError) Error() string {
+	cause := ""
+	if e.cause != nil {
+		cause = fmt.Sprintf(" | caused by: %v", e.cause)
+	}
+
+	key := ""
+	if e.key {
+		key = "key for "
+	}
+
+	return fmt.Sprintf(
+		"invalid %sSubmitDocumentRequest.%s: %s%s",
+		key,
+		e.field,
+		e.reason,
+		cause)
+}
+
+var _ error = SubmitDocumentRequestValidationError{}
+
+var _ interface {
+	Field() string
+	Reason() string
+	Key() bool
+	Cause() error
+	ErrorName() string
+} = SubmitDocumentRequestValidationError{}
+
+// Validate checks the field values on SubmitDocumentResponse with the rules
+// defined in the proto definition for this message. If any rules are
+// violated, the first error encountered is returned, or nil if there are no violations.
+func (m *SubmitDocumentResponse) Validate() error {
+	return m.validate(false)
+}
+
+// ValidateAll checks the field values on SubmitDocumentResponse with the rules
+// defined in the proto definition for this message. If any rules are
+// violated, the result is a list of violation errors wrapped in
+// SubmitDocumentResponseMultiError, or nil if none found.
+func (m *SubmitDocumentResponse) ValidateAll() error {
+	return m.validate(true)
+}
+
+func (m *SubmitDocumentResponse) validate(all bool) error {
+	if m == nil {
+		return nil
+	}
+
+	var errors []error
+
+	// no validation rules for Success
+
+	// no validation rules for SubmissionId
+
+	// no validation rules for NewState
+
+	// no validation rules for Message
+
+	if len(errors) > 0 {
+		return SubmitDocumentResponseMultiError(errors)
+	}
+
+	return nil
+}
+
+// SubmitDocumentResponseMultiError is an error wrapping multiple validation
+// errors returned by SubmitDocumentResponse.ValidateAll() if the designated
+// constraints aren't met.
+type SubmitDocumentResponseMultiError []error
+
+// Error returns a concatenation of all the error messages it wraps.
+func (m SubmitDocumentResponseMultiError) Error() string {
+	msgs := make([]string, 0, len(m))
+	for _, err := range m {
+		msgs = append(msgs, err.Error())
+	}
+	return strings.Join(msgs, "; ")
+}
+
+// AllErrors returns a list of validation violation errors.
+func (m SubmitDocumentResponseMultiError) AllErrors() []error { return m }
+
+// SubmitDocumentResponseValidationError is the validation error returned by
+// SubmitDocumentResponse.Validate if the designated constraints aren't met.
+type SubmitDocumentResponseValidationError struct {
+	field  string
+	reason string
+	cause  error
+	key    bool
+}
+
+// Field function returns field value.
+func (e SubmitDocumentResponseValidationError) Field() string { return e.field }
+
+// Reason function returns reason value.
+func (e SubmitDocumentResponseValidationError) Reason() string { return e.reason }
+
+// Cause function returns cause value.
+func (e SubmitDocumentResponseValidationError) Cause() error { return e.cause }
+
+// Key function returns key value.
+func (e SubmitDocumentResponseValidationError) Key() bool { return e.key }
+
+// ErrorName returns error name.
+func (e SubmitDocumentResponseValidationError) ErrorName() string {
+	return "SubmitDocumentResponseValidationError"
+}
+
+// Error satisfies the builtin error interface
+func (e SubmitDocumentResponseValidationError) Error() string {
+	cause := ""
+	if e.cause != nil {
+		cause = fmt.Sprintf(" | caused by: %v", e.cause)
+	}
+
+	key := ""
+	if e.key {
+		key = "key for "
+	}
+
+	return fmt.Sprintf(
+		"invalid %sSubmitDocumentResponse.%s: %s%s",
+		key,
+		e.field,
+		e.reason,
+		cause)
+}
+
+var _ error = SubmitDocumentResponseValidationError{}
+
+var _ interface {
+	Field() string
+	Reason() string
+	Key() bool
+	Cause() error
+	ErrorName() string
+} = SubmitDocumentResponseValidationError{}

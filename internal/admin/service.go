@@ -2,6 +2,7 @@ package admin
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"strconv"
@@ -17,6 +18,7 @@ import (
 	"google.golang.org/grpc/metadata"
 	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/types/known/structpb"
+	"gorm.io/datatypes"
 )
 
 type Service struct {
@@ -26,6 +28,12 @@ type Service struct {
 	teamClient     teamv1.TeamServiceClient
 	workflowClient workflowv1.WorkflowServiceClient
 	logger         *zap.Logger
+}
+type SubmitDocumentRequest struct {
+	ProjectID   int64
+	SubmittedBy int64
+	FileIDs     []string
+	Comment     string
 }
 
 func NewService(
@@ -1300,4 +1308,62 @@ func (s *Service) forwardCtx(ctx context.Context) context.Context {
 	in, _ := metadata.FromIncomingContext(ctx)
 	out := metadata.NewOutgoingContext(ctx, in.Copy())
 	return metadata.AppendToOutgoingContext(out, "x-internal-service", "admin_service")
+}
+func (s *Service) SubmitDocumentForStep(ctx context.Context, req *SubmitDocumentRequest) (*Submission, error) {
+	teamID, err := s.resolveTeamIDByProject(ctx, req.ProjectID, 0)
+	if err != nil {
+		return nil, err
+	}
+
+	// Получаем текущее состояние проекта
+	rt, err := s.projectClient.GetProjectRuntime(s.internalCtx(ctx),
+		&projectv1.GetProjectRuntimeRequest{ProjectId: req.ProjectID})
+	if err != nil {
+		return nil, err
+	}
+
+	// Проверяем что текущее состояние — DOCUMENT_UPLOAD тип
+	filesJSON, _ := json.Marshal(req.FileIDs)
+	dataJSON, _ := json.Marshal(map[string]interface{}{
+		"file_ids": req.FileIDs,
+		"comment":  req.Comment,
+	})
+
+	sub := &Submission{
+		ID:          uuid.New().String(),
+		ProjectID:   req.ProjectID,
+		TeamID:      teamID,
+		StepID:      rt.CurrentStateId,
+		SubmittedBy: req.SubmittedBy,
+		Status:      StatusPending,
+		Data:        datatypes.JSON(dataJSON),
+		Files:       datatypes.JSON(filesJSON),
+	}
+
+	if err := s.repo.CreateSubmission(ctx, sub); err != nil {
+		return nil, err
+	}
+
+	// Двигаем workflow
+	eventName := s.getEventNameForState(rt.CurrentStateName)
+	if eventName != "" {
+		actorID, actorRole := s.callerFromContext(ctx, req.SubmittedBy, "student")
+		_ = s.tryPerformIfAvailable(ctx, actorID, actorRole, req.ProjectID, eventName, map[string]interface{}{
+			"file_ids":      req.FileIDs,
+			"submission_id": sub.ID,
+		})
+	}
+
+	return sub, nil
+}
+
+func (s *Service) getEventNameForState(stateName string) string {
+	mapping := map[string]string{
+		"PRE_DEFENSE_1": "PREDEFENSE1_SUBMITTED",
+		"PRE_DEFENSE_2": "PREDEFENSE2_SUBMITTED",
+		"NORM_CONTROL":  "NORMCONTROL_SUBMITTED",
+		"ECONOMICS":     "ECONOMICS_SUBMITTED",
+		"ANTIPLAGIAT":   "ANTIPLAGIAT_SUBMITTED",
+	}
+	return mapping[stateName]
 }

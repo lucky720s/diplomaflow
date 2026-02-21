@@ -1272,3 +1272,34 @@ func (h *Handler) ListAvailableTeams(ctx context.Context, req *adminv1.ListAvail
 		TotalCount: total,
 	}, nil
 }
+func (h *Handler) SubmitDocument(ctx context.Context, req *adminv1.SubmitDocumentRequest) (*adminv1.SubmitDocumentResponse, error) {
+	if req.ProjectId == 0 {
+		return nil, status.Error(codes.InvalidArgument, "project_id is required")
+	}
+	if req.SubmittedBy == 0 {
+		return nil, status.Error(codes.InvalidArgument, "submitted_by is required")
+	}
+	if len(req.FileIds) == 0 {
+		return nil, status.Error(codes.InvalidArgument, "file_ids is required")
+	}
+
+	sub, err := h.service.SubmitDocumentForStep(ctx, &SubmitDocumentRequest{
+		ProjectID:   req.ProjectId,
+		SubmittedBy: req.SubmittedBy,
+		FileIDs:     req.FileIds,
+		Comment:     req.Comment,
+	})
+	if err != nil {
+		if _, ok := status.FromError(err); ok {
+			return nil, err
+		}
+		return nil, status.Errorf(codes.Internal, "failed to submit document: %v", err)
+	}
+
+	return &adminv1.SubmitDocumentResponse{
+		Success:      true,
+		SubmissionId: sub.ID,
+		NewState:     "",
+		Message:      "Document submitted successfully",
+	}, nil
+}

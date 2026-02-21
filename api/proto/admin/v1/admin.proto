@@ -72,6 +72,7 @@ service AdminService {
   rpc GetWorkflowProgress(GetWorkflowProgressRequest) returns (GetWorkflowProgressResponse);
   rpc ListPendingReviews(ListPendingReviewsRequest) returns (ListPendingReviewsResponse);
   rpc ListAvailableTeams(ListAvailableTeamsRequest) returns (ListAvailableTeamsResponse);
+  rpc SubmitDocument(SubmitDocumentRequest) returns (SubmitDocumentResponse);
 }
 
 // ==================== Topic Registration Messages ====================
@@ -985,4 +986,19 @@ message AvailableTeam {
 message ListAvailableTeamsResponse {
   repeated AvailableTeam teams = 1;
   int64 total_count = 2;
+}
+
+
+message SubmitDocumentRequest {
+  int64 project_id = 1 [(validate.rules).int64.gt = 0];
+  int64 submitted_by = 2 [(validate.rules).int64.gt = 0];
+  repeated string file_ids = 3;
+  string comment = 4;
+}
+
+message SubmitDocumentResponse {
+  bool success = 1;
+  string submission_id = 2;
+  string new_state = 3;
+  string message = 4;
 }

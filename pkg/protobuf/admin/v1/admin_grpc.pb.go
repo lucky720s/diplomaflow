@@ -60,6 +60,7 @@ const (
 	AdminService_GetWorkflowProgress_FullMethodName              = "/admin.v1.AdminService/GetWorkflowProgress"
 	AdminService_ListPendingReviews_FullMethodName               = "/admin.v1.AdminService/ListPendingReviews"
 	AdminService_ListAvailableTeams_FullMethodName               = "/admin.v1.AdminService/ListAvailableTeams"
+	AdminService_SubmitDocument_FullMethodName                   = "/admin.v1.AdminService/SubmitDocument"
 )
 
 // AdminServiceClient is the client API for AdminService service.
@@ -118,6 +119,7 @@ type AdminServiceClient interface {
 	GetWorkflowProgress(ctx context.Context, in *GetWorkflowProgressRequest, opts ...grpc.CallOption) (*GetWorkflowProgressResponse, error)
 	ListPendingReviews(ctx context.Context, in *ListPendingReviewsRequest, opts ...grpc.CallOption) (*ListPendingReviewsResponse, error)
 	ListAvailableTeams(ctx context.Context, in *ListAvailableTeamsRequest, opts ...grpc.CallOption) (*ListAvailableTeamsResponse, error)
+	SubmitDocument(ctx context.Context, in *SubmitDocumentRequest, opts ...grpc.CallOption) (*SubmitDocumentResponse, error)
 }
 
 type adminServiceClient struct {
@@ -528,6 +530,16 @@ func (c *adminServiceClient) ListAvailableTeams(ctx context.Context, in *ListAva
 	return out, nil
 }
 
+func (c *adminServiceClient) SubmitDocument(ctx context.Context, in *SubmitDocumentRequest, opts ...grpc.CallOption) (*SubmitDocumentResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(SubmitDocumentResponse)
+	err := c.cc.Invoke(ctx, AdminService_SubmitDocument_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // AdminServiceServer is the server API for AdminService service.
 // All implementations must embed UnimplementedAdminServiceServer
 // for forward compatibility.
@@ -584,6 +596,7 @@ type AdminServiceServer interface {
 	GetWorkflowProgress(context.Context, *GetWorkflowProgressRequest) (*GetWorkflowProgressResponse, error)
 	ListPendingReviews(context.Context, *ListPendingReviewsRequest) (*ListPendingReviewsResponse, error)
 	ListAvailableTeams(context.Context, *ListAvailableTeamsRequest) (*ListAvailableTeamsResponse, error)
+	SubmitDocument(context.Context, *SubmitDocumentRequest) (*SubmitDocumentResponse, error)
 	mustEmbedUnimplementedAdminServiceServer()
 }
 
@@ -713,6 +726,9 @@ func (UnimplementedAdminServiceServer) ListPendingReviews(context.Context, *List
 }
 func (UnimplementedAdminServiceServer) ListAvailableTeams(context.Context, *ListAvailableTeamsRequest) (*ListAvailableTeamsResponse, error) {
 	return nil, status.Error(codes.Unimplemented, "method ListAvailableTeams not implemented")
+}
+func (UnimplementedAdminServiceServer) SubmitDocument(context.Context, *SubmitDocumentRequest) (*SubmitDocumentResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method SubmitDocument not implemented")
 }
 func (UnimplementedAdminServiceServer) mustEmbedUnimplementedAdminServiceServer() {}
 func (UnimplementedAdminServiceServer) testEmbeddedByValue()                      {}
@@ -1455,6 +1471,24 @@ func _AdminService_ListAvailableTeams_Handler(srv interface{}, ctx context.Conte
 	return interceptor(ctx, in, info, handler)
 }
 
+func _AdminService_SubmitDocument_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(SubmitDocumentRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(AdminServiceServer).SubmitDocument(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: AdminService_SubmitDocument_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(AdminServiceServer).SubmitDocument(ctx, req.(*SubmitDocumentRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // AdminService_ServiceDesc is the grpc.ServiceDesc for AdminService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -1621,6 +1655,10 @@ var AdminService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "ListAvailableTeams",
 			Handler:    _AdminService_ListAvailableTeams_Handler,
+		},
+		{
+			MethodName: "SubmitDocument",
+			Handler:    _AdminService_SubmitDocument_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

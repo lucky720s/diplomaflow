@@ -172,6 +172,8 @@ func main() {
 			projects.DELETE("/:id/supervisor-requests/:request_id", handler.CancelSupervisorRequest)
 			projects.GET("/:id/my-grades", handler.GetProjectGradesForStudent)
 			projects.GET("/:id/grades", handler.GetProjectGradesForStudent)
+			projects.POST("/:id/documents", handler.UploadProjectDocument)
+			projects.POST("/:id/submit-document", handler.SubmitProjectDocument)
 
 		}
 
