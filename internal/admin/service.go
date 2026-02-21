@@ -199,10 +199,7 @@ func (s *Service) SubmitTopicRegistration(ctx context.Context, req *SubmitTopicR
 			return nil, status.Error(codes.AlreadyExists,
 				"тема уже утверждена для этой команды")
 		case StatusRejected:
-			// ===== РАЗРЕШАЕМ ПЕРЕПОДАЧУ =====
 			// Rejected → можно подать заново. Не блокируем.
-			// Опционально: помечаем старую заявку как superseded
-			// _ = s.repo.MarkTopicRegistrationSuperseded(ctx, existing.ID)
 		default:
 			// Неизвестный статус — пропускаем (fail-open)
 		}
@@ -242,6 +239,25 @@ func (s *Service) SubmitTopicRegistration(ctx context.Context, req *SubmitTopicR
 		TargetID:     teamID,
 		TargetType:   "team",
 	})
+
+	// =====================================================================
+	// FIX: двигаем workflow TOPIC_SUBMISSION → TOPIC_APPROVAL
+	// Без этого проект остаётся на TOPIC_SUBMISSION, и при approve
+	// переход TOPIC_APPROVED (доступный только из TOPIC_APPROVAL) не найдётся.
+	// Используем tryPerformIfAvailable — тот же паттерн, что и в
+	// createProjectForTeamOnApprove для TEAM_FORMED / SUPERVISOR_SELECTED.
+	// =====================================================================
+	actorID, actorRole := s.callerFromContext(ctx, req.SubmittedBy, "student")
+	if wfErr := s.tryPerformIfAvailable(ctx, actorID, actorRole, req.ProjectID, "TOPIC_SUBMITTED", map[string]interface{}{
+		"source":          "admin_service",
+		"registration_id": reg.ID,
+		"proposed_topic":  req.ProposedTopic,
+	}); wfErr != nil {
+		s.logger.Warn("Failed to perform TOPIC_SUBMITTED transition (non-blocking)",
+			zap.Error(wfErr),
+			zap.Int64("project_id", req.ProjectID),
+		)
+	}
 
 	return reg, nil
 }
