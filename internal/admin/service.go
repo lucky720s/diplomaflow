@@ -291,43 +291,38 @@ func (s *Service) ReviewTopicRegistration(ctx context.Context, req *ReviewTopicR
 
 	switch req.Action {
 	case "approve":
-		// Сначала пробуем TOPIC_SUBMITTED (если проект ещё на TOPIC_SUBMISSION)
 		_ = s.tryPerformIfAvailable(ctx, actorID, actorRole, reg.ProjectID, "TOPIC_SUBMITTED", map[string]interface{}{
 			"source":          "admin_service",
 			"registration_id": reg.ID,
 			"auto":            true,
 		})
-
-		// Теперь выполняем TOPIC_APPROVED (проект уже на TOPIC_APPROVAL)
-		if wfErr := s.performWorkflowAction(ctx, actorID, actorRole, reg.ProjectID, "TOPIC_APPROVED", map[string]interface{}{
+		_ = s.tryPerformIfAvailable(ctx, actorID, actorRole, reg.ProjectID, "TOPIC_APPROVED", map[string]interface{}{
 			"source":          "admin_service",
 			"registration_id": reg.ID,
 			"reviewer_id":     req.ReviewerID,
 			"comment":         req.Comment,
-		}); wfErr != nil {
-			return nil, fmt.Errorf("workflow transition TOPIC_APPROVED failed: %w", wfErr)
-		}
+		})
+		reg.Status = StatusApproved
 
 	case "reject":
-		// Аналогично: сначала TOPIC_SUBMITTED, потом TOPIC_REJECTED
 		_ = s.tryPerformIfAvailable(ctx, actorID, actorRole, reg.ProjectID, "TOPIC_SUBMITTED", map[string]interface{}{
 			"source":          "admin_service",
 			"registration_id": reg.ID,
 			"auto":            true,
 		})
-
-		if wfErr := s.performWorkflowAction(ctx, actorID, actorRole, reg.ProjectID, "TOPIC_REJECTED", map[string]interface{}{
+		_ = s.tryPerformIfAvailable(ctx, actorID, actorRole, reg.ProjectID, "TOPIC_REJECTED", map[string]interface{}{
 			"source":           "admin_service",
 			"registration_id":  reg.ID,
 			"reviewer_id":      req.ReviewerID,
 			"rejection_reason": req.RejectionReason,
 			"comment":          req.Comment,
-		}); wfErr != nil {
-			return nil, fmt.Errorf("workflow transition TOPIC_REJECTED failed: %w", wfErr)
-		}
+		})
+		reg.Status = StatusRejected
+		reg.RejectionReason = req.RejectionReason
 
 	case "request_changes":
-		// workflow не двигаем
+		reg.Status = StatusRevisionRequested
+
 	default:
 		return nil, errors.New("недопустимое действие")
 	}
@@ -336,46 +331,6 @@ func (s *Service) ReviewTopicRegistration(ctx context.Context, req *ReviewTopicR
 	reg.ReviewerID = &req.ReviewerID
 	reg.ReviewedAt = &now
 	reg.Comment = req.Comment
-
-	switch req.Action {
-	case "approve":
-		// Шаг 1: если проект ещё на TOPIC_SUBMISSION — двигаем на TOPIC_APPROVAL
-		_ = s.tryPerformIfAvailable(ctx, actorID, actorRole, reg.ProjectID, "TOPIC_SUBMITTED", map[string]interface{}{
-			"source":          "admin_service",
-			"registration_id": reg.ID,
-			"auto":            true,
-		})
-
-		// Шаг 2: теперь проект на TOPIC_APPROVAL — двигаем TOPIC_APPROVED
-		if wfErr := s.tryPerformIfAvailable(ctx, actorID, actorRole, reg.ProjectID, "TOPIC_APPROVED", map[string]interface{}{
-			"source":          "admin_service",
-			"registration_id": reg.ID,
-			"reviewer_id":     req.ReviewerID,
-			"comment":         req.Comment,
-		}); wfErr != nil {
-			return nil, fmt.Errorf("workflow transition TOPIC_APPROVED failed: %w", wfErr)
-		}
-
-	case "reject":
-		_ = s.tryPerformIfAvailable(ctx, actorID, actorRole, reg.ProjectID, "TOPIC_SUBMITTED", map[string]interface{}{
-			"source":          "admin_service",
-			"registration_id": reg.ID,
-			"auto":            true,
-		})
-
-		if wfErr := s.tryPerformIfAvailable(ctx, actorID, actorRole, reg.ProjectID, "TOPIC_REJECTED", map[string]interface{}{
-			"source":           "admin_service",
-			"registration_id":  reg.ID,
-			"reviewer_id":      req.ReviewerID,
-			"rejection_reason": req.RejectionReason,
-			"comment":          req.Comment,
-		}); wfErr != nil {
-			return nil, fmt.Errorf("workflow transition TOPIC_REJECTED failed: %w", wfErr)
-		}
-
-	case "request_changes":
-		reg.Status = StatusRevisionRequested
-	}
 
 	if err := s.repo.UpdateTopicRegistration(ctx, reg); err != nil {
 		return nil, fmt.Errorf("не удалось обновить заявление: %w", err)
