@@ -303,6 +303,12 @@ func (s *Service) ReviewTopicRegistration(ctx context.Context, req *ReviewTopicR
 			"comment":         req.Comment,
 		})
 		reg.Status = StatusApproved
+		if err := s.repo.SetProjectTopicRegisteredAt(ctx, reg.ProjectID, time.Now().UTC()); err != nil {
+			s.logger.Warn("Failed to set topic_registered_at",
+				zap.Error(err),
+				zap.Int64("project_id", reg.ProjectID),
+			)
+		}
 
 	case "reject":
 		_ = s.tryPerformIfAvailable(ctx, actorID, actorRole, reg.ProjectID, "TOPIC_SUBMITTED", map[string]interface{}{

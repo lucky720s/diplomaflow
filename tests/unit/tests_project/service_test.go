@@ -98,7 +98,8 @@ func TestCreateProject_SetsInitialState(t *testing.T) {
 	})
 	require.NoError(t, err)
 	require.Equal(t, int64(123), resp.ProjectId)
-	require.Equal(t, "active", resp.Status)
+	require.Equal(t, "TEAM_FORMATION", resp.Status)
+
 }
 
 func TestPerformAction_DelegatesToWorkflow(t *testing.T) {

@@ -100,6 +100,7 @@ type Repository interface {
 	GetPreDefenseDocuments(ctx context.Context, submissionID string) ([]PreDefenseDocument, error)
 	AddPreDefenseHistory(ctx context.Context, entry *PreDefenseHistory) error
 	GetPreDefenseHistory(ctx context.Context, submissionID string) ([]*PreDefenseHistory, error)
+	SetProjectTopicRegisteredAt(ctx context.Context, projectID int64, t time.Time) error
 }
 
 type TopicRegistrationFilter struct {
@@ -1277,4 +1278,10 @@ func (r *repository) BatchCountTeamsBySupervisors(ctx context.Context, superviso
 		result[r.SupervisorID] = r.Count
 	}
 	return result, nil
+}
+func (r *repository) SetProjectTopicRegisteredAt(ctx context.Context, projectID int64, t time.Time) error {
+	return r.db.WithContext(ctx).
+		Table("projects").
+		Where("id = ?", projectID).
+		Update("topic_registered_at", t).Error
 }

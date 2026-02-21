@@ -55,6 +55,7 @@ message GetProjectResponse {
   string current_state = 7;
   string status = 8;
   repeated StateHistory history = 9;
+  google.protobuf.Timestamp topic_registered_at = 10;
 }
 
 message GetStudentProjectsRequest {int64 student_id = 1;}
@@ -71,6 +72,7 @@ message ProjectPreview {
   string workflow_name = 8;
   string current_state_name = 9;
   google.protobuf.Timestamp deadline_at = 10;
+  google.protobuf.Timestamp topic_registered_at = 11;
 }
 
 message GetStudentProjectsResponse {repeated ProjectPreview projects = 1;}
@@ -109,6 +111,7 @@ message GetProjectRuntimeResponse {
   google.protobuf.Struct data = 12;
 
   google.protobuf.Timestamp deadline_at = 13;
+  google.protobuf.Timestamp topic_registered_at = 14;
 }
 
 message PostCommitActionGroup {

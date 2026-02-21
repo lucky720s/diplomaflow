@@ -74,7 +74,7 @@ func (s *Service) CreateProject(ctx context.Context, req *projectv1.CreateProjec
 		WorkflowName:     wf.Name,
 		CurrentStateID:   initial.Id,
 		CurrentStateName: initial.Name,
-		Status:           "active",
+		Status:           initial.Name,
 		Data:             datatypes.JSON([]byte(`{}`)),
 		DeadlineAt:       deadlineAt,
 		CreatedAt:        time.Now().UTC(),
@@ -112,10 +112,10 @@ func (s *Service) PerformAction(ctx context.Context, projectID int64, actionName
 	if err != nil {
 		return nil, fmt.Errorf("project not found: %w", err)
 	}
-	if p.Status != "active" {
+
+	if p.Status == "completed" || p.Status == "cancelled" || p.Status == "archived" {
 		return nil, errors.New("cannot perform action on inactive project")
 	}
-
 	outCtx := metadata.AppendToOutgoingContext(
 		ctx,
 		"x-internal-service", "project_service",
@@ -193,6 +193,9 @@ func (s *Service) GetProjectRuntime(ctx context.Context, projectID int64) (*proj
 	if p.DeadlineAt != nil {
 		resp.DeadlineAt = timestamppb.New(*p.DeadlineAt)
 	}
+	if p.TopicRegisteredAt != nil {
+		resp.TopicRegisteredAt = timestamppb.New(*p.TopicRegisteredAt)
+	}
 	return resp, nil
 }
 
@@ -230,6 +233,8 @@ func (s *Service) CommitTransition(ctx context.Context, req *projectv1.CommitTra
 		}
 		if req.SetStatus != "" {
 			p.Status = req.SetStatus
+		} else {
+			p.Status = req.ToStateName
 		}
 
 		p.UpdatedAt = time.Now().UTC()

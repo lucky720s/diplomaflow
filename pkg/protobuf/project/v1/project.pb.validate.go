@@ -542,6 +542,35 @@ func (m *GetProjectResponse) validate(all bool) error {
 
 	}
 
+	if all {
+		switch v := interface{}(m.GetTopicRegisteredAt()).(type) {
+		case interface{ ValidateAll() error }:
+			if err := v.ValidateAll(); err != nil {
+				errors = append(errors, GetProjectResponseValidationError{
+					field:  "TopicRegisteredAt",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		case interface{ Validate() error }:
+			if err := v.Validate(); err != nil {
+				errors = append(errors, GetProjectResponseValidationError{
+					field:  "TopicRegisteredAt",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		}
+	} else if v, ok := interface{}(m.GetTopicRegisteredAt()).(interface{ Validate() error }); ok {
+		if err := v.Validate(); err != nil {
+			return GetProjectResponseValidationError{
+				field:  "TopicRegisteredAt",
+				reason: "embedded message failed validation",
+				cause:  err,
+			}
+		}
+	}
+
 	if len(errors) > 0 {
 		return GetProjectResponseMultiError(errors)
 	}
@@ -789,6 +818,35 @@ func (m *ProjectPreview) validate(all bool) error {
 		if err := v.Validate(); err != nil {
 			return ProjectPreviewValidationError{
 				field:  "DeadlineAt",
+				reason: "embedded message failed validation",
+				cause:  err,
+			}
+		}
+	}
+
+	if all {
+		switch v := interface{}(m.GetTopicRegisteredAt()).(type) {
+		case interface{ ValidateAll() error }:
+			if err := v.ValidateAll(); err != nil {
+				errors = append(errors, ProjectPreviewValidationError{
+					field:  "TopicRegisteredAt",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		case interface{ Validate() error }:
+			if err := v.Validate(); err != nil {
+				errors = append(errors, ProjectPreviewValidationError{
+					field:  "TopicRegisteredAt",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		}
+	} else if v, ok := interface{}(m.GetTopicRegisteredAt()).(interface{ Validate() error }); ok {
+		if err := v.Validate(); err != nil {
+			return ProjectPreviewValidationError{
+				field:  "TopicRegisteredAt",
 				reason: "embedded message failed validation",
 				cause:  err,
 			}
@@ -1450,6 +1508,35 @@ func (m *GetProjectRuntimeResponse) validate(all bool) error {
 		if err := v.Validate(); err != nil {
 			return GetProjectRuntimeResponseValidationError{
 				field:  "DeadlineAt",
+				reason: "embedded message failed validation",
+				cause:  err,
+			}
+		}
+	}
+
+	if all {
+		switch v := interface{}(m.GetTopicRegisteredAt()).(type) {
+		case interface{ ValidateAll() error }:
+			if err := v.ValidateAll(); err != nil {
+				errors = append(errors, GetProjectRuntimeResponseValidationError{
+					field:  "TopicRegisteredAt",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		case interface{ Validate() error }:
+			if err := v.Validate(); err != nil {
+				errors = append(errors, GetProjectRuntimeResponseValidationError{
+					field:  "TopicRegisteredAt",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		}
+	} else if v, ok := interface{}(m.GetTopicRegisteredAt()).(interface{ Validate() error }); ok {
+		if err := v.Validate(); err != nil {
+			return GetProjectRuntimeResponseValidationError{
+				field:  "TopicRegisteredAt",
 				reason: "embedded message failed validation",
 				cause:  err,
 			}

@@ -146,7 +146,7 @@ func (h *Handler) GetProject(ctx context.Context, req *projectv1.GetProjectReque
 		})
 	}
 
-	return &projectv1.GetProjectResponse{
+	resp := &projectv1.GetProjectResponse{
 		ProjectId:    p.ID,
 		Title:        p.Title,
 		Description:  p.Description,
@@ -156,7 +156,11 @@ func (h *Handler) GetProject(ctx context.Context, req *projectv1.GetProjectReque
 		CurrentState: p.CurrentStateName,
 		Status:       p.Status,
 		History:      hist,
-	}, nil
+	}
+	if p.TopicRegisteredAt != nil {
+		resp.TopicRegisteredAt = timestamppb.New(*p.TopicRegisteredAt)
+	}
+	return resp, nil
 }
 
 func (h *Handler) GetStudentProjects(ctx context.Context, req *projectv1.GetStudentProjectsRequest) (*projectv1.GetStudentProjectsResponse, error) {
@@ -199,6 +203,9 @@ func (h *Handler) GetStudentProjects(ctx context.Context, req *projectv1.GetStud
 		}
 		if p.DeadlineAt != nil {
 			pp.DeadlineAt = timestamppb.New(*p.DeadlineAt)
+		}
+		if p.TopicRegisteredAt != nil {
+			pp.TopicRegisteredAt = timestamppb.New(*p.TopicRegisteredAt)
 		}
 		resp.Projects = append(resp.Projects, pp)
 	}

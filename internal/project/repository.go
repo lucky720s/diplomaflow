@@ -207,7 +207,9 @@ func (r *repository) ListByStudent(ctx context.Context, studentID int64) ([]*Pro
 func (r *repository) GetProjectsWithExpiredDeadlines(ctx context.Context) ([]*Project, error) {
 	var projects []*Project
 	err := r.db.WithContext(ctx).
-		Where("status = ? AND deadline_at < ? AND deadline_processed = ?", "active", time.Now().UTC(), false).
+		Where("status NOT IN ? AND deadline_at < ? AND deadline_processed = ?",
+			[]string{"completed", "cancelled", "archived"},
+			time.Now().UTC(), false).
 		Find(&projects).Error
 	return projects, err
 }

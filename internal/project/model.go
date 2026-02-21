@@ -28,9 +28,9 @@ type Project struct {
 
 	DeadlineAt        *time.Time `gorm:"column:deadline_at;index"`
 	DeadlineProcessed bool       `gorm:"column:deadline_processed;default:false"`
-
-	CreatedAt time.Time `gorm:"column:created_at"`
-	UpdatedAt time.Time `gorm:"column:updated_at"`
+	TopicRegisteredAt *time.Time `gorm:"column:topic_registered_at"`
+	CreatedAt         time.Time  `gorm:"column:created_at"`
+	UpdatedAt         time.Time  `gorm:"column:updated_at"`
 
 	History []StateHistory `gorm:"foreignKey:ProjectID"`
 }

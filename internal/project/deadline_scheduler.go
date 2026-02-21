@@ -53,9 +53,11 @@ func (s *DeadlineScheduler) check(ctx context.Context) {
 				First(&locked, "id = ?", projectID).Error; err != nil {
 				return err
 			}
-			if locked.Status != "active" || locked.DeadlineProcessed || locked.DeadlineAt == nil {
+
+			if locked.Status == "completed" || locked.Status == "cancelled" || locked.Status == "archived" || locked.DeadlineProcessed || locked.DeadlineAt == nil {
 				return nil
 			}
+
 			if locked.DeadlineAt.After(time.Now().UTC()) {
 				return nil
 			}
