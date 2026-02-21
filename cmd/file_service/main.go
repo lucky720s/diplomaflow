@@ -57,6 +57,16 @@ func main() {
 			log.Fatal("failed to serve", zap.Error(err))
 		}
 	}()
+	go func() {
+		ticker := time.NewTicker(30 * time.Minute)
+		defer ticker.Stop()
+		for range ticker.C {
+			cleaned := h.CleanupOrphanedTempFiles(1 * time.Hour)
+			if cleaned > 0 {
+				log.Info("Temp file cleanup", zap.Int("cleaned", cleaned))
+			}
+		}
+	}()
 
 	quit := make(chan os.Signal, 1)
 	signal.Notify(quit, syscall.SIGINT, syscall.SIGTERM)

@@ -27,3 +27,7 @@ func (m *MockRepository) GetMetadata(ctx context.Context, id string) (*file.File
 	}
 	return res, args.Error(1)
 }
+func (m *MockRepository) DeleteMetadata(ctx context.Context, id string) error {
+	args := m.Called(ctx, id)
+	return args.Error(0)
+}

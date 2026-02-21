@@ -69,3 +69,10 @@ func TestService_UploadFlow_AndResolvePath(t *testing.T) {
 
 	require.Equal(t, filepath.Clean(finalPath), filepath.Clean(resolvedPath))
 }
+func (r *memRepo) DeleteMetadata(ctx context.Context, id string) error {
+	if _, ok := r.m[id]; !ok {
+		return os.ErrNotExist
+	}
+	delete(r.m, id)
+	return nil
+}

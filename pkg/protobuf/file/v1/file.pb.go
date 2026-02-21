@@ -436,6 +436,102 @@ func (x *DownloadFileResponse) GetChunk() []byte {
 	return nil
 }
 
+type DeleteFileRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Id            string                 `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
+	UserId        int64                  `protobuf:"varint,2,opt,name=user_id,json=userId,proto3" json:"user_id,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *DeleteFileRequest) Reset() {
+	*x = DeleteFileRequest{}
+	mi := &file_file_v1_file_proto_msgTypes[7]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *DeleteFileRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*DeleteFileRequest) ProtoMessage() {}
+
+func (x *DeleteFileRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_file_v1_file_proto_msgTypes[7]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use DeleteFileRequest.ProtoReflect.Descriptor instead.
+func (*DeleteFileRequest) Descriptor() ([]byte, []int) {
+	return file_file_v1_file_proto_rawDescGZIP(), []int{7}
+}
+
+func (x *DeleteFileRequest) GetId() string {
+	if x != nil {
+		return x.Id
+	}
+	return ""
+}
+
+func (x *DeleteFileRequest) GetUserId() int64 {
+	if x != nil {
+		return x.UserId
+	}
+	return 0
+}
+
+type DeleteFileResponse struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Success       bool                   `protobuf:"varint,1,opt,name=success,proto3" json:"success,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *DeleteFileResponse) Reset() {
+	*x = DeleteFileResponse{}
+	mi := &file_file_v1_file_proto_msgTypes[8]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *DeleteFileResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*DeleteFileResponse) ProtoMessage() {}
+
+func (x *DeleteFileResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_file_v1_file_proto_msgTypes[8]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use DeleteFileResponse.ProtoReflect.Descriptor instead.
+func (*DeleteFileResponse) Descriptor() ([]byte, []int) {
+	return file_file_v1_file_proto_rawDescGZIP(), []int{8}
+}
+
+func (x *DeleteFileResponse) GetSuccess() bool {
+	if x != nil {
+		return x.Success
+	}
+	return false
+}
+
 var File_file_v1_file_proto protoreflect.FileDescriptor
 
 const file_file_v1_file_proto_rawDesc = "" +
@@ -465,11 +561,18 @@ const file_file_v1_file_proto_rawDesc = "" +
 	"\x13DownloadFileRequest\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\tR\x02id\",\n" +
 	"\x14DownloadFileResponse\x12\x14\n" +
-	"\x05chunk\x18\x01 \x01(\fR\x05chunk2\xef\x01\n" +
+	"\x05chunk\x18\x01 \x01(\fR\x05chunk\"<\n" +
+	"\x11DeleteFileRequest\x12\x0e\n" +
+	"\x02id\x18\x01 \x01(\tR\x02id\x12\x17\n" +
+	"\auser_id\x18\x02 \x01(\x03R\x06userId\".\n" +
+	"\x12DeleteFileResponse\x12\x18\n" +
+	"\asuccess\x18\x01 \x01(\bR\asuccess2\xb6\x02\n" +
 	"\vFileService\x12G\n" +
 	"\n" +
 	"UploadFile\x12\x1a.file.v1.UploadFileRequest\x1a\x1b.file.v1.UploadFileResponse(\x01\x12H\n" +
-	"\vGetFileInfo\x12\x1b.file.v1.GetFileInfoRequest\x1a\x1c.file.v1.GetFileInfoResponse\x12M\n" +
+	"\vGetFileInfo\x12\x1b.file.v1.GetFileInfoRequest\x1a\x1c.file.v1.GetFileInfoResponse\x12E\n" +
+	"\n" +
+	"DeleteFile\x12\x1a.file.v1.DeleteFileRequest\x1a\x1b.file.v1.DeleteFileResponse\x12M\n" +
 	"\fDownloadFile\x12\x1c.file.v1.DownloadFileRequest\x1a\x1d.file.v1.DownloadFileResponse0\x01B7Z5github.com/lucky720s/diplomaflow/pkg/protobuf/file/v1b\x06proto3"
 
 var (
@@ -484,7 +587,7 @@ func file_file_v1_file_proto_rawDescGZIP() []byte {
 	return file_file_v1_file_proto_rawDescData
 }
 
-var file_file_v1_file_proto_msgTypes = make([]protoimpl.MessageInfo, 7)
+var file_file_v1_file_proto_msgTypes = make([]protoimpl.MessageInfo, 9)
 var file_file_v1_file_proto_goTypes = []any{
 	(*UploadFileRequest)(nil),    // 0: file.v1.UploadFileRequest
 	(*FileInfo)(nil),             // 1: file.v1.FileInfo
@@ -493,17 +596,21 @@ var file_file_v1_file_proto_goTypes = []any{
 	(*GetFileInfoResponse)(nil),  // 4: file.v1.GetFileInfoResponse
 	(*DownloadFileRequest)(nil),  // 5: file.v1.DownloadFileRequest
 	(*DownloadFileResponse)(nil), // 6: file.v1.DownloadFileResponse
+	(*DeleteFileRequest)(nil),    // 7: file.v1.DeleteFileRequest
+	(*DeleteFileResponse)(nil),   // 8: file.v1.DeleteFileResponse
 }
 var file_file_v1_file_proto_depIdxs = []int32{
 	1, // 0: file.v1.UploadFileRequest.info:type_name -> file.v1.FileInfo
 	0, // 1: file.v1.FileService.UploadFile:input_type -> file.v1.UploadFileRequest
 	3, // 2: file.v1.FileService.GetFileInfo:input_type -> file.v1.GetFileInfoRequest
-	5, // 3: file.v1.FileService.DownloadFile:input_type -> file.v1.DownloadFileRequest
-	2, // 4: file.v1.FileService.UploadFile:output_type -> file.v1.UploadFileResponse
-	4, // 5: file.v1.FileService.GetFileInfo:output_type -> file.v1.GetFileInfoResponse
-	6, // 6: file.v1.FileService.DownloadFile:output_type -> file.v1.DownloadFileResponse
-	4, // [4:7] is the sub-list for method output_type
-	1, // [1:4] is the sub-list for method input_type
+	7, // 3: file.v1.FileService.DeleteFile:input_type -> file.v1.DeleteFileRequest
+	5, // 4: file.v1.FileService.DownloadFile:input_type -> file.v1.DownloadFileRequest
+	2, // 5: file.v1.FileService.UploadFile:output_type -> file.v1.UploadFileResponse
+	4, // 6: file.v1.FileService.GetFileInfo:output_type -> file.v1.GetFileInfoResponse
+	8, // 7: file.v1.FileService.DeleteFile:output_type -> file.v1.DeleteFileResponse
+	6, // 8: file.v1.FileService.DownloadFile:output_type -> file.v1.DownloadFileResponse
+	5, // [5:9] is the sub-list for method output_type
+	1, // [1:5] is the sub-list for method input_type
 	1, // [1:1] is the sub-list for extension type_name
 	1, // [1:1] is the sub-list for extension extendee
 	0, // [0:1] is the sub-list for field type_name
@@ -524,7 +631,7 @@ func file_file_v1_file_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_file_v1_file_proto_rawDesc), len(file_file_v1_file_proto_rawDesc)),
 			NumEnums:      0,
-			NumMessages:   7,
+			NumMessages:   9,
 			NumExtensions: 0,
 			NumServices:   1,
 		},

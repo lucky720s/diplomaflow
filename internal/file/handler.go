@@ -4,6 +4,7 @@ import (
 	"context"
 	"io"
 	"os"
+	"time"
 
 	"github.com/lucky720s/diplomaflow/pkg/logger"
 	filev1 "github.com/lucky720s/diplomaflow/pkg/protobuf/file/v1"
@@ -22,8 +23,8 @@ func NewHandler(service *Service, log *logger.Logger) *Handler {
 	return &Handler{service: service, logger: log}
 }
 
+// handler.go — исправить UploadFile:
 func (h *Handler) UploadFile(stream filev1.FileService_UploadFileServer) error {
-	// first message must be info
 	req, err := stream.Recv()
 	if err != nil {
 		return status.Errorf(codes.Unknown, "failed to receive first message: %v", err)
@@ -33,29 +34,31 @@ func (h *Handler) UploadFile(stream filev1.FileService_UploadFileServer) error {
 		return status.Error(codes.InvalidArgument, "first message must contain file info")
 	}
 
-	fileType := info.FileType
-	originalName := info.FileName
-	userID := info.UserId
-	projectID := info.ProjectId
-
-	id, tempPath, finalPath, f, err := h.service.StartUpload(originalName)
+	id, tempPath, finalPath, f, err := h.service.StartUpload(info.FileName)
 	if err != nil {
-		h.logger.Error("failed to start upload", zap.Error(err))
 		return status.Errorf(codes.Internal, "failed to start upload")
 	}
-	defer f.Close()
+
+	// КЛЮЧЕВОЕ ИСПРАВЛЕНИЕ: гарантированная очистка при любой ошибке
+	committed := false
+	defer func() {
+		f.Close()
+		if !committed {
+			_ = os.Remove(tempPath)
+			h.logger.Info("Upload cancelled, temp file cleaned",
+				zap.String("id", id), zap.String("temp", tempPath))
+		}
+	}()
 
 	var size int64
-
-	// read chunks
 	for {
 		req, err := stream.Recv()
 		if err == io.EOF {
 			break
 		}
 		if err != nil {
-			_ = os.Remove(tempPath)
-			return status.Errorf(codes.Unknown, "stream recv error: %v", err)
+			// Клиент отменил или сеть упала — defer уберёт .tmp
+			return status.Errorf(codes.Canceled, "upload cancelled: %v", err)
 		}
 
 		chunk := req.GetChunk()
@@ -65,18 +68,18 @@ func (h *Handler) UploadFile(stream filev1.FileService_UploadFileServer) error {
 
 		n, werr := f.Write(chunk)
 		if werr != nil {
-			_ = os.Remove(tempPath)
 			return status.Errorf(codes.Internal, "failed to write chunk: %v", werr)
 		}
 		size += int64(n)
 	}
 
-	if err := h.service.CommitUpload(stream.Context(), id, tempPath, finalPath, userID, projectID, originalName, fileType, size); err != nil {
-		h.logger.Error("commit upload failed", zap.Error(err))
+	if err := h.service.CommitUpload(stream.Context(), id, tempPath, finalPath,
+		info.UserId, info.ProjectId, info.FileName, info.FileType, size); err != nil {
 		return status.Errorf(codes.Internal, "commit upload failed: %v", err)
 	}
 
-	h.logger.Info("File uploaded successfully", zap.String("id", id), zap.Int64("size", size))
+	committed = true
+
 	return stream.SendAndClose(&filev1.UploadFileResponse{
 		Id:   id,
 		Size: uint32(size),
@@ -146,4 +149,20 @@ func (h *Handler) DownloadFile(req *filev1.DownloadFileRequest, stream filev1.Fi
 		}
 	}
 	return nil
+}
+func (h *Handler) DeleteFile(ctx context.Context, req *filev1.DeleteFileRequest) (*filev1.DeleteFileResponse, error) {
+	if req.Id == "" {
+		return nil, status.Error(codes.InvalidArgument, "id is required")
+	}
+
+	if err := h.service.DeleteFile(ctx, req.Id, req.UserId); err != nil {
+		h.logger.Error("DeleteFile failed", zap.Error(err))
+		return nil, status.Errorf(codes.Internal, "failed to delete file: %v", err)
+	}
+
+	h.logger.Info("File deleted", zap.String("id", req.Id))
+	return &filev1.DeleteFileResponse{Success: true}, nil
+}
+func (h *Handler) CleanupOrphanedTempFiles(maxAge time.Duration) int {
+	return h.service.CleanupOrphanedTempFiles(maxAge)
 }

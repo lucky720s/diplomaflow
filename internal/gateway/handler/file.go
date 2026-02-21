@@ -120,3 +120,23 @@ func (h *Handler) DownloadFile(c *gin.Context) {
 		return true
 	})
 }
+func (h *Handler) DeleteFile(c *gin.Context) {
+	id := c.Param("id")
+	if id == "" {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "id is required"})
+		return
+	}
+
+	userID := c.GetInt64("userId")
+
+	_, err := h.fileClient.DeleteFile(c.Request.Context(), &filev1.DeleteFileRequest{
+		Id:     id,
+		UserId: userID,
+	})
+	if err != nil {
+		MapGRPCError(c, err)
+		return
+	}
+
+	c.JSON(http.StatusNoContent, nil)
+}

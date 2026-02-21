@@ -118,3 +118,55 @@ func (s *Service) ResolveFilePath(ctx context.Context, id string) (path string, 
 	}
 	return p, m, nil
 }
+func (s *Service) DeleteFile(ctx context.Context, id string, callerUserID int64) error {
+	meta, err := s.repo.GetMetadata(ctx, id)
+	if err != nil {
+		return fmt.Errorf("file not found: %w", err)
+	}
+	if callerUserID > 0 && meta.UserID != callerUserID {
+		return fmt.Errorf("permission denied: user %d is not the owner", callerUserID)
+	}
+	ext := filepath.Ext(meta.FileName)
+	filePath := filepath.Join(s.storagePath, meta.ID+ext)
+	if err := os.Remove(filePath); err != nil && !os.IsNotExist(err) {
+		s.logger.Warn("failed to remove file from disk", zap.Error(err))
+	}
+
+	tmpPath := filePath + ".tmp"
+	_ = os.Remove(tmpPath)
+	if err := s.repo.DeleteMetadata(ctx, id); err != nil {
+		return fmt.Errorf("failed to delete metadata: %w", err)
+	}
+
+	return nil
+}
+
+// service.go — добавить:
+func (s *Service) CleanupOrphanedTempFiles(maxAge time.Duration) int {
+	entries, err := os.ReadDir(s.storagePath)
+	if err != nil {
+		s.logger.Error("failed to read storage dir", zap.Error(err))
+		return 0
+	}
+
+	cleaned := 0
+	cutoff := time.Now().Add(-maxAge)
+
+	for _, entry := range entries {
+		if entry.IsDir() || !strings.HasSuffix(entry.Name(), ".tmp") {
+			continue
+		}
+		info, err := entry.Info()
+		if err != nil {
+			continue
+		}
+		if info.ModTime().Before(cutoff) {
+			path := filepath.Join(s.storagePath, entry.Name())
+			if err := os.Remove(path); err == nil {
+				cleaned++
+				s.logger.Info("Cleaned orphaned temp file", zap.String("file", entry.Name()))
+			}
+		}
+	}
+	return cleaned
+}

@@ -311,6 +311,7 @@ func main() {
 		{
 			files.POST("/upload", handler.UploadFile)
 			files.GET("/:id", handler.DownloadFile)
+			files.DELETE("/:id", handler.DeleteFile)
 		}
 
 		forms := v1.Group("/forms")

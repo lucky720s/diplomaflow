@@ -7,8 +7,7 @@ option go_package = "github.com/lucky720s/diplomaflow/pkg/protobuf/file/v1";
 service FileService {
   rpc UploadFile(stream UploadFileRequest) returns (UploadFileResponse);
   rpc GetFileInfo(GetFileInfoRequest) returns (GetFileInfoResponse);
-
-  // Download file contents as stream of chunks
+  rpc DeleteFile(DeleteFileRequest) returns (DeleteFileResponse);
   rpc DownloadFile(DownloadFileRequest) returns (stream DownloadFileResponse);
 }
 
@@ -57,4 +56,12 @@ message DownloadFileRequest {
 
 message DownloadFileResponse {
   bytes chunk = 1;
+}
+message DeleteFileRequest {
+  string id = 1;
+  int64 user_id = 2;
+}
+
+message DeleteFileResponse {
+  bool success = 1;
 }

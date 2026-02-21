@@ -9,6 +9,7 @@ import (
 type Repository interface {
 	SaveMetadata(ctx context.Context, meta *FileMetadata) error
 	GetMetadata(ctx context.Context, id string) (*FileMetadata, error)
+	DeleteMetadata(ctx context.Context, id string) error
 }
 
 type repository struct {
@@ -32,4 +33,7 @@ func (r *repository) GetMetadata(ctx context.Context, id string) (*FileMetadata,
 		return nil, err
 	}
 	return &meta, nil
+}
+func (r *repository) DeleteMetadata(ctx context.Context, id string) error {
+	return r.db.WithContext(ctx).Where("id = ?", id).Delete(&FileMetadata{}).Error
 }
