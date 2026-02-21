@@ -339,7 +339,14 @@ func (s *Service) ReviewTopicRegistration(ctx context.Context, req *ReviewTopicR
 
 	switch req.Action {
 	case "approve":
-		reg.Status = StatusApproved
+		if wfErr := s.tryPerformIfAvailable(ctx, actorID, actorRole, reg.ProjectID, "TOPIC_APPROVED", map[string]interface{}{
+			"source":          "admin_service",
+			"registration_id": reg.ID,
+			"reviewer_id":     req.ReviewerID,
+			"comment":         req.Comment,
+		}); wfErr != nil {
+			return nil, fmt.Errorf("workflow transition TOPIC_APPROVED failed: %w", wfErr)
+		}
 	case "reject":
 		reg.Status = StatusRejected
 		reg.RejectionReason = req.RejectionReason
