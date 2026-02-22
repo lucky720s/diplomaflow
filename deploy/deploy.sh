@@ -141,8 +141,8 @@ done
 log "Cleanup: dangling images (old builds)"
 docker image prune -f || true
 
-log "Cleanup: build cache older than 24h (keep recent for speed)"
-docker builder prune -af --filter "until=24h" || true
+log "Cleanup: build cache older than 16h (keep recent for speed)"
+docker builder prune -af --filter "until=16h" || true
 
 log "Cleanup: stopped containers"
 docker container prune -f || true
@@ -150,10 +150,10 @@ docker container prune -f || true
 log "Cleanup: unused networks"
 docker network prune -f || true
 
-# Удаляем ВСЕ образы без контейнеров, старше 24 часов
+# Удаляем ВСЕ образы без контейнеров, старше 16 часов
 # Это убьёт старые версии сервисов, но оставит текущие (они привязаны к контейнерам)
-log "Cleanup: unused images older than 24h"
-docker image prune -af --filter "until=24h" || true
+log "Cleanup: unused images older than 16h"
+docker image prune -af --filter "until=16h" || true
 
 # DO NOT prune volumes — Postgres data, file_uploads, grafana, prometheus живут там!
 
