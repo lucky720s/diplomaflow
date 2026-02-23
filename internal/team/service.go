@@ -327,6 +327,17 @@ func (s *Service) LeaveTeam(ctx context.Context, teamID int64, userID int64) (*L
 	if err := s.repo.RemoveMember(ctx, teamID, userID); err != nil {
 		return nil, fmt.Errorf("remove member: %w", err)
 	}
+	if member.Role != RoleLeader {
+		leader, lerr := s.repo.GetTeamLeader(ctx, teamID)
+		if lerr == nil && leader != nil && leader.UserID != userID {
+			s.notifyBestEffort(ctx, leader.UserID,
+				"Участник вышел из команды",
+				fmt.Sprintf("Пользователь %d вышел из команды.", userID),
+				"/dashboard/team",
+				"team_member_left",
+			)
+		}
+	}
 
 	s.logger.Info("Member left team", zap.Int64("team_id", teamID), zap.Int64("user_id", userID))
 	return result, nil
@@ -360,6 +371,13 @@ func (s *Service) TransferLeadership(ctx context.Context, teamID int64, currentL
 	}
 
 	s.notifyBestEffort(ctx, newLeaderID, "Вам передано лидерство", "Теперь вы лидер команды.", "/dashboard/team", "leadership_changed")
+	s.notifyBestEffort(ctx, currentLeaderID,
+		"Лидерство передано",
+		fmt.Sprintf("Вы передали лидерство пользователю %d.", newLeaderID),
+		"/dashboard/team",
+		"leadership_transferred",
+	)
+
 	s.logger.Info("Leadership transferred", zap.Int64("team_id", teamID), zap.Int64("from_user", currentLeaderID), zap.Int64("to_user", newLeaderID))
 	return s.GetTeam(ctx, teamID)
 }
@@ -391,6 +409,13 @@ func (s *Service) AddMember(ctx context.Context, teamID int64, userID int64, rol
 	}
 
 	s.notifyBestEffort(ctx, userID, "Вы добавлены в команду", "Вас добавили в команду. Откройте страницу команды.", "/dashboard/team", "team_member_added")
+	s.notifyBestEffort(ctx, requesterID,
+		"Участник добавлен в команду",
+		fmt.Sprintf("Вы добавили пользователя %d в команду.", userID),
+		"/dashboard/team",
+		"team_member_added_leader",
+	)
+
 	return nil
 }
 
@@ -417,6 +442,13 @@ func (s *Service) RemoveMember(ctx context.Context, teamID int64, userID int64, 
 	}
 
 	s.notifyBestEffort(ctx, userID, "Вы удалены из команды", "Вас удалили из команды.", "/dashboard", "team_member_removed")
+	s.notifyBestEffort(ctx, requesterID,
+		"Участник удалён из команды",
+		fmt.Sprintf("Вы удалили пользователя %d из команды.", userID),
+		"/dashboard/team",
+		"team_member_removed_leader",
+	)
+
 	return nil
 }
 
@@ -463,6 +495,7 @@ func (s *Service) RespondToInvite(ctx context.Context, inviteID int64, userID in
 			"/dashboard/team",
 			"team_invite_accepted",
 		)
+
 	} else {
 		invite.Status = InviteStatusDeclined
 		s.notifyBestEffort(ctx, invite.InviterID,
@@ -621,6 +654,12 @@ func (s *Service) JoinTeamByCode(ctx context.Context, inviteCode string, userID,
 			"team_member_joined",
 		)
 	}
+	s.notifyBestEffort(ctx, userID,
+		"Вы вступили в команду",
+		"Вы успешно присоединились к команде по коду.",
+		"/dashboard/team",
+		"team_joined_by_code",
+	)
 
 	return team.ID, nil
 }

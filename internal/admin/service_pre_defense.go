@@ -82,6 +82,21 @@ func (s *Service) SubmitPreDefense(ctx context.Context, teamID, projectID, submi
 		zap.Int64("team_id", resolvedTeamID),
 		zap.Int64("project_id", projectID),
 	)
+	s.notifyTeamBestEffort(ctx, resolvedTeamID,
+		"Заявка на предзащиту отправлена",
+		"Заявка создана и отправлена на рассмотрение.",
+		"/diplom",
+		"predefense_submitted",
+	)
+
+	if supervisorID != nil && *supervisorID > 0 {
+		s.notifyBestEffort(ctx, *supervisorID,
+			"Новая заявка на предзащиту",
+			fmt.Sprintf("Команда %d подала заявку на предзащиту.", resolvedTeamID),
+			"/teacher/pre-defenses",
+			"predefense_submitted_to_supervisor",
+		)
+	}
 
 	return sub.ID, sub, nil
 }
@@ -141,6 +156,37 @@ func (s *Service) SchedulePreDefense(ctx context.Context, submissionID string, s
 		zap.Time("date", scheduledDate),
 		zap.String("time", scheduledTime),
 	)
+	msg := fmt.Sprintf("Назначено: %s %s. Локация: %s", scheduledDate.Format("2006-01-02"), scheduledTime, location)
+	if meetingLink != "" {
+		msg += fmt.Sprintf(". Ссылка: %s", meetingLink)
+	}
+
+	s.notifyTeamBestEffort(ctx, sub.TeamID,
+		"Предзащита назначена",
+		msg,
+		"/diplom",
+		"predefense_scheduled",
+	)
+
+	if sub.SupervisorID != nil && *sub.SupervisorID > 0 {
+		s.notifyBestEffort(ctx, *sub.SupervisorID,
+			"Предзащита назначена",
+			msg,
+			"/teacher/pre-defenses",
+			"predefense_scheduled_supervisor",
+		)
+	}
+
+	for _, uid := range commissionMemberIDs {
+		if uid > 0 {
+			s.notifyBestEffort(ctx, uid,
+				"Вы добавлены в комиссию предзащиты",
+				msg,
+				"/teacher/pre-defenses",
+				"predefense_commission_member_added",
+			)
+		}
+	}
 
 	return nil
 }
@@ -199,6 +245,7 @@ func (s *Service) GradePreDefense(ctx context.Context, submissionID string, grad
 		Grade:     grade,
 		Comment:   fmt.Sprintf("Pre-defense grade: %s", comment),
 		GraderID:  gradedBy,
+		Silent:    true,
 	})
 
 	// История
@@ -210,6 +257,12 @@ func (s *Service) GradePreDefense(ctx context.Context, submissionID string, grad
 		NewValue:     "graded",
 		Comment:      fmt.Sprintf("Grade: %d. %s", grade, comment),
 	})
+	s.notifyTeamBestEffort(ctx, sub.TeamID,
+		"Предзащита оценена",
+		fmt.Sprintf("Оценка: %d. %s", grade, comment),
+		"/diplom",
+		"predefense_graded",
+	)
 
 	return nil
 }
@@ -271,6 +324,12 @@ func (s *Service) CompletePreDefense(ctx context.Context, submissionID string, c
 		NewValue:     sub.Status,
 		Comment:      fmt.Sprintf("Result: %s. %s", result, resultComment),
 	})
+	s.notifyTeamBestEffort(ctx, sub.TeamID,
+		"Предзащита завершена",
+		fmt.Sprintf("Результат: %s. %s", sub.Status, resultComment),
+		"/diplom",
+		"predefense_completed",
+	)
 
 	return nil
 }
@@ -307,6 +366,35 @@ func (s *Service) ReschedulePreDefense(ctx context.Context, submissionID string,
 		NewValue:     "scheduled",
 		Comment:      reason,
 	})
+	msg := fmt.Sprintf("Новая дата: %s %s. Причина: %s", newDate.Format("2006-01-02"), newTime, reason)
+
+	s.notifyTeamBestEffort(ctx, sub.TeamID,
+		"Предзащита перенесена",
+		msg,
+		"/diplom",
+		"predefense_rescheduled",
+	)
+
+	if sub.SupervisorID != nil && *sub.SupervisorID > 0 {
+		s.notifyBestEffort(ctx, *sub.SupervisorID,
+			"Предзащита перенесена",
+			msg,
+			"/teacher/pre-defenses",
+			"predefense_rescheduled_supervisor",
+		)
+	}
+
+	members, _ := s.repo.GetCommissionMembers(ctx, sub.ID)
+	for _, m := range members {
+		if m.UserID > 0 {
+			s.notifyBestEffort(ctx, m.UserID,
+				"Предзащита перенесена",
+				msg,
+				"/teacher/pre-defenses",
+				"predefense_rescheduled_commission",
+			)
+		}
+	}
 
 	return nil
 }
@@ -366,6 +454,12 @@ func (s *Service) AddPreDefenseCommissionMember(ctx context.Context, submissionI
 		ActorID:      addedBy,
 		NewValue:     fmt.Sprintf("user_id=%d, role=%s", userID, role),
 	})
+	s.notifyBestEffort(ctx, userID,
+		"Вы добавлены в комиссию предзащиты",
+		fmt.Sprintf("Роль: %s", role),
+		"/teacher/pre-defenses",
+		"predefense_commission_member_added",
+	)
 
 	return member, nil
 }
@@ -383,6 +477,16 @@ func (s *Service) RemovePreDefenseCommissionMember(ctx context.Context, submissi
 		OldValue:     fmt.Sprintf("user_id=%d", userID),
 		Comment:      reason,
 	})
+	msg := "Вы удалены из комиссии предзащиты."
+	if reason != "" {
+		msg = msg + " Причина: " + reason
+	}
+	s.notifyBestEffort(ctx, userID,
+		"Изменение комиссии предзащиты",
+		msg,
+		"/teacher/pre-defenses",
+		"predefense_commission_member_removed",
+	)
 
 	return nil
 }

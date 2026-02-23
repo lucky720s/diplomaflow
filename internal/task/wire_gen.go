@@ -7,6 +7,7 @@
 package task
 
 import (
+	v1_2 "github.com/lucky720s/diplomaflow/pkg/protobuf/notification/v1"
 	"github.com/lucky720s/diplomaflow/pkg/protobuf/team/v1"
 	"go.uber.org/zap"
 	"google.golang.org/grpc"
@@ -23,9 +24,15 @@ func InitializeApp(cfg *Config, db *gorm.DB, logger *zap.Logger) (*Handler, func
 	if err != nil {
 		return nil, nil, err
 	}
-	service := NewService(taskRepository, teamServiceClient, logger)
+	notificationServiceClient, cleanup2, err := ProvideNotificationClient(cfg)
+	if err != nil {
+		cleanup()
+		return nil, nil, err
+	}
+	service := NewService(taskRepository, teamServiceClient, notificationServiceClient, logger)
 	handler := NewHandler(service, logger)
 	return handler, func() {
+		cleanup2()
 		cleanup()
 	}, nil
 }
@@ -45,4 +52,15 @@ func ProvideTeamClient(cfg *Config) (v1.TeamServiceClient, func(), error) {
 	cleanup := func() { conn.Close() }
 
 	return client, cleanup, nil
+}
+
+func ProvideNotificationClient(cfg *Config) (v1_2.NotificationServiceClient, func(), error) {
+	conn, err := grpc.NewClient(
+		cfg.Services.NotificationAddr, grpc.WithTransportCredentials(insecure.NewCredentials()),
+	)
+	if err != nil {
+		return nil, nil, err
+	}
+	client := v1_2.NewNotificationServiceClient(conn)
+	return client, func() { conn.Close() }, nil
 }

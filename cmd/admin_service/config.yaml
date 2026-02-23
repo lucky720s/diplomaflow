@@ -7,3 +7,4 @@ services:
   project_addr: "project_service:8083"
   team_addr: "team_service:8084"
   workflow_addr: "workflow_service:8085"
+  notification_addr: "notification_service:8087"

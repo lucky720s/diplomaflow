@@ -424,7 +424,7 @@ func (h *Handler) AssignSupervisor(ctx context.Context, req *adminv1.AssignSuper
 		return nil, status.Error(codes.Unauthenticated, "actor_id is required for audit trail")
 	}
 
-	err := h.service.AssignSupervisor(ctx, req.TeamId, req.SupervisorId, actorID)
+	err := h.service.AssignSupervisor(ctx, req.TeamId, req.SupervisorId, actorID, false)
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, "failed to assign supervisor: %v", err)
 	}

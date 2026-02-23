@@ -7,9 +7,10 @@ type Config struct {
 		DSN string `mapstructure:"dsn"`
 	} `mapstructure:"database"`
 	Services struct {
-		AuthAddr     string `mapstructure:"auth_addr"`
-		ProjectAddr  string `mapstructure:"project_addr"`
-		TeamAddr     string `mapstructure:"team_addr"`
-		WorkflowAddr string `mapstructure:"workflow_addr"`
+		AuthAddr         string `mapstructure:"auth_addr"`
+		ProjectAddr      string `mapstructure:"project_addr"`
+		TeamAddr         string `mapstructure:"team_addr"`
+		WorkflowAddr     string `mapstructure:"workflow_addr"`
+		NotificationAddr string `mapstructure:"notification_addr"`
 	} `mapstructure:"services"`
 }

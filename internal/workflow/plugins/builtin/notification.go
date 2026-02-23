@@ -75,13 +75,6 @@ func (p *NotificationPlugin) Execute(ctx context.Context, actx *plugins.ActionCo
 	title = interpolate(title, actx)
 	message = interpolate(message, actx)
 
-	link := toString(actx.Config["link"])
-	if link == "" {
-		link = fmt.Sprintf("/projects/%d", actx.ProjectID)
-	} else {
-		link = interpolate(link, actx)
-	}
-
 	nType := toString(actx.Config["type"])
 	if nType == "" {
 		nType = "WORKFLOW"
@@ -99,6 +92,19 @@ func (p *NotificationPlugin) Execute(ctx context.Context, actx *plugins.ActionCo
 		if ids := toInt64Slice(actx.Config["explicit_user_ids"]); len(ids) > 0 {
 			recipients = append(recipients, ids...)
 		}
+	}
+	link := toString(actx.Config["link"])
+	if link == "" {
+		// фронтовые роуты:
+		// student/team -> /diplom
+		// supervisor -> /teacher/diploms/[projectId]
+		if recType == "supervisor" {
+			link = fmt.Sprintf("/teacher/diploms/%d", actx.ProjectID)
+		} else {
+			link = "/diplom"
+		}
+	} else {
+		link = interpolate(link, actx)
 	}
 
 	recipients = uniqueInt64(recipients)
@@ -180,6 +186,10 @@ func interpolate(template string, actx *plugins.ActionContext) string {
 	s = strings.ReplaceAll(s, "{{project_id}}", fmt.Sprint(actx.ProjectID))
 	s = strings.ReplaceAll(s, "{{team_id}}", fmt.Sprint(actx.TeamID))
 	s = strings.ReplaceAll(s, "{{user_id}}", fmt.Sprint(actx.UserID))
+	s = strings.ReplaceAll(s, "{{state_name}}", actx.NewState)
+	s = strings.ReplaceAll(s, "{{previous_state}}", actx.PreviousState)
+	s = strings.ReplaceAll(s, "{{trigger}}", actx.Trigger)
+
 	if t, ok := actx.ProjectData["title"].(string); ok && t != "" {
 		s = strings.ReplaceAll(s, "{{project_title}}", t)
 	}

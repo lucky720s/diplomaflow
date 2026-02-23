@@ -8,6 +8,7 @@ import (
 	"github.com/google/wire"
 	"github.com/lucky720s/diplomaflow/pkg/database"
 	authv1 "github.com/lucky720s/diplomaflow/pkg/protobuf/auth/v1"
+	notificationv1 "github.com/lucky720s/diplomaflow/pkg/protobuf/notification/v1"
 	projectv1 "github.com/lucky720s/diplomaflow/pkg/protobuf/project/v1"
 	teamv1 "github.com/lucky720s/diplomaflow/pkg/protobuf/team/v1"
 	workflowv1 "github.com/lucky720s/diplomaflow/pkg/protobuf/workflow/v1"
@@ -57,6 +58,15 @@ func ProvideWorkflowClient(cfg *Config) (workflowv1.WorkflowServiceClient, func(
 	return workflowv1.NewWorkflowServiceClient(conn), cleanup, nil
 }
 
+func ProvideNotificationClient(cfg *Config) (notificationv1.NotificationServiceClient, func(), error) {
+	conn, err := grpc.NewClient(cfg.Services.NotificationAddr, grpc.WithTransportCredentials(insecure.NewCredentials()))
+	if err != nil {
+		return nil, nil, err
+	}
+	cleanup := func() { conn.Close() }
+	return notificationv1.NewNotificationServiceClient(conn), cleanup, nil
+}
+
 func InitializeApp(cfg *Config, log *zap.Logger) (*Handler, func(), error) {
 	wire.Build(
 		ProvideDB,
@@ -64,6 +74,7 @@ func InitializeApp(cfg *Config, log *zap.Logger) (*Handler, func(), error) {
 		ProvideProjectClient,
 		ProvideTeamClient,
 		ProvideWorkflowClient,
+		ProvideNotificationClient,
 		NewRepository,
 		NewService,
 		NewHandler,

@@ -10,6 +10,7 @@ import (
 
 	"github.com/google/uuid"
 	authv1 "github.com/lucky720s/diplomaflow/pkg/protobuf/auth/v1"
+	notificationv1 "github.com/lucky720s/diplomaflow/pkg/protobuf/notification/v1"
 	projectv1 "github.com/lucky720s/diplomaflow/pkg/protobuf/project/v1"
 	teamv1 "github.com/lucky720s/diplomaflow/pkg/protobuf/team/v1"
 	workflowv1 "github.com/lucky720s/diplomaflow/pkg/protobuf/workflow/v1"
@@ -19,15 +20,17 @@ import (
 	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/types/known/structpb"
 	"gorm.io/datatypes"
+	"gorm.io/gorm"
 )
 
 type Service struct {
-	repo           Repository
-	authClient     authv1.AuthServiceClient
-	projectClient  projectv1.ProjectServiceClient
-	teamClient     teamv1.TeamServiceClient
-	workflowClient workflowv1.WorkflowServiceClient
-	logger         *zap.Logger
+	repo               Repository
+	authClient         authv1.AuthServiceClient
+	projectClient      projectv1.ProjectServiceClient
+	teamClient         teamv1.TeamServiceClient
+	workflowClient     workflowv1.WorkflowServiceClient
+	notificationClient notificationv1.NotificationServiceClient
+	logger             *zap.Logger
 }
 type SubmitDocumentRequest struct {
 	ProjectID   int64
@@ -42,15 +45,17 @@ func NewService(
 	projectClient projectv1.ProjectServiceClient,
 	teamClient teamv1.TeamServiceClient,
 	workflowClient workflowv1.WorkflowServiceClient,
+	notificationClient notificationv1.NotificationServiceClient,
 	logger *zap.Logger,
 ) *Service {
 	return &Service{
-		repo:           repo,
-		authClient:     authClient,
-		projectClient:  projectClient,
-		teamClient:     teamClient,
-		workflowClient: workflowClient,
-		logger:         logger,
+		repo:               repo,
+		authClient:         authClient,
+		projectClient:      projectClient,
+		teamClient:         teamClient,
+		workflowClient:     workflowClient,
+		notificationClient: notificationClient,
+		logger:             logger,
 	}
 }
 
@@ -127,12 +132,20 @@ func (s *Service) tryPerformIfAvailable(ctx context.Context, actorID int64, acto
 		return errors.New("project runtime is nil")
 	}
 
-	tr, err := s.workflowClient.GetAvailableTransitions(ctx, &workflowv1.GetAvailableTransitionsRequest{
+	outCtx := metadata.AppendToOutgoingContext(
+		ctx,
+		"x-internal-service", "admin_service",
+		"x-user-id", fmt.Sprintf("%d", actorID),
+		"x-user-role", actorRole,
+	)
+
+	tr, err := s.workflowClient.GetAvailableTransitions(outCtx, &workflowv1.GetAvailableTransitionsRequest{
 		ProjectId:      projectID,
 		CurrentStateId: rt.CurrentStateId,
 		UserId:         actorID,
 		UserRole:       actorRole,
 	})
+
 	if err != nil {
 		// Если runtime API недоступно/ошибка — fallback: просто пробуем PerformAction.
 		s.logger.Warn("GetAvailableTransitions failed, fallback to PerformAction",
@@ -266,6 +279,21 @@ func (s *Service) SubmitTopicRegistration(ctx context.Context, req *SubmitTopicR
 			zap.Int64("project_id", req.ProjectID),
 		)
 	}
+	// notify supervisor (если это его тема)
+	s.notifyBestEffort(ctx, reg.SupervisorID,
+		"Новая тема на согласование",
+		fmt.Sprintf("Команда «%d» подала тему: %s", teamID, reg.ProposedTopic),
+		fmt.Sprintf("/teacher/diploms/%d", reg.ProjectID),
+		"topic_registration_submitted",
+	)
+
+	// notify team
+	s.notifyTeamBestEffort(ctx, teamID,
+		"Тема отправлена на согласование",
+		fmt.Sprintf("Тема: %s", reg.ProposedTopic),
+		"/diplom",
+		"topic_registration_submitted_team",
+	)
 
 	return reg, nil
 }
@@ -364,6 +392,37 @@ func (s *Service) ReviewTopicRegistration(ctx context.Context, req *ReviewTopicR
 		TargetID:     reg.TeamID,
 		TargetType:   "topic_registration",
 	})
+	switch req.Action {
+	case "approve":
+		s.notifyTeamBestEffort(ctx, reg.TeamID,
+			"Тема утверждена",
+			fmt.Sprintf("Тема: %s", reg.ProposedTopic),
+			"/diplom",
+			"topic_registration_approved",
+		)
+	case "reject":
+		reason := req.RejectionReason
+		if reason == "" {
+			reason = "Причина не указана"
+		}
+		s.notifyTeamBestEffort(ctx, reg.TeamID,
+			"Тема отклонена",
+			fmt.Sprintf("Причина: %s", reason),
+			"/diplom",
+			"topic_registration_rejected",
+		)
+	case "request_changes":
+		msg := req.Comment
+		if msg == "" {
+			msg = "Нужны правки"
+		}
+		s.notifyTeamBestEffort(ctx, reg.TeamID,
+			"Нужны правки по теме",
+			msg,
+			"/diplom",
+			"topic_registration_changes_requested",
+		)
+	}
 
 	return reg, nil
 }
@@ -598,31 +657,71 @@ func (s *Service) ListSupervisors(ctx context.Context, departmentID, universityI
 	return supervisors, resp.TotalCount, nil
 }
 
-func (s *Service) AssignSupervisor(ctx context.Context, teamID, supervisorID, assignedBy int64) error {
+func (s *Service) AssignSupervisor(ctx context.Context, teamID, supervisorID, assignedBy int64, silent bool) error {
+	updated := false //nolint:govet,govet,govet
+	prevSupervisorID := int64(0)
+
 	existing, err := s.repo.GetSupervisorAssignment(ctx, teamID)
 	if err == nil && existing != nil {
+		prevSupervisorID = existing.SupervisorID
 		existing.SupervisorID = supervisorID
 		existing.AssignedBy = assignedBy
-		return s.repo.UpdateSupervisorAssignment(ctx, existing)
+		if err = s.repo.UpdateSupervisorAssignment(ctx, existing); err != nil { //nolint:govet,govet,govet
+			return fmt.Errorf("failed to update supervisor assignment: %w", err)
+		}
+		updated = true
+	} else {
+		if err != nil && !errors.Is(err, gorm.ErrRecordNotFound) {
+			return fmt.Errorf("failed to get supervisor assignment: %w", err)
+		}
+
+		assignment := &SupervisorAssignment{
+			TeamID:       teamID,
+			SupervisorID: supervisorID,
+			AssignedBy:   assignedBy,
+		}
+		if err := s.repo.AssignSupervisor(ctx, assignment); err != nil {
+			return fmt.Errorf("failed to assign supervisor: %w", err)
+		}
 	}
 
-	assignment := &SupervisorAssignment{
-		TeamID:       teamID,
-		SupervisorID: supervisorID,
-		AssignedBy:   assignedBy,
+	desc := fmt.Sprintf("Supervisor %d assigned to team %d", supervisorID, teamID)
+	if updated && prevSupervisorID > 0 && prevSupervisorID != supervisorID {
+		desc = fmt.Sprintf("Supervisor %d reassigned to team %d (from %d)", supervisorID, teamID, prevSupervisorID)
 	}
-
-	if err := s.repo.AssignSupervisor(ctx, assignment); err != nil {
-		return fmt.Errorf("failed to assign supervisor: %w", err)
-	}
-
 	_ = s.repo.LogActivity(ctx, &AdminActivity{
 		ActivityType: ActivityTypeSupervisorAssign,
-		Description:  fmt.Sprintf("Supervisor %d assigned to team %d", supervisorID, teamID),
+		Description:  desc,
 		ActorID:      assignedBy,
 		TargetID:     teamID,
 		TargetType:   "team",
 	})
+
+	if !silent {
+		projectID := int64(0)
+		if td, derr := s.repo.GetTeamFullDetails(ctx, teamID); derr == nil && td != nil {
+			projectID = td.ProjectID
+		}
+
+		teacherLink := fmt.Sprintf("/teacher/boards/%d", teamID)
+		if projectID > 0 {
+			teacherLink = fmt.Sprintf("/teacher/diploms/%d", projectID)
+		}
+
+		s.notifyTeamBestEffort(ctx, teamID,
+			"Назначен научный руководитель",
+			"В вашей команде назначен научный руководитель. Можно продолжать работу над дипломом.",
+			"/diplom",
+			"supervisor_assigned_admin",
+		)
+
+		s.notifyBestEffort(ctx, supervisorID,
+			"Вам назначена команда",
+			fmt.Sprintf("Вам назначена команда %d для руководства.", teamID),
+			teacherLink,
+			"supervisor_assigned_to_team",
+		)
+	}
 
 	return nil
 }
@@ -692,7 +791,35 @@ func (s *Service) ReviewSubmission(ctx context.Context, req *ReviewSubmissionReq
 			Grade:     req.Grade,
 			Comment:   req.Comment,
 			GraderID:  req.ReviewerID,
+			Silent:    true,
 		})
+	}
+	switch req.Action {
+	case "approve":
+		msg := "Документ принят."
+		if req.Grade > 0 {
+			msg = fmt.Sprintf("Документ принят. Оценка: %d", req.Grade)
+		}
+		s.notifyTeamBestEffort(ctx, sub.TeamID,
+			"Проверка документа: принято",
+			msg,
+			"/diplom",
+			"submission_review_approved",
+		)
+	case "reject":
+		s.notifyTeamBestEffort(ctx, sub.TeamID,
+			"Проверка документа: отклонено",
+			req.Comment,
+			"/diplom",
+			"submission_review_rejected",
+		)
+	case "request_changes":
+		s.notifyTeamBestEffort(ctx, sub.TeamID,
+			"Проверка документа: нужны правки",
+			req.Comment,
+			"/diplom",
+			"submission_review_changes_requested",
+		)
 	}
 
 	return sub, nil
@@ -706,6 +833,7 @@ type SetGradeRequest struct {
 	Grade     int32
 	Comment   string
 	GraderID  int64
+	Silent    bool
 }
 
 func (s *Service) GetProjectGrades(ctx context.Context, projectID int64) ([]*Grade, float32, error) {
@@ -748,6 +876,20 @@ func (s *Service) SetStepGrade(ctx context.Context, req *SetGradeRequest) (*Grad
 			ChangedBy: req.GraderID,
 			Reason:    req.Comment,
 		})
+		if !req.Silent {
+			teamID := int64(0)
+			if rt, rtErr := s.projectClient.GetProjectRuntime(s.internalCtx(ctx), &projectv1.GetProjectRuntimeRequest{ProjectId: req.ProjectID}); rtErr == nil && rt != nil {
+				teamID = rt.TeamId
+			}
+			if teamID > 0 {
+				s.notifyTeamBestEffort(ctx, teamID,
+					"Выставлена оценка за этап",
+					fmt.Sprintf("Оценка: %d. %s", req.Grade, req.Comment),
+					"/diplom",
+					"step_grade_set",
+				)
+			}
+		}
 
 		return existing, nil
 	}
@@ -781,6 +923,20 @@ func (s *Service) SetStepGrade(ctx context.Context, req *SetGradeRequest) (*Grad
 		TargetID:     req.ProjectID,
 		TargetType:   "project",
 	})
+	if !req.Silent {
+		teamID := int64(0)
+		if rt, rtErr := s.projectClient.GetProjectRuntime(s.internalCtx(ctx), &projectv1.GetProjectRuntimeRequest{ProjectId: req.ProjectID}); rtErr == nil && rt != nil {
+			teamID = rt.TeamId
+		}
+		if teamID > 0 {
+			s.notifyTeamBestEffort(ctx, teamID,
+				"Выставлена оценка за этап",
+				fmt.Sprintf("Оценка: %d. %s", req.Grade, req.Comment),
+				"/diplom",
+				"step_grade_set",
+			)
+		}
+	}
 
 	return grade, nil
 }
@@ -914,7 +1070,26 @@ func (s *Service) CreateSupervisorRequest(ctx context.Context, req *CreateSuperv
 		TargetType:   "supervisor_request",
 	})
 
-	return s.repo.GetSupervisorRequestWithDetails(ctx, supervisorRequest.ID)
+	details, derr := s.repo.GetSupervisorRequestWithDetails(ctx, supervisorRequest.ID)
+	if derr != nil {
+		return nil, derr
+	}
+
+	s.notifyBestEffort(ctx, req.SupervisorID,
+		"Новая заявка на руководство",
+		fmt.Sprintf("Команда «%s» отправила заявку. Предложенная тема: %s", details.TeamName, details.ProposedTopic),
+		"/teacher/requests",
+		"supervisor_request_created",
+	)
+	// notify team (confirmation)
+	s.notifyTeamBestEffort(ctx, teamID,
+		"Заявка научному руководителю отправлена",
+		"Ожидайте ответа преподавателя. Вы можете отменить заявку и выбрать другого руководителя.",
+		"/diplom/select-supervisor",
+		"supervisor_request_sent",
+	)
+
+	return details, nil
 }
 
 func (s *Service) GetSupervisorRequest(ctx context.Context, requestID string) (*SupervisorRequestWithDetails, []*SupervisorRequestHistory, error) {
@@ -1047,9 +1222,6 @@ func (s *Service) createProjectForTeamOnApprove(ctx context.Context, teamID int6
 	return cr.ProjectId, nil
 }
 
-// RespondToSupervisorRequest:
-// - approve: if request has no project_id => create project now, then do workflow action(s), then mark approved & assignment.
-// - reject: mark rejected.
 func (s *Service) RespondToSupervisorRequest(ctx context.Context, req *RespondToSupervisorRequestInput) (*SupervisorRequestWithDetails, error) {
 	if req == nil {
 		return nil, errors.New("request is nil")
@@ -1074,7 +1246,6 @@ func (s *Service) RespondToSupervisorRequest(ctx context.Context, req *RespondTo
 
 	switch req.Action {
 	case "approve":
-		// Ensure project exists
 		if supervisorReq.ProjectID == nil || *supervisorReq.ProjectID <= 0 {
 			if supervisorReq.TeamID <= 0 {
 				return nil, errors.New("cannot approve: request has no team_id and no project_id")
@@ -1088,9 +1259,10 @@ func (s *Service) RespondToSupervisorRequest(ctx context.Context, req *RespondTo
 
 		// Assignment (projection)
 		if supervisorReq.TeamID > 0 {
-			if err := s.AssignSupervisor(ctx, supervisorReq.TeamID, supervisorReq.SupervisorID, supervisorReq.SupervisorID); err != nil {
+			if err := s.AssignSupervisor(ctx, supervisorReq.TeamID, supervisorReq.SupervisorID, supervisorReq.SupervisorID, true); err != nil {
 				return nil, fmt.Errorf("failed to assign supervisor: %w", err)
 			}
+
 		}
 
 		supervisorReq.Status = SupervisorRequestStatusApproved
@@ -1130,7 +1302,34 @@ func (s *Service) RespondToSupervisorRequest(ctx context.Context, req *RespondTo
 		TargetType:   "supervisor_request",
 	})
 
-	return s.repo.GetSupervisorRequestWithDetails(ctx, supervisorReq.ID)
+	details, derr := s.repo.GetSupervisorRequestWithDetails(ctx, supervisorReq.ID)
+	if derr != nil {
+		return nil, derr
+	}
+
+	if req.Action == "approve" {
+		// после approve у команды уже создаётся project (team-first) и дальше жизнь в дипломе
+		s.notifyTeamBestEffort(ctx, supervisorReq.TeamID,
+			"Научный руководитель одобрил заявку",
+			fmt.Sprintf("Заявка одобрена. Руководитель: %s. Теперь можно продолжать работу над дипломом.", details.SupervisorName),
+			"/diplom",
+			"supervisor_request_approved",
+		)
+	} else if req.Action == "reject" {
+		// после reject логично вернуть на страницу команды, чтобы выбрать другого и отправить заявку
+		reason := req.RejectReason
+		if reason == "" {
+			reason = "Причина не указана"
+		}
+		s.notifyTeamBestEffort(ctx, supervisorReq.TeamID,
+			"Заявка на научного руководителя отклонена",
+			fmt.Sprintf("Заявка отклонена. Причина: %s", reason),
+			"/diplom/select-supervisor",
+			"supervisor_request_rejected",
+		)
+	}
+
+	return details, nil
 }
 
 func (s *Service) CancelSupervisorRequest(ctx context.Context, requestID string, cancelledBy int64, reason string) error {
@@ -1162,6 +1361,19 @@ func (s *Service) CancelSupervisorRequest(ctx context.Context, requestID string,
 		ActorID:   cancelledBy,
 		Comment:   comment,
 	})
+	s.notifyBestEffort(ctx, supervisorReq.SupervisorID,
+		"Заявка отменена",
+		"Команда отменила заявку на руководство.",
+		"/teacher/requests",
+		"supervisor_request_cancelled",
+	)
+	// notify team
+	s.notifyTeamBestEffort(ctx, supervisorReq.TeamID,
+		"Заявка научному руководителю отменена",
+		"Вы можете выбрать другого руководителя и отправить новую заявку.",
+		"/diplom/select-supervisor",
+		"supervisor_request_cancelled_team",
+	)
 
 	return nil
 }
@@ -1235,7 +1447,7 @@ type UpdateTeamByAdminRequest struct {
 }
 
 func (s *Service) UpdateTeamByAdmin(ctx context.Context, req *UpdateTeamByAdminRequest) (*TeamFullDetails, error) {
-	_, err := s.repo.GetTeamFullDetails(ctx, req.TeamID)
+	before, err := s.repo.GetTeamFullDetails(ctx, req.TeamID)
 	if err != nil {
 		return nil, fmt.Errorf("team not found: %w", err)
 	}
@@ -1263,15 +1475,66 @@ func (s *Service) UpdateTeamByAdmin(ctx context.Context, req *UpdateTeamByAdminR
 		TargetType:   "team",
 	})
 
-	return s.repo.GetTeamFullDetails(ctx, req.TeamID)
+	after, gerr := s.repo.GetTeamFullDetails(ctx, req.TeamID)
+	if gerr != nil {
+		return nil, gerr
+	}
+
+	// name changed
+	if req.Name != "" && before.Name != after.Name {
+		s.notifyTeamBestEffort(ctx, req.TeamID,
+			"Изменено название команды",
+			fmt.Sprintf("Новое название: %s", after.Name),
+			"/team",
+			"team_admin_name_updated",
+		)
+	}
+
+	// supervisor changed
+	if req.SupervisorID > 0 && before.SupervisorID != after.SupervisorID {
+		projectID := after.ProjectID
+		teacherLink := fmt.Sprintf("/teacher/boards/%d", req.TeamID)
+		if projectID > 0 {
+			teacherLink = fmt.Sprintf("/teacher/diploms/%d", projectID)
+		}
+
+		s.notifyTeamBestEffort(ctx, req.TeamID,
+			"Изменён научный руководитель",
+			"Команде назначен (или изменён) научный руководитель.",
+			"/diplom",
+			"team_supervisor_changed_admin",
+		)
+
+		s.notifyBestEffort(ctx, after.SupervisorID,
+			"Вам назначена команда",
+			fmt.Sprintf("Вам назначена команда «%s».", after.Name),
+			teacherLink,
+			"supervisor_assigned_to_team",
+		)
+	}
+
+	return after, nil
 }
 
 func (s *Service) DeleteTeamByAdmin(ctx context.Context, teamID int64, reason string, deletedBy int64) error {
-	_, err := s.repo.GetTeamFullDetails(ctx, teamID)
+	team, err := s.repo.GetTeamFullDetails(ctx, teamID)
 	if err != nil {
 		return fmt.Errorf("team not found: %w", err)
 	}
+	for _, m := range team.Members {
+		if m == nil || m.UserID <= 0 {
+			continue
+		}
+		s.notifyBestEffort(ctx, m.UserID,
+			"Команда удалена администратором",
+			fmt.Sprintf("Команда «%s» была удалена. Причина: %s", team.Name, reason),
+			"/team",
+			"team_deleted_admin",
+		)
+	}
+
 	return s.repo.DeleteTeamByAdmin(ctx, teamID, reason, deletedBy)
+
 }
 
 func (s *Service) GetGradingHistoryFull(ctx context.Context, projectID, stepID int64) ([]*GradeHistoryFull, error) {
@@ -1353,6 +1616,23 @@ func (s *Service) SubmitDocumentForStep(ctx context.Context, req *SubmitDocument
 			"submission_id": sub.ID,
 		})
 	}
+	// notify team
+	s.notifyTeamBestEffort(ctx, teamID,
+		"Документ отправлен на проверку",
+		"Файл(ы) загружены и отправлены на рассмотрение.",
+		"/diplom",
+		"submission_submitted",
+	)
+
+	// notify supervisor if assigned
+	if a, aerr := s.repo.GetSupervisorAssignment(ctx, teamID); aerr == nil && a != nil && a.SupervisorID > 0 {
+		s.notifyBestEffort(ctx, a.SupervisorID,
+			"Новый документ на проверку",
+			fmt.Sprintf("Команда %d отправила документ(ы) на проверку.", teamID),
+			fmt.Sprintf("/teacher/diploms/%d", req.ProjectID),
+			"submission_submitted_to_reviewer",
+		)
+	}
 
 	return sub, nil
 }
@@ -1366,4 +1646,43 @@ func (s *Service) getEventNameForState(stateName string) string {
 		"ANTIPLAGIAT":   "ANTIPLAGIAT_SUBMITTED",
 	}
 	return mapping[stateName]
+}
+func (s *Service) notifyBestEffort(ctx context.Context, userID int64, title, message, link, nType string) {
+	if s.notificationClient == nil || userID <= 0 {
+		return
+	}
+	nctx := metadata.AppendToOutgoingContext(ctx, "x-internal-service", "admin_service")
+	_, err := s.notificationClient.SendNotification(nctx, &notificationv1.SendNotificationRequest{
+		UserId:  userID,
+		Title:   title,
+		Message: message,
+		Link:    link,
+		Type:    nType,
+	})
+	if err != nil {
+		s.logger.Warn("send notification failed", zap.Int64("user_id", userID), zap.Error(err))
+	}
+}
+func (s *Service) notifyTeamBestEffort(ctx context.Context, teamID int64, title, message, link, nType string) {
+	if s.notificationClient == nil || teamID <= 0 {
+		return
+	}
+
+	t, err := s.teamClient.GetTeam(s.internalCtx(ctx), &teamv1.GetTeamRequest{TeamId: teamID})
+	if err != nil || t == nil {
+		s.logger.Warn("notifyTeamBestEffort: GetTeam failed", zap.Int64("team_id", teamID), zap.Error(err))
+		return
+	}
+
+	seen := make(map[int64]struct{}, len(t.Members))
+	for _, m := range t.Members {
+		if m == nil || m.UserId <= 0 {
+			continue
+		}
+		if _, ok := seen[m.UserId]; ok {
+			continue
+		}
+		seen[m.UserId] = struct{}{}
+		s.notifyBestEffort(ctx, m.UserId, title, message, link, nType)
+	}
 }

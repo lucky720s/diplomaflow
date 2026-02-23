@@ -251,3 +251,16 @@ var DefaultColumns = []Column{
 	{Name: "На проверке", Slug: "review", Color: "#F59E0B", OrderIndex: 2, IsDefault: false, IsDoneColumn: false},
 	{Name: "Готово", Slug: "done", Color: "#10B981", OrderIndex: 3, IsDefault: false, IsDoneColumn: true},
 }
+
+// DeadlineNotificationRun — запись о том, что уведомление по дедлайну уже отправляли (дедуп).
+type DeadlineNotificationRun struct {
+	ID       int64     `gorm:"primaryKey"`
+	DedupKey string    `gorm:"uniqueIndex;not null"`
+	Kind     string    `gorm:"index;not null"` // due_today | due_tomorrow | overdue
+	TaskID   int64     `gorm:"index;not null"`
+	UserID   int64     `gorm:"index;not null"` // assignee
+	DueDate  time.Time `gorm:"type:date;not null"`
+	SentAt   time.Time `gorm:"not null"`
+}
+
+func (DeadlineNotificationRun) TableName() string { return "task_deadline_notification_runs" }

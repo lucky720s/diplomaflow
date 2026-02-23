@@ -165,6 +165,45 @@ func (w *Worker) handleDeadline(ctx context.Context, p deadlinePayload) error {
 	}
 
 	projectData := w.buildProjectData(ctx, internalCtx, snap)
+	// If no ON_DEADLINE actions configured for this state — send a default notification to the whole team (best-effort).
+	if len(actions) == 0 {
+		a := workflow.StateAction{
+			ID:         0, // synthetic
+			StateID:    p.StateID,
+			Name:       "DEFAULT_DEADLINE_NOTIFICATION",
+			Type:       "SEND_NOTIFICATION",
+			Trigger:    p.Trigger,
+			IsEnabled:  true,
+			MaxRetries: 3,
+		}
+		actx := &plugins.ActionContext{
+			ProjectID:    p.ProjectID,
+			StateID:      p.StateID,
+			UserID:       0,
+			TeamID:       snap.TeamId,
+			DepartmentID: snap.DepartmentId,
+			UniversityID: snap.UniversityId,
+			Trigger:      p.Trigger,
+			Config: map[string]interface{}{
+				"title":      "Дедлайн этапа",
+				"message":    fmt.Sprintf("Наступил дедлайн этапа «%s».", snap.CurrentStateName),
+				"link":       "/diplom",
+				"type":       "workflow_deadline_reached",
+				"recipients": "team",
+			},
+			ProjectData: projectData,
+			NewState:    snap.CurrentStateName,
+			Metadata: map[string]interface{}{
+				"deadline_at": p.DeadlineAt,
+			},
+			Payload: map[string]interface{}{},
+		}
+		dedup := makeDedupKey("deadline-default", p.ProjectID, 0, p.Trigger, 0, fmt.Sprintf("%s|sid=%d", p.DeadlineAt, p.StateID))
+		if err := w.executeOne(ctx, dedup, &a, actx); err != nil {
+			return err
+		}
+		return nil
+	}
 
 	for _, a := range actions {
 		if !a.IsEnabled {

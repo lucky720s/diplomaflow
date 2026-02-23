@@ -3,6 +3,7 @@ package task
 import (
 	"context"
 	"fmt"
+	"strings"
 	"time"
 
 	"gorm.io/gorm"
@@ -85,6 +86,11 @@ type Repository interface {
 	GetMyTasks(ctx context.Context, userID int64, filter MyTasksFilter) ([]*Task, int64, error)
 	GetOverdueTasks(ctx context.Context, boardID int64, assigneeID *int64, limit, offset int) ([]*Task, int64, error)
 	GetUpcomingDeadlines(ctx context.Context, boardID int64, userID *int64, daysAhead, limit, offset int) ([]*Task, int64, error)
+
+	// Deadline notifier
+	ListTasksDueOn(ctx context.Context, dueDate time.Time) ([]*Task, error)
+	ListOverdueOpenTasks(ctx context.Context, beforeDate time.Time) ([]*Task, error)
+	TryInsertDeadlineRun(ctx context.Context, run *DeadlineNotificationRun) (bool, error)
 }
 
 // TaskFilter - фильтр для списка задач
@@ -906,4 +912,47 @@ func (r *repository) GetUpcomingDeadlines(ctx context.Context, boardID int64, us
 		Find(&tasks).Error
 
 	return tasks, total, err
+}
+func (r *repository) ListTasksDueOn(ctx context.Context, dueDate time.Time) ([]*Task, error) {
+	var tasks []*Task
+	err := r.db.WithContext(ctx).
+		Model(&Task{}).
+		Where("deleted_at IS NULL").
+		Where("status != ?", TaskStatusDone).
+		Where("assignee_id IS NOT NULL").
+		Where("due_date = ?", dueDate.Format("2006-01-02")).
+		Find(&tasks).Error
+	return tasks, err
+}
+
+func (r *repository) ListOverdueOpenTasks(ctx context.Context, beforeDate time.Time) ([]*Task, error) {
+	var tasks []*Task
+	err := r.db.WithContext(ctx).
+		Model(&Task{}).
+		Where("deleted_at IS NULL").
+		Where("status != ?", TaskStatusDone).
+		Where("assignee_id IS NOT NULL").
+		Where("due_date < ?", beforeDate.Format("2006-01-02")).
+		Find(&tasks).Error
+	return tasks, err
+}
+
+func (r *repository) TryInsertDeadlineRun(ctx context.Context, run *DeadlineNotificationRun) (bool, error) {
+	if run == nil || run.DedupKey == "" {
+		return false, fmt.Errorf("run/dedup_key required")
+	}
+
+	err := r.db.WithContext(ctx).Create(run).Error
+	if err == nil {
+		return true, nil
+	}
+
+	// дедуп: если уже есть — просто "не вставили"
+	if strings.Contains(err.Error(), "duplicate key") ||
+		strings.Contains(err.Error(), "unique constraint") ||
+		strings.Contains(err.Error(), "UNIQUE constraint") {
+		return false, nil
+	}
+
+	return false, err
 }

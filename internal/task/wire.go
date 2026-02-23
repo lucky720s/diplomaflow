@@ -5,6 +5,7 @@ package task
 
 import (
 	"github.com/google/wire"
+	notificationv1 "github.com/lucky720s/diplomaflow/pkg/protobuf/notification/v1"
 	teamv1 "github.com/lucky720s/diplomaflow/pkg/protobuf/team/v1"
 	"go.uber.org/zap"
 	"google.golang.org/grpc"
@@ -27,12 +28,24 @@ func ProvideTeamClient(cfg *Config) (teamv1.TeamServiceClient, func(), error) {
 
 	return client, cleanup, nil
 }
+func ProvideNotificationClient(cfg *Config) (notificationv1.NotificationServiceClient, func(), error) {
+	conn, err := grpc.NewClient(
+		cfg.Services.NotificationAddr,
+		grpc.WithTransportCredentials(insecure.NewCredentials()),
+	)
+	if err != nil {
+		return nil, nil, err
+	}
+	client := notificationv1.NewNotificationServiceClient(conn)
+	return client, func() { conn.Close() }, nil
+}
 
 // InitializeApp инициализирует приложение task_service
 func InitializeApp(cfg *Config, db *gorm.DB, logger *zap.Logger) (*Handler, func(), error) {
 	wire.Build(
 		NewRepository,
 		ProvideTeamClient,
+		ProvideNotificationClient,
 		NewService,
 		NewHandler,
 	)

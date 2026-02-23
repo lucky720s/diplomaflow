@@ -60,7 +60,8 @@ func internalServiceFromMD(ctx context.Context) string {
 
 func isAllowedInternalSender(svc string) bool {
 	switch svc {
-	case "workflow_service", "admin_service", "api_gateway":
+	case "workflow_service", "admin_service", "api_gateway",
+		"team_service", "task_service":
 		return true
 	default:
 		return false

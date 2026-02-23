@@ -34,7 +34,10 @@ func main() {
 	// Database connection
 	db, err := gorm.Open(postgres.Open(cfg.Database.DSN), &gorm.Config{})
 	if err != nil {
-		log.Fatal("failed to connect to database", zap.Error(err))
+		log.Fatal("failed to connect database", zap.Error(err))
+	}
+	if err := db.AutoMigrate(&task.DeadlineNotificationRun{}); err != nil { //nolint:govet
+		log.Fatal("failed to migrate task_deadline_notification_runs", zap.Error(err))
 	}
 
 	// Initialize app via Wire
@@ -43,6 +46,10 @@ func main() {
 		log.Fatal("failed to initialize app", zap.Error(err))
 	}
 	defer cleanup()
+
+	bgCtx, bgCancel := context.WithCancel(context.Background())
+	defer bgCancel()
+	h.StartBackgroundJobs(bgCtx)
 
 	// gRPC listener
 	lis, err := net.Listen("tcp", ":"+cfg.GRPCPort)
@@ -83,7 +90,7 @@ func main() {
 
 	healthServer.SetServingStatus("", grpc_health_v1.HealthCheckResponse_NOT_SERVING)
 	healthServer.SetServingStatus("task.v1.TaskService", grpc_health_v1.HealthCheckResponse_NOT_SERVING)
-
+	bgCancel()
 	grpcServer.GracefulStop()
 	log.Info("Task Service exited")
 }

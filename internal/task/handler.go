@@ -27,6 +27,12 @@ func NewHandler(service *Service, logger *zap.Logger) *Handler {
 		logger:  logger,
 	}
 }
+func (h *Handler) StartBackgroundJobs(ctx context.Context) {
+	if h.service == nil {
+		return
+	}
+	h.service.StartDeadlineNotifier(ctx)
+}
 
 // ==================== Board ====================
 

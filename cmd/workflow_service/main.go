@@ -2,10 +2,12 @@ package main
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"net"
 	"os"
 	"os/signal"
+	"strings"
 	"syscall"
 	"time"
 
@@ -28,6 +30,7 @@ import (
 	"google.golang.org/grpc/health"
 	"google.golang.org/grpc/health/grpc_health_v1"
 	"google.golang.org/grpc/reflection"
+	"gorm.io/datatypes"
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
 )
@@ -38,6 +41,108 @@ func dial(addr string) (*grpc.ClientConn, error) {
 		grpc.WithDefaultServiceConfig(grpcpkg.DefaultRetryServiceConfig()),
 		grpc.WithUnaryInterceptor(grpcpkg.TimeoutInterceptor(10*time.Second)),
 	)
+}
+func ensureDefaultOnEnterNotifications(db *gorm.DB, log *zap.Logger) {
+	var states []workflow.State
+	if err := db.Find(&states).Error; err != nil {
+		log.Warn("default notifications: failed to list states", zap.Error(err))
+		return
+	}
+
+	type tpl struct{ title, msg, link, nType string }
+	byType := map[string]tpl{
+		"TEAM_FORMATION": {
+			title: "Сформируйте команду",
+			msg:   "Этап «{{state_name}}»: добавьте участников и отправьте приглашения.",
+			link:  "/team",
+			nType: "workflow_team_formation_enter",
+		},
+		"SUPERVISOR_SELECTION": {
+			title: "Выберите научного руководителя",
+			msg:   "Этап «{{state_name}}»: выберите научного руководителя для проекта.",
+			link:  "/diplom/select-supervisor",
+			nType: "workflow_supervisor_selection_enter",
+		},
+		"TOPIC_APPROVAL": {
+			title: "Отправьте тему на согласование",
+			msg:   "Этап «{{state_name}}»: заполните и отправьте тему диплома.",
+			link:  "/diplom",
+			nType: "workflow_topic_required",
+		},
+		"DOCUMENT_UPLOAD": {
+			title: "Нужно загрузить документы",
+			msg:   "Этап «{{state_name}}»: загрузите необходимые файлы.",
+			link:  "/diplom",
+			nType: "workflow_document_upload_required",
+		},
+		"FORM_SUBMIT": {
+			title: "Нужно заполнить форму",
+			msg:   "Этап «{{state_name}}»: заполните и отправьте форму.",
+			link:  "/diplom",
+			nType: "workflow_form_required",
+		},
+		"DEFENSE": {
+			title: "Подготовка к защите",
+			msg:   "Этап «{{state_name}}»: проверьте требования и готовьтесь к защите.",
+			link:  "/diplom",
+			nType: "workflow_defense_stage_enter",
+		},
+		"COMPLETED": {
+			title: "Проект завершён",
+			msg:   "Workflow проекта завершён.",
+			link:  "/diplom",
+			nType: "workflow_completed",
+		},
+	}
+
+	for _, st := range states {
+		t, ok := byType[strings.ToUpper(strings.TrimSpace(st.Type))]
+		if !ok {
+			continue
+		}
+
+		// если уже есть хотя бы один SEND_NOTIFICATION на ON_ENTER — ничего не добавляем
+		var cnt int64
+		if err := db.Model(&workflow.StateAction{}).
+			Where("state_id = ? AND type = ? AND trigger = ? AND is_enabled = ?", st.ID, "SEND_NOTIFICATION", "ON_ENTER", true).
+			Count(&cnt).Error; err != nil {
+			log.Warn("default notifications: count actions failed", zap.Int64("state_id", st.ID), zap.Error(err))
+			continue
+		}
+		if cnt > 0 {
+			continue
+		}
+
+		cfg := map[string]interface{}{
+			"title":      t.title,
+			"message":    t.msg,
+			"link":       t.link,
+			"type":       t.nType,
+			"recipients": "team",
+		}
+		b, _ := json.Marshal(cfg)
+
+		a := &workflow.StateAction{
+			StateID:    st.ID,
+			Name:       "AUTO_NOTIFY_ON_ENTER",
+			Type:       "SEND_NOTIFICATION",
+			Trigger:    "ON_ENTER",
+			OrderIndex: 0,
+			Config:     datatypes.JSON(b),
+			IsEnabled:  true,
+			MaxRetries: 3,
+		}
+
+		if err := db.Create(a).Error; err != nil {
+			log.Warn("default notifications: create action failed", zap.Int64("state_id", st.ID), zap.Error(err))
+			continue
+		}
+
+		log.Info("default notifications: created ON_ENTER SEND_NOTIFICATION",
+			zap.Int64("state_id", st.ID),
+			zap.String("state_type", st.Type),
+		)
+	}
 }
 
 func main() {
@@ -53,6 +158,7 @@ func main() {
 	if err != nil {
 		log.Fatal("failed to connect db", zap.Error(err))
 	}
+	ensureDefaultOnEnterNotifications(db, log.Logger)
 
 	// Connect notification
 	notifConn, err := dial(cfg.Services.NotificationAddr)

@@ -7,23 +7,27 @@ import (
 	"fmt"
 	"time"
 
+	notificationv1 "github.com/lucky720s/diplomaflow/pkg/protobuf/notification/v1"
 	teamv1 "github.com/lucky720s/diplomaflow/pkg/protobuf/team/v1"
 	"go.uber.org/zap"
+	"google.golang.org/grpc/metadata"
 )
 
 // Service - бизнес-логика для task_service
 type Service struct {
-	repo       Repository
-	teamClient teamv1.TeamServiceClient
-	logger     *zap.Logger
+	repo               Repository
+	teamClient         teamv1.TeamServiceClient
+	notificationClient notificationv1.NotificationServiceClient
+	logger             *zap.Logger
 }
 
 // NewService создает новый сервис
-func NewService(repo Repository, teamClient teamv1.TeamServiceClient, logger *zap.Logger) *Service {
+func NewService(repo Repository, teamClient teamv1.TeamServiceClient, notificationClient notificationv1.NotificationServiceClient, logger *zap.Logger) *Service {
 	return &Service{
-		repo:       repo,
-		teamClient: teamClient,
-		logger:     logger,
+		repo:               repo,
+		teamClient:         teamClient,
+		notificationClient: notificationClient,
+		logger:             logger,
 	}
 }
 
@@ -432,6 +436,15 @@ func (s *Service) CreateTask(ctx context.Context, input *CreateTaskInput) (*Task
 	_ = s.repo.AddWatcher(ctx, &Watcher{TaskID: task.ID, UserID: input.CreatedBy})
 
 	s.logger.Info("Task created", zap.Int64("task_id", task.ID), zap.String("title", input.Title))
+	if task.AssigneeID != nil && *task.AssigneeID > 0 && *task.AssigneeID != input.CreatedBy {
+		s.notifyBestEffort(ctx, *task.AssigneeID,
+			"Вам назначили задачу",
+			fmt.Sprintf("Задача: %s", task.Title),
+			"/tasks",
+			"task_assigned",
+		)
+	}
+
 	return task, nil
 }
 
@@ -764,6 +777,14 @@ func (s *Service) AssignTask(ctx context.Context, taskID, assigneeID, assignedBy
 
 	s.logTaskActivity(ctx, taskID, assignedBy, ActionAssigned, "assignee", oldAssignee, fmt.Sprintf("%d", assigneeID))
 	_ = s.repo.AddWatcher(ctx, &Watcher{TaskID: taskID, UserID: assigneeID})
+	if assigneeID != assignedBy {
+		s.notifyBestEffort(ctx, assigneeID,
+			"Вам назначили задачу",
+			fmt.Sprintf("Задача: %s", task.Title),
+			"/tasks",
+			"task_assigned",
+		)
+	}
 
 	return task, nil
 }
@@ -823,6 +844,17 @@ func (s *Service) CreateComment(ctx context.Context, input *CreateCommentInput) 
 
 	s.logTaskActivity(ctx, input.TaskID, input.AuthorID, ActionCommented, "", "", "")
 	_ = s.repo.AddWatcher(ctx, &Watcher{TaskID: input.TaskID, UserID: input.AuthorID})
+	for _, uid := range input.MentionUserIDs {
+		if uid <= 0 || uid == input.AuthorID {
+			continue
+		}
+		s.notifyBestEffort(ctx, uid,
+			"Вас упомянули в комментарии",
+			"Откройте задачу, чтобы посмотреть комментарий.",
+			"/tasks",
+			"task_mentioned",
+		)
+	}
 
 	return comment, nil
 }
@@ -1094,4 +1126,123 @@ func (s *Service) BulkDeleteTasks(ctx context.Context, taskIDs []int64, deletedB
 	}
 	_ = deletedBy
 	return s.repo.BulkDeleteTasks(ctx, taskIDs)
+}
+func (s *Service) notifyBestEffort(ctx context.Context, userID int64, title, message, link, nType string) {
+	if s.notificationClient == nil || userID <= 0 {
+		return
+	}
+	nctx := metadata.AppendToOutgoingContext(ctx, "x-internal-service", "task_service")
+	_, err := s.notificationClient.SendNotification(nctx, &notificationv1.SendNotificationRequest{
+		UserId:  userID,
+		Title:   title,
+		Message: message,
+		Link:    link,
+		Type:    nType,
+	})
+	if err != nil {
+		s.logger.Warn("send notification failed", zap.Int64("user_id", userID), zap.Error(err))
+	}
+}
+func (s *Service) StartDeadlineNotifier(ctx context.Context) {
+	// как часто проверяем
+	ticker := time.NewTicker(30 * time.Minute)
+	go func() {
+		defer ticker.Stop()
+
+		// сразу пробуем один раз при старте
+		s.deadlineTick(ctx)
+
+		for {
+			select {
+			case <-ctx.Done():
+				return
+			case <-ticker.C:
+				s.deadlineTick(ctx)
+			}
+		}
+	}()
+}
+
+func (s *Service) deadlineTick(ctx context.Context) {
+	now := time.Now().UTC()
+	today := time.Date(now.Year(), now.Month(), now.Day(), 0, 0, 0, 0, time.UTC)
+	tomorrow := today.AddDate(0, 0, 1)
+
+	_ = s.notifyDueDate(ctx, today, "due_today", "Дедлайн сегодня", "Сегодня дедлайн по задаче: %s", "task_due_today")
+	_ = s.notifyDueDate(ctx, tomorrow, "due_tomorrow", "Дедлайн завтра", "Завтра дедлайн по задаче: %s", "task_due_tomorrow")
+	_ = s.notifyOverdue(ctx, today)
+}
+
+func (s *Service) notifyDueDate(ctx context.Context, dueDate time.Time, kind, title, msgFmt, nType string) error {
+	tasks, err := s.repo.ListTasksDueOn(ctx, dueDate)
+	if err != nil {
+		s.logger.Warn("deadline notifier: list due tasks failed", zap.Error(err))
+		return err
+	}
+
+	dateKey := dueDate.Format("2006-01-02")
+	for _, t := range tasks {
+		if t == nil || t.AssigneeID == nil || *t.AssigneeID <= 0 {
+			continue
+		}
+
+		dedup := fmt.Sprintf("%s|task=%d|user=%d|date=%s", kind, t.ID, *t.AssigneeID, dateKey)
+		inserted, ierr := s.repo.TryInsertDeadlineRun(ctx, &DeadlineNotificationRun{
+			DedupKey: dedup,
+			Kind:     kind,
+			TaskID:   t.ID,
+			UserID:   *t.AssigneeID,
+			DueDate:  dueDate,
+			SentAt:   time.Now().UTC(),
+		})
+		if ierr != nil || !inserted {
+			continue
+		}
+
+		s.notifyBestEffort(ctx, *t.AssigneeID,
+			title,
+			fmt.Sprintf(msgFmt, t.Title),
+			"/tasks",
+			nType,
+		)
+	}
+
+	return nil
+}
+
+func (s *Service) notifyOverdue(ctx context.Context, today time.Time) error {
+	tasks, err := s.repo.ListOverdueOpenTasks(ctx, today)
+	if err != nil {
+		s.logger.Warn("deadline notifier: list overdue tasks failed", zap.Error(err))
+		return err
+	}
+
+	dateKey := today.Format("2006-01-02")
+	for _, t := range tasks {
+		if t == nil || t.AssigneeID == nil || *t.AssigneeID <= 0 || t.DueDate == nil {
+			continue
+		}
+
+		dedup := fmt.Sprintf("overdue|task=%d|user=%d|date=%s", t.ID, *t.AssigneeID, dateKey)
+		inserted, ierr := s.repo.TryInsertDeadlineRun(ctx, &DeadlineNotificationRun{
+			DedupKey: dedup,
+			Kind:     "overdue",
+			TaskID:   t.ID,
+			UserID:   *t.AssigneeID,
+			DueDate:  *t.DueDate,
+			SentAt:   time.Now().UTC(),
+		})
+		if ierr != nil || !inserted {
+			continue
+		}
+
+		s.notifyBestEffort(ctx, *t.AssigneeID,
+			"Задача просрочена",
+			fmt.Sprintf("Просрочена задача: %s", t.Title),
+			"/tasks",
+			"task_overdue",
+		)
+	}
+
+	return nil
 }
