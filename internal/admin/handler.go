@@ -18,6 +18,7 @@ import (
 
 type Handler struct {
 	adminv1.UnimplementedAdminServiceServer
+	adminv1.UnimplementedNormControlServiceServer
 	service *Service
 	logger  *zap.Logger
 }

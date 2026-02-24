@@ -1606,6 +1606,7 @@ func (s *Service) SubmitDocumentForStep(ctx context.Context, req *SubmitDocument
 	if err := s.repo.CreateSubmission(ctx, sub); err != nil {
 		return nil, err
 	}
+	s.ensureNormCheckIfNeeded(ctx, sub)
 
 	// Двигаем workflow
 	eventName := s.getEventNameForState(rt.CurrentStateName)
@@ -1641,7 +1642,7 @@ func (s *Service) getEventNameForState(stateName string) string {
 	mapping := map[string]string{
 		"PRE_DEFENSE_1": "PREDEFENSE1_SUBMITTED",
 		"PRE_DEFENSE_2": "PREDEFENSE2_SUBMITTED",
-		"NORM_CONTROL":  "NORMCONTROL_SUBMITTED",
+		"NORM_CONTROL":  "",
 		"ECONOMICS":     "ECONOMICS_SUBMITTED",
 		"ANTIPLAGIAT":   "ANTIPLAGIAT_SUBMITTED",
 	}

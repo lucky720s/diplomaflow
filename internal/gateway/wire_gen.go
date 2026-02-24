@@ -101,7 +101,7 @@ func InitializeApp(cfg *config.Config, log *logger.Logger) (*handler.Handler, fu
 		cleanup()
 		return nil, nil, err
 	}
-	taskServiceClient, cleanup10, err := ProvideTaskClient(cfg)
+	normControlServiceClient, cleanup10, err := ProvideNormControlClient(cfg)
 	if err != nil {
 		cleanup9()
 		cleanup8()
@@ -114,8 +114,23 @@ func InitializeApp(cfg *config.Config, log *logger.Logger) (*handler.Handler, fu
 		cleanup()
 		return nil, nil, err
 	}
-	handlerHandler := handler.NewHandler(authServiceClient, projectServiceClient, teamServiceClient, universityServiceClient, workflowServiceClient, notificationServiceClient, fileServiceClient, formServiceClient, adminServiceClient, taskServiceClient)
+	taskServiceClient, cleanup11, err := ProvideTaskClient(cfg)
+	if err != nil {
+		cleanup10()
+		cleanup9()
+		cleanup8()
+		cleanup7()
+		cleanup6()
+		cleanup5()
+		cleanup4()
+		cleanup3()
+		cleanup2()
+		cleanup()
+		return nil, nil, err
+	}
+	handlerHandler := handler.NewHandler(authServiceClient, projectServiceClient, teamServiceClient, universityServiceClient, workflowServiceClient, notificationServiceClient, fileServiceClient, formServiceClient, adminServiceClient, normControlServiceClient, taskServiceClient)
 	return handlerHandler, func() {
+		cleanup11()
 		cleanup10()
 		cleanup9()
 		cleanup8()
@@ -219,4 +234,12 @@ func ProvideTaskClient(cfg *config.Config) (v1_10.TaskServiceClient, func(), err
 		return nil, nil, err
 	}
 	return v1_10.NewTaskServiceClient(conn), cleanup, nil
+}
+
+func ProvideNormControlClient(cfg *config.Config) (v1_9.NormControlServiceClient, func(), error) {
+	conn, cleanup, err := provideConn(cfg.AdminServiceAddr)
+	if err != nil {
+		return nil, nil, err
+	}
+	return v1_9.NewNormControlServiceClient(conn), cleanup, nil
 }

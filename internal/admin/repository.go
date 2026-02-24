@@ -101,6 +101,28 @@ type Repository interface {
 	AddPreDefenseHistory(ctx context.Context, entry *PreDefenseHistory) error
 	GetPreDefenseHistory(ctx context.Context, submissionID string) ([]*PreDefenseHistory, error)
 	SetProjectTopicRegisteredAt(ctx context.Context, projectID int64, t time.Time) error
+
+	// ==================== Norm Control ====================
+	EnsureNormCheckForSubmission(ctx context.Context, submissionID string) (*NormControlCheck, error)
+	ListNormChecks(ctx context.Context, filter NormCheckFilter) ([]*NormControlCheck, int64, error)
+	GetNormCheck(ctx context.Context, submissionID string) (*NormControlCheck, error)
+	UpdateNormCheck(ctx context.Context, check *NormControlCheck) error
+
+	ListNormIssues(ctx context.Context, submissionID string) ([]*NormControlIssue, error)
+	GetNormIssue(ctx context.Context, id string) (*NormControlIssue, error)
+	CreateNormIssue(ctx context.Context, issue *NormControlIssue) error
+	UpdateNormIssue(ctx context.Context, issue *NormControlIssue) error
+	DeleteNormIssue(ctx context.Context, id string) error
+
+	CountUnresolvedCriticalIssues(ctx context.Context, submissionID string) (int64, error)
+
+	AddNormHistory(ctx context.Context, h *NormControlHistory) error
+	ListNormHistory(ctx context.Context, projectID int64) ([]*NormControlHistory, error)
+
+	ListNormChecklists(ctx context.Context) ([]*NormControlChecklist, error)
+	CreateNormChecklist(ctx context.Context, c *NormControlChecklist) error
+
+	StatsNormIssuesByCategory(ctx context.Context, departmentID int64) (map[string]int64, error)
 }
 
 type TopicRegistrationFilter struct {

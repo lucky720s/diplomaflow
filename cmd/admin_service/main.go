@@ -42,12 +42,13 @@ func main() {
 
 	grpcServer := grpc.NewServer()
 	adminv1.RegisterAdminServiceServer(grpcServer, h)
-
+	adminv1.RegisterNormControlServiceServer(grpcServer, h)
 	// gRPC health
 	healthServer := health.NewServer()
 	grpc_health_v1.RegisterHealthServer(grpcServer, healthServer)
 	healthServer.SetServingStatus("", grpc_health_v1.HealthCheckResponse_SERVING)
 	healthServer.SetServingStatus("admin.v1.AdminService", grpc_health_v1.HealthCheckResponse_SERVING)
+	healthServer.SetServingStatus("admin.v1.NormControlService", grpc_health_v1.HealthCheckResponse_SERVING)
 
 	reflection.Register(grpcServer)
 
@@ -69,6 +70,7 @@ func main() {
 
 	healthServer.SetServingStatus("", grpc_health_v1.HealthCheckResponse_NOT_SERVING)
 	healthServer.SetServingStatus("admin.v1.AdminService", grpc_health_v1.HealthCheckResponse_NOT_SERVING)
+	healthServer.SetServingStatus("admin.v1.NormControlService", grpc_health_v1.HealthCheckResponse_NOT_SERVING)
 
 	grpcServer.GracefulStop()
 	log.Info("Admin Service exited")

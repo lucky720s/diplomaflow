@@ -343,6 +343,28 @@ func main() {
 			supervisorsPanel.GET("/submissions", handler.ListSupervisorSubmissions)
 			supervisorsPanel.POST("/topic-registrations/:id/review", handler.ReviewTopicRegistration)
 		}
+		norm := v1.Group("/norm-control")
+		norm.Use(middleware.AuthMiddleware(cfg.JWTSecret))
+		norm.Use(middleware.RBACMiddleware("admin", "norm_control"))
+		{
+			norm.GET("/pending", handler.NormListPending)
+			norm.GET("/documents/:id", handler.NormGetDocument)
+
+			norm.POST("/documents/:id/start", handler.NormStartReview)
+
+			norm.POST("/documents/:id/issues", handler.NormAddIssue)
+			norm.PUT("/issues/:id", handler.NormUpdateIssue)
+			norm.DELETE("/issues/:id", handler.NormDeleteIssue)
+
+			norm.POST("/documents/:id/approve", handler.NormApprove)
+			norm.POST("/documents/:id/return", handler.NormReturn)
+
+			norm.GET("/history/:project_id", handler.NormHistory)
+			norm.GET("/statistics", handler.NormStatistics)
+
+			norm.GET("/checklists", handler.NormListChecklists)
+			norm.POST("/checklists", handler.NormCreateChecklist)
+		}
 
 	}
 
@@ -360,6 +382,7 @@ func main() {
 		{Name: "file", Addr: cfg.FileServiceAddr, ServiceName: "file.v1.FileService"},
 		{Name: "form", Addr: cfg.FormServiceAddr, ServiceName: "form.v1.FormService"},
 		{Name: "admin", Addr: cfg.AdminServiceAddr, ServiceName: "admin.v1.AdminService"},
+		{Name: "admin_norm", Addr: cfg.AdminServiceAddr, ServiceName: "admin.v1.NormControlService"},
 	}
 
 	router.GET("/healthz", func(c *gin.Context) {

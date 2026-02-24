@@ -1,0 +1,206 @@
+syntax = "proto3";
+
+package admin.v1;
+
+import "validate/validate.proto";
+import "google/protobuf/timestamp.proto";
+
+option go_package = "github.com/lucky720s/diplomaflow/pkg/protobuf/admin/v1";
+
+// ==================== Service ====================
+service NormControlService {
+rpc ListPendingDocuments(ListPendingDocumentsRequest) returns (ListPendingDocumentsResponse);
+rpc GetDocumentForReview(GetDocumentRequest) returns (DocumentReviewResponse);
+rpc StartReview(StartReviewRequest) returns (StartReviewResponse);
+
+rpc AddIssue(AddIssueRequest) returns (AddIssueResponse);
+rpc UpdateIssue(UpdateIssueRequest) returns (UpdateIssueResponse);
+rpc DeleteIssue(DeleteIssueRequest) returns (DeleteIssueResponse);
+
+rpc ApproveDocument(ApproveDocumentRequest) returns (ApproveDocumentResponse);
+rpc ReturnForRevision(ReturnForRevisionRequest) returns (ReturnForRevisionResponse);
+
+rpc GetCheckHistory(GetCheckHistoryRequest) returns (GetCheckHistoryResponse);
+rpc GetErrorStatistics(GetStatisticsRequest) returns (GetStatisticsResponse);
+
+rpc ListChecklists(ListChecklistsRequest) returns (ListChecklistsResponse);
+rpc CreateChecklist(CreateChecklistRequest) returns (CreateChecklistResponse);
+}
+
+// ==================== Common models ====================
+message PendingDocument {
+string id = 1;              // check_id или document_id (на твоё усмотрение)
+int64 project_id = 2;
+int64 team_id = 3;
+string status = 4;          // submitted|in_review|returned|approved
+string file_id = 5;
+int32 version = 6;
+int64 checker_id = 7;
+google.protobuf.Timestamp submitted_at = 8;
+}
+
+message Issue {
+string id = 1;
+string check_id = 2;
+
+string category = 3;        // formatting|structure|references|tables|...
+string severity = 4;        // critical|major|minor
+string description = 5;
+
+int32 page_number = 6;
+int32 line_number = 7;
+
+bool is_resolved = 8;
+google.protobuf.Timestamp created_at = 9;
+google.protobuf.Timestamp resolved_at = 10;
+}
+
+message Checklist {
+string id = 1;
+string name = 2;
+string category = 3;
+string items_json = 4;      // JSON строкой (проще всего для старта)
+bool is_active = 5;
+}
+
+// ==================== RPCs ====================
+message ListPendingDocumentsRequest {
+string status = 1;
+int64 team_id = 2;
+int64 checker_id = 3;
+int64 department_id = 4;
+int32 page = 5;
+int32 page_size = 6;
+}
+
+message ListPendingDocumentsResponse {
+repeated PendingDocument documents = 1;
+int64 total_count = 2;
+}
+
+message GetDocumentRequest {
+string id = 1 [(validate.rules).string.min_len = 1];
+}
+
+message DocumentReviewResponse {
+PendingDocument document = 1;
+repeated Issue issues = 2;
+string overall_comment = 3;
+}
+
+message StartReviewRequest {
+string id = 1 [(validate.rules).string.min_len = 1];
+int64 checker_id = 2 [(validate.rules).int64.gt = 0];
+}
+
+message StartReviewResponse {
+bool success = 1;
+string status = 2;
+}
+
+message AddIssueRequest {
+string document_id = 1 [(validate.rules).string.min_len = 1];
+
+string category = 2;
+string severity = 3;
+string description = 4 [(validate.rules).string.min_len = 1];
+
+int32 page_number = 5;
+int32 line_number = 6;
+}
+
+message AddIssueResponse {
+Issue issue = 1;
+}
+
+message UpdateIssueRequest {
+string id = 1 [(validate.rules).string.min_len = 1];
+
+string category = 2;
+string severity = 3;
+string description = 4;
+int32 page_number = 5;
+int32 line_number = 6;
+
+bool is_resolved = 7;
+}
+
+message UpdateIssueResponse {
+Issue issue = 1;
+}
+
+message DeleteIssueRequest {
+string id = 1 [(validate.rules).string.min_len = 1];
+}
+
+message DeleteIssueResponse {
+bool success = 1;
+}
+
+message ApproveDocumentRequest {
+string id = 1 [(validate.rules).string.min_len = 1];
+int64 checker_id = 2 [(validate.rules).int64.gt = 0];
+string comment = 3;
+}
+
+message ApproveDocumentResponse {
+bool success = 1;
+string status = 2;
+}
+
+message ReturnForRevisionRequest {
+string id = 1 [(validate.rules).string.min_len = 1];
+int64 checker_id = 2 [(validate.rules).int64.gt = 0];
+string comment = 3;
+}
+
+message ReturnForRevisionResponse {
+bool success = 1;
+string status = 2;
+}
+
+message GetCheckHistoryRequest {
+int64 project_id = 1 [(validate.rules).int64.gt = 0];
+}
+
+message HistoryItem {
+string id = 1;
+int64 project_id = 2;
+string action = 3;
+int64 actor_id = 4;
+string comment = 5;
+google.protobuf.Timestamp created_at = 6;
+}
+
+message GetCheckHistoryResponse {
+repeated HistoryItem history = 1;
+}
+
+message GetStatisticsRequest {
+int64 department_id = 1;
+}
+
+message CategoryStat {
+string category = 1;
+int64 issue_count = 2;
+}
+
+message GetStatisticsResponse {
+repeated CategoryStat stats = 1;
+}
+
+message ListChecklistsRequest {}
+
+message ListChecklistsResponse {
+repeated Checklist checklists = 1;
+}
+
+message CreateChecklistRequest {
+string name = 1 [(validate.rules).string.min_len = 1];
+string category = 2;
+string items_json = 3 [(validate.rules).string.min_len = 2];
+}
+
+message CreateChecklistResponse {
+Checklist checklist = 1;
+}

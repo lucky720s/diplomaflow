@@ -119,6 +119,13 @@ func ProvideTaskClient(cfg *config.Config) (taskv1.TaskServiceClient, func(), er
 	}
 	return taskv1.NewTaskServiceClient(conn), cleanup, nil
 }
+func ProvideNormControlClient(cfg *config.Config) (adminv1.NormControlServiceClient, func(), error) {
+	conn, cleanup, err := provideConn(cfg.AdminServiceAddr)
+	if err != nil {
+		return nil, nil, err
+	}
+	return adminv1.NewNormControlServiceClient(conn), cleanup, nil
+}
 
 func InitializeApp(cfg *config.Config, log *logger.Logger) (*handler.Handler, func(), error) {
 	wire.Build(
@@ -132,6 +139,7 @@ func InitializeApp(cfg *config.Config, log *logger.Logger) (*handler.Handler, fu
 		ProvideFormClient,
 		ProvideTaskClient,
 		ProvideAdminClient,
+		ProvideNormControlClient,
 		handler.NewHandler,
 	)
 	return &handler.Handler{}, nil, nil

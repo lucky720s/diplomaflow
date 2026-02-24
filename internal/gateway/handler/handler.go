@@ -23,6 +23,7 @@ type Handler struct {
 	fileClient         filev1.FileServiceClient
 	formClient         formv1.FormServiceClient
 	adminClient        adminv1.AdminServiceClient
+	normControlClient  adminv1.NormControlServiceClient
 	taskClient         taskv1.TaskServiceClient
 }
 
@@ -36,6 +37,7 @@ func NewHandler(
 	fileClient filev1.FileServiceClient,
 	formClient formv1.FormServiceClient,
 	adminClient adminv1.AdminServiceClient,
+	normControlClient adminv1.NormControlServiceClient,
 	taskClient taskv1.TaskServiceClient,
 ) *Handler {
 	return &Handler{
@@ -48,6 +50,7 @@ func NewHandler(
 		fileClient:         fileClient,
 		formClient:         formClient,
 		adminClient:        adminClient,
+		normControlClient:  normControlClient,
 		taskClient:         taskClient,
 	}
 }
