@@ -2,11 +2,13 @@ package middleware
 
 import (
 	"net/http"
+	"strings"
 
 	"github.com/gin-gonic/gin"
 )
 
 func CorsMiddleware(allowedOrigins []string) gin.HandlerFunc {
+	// fallback (если конфиг не передали)
 	if len(allowedOrigins) == 0 {
 		allowedOrigins = []string{
 			"https://diploma-flow.iitu.kz",
@@ -14,27 +16,40 @@ func CorsMiddleware(allowedOrigins []string) gin.HandlerFunc {
 			"http://localhost:5173",
 		}
 	}
-	//tagy bir push
-	originsMap := make(map[string]bool)
+
+	// whitelist map
+	originsMap := make(map[string]struct{}, len(allowedOrigins))
 	for _, o := range allowedOrigins {
-		originsMap[o] = true
+		o = strings.TrimSpace(o)
+		if o == "" {
+			continue
+		}
+		originsMap[o] = struct{}{}
 	}
 
 	return func(c *gin.Context) {
 		origin := c.Request.Header.Get("Origin")
-		if origin == "" {
-			c.Writer.Header().Set("Access-Control-Allow-Origin", "*")
-		}
-		if originsMap[origin] {
-			c.Writer.Header().Set("Access-Control-Allow-Origin", origin)
+
+		// Всегда корректно отвечаем на preflight (OPTIONS).
+		// Но CORS-заголовки даём только если Origin разрешён.
+		if origin != "" {
+			if _, ok := originsMap[origin]; ok {
+				h := c.Writer.Header()
+				h.Set("Access-Control-Allow-Origin", origin)
+				h.Set("Vary", "Origin")
+
+				// credentials можно только когда origin НЕ "*"
+				h.Set("Access-Control-Allow-Credentials", "true")
+				h.Set("Access-Control-Allow-Headers",
+					"Content-Type, Content-Length, Accept-Encoding, X-CSRF-Token, Authorization, accept, origin, Cache-Control, X-Requested-With, X-Trace-ID")
+				h.Set("Access-Control-Allow-Methods", "POST, OPTIONS, GET, PUT, DELETE, PATCH")
+				h.Set("Access-Control-Max-Age", "86400")
+			}
+			// если Origin не в whitelist — ничего не выставляем,
+			// браузер сам заблокирует доступ (как и должно быть)
 		}
 
-		c.Writer.Header().Set("Access-Control-Allow-Credentials", "true")
-		c.Writer.Header().Set("Access-Control-Allow-Headers", "Content-Type, Content-Length, Accept-Encoding, X-CSRF-Token, Authorization, accept, origin, Cache-Control, X-Requested-With, X-Trace-ID")
-		c.Writer.Header().Set("Access-Control-Allow-Methods", "POST, OPTIONS, GET, PUT, DELETE, PATCH")
-		c.Writer.Header().Set("Access-Control-Max-Age", "86400")
-
-		if c.Request.Method == "OPTIONS" {
+		if c.Request.Method == http.MethodOptions {
 			c.AbortWithStatus(http.StatusNoContent)
 			return
 		}
