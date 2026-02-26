@@ -13,8 +13,8 @@ v_iitu_id BIGINT;
   v_role_comm BIGINT;
 BEGIN
 SELECT id INTO v_iitu_id FROM universities WHERE short_name = 'IITU' LIMIT 1;
-SELECT id INTO v_pi_id FROM departments WHERE university_id = v_iitu_id AND name = 'Программная Инженерия' LIMIT 1;
-SELECT id INTO v_sib_id FROM departments WHERE university_id = v_iitu_id AND name = 'СИБ' LIMIT 1;
+SELECT id INTO v_pi_id FROM departments WHERE university_id = v_iitu_id AND name = 'Компьютерная инженерия' LIMIT 1;
+SELECT id INTO v_sib_id FROM departments WHERE university_id = v_iitu_id AND name = 'Тест' LIMIT 1;
 
 IF v_iitu_id IS NULL OR v_pi_id IS NULL OR v_sib_id IS NULL THEN
     RAISE EXCEPTION 'IITU/PI/SIB not found';
