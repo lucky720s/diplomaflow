@@ -1,24 +1,29 @@
 name: diplomaflow
 
+# ============================================================
+# Общие env для сервисов (берём из .env через --env-file)
+# ============================================================
 x-common-env: &common_env
   ENV: ${ENV:-production}
   DATABASE_DSN: ${DATABASE_DSN:?DATABASE_DSN is required}
 
-x-service-addrs-host: &svc_addrs_host
-  SERVICES_AUTH_ADDR: 127.0.0.1:8082
-  SERVICES_UNIVERSITY_ADDR: 127.0.0.1:8081
-  SERVICES_PROJECT_ADDR: 127.0.0.1:8083
-  SERVICES_TEAM_ADDR: 127.0.0.1:8084
-  SERVICES_WORKFLOW_ADDR: 127.0.0.1:8085
-  SERVICES_NOTIFICATION_ADDR: 127.0.0.1:8087
-  SERVICES_FILE_ADDR: 127.0.0.1:8088
-  SERVICES_FORM_ADDR: 127.0.0.1:8089
-  SERVICES_ADMIN_ADDR: 127.0.0.1:8090
-  SERVICES_TASK_ADDR: 127.0.0.1:8091
+# ============================================================
+# gRPC адреса сервисов ВНУТРИ docker-сети (НЕ localhost)
+# ============================================================
+x-service-addrs-docker: &svc_addrs_docker
+  SERVICES_AUTH_ADDR: auth_service:8082
+  SERVICES_UNIVERSITY_ADDR: university_service:8081
+  SERVICES_PROJECT_ADDR: project_service:8083
+  SERVICES_TEAM_ADDR: team_service:8084
+  SERVICES_WORKFLOW_ADDR: workflow_service:8085
+  SERVICES_NOTIFICATION_ADDR: notification_service:8087
+  SERVICES_FILE_ADDR: file_service:8088
+  SERVICES_FORM_ADDR: form_service:8089
+  SERVICES_ADMIN_ADDR: admin_service:8090
+  SERVICES_TASK_ADDR: task_service:8091
 
 # ============================================================
-# Лимит логов — предотвращает рост /var/lib/docker/containers/
-# Максимум 30 МБ на сервис (3 файла × 10 МБ)
+# Лимит логов контейнеров
 # ============================================================
 x-logging: &default-logging
   driver: "json-file"
@@ -26,21 +31,32 @@ x-logging: &default-logging
     max-size: "10m"
     max-file: "3"
 
+networks:
+  diplomaflow:
+    driver: bridge
+
+volumes:
+  pg_data:
+  file_uploads:
+  prom_data:
+  grafana_data:
+
 services:
   main_postgres:
     image: postgres:16-alpine
-    network_mode: host
     logging: *default-logging
+    networks: [diplomaflow]
     environment:
       POSTGRES_USER: ${POSTGRES_USER:-diplomaflow}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?POSTGRES_PASSWORD is required}
       POSTGRES_DB: ${POSTGRES_DB:-diplomaflow}
-      PGPORT: "5433"
-    command: -p 5433
     volumes:
       - pg_data:/var/lib/postgresql/data
+    # (опционально) если хочешь доступ к БД с хоста — оставь только localhost
+    ports:
+      - "127.0.0.1:5433:5432"
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U $$POSTGRES_USER -h 127.0.0.1 -p 5433"]
+      test: ["CMD-SHELL", "pg_isready -U $$POSTGRES_USER -h 127.0.0.1 -p 5432"]
       interval: 5s
       timeout: 3s
       retries: 30
@@ -48,11 +64,15 @@ services:
 
   redis:
     image: redis:7-alpine
-    network_mode: host
     logging: *default-logging
-    command: redis-server --port 6380
+    networks: [diplomaflow]
+    # стандартный порт внутри контейнера
+    command: redis-server --port 6379
+    # (опционально) доступ с хоста — только localhost
+    ports:
+      - "127.0.0.1:6380:6379"
     healthcheck:
-      test: ["CMD", "redis-cli", "-h", "127.0.0.1", "-p", "6380", "ping"]
+      test: ["CMD", "redis-cli", "-h", "127.0.0.1", "-p", "6379", "ping"]
       interval: 5s
       timeout: 3s
       retries: 30
@@ -62,13 +82,14 @@ services:
     build:
       context: .
       dockerfile: cmd/migrate/Dockerfile
-    network_mode: host
     logging: *default-logging
+    networks: [diplomaflow]
     depends_on:
       main_postgres:
         condition: service_healthy
     environment:
-      DATABASE_URL: postgres://${POSTGRES_USER:-diplomaflow}:${POSTGRES_PASSWORD}@127.0.0.1:5433/${POSTGRES_DB:-diplomaflow}?sslmode=disable
+      # Миграции должны ходить в БД через docker DNS, не localhost [[2]]
+      DATABASE_URL: postgres://${POSTGRES_USER:-diplomaflow}:${POSTGRES_PASSWORD}@main_postgres:5432/${POSTGRES_DB:-diplomaflow}?sslmode=disable
     command: ["-cmd=up", "-path=file:///app/db/migrations"]
     restart: "no"
 
@@ -76,20 +97,24 @@ services:
     build:
       context: .
       dockerfile: cmd/api_gateway/Dockerfile
-    network_mode: host
     logging: *default-logging
+    networks: [diplomaflow]
     environment:
       ENV: ${ENV:-production}
       PORT: "8080"
-      REDIS_ADDR: 127.0.0.1:6380
+      # Внутри сети redis по имени сервиса
+      REDIS_ADDR: redis:6379
       JWT_SECRET: ${JWT_SECRET:?JWT_SECRET is required}
       METRICS_PORT: ${METRICS_PORT:-9091}
-      <<: *svc_addrs_host
+      <<: *svc_addrs_docker
     depends_on:
       redis:
         condition: service_healthy
       auth_service:
         condition: service_started
+    # Публикуем gateway только на localhost (под nginx), наружу не торчит
+    ports:
+      - "127.0.0.1:8080:8080"
     healthcheck:
       test: ["CMD-SHELL", "wget -qO- http://127.0.0.1:8080/healthz >/dev/null 2>&1"]
       interval: 10s
@@ -102,8 +127,8 @@ services:
     build:
       context: .
       dockerfile: cmd/university_service/Dockerfile
-    network_mode: host
     logging: *default-logging
+    networks: [diplomaflow]
     environment:
       <<: *common_env
       GRPC_PORT: "8081"
@@ -122,16 +147,16 @@ services:
     build:
       context: .
       dockerfile: cmd/auth_service/Dockerfile
-    network_mode: host
     logging: *default-logging
+    networks: [diplomaflow]
     environment:
       <<: *common_env
       GRPC_PORT: "8082"
-      REDIS_ADDR: 127.0.0.1:6380
+      REDIS_ADDR: redis:6379
       JWT_SECRET: ${JWT_SECRET:?JWT_SECRET is required}
       ACCESS_TOKEN_TTL: ${ACCESS_TOKEN_TTL:-24h}
       REFRESH_TOKEN_TTL: ${REFRESH_TOKEN_TTL:-720h}
-      SERVICES_UNIVERSITY_ADDR: 127.0.0.1:8081
+      SERVICES_UNIVERSITY_ADDR: university_service:8081
     depends_on:
       migrate:
         condition: service_completed_successfully
@@ -151,8 +176,8 @@ services:
     build:
       context: .
       dockerfile: cmd/notification_service/Dockerfile
-    network_mode: host
     logging: *default-logging
+    networks: [diplomaflow]
     environment:
       <<: *common_env
       GRPC_PORT: "8087"
@@ -171,14 +196,14 @@ services:
     build:
       context: .
       dockerfile: cmd/workflow_service/Dockerfile
-    network_mode: host
     logging: *default-logging
+    networks: [diplomaflow]
     environment:
       <<: *common_env
       GRPC_PORT: "8085"
-      SERVICES_NOTIFICATION_ADDR: 127.0.0.1:8087
-      SERVICES_PROJECT_ADDR: 127.0.0.1:8083
-      SERVICES_TEAM_ADDR: 127.0.0.1:8084
+      SERVICES_NOTIFICATION_ADDR: notification_service:8087
+      SERVICES_PROJECT_ADDR: project_service:8083
+      SERVICES_TEAM_ADDR: team_service:8084
     depends_on:
       migrate:
         condition: service_completed_successfully
@@ -196,13 +221,13 @@ services:
     build:
       context: .
       dockerfile: cmd/project_service/Dockerfile
-    network_mode: host
     logging: *default-logging
+    networks: [diplomaflow]
     environment:
       <<: *common_env
       GRPC_PORT: "8083"
-      SERVICES_WORKFLOW_ADDR: 127.0.0.1:8085
-      SERVICES_NOTIFICATION_ADDR: 127.0.0.1:8087
+      SERVICES_WORKFLOW_ADDR: workflow_service:8085
+      SERVICES_NOTIFICATION_ADDR: notification_service:8087
     depends_on:
       migrate:
         condition: service_completed_successfully
@@ -222,14 +247,14 @@ services:
     build:
       context: .
       dockerfile: cmd/team_service/Dockerfile
-    network_mode: host
     logging: *default-logging
+    networks: [diplomaflow]
     environment:
       <<: *common_env
       GRPC_PORT: "8084"
-      SERVICES_AUTH_ADDR: 127.0.0.1:8082
-      SERVICES_WORKFLOW_ADDR: 127.0.0.1:8085
-      SERVICES_NOTIFICATION_ADDR: 127.0.0.1:8087
+      SERVICES_AUTH_ADDR: auth_service:8082
+      SERVICES_WORKFLOW_ADDR: workflow_service:8085
+      SERVICES_NOTIFICATION_ADDR: notification_service:8087
     depends_on:
       migrate:
         condition: service_completed_successfully
@@ -251,8 +276,8 @@ services:
     build:
       context: .
       dockerfile: cmd/file_service/Dockerfile
-    network_mode: host
     logging: *default-logging
+    networks: [diplomaflow]
     environment:
       <<: *common_env
       GRPC_PORT: "8088"
@@ -274,8 +299,8 @@ services:
     build:
       context: .
       dockerfile: cmd/form_service/Dockerfile
-    network_mode: host
     logging: *default-logging
+    networks: [diplomaflow]
     environment:
       <<: *common_env
       GRPC_PORT: "8089"
@@ -294,15 +319,15 @@ services:
     build:
       context: .
       dockerfile: cmd/admin_service/Dockerfile
-    network_mode: host
     logging: *default-logging
+    networks: [diplomaflow]
     environment:
       <<: *common_env
       GRPC_PORT: "8090"
-      SERVICES_AUTH_ADDR: 127.0.0.1:8082
-      SERVICES_PROJECT_ADDR: 127.0.0.1:8083
-      SERVICES_TEAM_ADDR: 127.0.0.1:8084
-      SERVICES_WORKFLOW_ADDR: 127.0.0.1:8085
+      SERVICES_AUTH_ADDR: auth_service:8082
+      SERVICES_PROJECT_ADDR: project_service:8083
+      SERVICES_TEAM_ADDR: team_service:8084
+      SERVICES_WORKFLOW_ADDR: workflow_service:8085
     depends_on:
       migrate:
         condition: service_completed_successfully
@@ -326,15 +351,15 @@ services:
     build:
       context: .
       dockerfile: cmd/task_service/Dockerfile
-    network_mode: host
     logging: *default-logging
+    networks: [diplomaflow]
     environment:
       <<: *common_env
       GRPC_PORT: "8091"
-      SERVICES_AUTH_ADDR: 127.0.0.1:8082
-      SERVICES_TEAM_ADDR: 127.0.0.1:8084
-      SERVICES_NOTIFICATION_ADDR: 127.0.0.1:8087
-      SERVICES_FILE_ADDR: 127.0.0.1:8088
+      SERVICES_AUTH_ADDR: auth_service:8082
+      SERVICES_TEAM_ADDR: team_service:8084
+      SERVICES_NOTIFICATION_ADDR: notification_service:8087
+      SERVICES_FILE_ADDR: file_service:8088
     depends_on:
       migrate:
         condition: service_completed_successfully
@@ -356,30 +381,29 @@ services:
 
   prometheus:
     image: prom/prometheus:v2.55.1
-    network_mode: host
     logging: *default-logging
+    networks: [diplomaflow]
     volumes:
       - ./deploy/prometheus.yml:/etc/prometheus/prometheus.yml:ro
       - prom_data:/prometheus
     command:
       - --config.file=/etc/prometheus/prometheus.yml
+    # (опционально) наружу не надо — только локально
+    ports:
+      - "127.0.0.1:9090:9090"
     restart: unless-stopped
 
   grafana:
     image: grafana/grafana:11.3.0
-    network_mode: host
     logging: *default-logging
+    networks: [diplomaflow]
     environment:
-      - GF_SECURITY_ADMIN_USER=admin
-      - GF_SECURITY_ADMIN_PASSWORD=${GRAFANA_ADMIN_PASSWORD:?GRAFANA_ADMIN_PASSWORD is required}
+      GF_SECURITY_ADMIN_USER: admin
+      GF_SECURITY_ADMIN_PASSWORD: ${GRAFANA_ADMIN_PASSWORD:?GRAFANA_ADMIN_PASSWORD is required}
     volumes:
       - grafana_data:/var/lib/grafana
       - ./deploy/grafana/provisioning:/etc/grafana/provisioning:ro
       - ./deploy/grafana/dashboards:/var/lib/grafana/dashboards:ro
+    ports:
+      - "127.0.0.1:3000:3000"
     restart: unless-stopped
-
-volumes:
-  pg_data:
-  file_uploads:
-  prom_data:
-  grafana_data:

@@ -5,5 +5,7 @@ database:
 services:
   auth_addr: "auth_service:8082"
   notification_addr: "notification_service:8087"
-  workflow_addr: "workflow_service:8085"  
+  workflow_addr: "workflow_service:8085"
+
+
 
