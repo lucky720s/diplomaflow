@@ -17,8 +17,8 @@ END IF;
 
 INSERT INTO departments (name, university_id)
 VALUES
-    ('Программная Инженерия', v_iitu_id),
-    ('СИБ', v_iitu_id)
+    ('Компьютерная инженерия', v_iitu_id),
+    ('Тест', v_iitu_id)
     ON CONFLICT (name, university_id) DO NOTHING;
 END $$;
 
@@ -29,7 +29,7 @@ v_iitu_id BIGINT;
   v_pi_id BIGINT;
 BEGIN
 SELECT id INTO v_iitu_id FROM universities WHERE short_name = 'IITU' LIMIT 1;
-SELECT id INTO v_pi_id FROM departments WHERE university_id = v_iitu_id AND name = 'Программная Инженерия' LIMIT 1;
+SELECT id INTO v_pi_id FROM departments WHERE university_id = v_iitu_id AND name = 'Компьютерная инженерия' LIMIT 1;
 
 IF v_pi_id IS NULL THEN
     RAISE EXCEPTION 'PI department not found';
