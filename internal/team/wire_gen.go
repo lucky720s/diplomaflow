@@ -7,6 +7,7 @@
 package team
 
 import (
+	v1_4 "github.com/lucky720s/diplomaflow/pkg/protobuf/admin/v1"
 	"github.com/lucky720s/diplomaflow/pkg/protobuf/auth/v1"
 	v1_3 "github.com/lucky720s/diplomaflow/pkg/protobuf/notification/v1"
 	v1_2 "github.com/lucky720s/diplomaflow/pkg/protobuf/workflow/v1"
@@ -16,9 +17,9 @@ import (
 
 // Injectors from wire.go:
 
-func InitializeApp(cfg *Config, db *gorm.DB, logger *zap.Logger, authClient v1.AuthServiceClient, workflowClient v1_2.WorkflowServiceClient, notificationClient v1_3.NotificationServiceClient) (*App, func(), error) {
+func InitializeApp(cfg *Config, db *gorm.DB, logger *zap.Logger, authClient v1.AuthServiceClient, workflowClient v1_2.WorkflowServiceClient, notificationClient v1_3.NotificationServiceClient, adminClient v1_4.AdminServiceClient) (*App, func(), error) {
 	teamRepository := NewRepository(db)
-	service := NewService(teamRepository, authClient, workflowClient, notificationClient, logger)
+	service := NewService(teamRepository, authClient, workflowClient, notificationClient, adminClient, logger)
 	handler := NewHandler(service, logger)
 	app := &App{
 		Handler: handler,

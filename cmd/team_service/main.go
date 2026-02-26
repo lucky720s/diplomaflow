@@ -11,6 +11,7 @@ import (
 	"github.com/lucky720s/diplomaflow/pkg/config"
 	grpcpkg "github.com/lucky720s/diplomaflow/pkg/grpc"
 	"github.com/lucky720s/diplomaflow/pkg/logger"
+	adminv1 "github.com/lucky720s/diplomaflow/pkg/protobuf/admin/v1"
 	authv1 "github.com/lucky720s/diplomaflow/pkg/protobuf/auth/v1"
 	notificationv1 "github.com/lucky720s/diplomaflow/pkg/protobuf/notification/v1"
 	teamv1 "github.com/lucky720s/diplomaflow/pkg/protobuf/team/v1"
@@ -70,6 +71,14 @@ func main() {
 	defer notificationConn.Close()
 	notificationClient := notificationv1.NewNotificationServiceClient(notificationConn)
 
+	// Admin client
+	adminConn, err := dial(cfg.Services.AdminAddr)
+	if err != nil {
+		log.Fatal("Failed to connect to admin service", zap.Error(err))
+	}
+	defer adminConn.Close()
+	adminClient := adminv1.NewAdminServiceClient(adminConn)
+
 	// Initialize app (теперь с 6 аргументами)
 	app, cleanup, err := team.InitializeApp(
 		&cfg,
@@ -78,6 +87,7 @@ func main() {
 		authClient,
 		workflowClient,
 		notificationClient,
+		adminClient,
 	)
 	if err != nil {
 		log.Fatal("failed to initialize app", zap.Error(err))

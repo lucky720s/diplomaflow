@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"time"
 
+	adminv1 "github.com/lucky720s/diplomaflow/pkg/protobuf/admin/v1"
 	authv1 "github.com/lucky720s/diplomaflow/pkg/protobuf/auth/v1"
 	notificationv1 "github.com/lucky720s/diplomaflow/pkg/protobuf/notification/v1"
 	workflowv1 "github.com/lucky720s/diplomaflow/pkg/protobuf/workflow/v1"
@@ -33,6 +34,7 @@ type Service struct {
 	authClient         authv1.AuthServiceClient
 	workflowClient     workflowv1.WorkflowServiceClient
 	notificationClient notificationv1.NotificationServiceClient
+	adminClient        adminv1.AdminServiceClient // ДОБАВИТЬ
 	logger             *zap.Logger
 }
 
@@ -41,6 +43,7 @@ func NewService(
 	authClient authv1.AuthServiceClient,
 	workflowClient workflowv1.WorkflowServiceClient,
 	notificationClient notificationv1.NotificationServiceClient,
+	adminClient adminv1.AdminServiceClient,
 	logger *zap.Logger,
 ) *Service {
 	return &Service{
@@ -48,6 +51,7 @@ func NewService(
 		authClient:         authClient,
 		workflowClient:     workflowClient,
 		notificationClient: notificationClient,
+		adminClient:        adminClient,
 		logger:             logger,
 	}
 }

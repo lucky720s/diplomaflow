@@ -4,6 +4,7 @@ import (
 	"context"
 	"strconv"
 
+	adminv1 "github.com/lucky720s/diplomaflow/pkg/protobuf/admin/v1"
 	authv1 "github.com/lucky720s/diplomaflow/pkg/protobuf/auth/v1"
 	teamv1 "github.com/lucky720s/diplomaflow/pkg/protobuf/team/v1"
 	"go.uber.org/zap"
@@ -164,7 +165,7 @@ func (h *Handler) GetMyTeam(ctx context.Context, req *teamv1.GetMyTeamRequest) (
 	if err != nil {
 		return nil, err
 	}
-	// игнорируем req.UserId (или можно строго запрещать mismatch)
+
 	if req.UserId != 0 && req.UserId != userID {
 		return nil, status.Error(codes.PermissionDenied, "forbidden")
 	}
@@ -176,8 +177,6 @@ func (h *Handler) GetMyTeam(ctx context.Context, req *teamv1.GetMyTeamRequest) (
 	if team == nil {
 		return &teamv1.GetMyTeamResponse{HasTeam: false}, nil
 	}
-
-	// collect ids
 	ids := make([]int64, 0, len(members))
 	seen := map[int64]struct{}{}
 	for _, m := range members {
@@ -188,7 +187,6 @@ func (h *Handler) GetMyTeam(ctx context.Context, req *teamv1.GetMyTeamRequest) (
 		ids = append(ids, m.UserID)
 	}
 
-	// internal call to auth_service
 	authCtx := metadata.AppendToOutgoingContext(ctx, "x-internal-service", "team_service")
 	au, err := h.service.authClient.BatchGetUserPreviews(authCtx, &authv1.BatchGetUserPreviewsRequest{Ids: ids})
 	if err != nil {
@@ -213,6 +211,23 @@ func (h *Handler) GetMyTeam(ctx context.Context, req *teamv1.GetMyTeamRequest) (
 		pbMembers = append(pbMembers, tm)
 	}
 
+	var pbSupervisor *teamv1.SupervisorPreview
+	var supervisorID int64
+
+	adminCtx := metadata.AppendToOutgoingContext(ctx, "x-internal-service", "team_service")
+	adminResp, err := h.service.adminClient.GetTeamDetails(adminCtx, &adminv1.GetTeamDetailsRequest{TeamId: team.ID})
+
+	if err != nil {
+		h.logger.Warn("Failed to get team details from admin_service", zap.Error(err), zap.Int64("team_id", team.ID))
+	} else if adminResp != nil && adminResp.Team != nil && adminResp.Team.Supervisor != nil {
+		supervisorID = adminResp.Team.Supervisor.Id
+		pbSupervisor = &teamv1.SupervisorPreview{
+			Id:       adminResp.Team.Supervisor.Id,
+			FullName: adminResp.Team.Supervisor.FullName,
+			Email:    adminResp.Team.Supervisor.Email,
+		}
+	}
+
 	return &teamv1.GetMyTeamResponse{
 		HasTeam: true,
 		Team: &teamv1.TeamInfo{
@@ -224,6 +239,8 @@ func (h *Handler) GetMyTeam(ctx context.Context, req *teamv1.GetMyTeamRequest) (
 			PendingInvitesCount: int32(pendingCount),
 			InviteCode:          team.InviteCode,
 			CompositionLocked:   team.CompositionLocked,
+			SupervisorId:        supervisorID,
+			Supervisor:          pbSupervisor,
 		},
 	}, nil
 }

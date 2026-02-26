@@ -120,6 +120,13 @@ message TeamInfo {
   int32 pending_invites_count = 6;
   string invite_code = 7;
   bool composition_locked = 8;
+  int64 supervisor_id = 9;
+  SupervisorPreview supervisor = 10;
+}
+message SupervisorPreview {
+  int64 id = 1;
+  string full_name = 2;
+  string email = 3;
 }
 message UpdateTeamRequest {
   Team team = 1;
