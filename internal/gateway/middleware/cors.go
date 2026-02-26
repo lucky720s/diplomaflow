@@ -9,7 +9,7 @@ import (
 func CorsMiddleware(allowedOrigins []string) gin.HandlerFunc {
 	if len(allowedOrigins) == 0 {
 		allowedOrigins = []string{
-			"https://diplomaflow.kz",
+			"https://diploma-flow.iitu.kz",
 			"http://localhost:3000",
 			"http://localhost:5173",
 		}
