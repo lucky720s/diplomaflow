@@ -22,7 +22,7 @@ v_iitu_id BIGINT;
   v_academic_year VARCHAR(20) := '2025-2026';
 BEGIN
 SELECT id INTO v_iitu_id FROM universities WHERE short_name = 'IITU' LIMIT 1;
-SELECT id INTO v_pi_id FROM departments WHERE university_id = v_iitu_id AND name = 'Программная Инженерия' LIMIT 1;
+SELECT id INTO v_pi_id FROM departments WHERE university_id = v_iitu_id AND name = 'Компьютерная инженерия' LIMIT 1;
 
 IF v_pi_id IS NULL THEN
     RAISE EXCEPTION 'PI department not found';
@@ -32,7 +32,7 @@ END IF;
 INSERT INTO workflows (name, description, department_id, version, is_active, settings)
 VALUES (
            'Дипломный проект (ПИ)',
-           'Workflow дипломного проекта для кафедры Программная Инженерия (IITU)',
+           'Workflow дипломного проекта для кафедры Компьютерная инженерия (IITU)',
            v_pi_id,
            1,
            TRUE,
