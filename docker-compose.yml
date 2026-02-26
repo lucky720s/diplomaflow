@@ -400,10 +400,10 @@ services:
     environment:
       GF_SECURITY_ADMIN_USER: admin
       GF_SECURITY_ADMIN_PASSWORD: ${GRAFANA_ADMIN_PASSWORD:?GRAFANA_ADMIN_PASSWORD is required}
+      GF_SERVER_HTTP_ADDR: 127.0.0.1   # только локально (доступ через nginx/VPN)
+      GF_SERVER_HTTP_PORT: 3001        # новый порт grafana
     volumes:
       - grafana_data:/var/lib/grafana
       - ./deploy/grafana/provisioning:/etc/grafana/provisioning:ro
       - ./deploy/grafana/dashboards:/var/lib/grafana/dashboards:ro
-    ports:
-      - "127.0.0.1:3000:3000"
     restart: unless-stopped
