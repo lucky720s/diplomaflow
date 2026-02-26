@@ -17,24 +17,14 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Sync repo to /opt/diplomaflow
+      - name: Assert tools exist
         shell: bash
         run: |
           set -euo pipefail
+          command -v rsync
+          docker compose version
 
-          # гарантируем, что каталог существует и принадлежит user
-          sudo mkdir -p /opt/diplomaflow
-          sudo chown -R user:user /opt/diplomaflow
-
-          # rsync должен быть установлен один раз на сервере
-          command -v rsync >/dev/null 2>&1 || { echo "rsync not installed"; exit 1; }
-
-          rsync -a --delete \
-            --exclude ".git" \
-            --exclude ".github" \
-            ./ /opt/diplomaflow/
-
-      - name: Write /opt/diplomaflow_state/.env from GitHub Secrets
+      - name: Write /opt/diplomaflow_state/.env from GitHub Secrets (atomic)
         shell: bash
         env:
           BACKEND_ENV_B64: ${{ secrets.BACKEND_ENV_B64 }}
@@ -42,19 +32,32 @@ jobs:
           set -euo pipefail
           umask 077
 
-          sudo mkdir -p /opt/diplomaflow_state
-          sudo chown -R user:user /opt/diplomaflow_state
-          sudo chmod 700 /opt/diplomaflow_state
-
           test -n "$BACKEND_ENV_B64"
+          test -d /opt/diplomaflow_state
 
           tmp="$(mktemp)"
           echo "$BACKEND_ENV_B64" | base64 -d > "$tmp"
           chmod 600 "$tmp"
           mv -f "$tmp" /opt/diplomaflow_state/.env
 
+      - name: Sync code to /opt/diplomaflow
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -d /opt/diplomaflow
+
+          rsync -a --delete \
+            --exclude ".git" \
+            --exclude ".github" \
+            ./ /opt/diplomaflow/
+
       - name: Deploy (docker compose + migrate)
         shell: bash
         run: |
           set -euo pipefail
           bash /opt/diplomaflow_scripts/deploy_backend.sh
+
+      # (опционально) если хочешь именно через systemd дергать:
+      # у тебя systemctl в sudo NOPASSWD разрешён
+      # - name: Restart systemd unit
+      #   run: sudo systemctl restart diplomaflow-backend.service
