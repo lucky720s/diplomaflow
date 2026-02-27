@@ -98,7 +98,7 @@ func (h *Handler) GetProject(ctx context.Context, req *projectv1.GetProjectReque
 	internalSvc := getInternalService(ctx)
 
 	if internalSvc != "" {
-		if permErr := requireInternal(ctx, "admin_service", "workflow_service"); permErr != nil {
+		if permErr := requireInternal(ctx, "admin_service", "workflow_service", "api_gateway"); permErr != nil {
 			return nil, permErr
 		}
 		p, err = h.service.GetProject(ctx, req.ProjectId)
