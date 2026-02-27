@@ -112,7 +112,7 @@ func main() {
 		// Admin Panel routes (Commission & Tech Support)
 		adminPanel := v1.Group("/admin-panel")
 		adminPanel.Use(middleware.AuthMiddleware(cfg.JWTSecret))
-		adminPanel.Use(middleware.RBACMiddleware("admin", "commission", "tech_support"))
+		adminPanel.Use(middleware.RBACMiddleware("admin", "teacher", "tech_support"))
 		{
 			adminPanel.GET("/dashboard", handler.GetAdminDashboard)
 			adminPanel.GET("/stats", handler.GetDepartmentStats)
