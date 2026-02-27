@@ -24,7 +24,7 @@ func (h *Handler) GetProjectDetails(c *gin.Context) {
 	userID := c.GetInt64("userId")
 	userRole := c.GetString("role")
 
-	projectResp, err := h.projectClient.GetProject(ctx, &projectv1.GetProjectRequest{
+	projectResp, err := h.projectClient.GetProject(internalCtx(c), &projectv1.GetProjectRequest{
 		ProjectId: projectID,
 	})
 	if err != nil {
