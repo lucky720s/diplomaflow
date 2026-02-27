@@ -102,12 +102,12 @@ func (s *Service) resolveTeamIDByProject(ctx context.Context, projectID int64, t
 	}
 	return teamID, nil
 }
-
 func (s *Service) performWorkflowAction(ctx context.Context, actorID int64, actorRole string, projectID int64, actionName string, payload map[string]interface{}) error {
 	pbPayload, _ := structpb.NewStruct(payload)
 
 	actCtx := metadata.AppendToOutgoingContext(
 		ctx,
+		"x-internal-service", "admin_service",
 		"x-user-id", fmt.Sprintf("%d", actorID),
 		"x-user-role", actorRole,
 	)
@@ -1205,19 +1205,35 @@ func (s *Service) createProjectForTeamOnApprove(ctx context.Context, teamID int6
 
 	// Best-effort: move workflow forward (TEAM_FORMED then SUPERVISOR_SELECTED), if available
 	// TEAM_FORMED as leader/student
-	_ = s.tryPerformIfAvailable(ctx, tc.LeaderUserID, "student", cr.ProjectId, "TEAM_FORMED", map[string]interface{}{
+	if err := s.tryPerformIfAvailable(ctx, tc.LeaderUserID, "student", cr.ProjectId, "TEAM_FORMED", map[string]interface{}{
 		"source":  "admin_service",
 		"team_id": tc.TeamID,
 		"comment": "Auto after supervisor approval",
-	})
+	}); err != nil {
+		s.logger.Error("auto-advance TEAM_FORMED failed",
+			zap.Int64("project_id", cr.ProjectId),
+			zap.Int64("leader_id", tc.LeaderUserID),
+			zap.Error(err),
+		)
+	} else {
+		s.logger.Info("auto-advance TEAM_FORMED OK", zap.Int64("project_id", cr.ProjectId))
 
-	// SUPERVISOR_SELECTED as teacher
-	_ = s.tryPerformIfAvailable(ctx, supervisorID, "teacher", cr.ProjectId, "SUPERVISOR_SELECTED", map[string]interface{}{
-		"source":        "admin_service",
-		"team_id":       tc.TeamID,
-		"supervisor_id": supervisorID,
-		"comment":       "Approved",
-	})
+		// SUPERVISOR_SELECTED as teacher (только если TEAM_FORMED прошёл)
+		if err := s.tryPerformIfAvailable(ctx, supervisorID, "teacher", cr.ProjectId, "SUPERVISOR_SELECTED", map[string]interface{}{
+			"source":        "admin_service",
+			"team_id":       tc.TeamID,
+			"supervisor_id": supervisorID,
+			"comment":       "Approved",
+		}); err != nil {
+			s.logger.Error("auto-advance SUPERVISOR_SELECTED failed",
+				zap.Int64("project_id", cr.ProjectId),
+				zap.Int64("supervisor_id", supervisorID),
+				zap.Error(err),
+			)
+		} else {
+			s.logger.Info("auto-advance SUPERVISOR_SELECTED OK", zap.Int64("project_id", cr.ProjectId))
+		}
+	}
 
 	return cr.ProjectId, nil
 }

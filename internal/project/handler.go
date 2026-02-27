@@ -226,6 +226,23 @@ func (h *Handler) PerformAction(ctx context.Context, req *projectv1.PerformActio
 	userID := getRequesterID(ctx)
 	role := getRequesterRole(ctx)
 
+	// Разрешаем internal вызовы от admin_service
+	// admin_service передаёт x-internal-service + x-user-id + x-user-role
+	internalSvc := getInternalService(ctx)
+	if internalSvc != "" {
+		if permErr := requireInternal(ctx, "admin_service"); permErr != nil {
+			return nil, permErr
+		}
+		// userID и role уже прочитаны из metadata (admin_service их передаёт)
+		// Если по какой-то причине не пришли — fallback
+		if userID == 0 {
+			userID = 1 // system fallback
+		}
+		if role == "" {
+			role = "system"
+		}
+	}
+
 	if userID == 0 {
 		return nil, status.Error(codes.Unauthenticated, "unauthorized")
 	}
