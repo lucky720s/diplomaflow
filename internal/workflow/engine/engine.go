@@ -12,6 +12,7 @@ import (
 	"github.com/lucky720s/diplomaflow/internal/workflow/plugins"
 	teamv1 "github.com/lucky720s/diplomaflow/pkg/protobuf/team/v1"
 	"go.uber.org/zap"
+	"google.golang.org/grpc/metadata"
 )
 
 var (
@@ -189,12 +190,16 @@ func (e *WorkflowEngine) validateTeamFormed(ctx context.Context, req *ExecuteTra
 		e.logger.Warn("TEAM_FORMATION state has no team_config; skipping validation", zap.Int64("state_id", fromState.ID))
 		return nil
 	}
-
-	teamResp, err := e.teamClient.GetTeam(ctx, &teamv1.GetTeamRequest{TeamId: req.TeamID})
+	mdCtx := metadata.AppendToOutgoingContext(
+		ctx,
+		"x-internal-service", "workflow_service",
+		"x-user-id", fmt.Sprintf("%d", req.UserID),
+		"x-user-role", req.UserRole,
+	)
+	teamResp, err := e.teamClient.GetTeam(mdCtx, &teamv1.GetTeamRequest{TeamId: req.TeamID})
 	if err != nil {
 		return fmt.Errorf("failed to fetch team for validation: %w", err)
 	}
-
 	size := int32(len(teamResp.Members))
 
 	// allow_solo logic
