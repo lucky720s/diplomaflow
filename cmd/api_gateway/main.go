@@ -109,10 +109,10 @@ func main() {
 			admin.POST("/workflows/:id/states/:sid/actions", handler.CreateStateAction)
 		}
 
-		// Admin Panel routes (Commission & Tech Support)
+		// Admin Panel routes (admin + teacher)
 		adminPanel := v1.Group("/admin-panel")
 		adminPanel.Use(middleware.AuthMiddleware(cfg.JWTSecret))
-		adminPanel.Use(middleware.RBACMiddleware("admin", "teacher", "tech_support"))
+		adminPanel.Use(middleware.RBACMiddleware("admin", "teacher"))
 		{
 			adminPanel.GET("/dashboard", handler.GetAdminDashboard)
 			adminPanel.GET("/stats", handler.GetDepartmentStats)
@@ -321,7 +321,7 @@ func main() {
 		}
 		topicRegs := v1.Group("/topic-registrations")
 		topicRegs.Use(middleware.AuthMiddleware(cfg.JWTSecret))
-		topicRegs.Use(middleware.RBACMiddleware("teacher", "admin", "commission", "tech_support"))
+		topicRegs.Use(middleware.RBACMiddleware("teacher", "admin", "commission"))
 		{
 			topicRegs.POST("/:id/review", handler.ReviewTopicRegistration)
 		}
