@@ -32,14 +32,21 @@ type JwtClaims struct {
 }
 
 func (j *JwtWrapper) ValidateToken(signedToken string) (*JwtClaims, error) {
+	if strings.TrimSpace(signedToken) == "" {
+		return nil, errors.New("token is empty")
+	}
+
 	token, err := jwt.ParseWithClaims(
 		signedToken,
 		&JwtClaims{},
 		func(token *jwt.Token) (interface{}, error) {
+			if token.Method == nil || token.Method.Alg() != jwt.SigningMethodHS256.Alg() {
+				return nil, fmt.Errorf("unexpected signing method: %v", token.Header["alg"])
+			}
 			return []byte(j.SecretKey), nil
 		},
+		jwt.WithValidMethods([]string{jwt.SigningMethodHS256.Alg()}),
 	)
-
 	if err != nil {
 		return nil, err
 	}
@@ -49,7 +56,10 @@ func (j *JwtWrapper) ValidateToken(signedToken string) (*JwtClaims, error) {
 		return nil, errors.New("couldn't parse claims")
 	}
 
-	if claims.ExpiresAt != nil && claims.ExpiresAt.Time.Before(time.Now()) {
+	if j.Issuer != "" && claims.Issuer != j.Issuer {
+		return nil, fmt.Errorf("invalid issuer: %s", claims.Issuer)
+	}
+	if claims.ExpiresAt == nil || claims.ExpiresAt.Time.Before(time.Now()) {
 		return nil, errors.New("token expired")
 	}
 

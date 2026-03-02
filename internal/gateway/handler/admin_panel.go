@@ -15,8 +15,9 @@ import (
 
 func (h *Handler) GetAdminDashboard(c *gin.Context) {
 	departmentID := c.GetInt64("departmentId")
-	if departmentID == 0 {
-		// Попробуем из query
+	role := c.GetString("role")
+
+	if role == "admin" && departmentID == 0 {
 		if did := c.Query("department_id"); did != "" {
 			departmentID, _ = strconv.ParseInt(did, 10, 64)
 		}

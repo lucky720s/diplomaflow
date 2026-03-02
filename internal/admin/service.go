@@ -1019,6 +1019,17 @@ func (s *Service) CreateSupervisorRequest(ctx context.Context, req *CreateSuperv
 			return nil, err
 		}
 	}
+	if isTeacherSelfClaim {
+		callerDept := deptIDFromIncomingMD(ctx)
+		tc, err := s.repo.GetTeamContext(ctx, teamID) // tc.DepartmentID
+		if err != nil {
+			return nil, status.Error(codes.NotFound, "team not found")
+		} //nolint:gofmt
+
+		if callerDept <= 0 || tc.DepartmentID != callerDept {
+			return nil, status.Error(codes.PermissionDenied, "forbidden: cross-department claim")
+		}
+	}
 
 	hasPending, err := s.repo.HasPendingSupervisorRequest(ctx, teamID)
 	if err != nil {
@@ -1702,4 +1713,13 @@ func (s *Service) notifyTeamBestEffort(ctx context.Context, teamID int64, title,
 		seen[m.UserId] = struct{}{}
 		s.notifyBestEffort(ctx, m.UserId, title, message, link, nType)
 	}
+}
+func deptIDFromIncomingMD(ctx context.Context) int64 {
+	if md, ok := metadata.FromIncomingContext(ctx); ok {
+		if v := md.Get("x-department-id"); len(v) > 0 {
+			id, _ := strconv.ParseInt(v[0], 10, 64)
+			return id
+		}
+	}
+	return 0
 }

@@ -41,12 +41,17 @@ func (h *Handler) NormListPending(c *gin.Context) {
 			pageSize = int32(x)
 		}
 	}
-
+	dept := c.GetInt64("departmentId")
+	if c.GetString("role") == "admin" {
+		if q := parseInt64(c.Query("departmentId")); q > 0 {
+			dept = q
+		}
+	}
 	req := &adminv1.ListPendingDocumentsRequest{
 		Status:       c.Query("status"),
 		TeamId:       parseInt64(c.Query("teamId")),
 		CheckerId:    parseInt64(c.Query("checkerId")),
-		DepartmentId: parseInt64(c.Query("departmentId")),
+		DepartmentId: dept,
 		Page:         page,
 		PageSize:     pageSize,
 	}
@@ -204,9 +209,11 @@ func (h *Handler) NormHistory(c *gin.Context) {
 }
 
 func (h *Handler) NormStatistics(c *gin.Context) {
-	deptID := parseInt64(c.Query("department_id"))
-	if deptID == 0 {
-		deptID = c.GetInt64("departmentId")
+	deptID := c.GetInt64("departmentId")
+	if c.GetString("role") == "admin" {
+		if q := parseInt64(c.Query("departmentId")); q > 0 {
+			deptID = q
+		}
 	}
 
 	resp, err := h.normControlClient.GetErrorStatistics(normCtx(c), &adminv1.GetStatisticsRequest{DepartmentId: deptID})

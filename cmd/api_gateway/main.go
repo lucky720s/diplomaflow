@@ -49,6 +49,7 @@ func main() {
 		collectors.NewProcessCollector(collectors.ProcessCollectorOpts{}),
 	)
 	router := gin.New()
+	_ = router.SetTrustedProxies([]string{"127.0.0.1"})
 	router.Use(gin.Recovery())
 	router.Use(middleware.CorsMiddleware(cfg.AllowedOrigins))
 	router.Use(middleware.TraceIDMiddleware())
@@ -62,7 +63,6 @@ func main() {
 			auth.POST("/register", handler.Register)
 			auth.POST("/login", handler.Login)
 			auth.POST("/refresh", handler.RefreshToken)
-			auth.POST("/logout", handler.Logout)
 		}
 
 		authProtected := v1.Group("/auth")
@@ -70,6 +70,7 @@ func main() {
 		{
 			authProtected.GET("/sessions", handler.ListSessions)
 			authProtected.DELETE("/sessions/:id", handler.RevokeSession)
+			authProtected.POST("/logout", handler.Logout)
 		}
 
 		users := v1.Group("/users")

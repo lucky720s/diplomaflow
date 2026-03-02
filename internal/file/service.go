@@ -123,9 +123,13 @@ func (s *Service) DeleteFile(ctx context.Context, id string, callerUserID int64)
 	if err != nil {
 		return fmt.Errorf("file not found: %w", err)
 	}
-	if callerUserID > 0 && meta.UserID != callerUserID {
-		return fmt.Errorf("permission denied: user %d is not the owner", callerUserID)
+	if callerUserID <= 0 {
+		return fmt.Errorf("unauthorized")
 	}
+	if meta.UserID != callerUserID {
+		return fmt.Errorf("permission denied")
+	}
+
 	ext := filepath.Ext(meta.FileName)
 	filePath := filepath.Join(s.storagePath, meta.ID+ext)
 	if err := os.Remove(filePath); err != nil && !os.IsNotExist(err) {

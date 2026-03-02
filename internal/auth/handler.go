@@ -159,6 +159,32 @@ func (h *Handler) ValidateToken(ctx context.Context, req *authv1.ValidateTokenRe
 }
 
 func (h *Handler) ListUsers(ctx context.Context, req *authv1.ListUsersRequest) (*authv1.ListUsersResponse, error) {
+	if err := requireInternalOneOf(ctx, "api_gateway", "admin_service"); err != nil {
+		return nil, err
+	}
+
+	md, _ := metadata.FromIncomingContext(ctx)
+	callerRole := ""
+	if md != nil {
+		if v := md.Get("x-user-role"); len(v) > 0 {
+			callerRole = v[0]
+		}
+	}
+	switch callerRole {
+	case "admin":
+		// ok
+	case "teacher":
+		dept := mdInt64(md, "x-department-id") // optional
+		univ := mdInt64(md, "x-university-id")
+		req.DepartmentId = dept
+		req.UniversityId = univ
+	default:
+		dept := mdInt64(md, "x-department-id")
+		univ := mdInt64(md, "x-university-id")
+		req.DepartmentId = dept
+		req.UniversityId = univ
+	}
+
 	users, total, err := h.service.ListUsers(
 		ctx,
 		req.UniversityId,
@@ -197,6 +223,13 @@ func (h *Handler) AssignRole(ctx context.Context, req *authv1.AssignRoleRequest)
 	}
 	if req.Role == "" {
 		return nil, status.Error(codes.InvalidArgument, "role is required")
+	}
+
+	if err := requireInternal(ctx, "api_gateway"); err != nil {
+		return nil, err
+	}
+	if err := requireAdmin(ctx); err != nil {
+		return nil, err
 	}
 
 	if err := h.service.AssignRole(ctx, req.UserId, req.Role); err != nil {
@@ -398,4 +431,21 @@ func (h *Handler) ListUserDepartmentRoles(ctx context.Context, req *authv1.ListU
 	}
 
 	return &authv1.ListUserDepartmentRolesResponse{Slugs: slugs}, nil
+}
+func requireInternalOneOf(ctx context.Context, expected ...string) error {
+	md, ok := metadata.FromIncomingContext(ctx)
+	if !ok || md == nil {
+		return status.Error(codes.PermissionDenied, "missing metadata")
+	}
+	v := md.Get("x-internal-service")
+	if len(v) == 0 {
+		return status.Error(codes.PermissionDenied, "forbidden")
+	}
+	got := v[0]
+	for _, e := range expected {
+		if got == e {
+			return nil
+		}
+	}
+	return status.Error(codes.PermissionDenied, "forbidden")
 }

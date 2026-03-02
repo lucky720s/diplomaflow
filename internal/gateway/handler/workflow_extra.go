@@ -12,19 +12,23 @@ func (h *Handler) GetTeamConfiguration(c *gin.Context) {
 	departmentID := c.GetInt64("departmentId")
 
 	var workflowID int64
-	if v := c.Query("workflow_id"); v != "" {
-		workflowID, _ = strconv.ParseInt(v, 10, 64)
+	if c.GetString("role") == "admin" {
+		if v := c.Query("workflow_id"); v != "" {
+			workflowID, _ = strconv.ParseInt(v, 10, 64)
+		}
 	}
-
 	var stateID int64
-	if v := c.Query("state_id"); v != "" {
-		stateID, _ = strconv.ParseInt(v, 10, 64)
+	if c.GetString("role") == "admin" {
+		if v := c.Query("state_id"); v != "" {
+			stateID, _ = strconv.ParseInt(v, 10, 64)
+		}
 	}
-
 	// Allow override department_id (optional)
-	if v := c.Query("department_id"); v != "" {
-		if did, err := strconv.ParseInt(v, 10, 64); err == nil && did > 0 {
-			departmentID = did
+	if c.GetString("role") == "admin" {
+		if v := c.Query("department_id"); v != "" {
+			if did, err := strconv.ParseInt(v, 10, 64); err == nil && did > 0 {
+				departmentID = did
+			}
 		}
 	}
 
@@ -45,10 +49,12 @@ func (h *Handler) GetDepartmentWorkflowConfig(c *gin.Context) {
 	departmentID := c.GetInt64("departmentId")
 	academicYear := c.Query("academic_year")
 
-	// Allow override department_id (optional)
-	if v := c.Query("department_id"); v != "" {
-		if did, err := strconv.ParseInt(v, 10, 64); err == nil && did > 0 {
-			departmentID = did
+	// override только admin
+	if c.GetString("role") == "admin" {
+		if v := c.Query("department_id"); v != "" {
+			if did, err := strconv.ParseInt(v, 10, 64); err == nil && did > 0 {
+				departmentID = did
+			}
 		}
 	}
 

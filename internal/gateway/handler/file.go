@@ -5,6 +5,7 @@ import (
 	"net/http"
 	"path/filepath"
 	"strconv"
+	"strings"
 
 	"github.com/gin-gonic/gin"
 	filev1 "github.com/lucky720s/diplomaflow/pkg/protobuf/file/v1"
@@ -20,13 +21,14 @@ func (h *Handler) UploadFile(c *gin.Context) {
 
 	userID := c.GetInt64("userId")
 
-	// optional: attach to project
 	var projectID int64
 	if q := c.Query("project_id"); q != "" {
 		projectID, _ = strconv.ParseInt(q, 10, 64)
 	}
 
-	stream, err := h.fileClient.UploadFile(c.Request.Context())
+	ctx := outgoingCtx(c)
+
+	stream, err := h.fileClient.UploadFile(ctx)
 	if err != nil {
 		MapGRPCError(c, err)
 		return
@@ -34,8 +36,7 @@ func (h *Handler) UploadFile(c *gin.Context) {
 
 	ext := filepath.Ext(header.Filename)
 
-	// send info first
-	err = stream.Send(&filev1.UploadFileRequest{
+	if err := stream.Send(&filev1.UploadFileRequest{ //nolint:govet
 		Data: &filev1.UploadFileRequest_Info{
 			Info: &filev1.FileInfo{
 				FileType:  ext,
@@ -44,8 +45,7 @@ func (h *Handler) UploadFile(c *gin.Context) {
 				ProjectId: projectID,
 			},
 		},
-	})
-	if err != nil {
+	}); err != nil {
 		MapGRPCError(c, err)
 		return
 	}
@@ -54,12 +54,9 @@ func (h *Handler) UploadFile(c *gin.Context) {
 	for {
 		n, readErr := f.Read(buf)
 		if n > 0 {
-			sendErr := stream.Send(&filev1.UploadFileRequest{
-				Data: &filev1.UploadFileRequest_Chunk{
-					Chunk: buf[:n],
-				},
-			})
-			if sendErr != nil {
+			if sendErr := stream.Send(&filev1.UploadFileRequest{
+				Data: &filev1.UploadFileRequest_Chunk{Chunk: buf[:n]},
+			}); sendErr != nil {
 				MapGRPCError(c, sendErr)
 				return
 			}
@@ -88,18 +85,23 @@ func (h *Handler) DownloadFile(c *gin.Context) {
 		return
 	}
 
-	// Best-effort: get original name for Content-Disposition
+	ctx := outgoingCtx(c)
+
 	downloadName := "file"
-	info, infoErr := h.fileClient.GetFileInfo(c.Request.Context(), &filev1.GetFileInfoRequest{Id: id})
+	info, infoErr := h.fileClient.GetFileInfo(ctx, &filev1.GetFileInfoRequest{Id: id})
 	if infoErr == nil && info != nil && info.Name != "" {
 		downloadName = info.Name
 	}
 
-	stream, err := h.fileClient.DownloadFile(c.Request.Context(), &filev1.DownloadFileRequest{Id: id})
+	stream, err := h.fileClient.DownloadFile(ctx, &filev1.DownloadFileRequest{Id: id})
 	if err != nil {
 		MapGRPCError(c, err)
 		return
 	}
+
+	downloadName = strings.ReplaceAll(downloadName, "\n", "")
+	downloadName = strings.ReplaceAll(downloadName, "\r", "")
+	downloadName = strings.ReplaceAll(downloadName, `"`, "'")
 
 	c.Header("Content-Type", "application/octet-stream")
 	c.Header("Content-Disposition", "attachment; filename=\""+downloadName+"\"")
@@ -111,7 +113,6 @@ func (h *Handler) DownloadFile(c *gin.Context) {
 			return false
 		}
 		if recvErr != nil {
-			// В середине стрима уже нельзя корректно вернуть JSON ошибку — просто стопаем.
 			return false
 		}
 		if len(msg.Chunk) > 0 {
@@ -120,6 +121,7 @@ func (h *Handler) DownloadFile(c *gin.Context) {
 		return true
 	})
 }
+
 func (h *Handler) DeleteFile(c *gin.Context) {
 	id := c.Param("id")
 	if id == "" {
@@ -127,11 +129,9 @@ func (h *Handler) DeleteFile(c *gin.Context) {
 		return
 	}
 
-	userID := c.GetInt64("userId")
-
-	_, err := h.fileClient.DeleteFile(c.Request.Context(), &filev1.DeleteFileRequest{
+	_, err := h.fileClient.DeleteFile(outgoingCtx(c), &filev1.DeleteFileRequest{
 		Id:     id,
-		UserId: userID,
+		UserId: c.GetInt64("userId"),
 	})
 	if err != nil {
 		MapGRPCError(c, err)

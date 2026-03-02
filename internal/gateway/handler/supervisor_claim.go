@@ -32,6 +32,8 @@ func (h *Handler) TeacherClaimTeam(c *gin.Context) {
 		c.Request.Context(),
 		"x-user-id", strconv.FormatInt(teacherID, 10),
 		"x-user-role", role,
+		"x-department-id", strconv.FormatInt(c.GetInt64("departmentId"), 10),
+		"x-university-id", strconv.FormatInt(c.GetInt64("universityId"), 10),
 	)
 
 	createResp, err := h.adminClient.CreateSupervisorRequestByTeam(ctx, &adminv1.CreateSupervisorRequestByTeamReq{

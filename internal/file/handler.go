@@ -4,12 +4,14 @@ import (
 	"context"
 	"io"
 	"os"
+	"strconv"
 	"time"
 
 	"github.com/lucky720s/diplomaflow/pkg/logger"
 	filev1 "github.com/lucky720s/diplomaflow/pkg/protobuf/file/v1"
 	"go.uber.org/zap"
 	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/metadata"
 	"google.golang.org/grpc/status"
 )
 
@@ -23,8 +25,13 @@ func NewHandler(service *Service, log *logger.Logger) *Handler {
 	return &Handler{service: service, logger: log}
 }
 
-// handler.go — исправить UploadFile:
 func (h *Handler) UploadFile(stream filev1.FileService_UploadFileServer) error {
+	// caller must be authenticated via metadata from gateway
+	uid := callerUserID(stream.Context())
+	if uid <= 0 {
+		return status.Error(codes.Unauthenticated, "missing x-user-id")
+	}
+
 	req, err := stream.Recv()
 	if err != nil {
 		return status.Errorf(codes.Unknown, "failed to receive first message: %v", err)
@@ -34,15 +41,18 @@ func (h *Handler) UploadFile(stream filev1.FileService_UploadFileServer) error {
 		return status.Error(codes.InvalidArgument, "first message must contain file info")
 	}
 
+	// SECURITY: не доверяем info.UserId от клиента вообще
+	// (можешь также возвращать PermissionDenied если info.UserId != 0 && info.UserId != uid)
+	info.UserId = uid
+
 	id, tempPath, finalPath, f, err := h.service.StartUpload(info.FileName)
 	if err != nil {
 		return status.Errorf(codes.Internal, "failed to start upload")
 	}
 
-	// КЛЮЧЕВОЕ ИСПРАВЛЕНИЕ: гарантированная очистка при любой ошибке
 	committed := false
 	defer func() {
-		f.Close()
+		_ = f.Close()
 		if !committed {
 			_ = os.Remove(tempPath)
 			h.logger.Info("Upload cancelled, temp file cleaned",
@@ -50,14 +60,15 @@ func (h *Handler) UploadFile(stream filev1.FileService_UploadFileServer) error {
 		}
 	}()
 
+	const maxBytes = int64(50 << 20) // 50MB (лучше вынести в config)
 	var size int64
+
 	for {
 		req, err := stream.Recv()
 		if err == io.EOF {
 			break
 		}
 		if err != nil {
-			// Клиент отменил или сеть упала — defer уберёт .tmp
 			return status.Errorf(codes.Canceled, "upload cancelled: %v", err)
 		}
 
@@ -66,15 +77,22 @@ func (h *Handler) UploadFile(stream filev1.FileService_UploadFileServer) error {
 			continue
 		}
 
-		n, werr := f.Write(chunk)
-		if werr != nil {
+		size += int64(len(chunk))
+		if size > maxBytes {
+			return status.Errorf(codes.InvalidArgument, "file too large (max %d bytes)", maxBytes)
+		}
+
+		if _, werr := f.Write(chunk); werr != nil {
 			return status.Errorf(codes.Internal, "failed to write chunk: %v", werr)
 		}
-		size += int64(n)
 	}
 
-	if err := h.service.CommitUpload(stream.Context(), id, tempPath, finalPath,
-		info.UserId, info.ProjectId, info.FileName, info.FileType, size); err != nil {
+	if err := h.service.CommitUpload(
+		stream.Context(),
+		id, tempPath, finalPath,
+		info.UserId, info.ProjectId,
+		info.FileName, info.FileType, size,
+	); err != nil {
 		return status.Errorf(codes.Internal, "commit upload failed: %v", err)
 	}
 
@@ -91,27 +109,38 @@ func (h *Handler) GetFileInfo(ctx context.Context, req *filev1.GetFileInfoReques
 		return nil, status.Error(codes.InvalidArgument, "id is required")
 	}
 
-	path, meta, err := h.service.ResolveFilePath(ctx, req.Id)
+	uid := callerUserID(ctx)
+	if uid <= 0 {
+		return nil, status.Error(codes.Unauthenticated, "missing x-user-id")
+	}
+
+	_, meta, err := h.service.ResolveFilePath(ctx, req.Id)
 	if err != nil {
 		return nil, status.Errorf(codes.NotFound, "file not found")
 	}
-	_ = path // we just confirm existence
+
+	// SECURITY: если это legacy-имя (meta == nil) — запрещаем обычным пользователям
+	if meta == nil && !isInternalCaller(ctx) {
+		return nil, status.Error(codes.PermissionDenied, "legacy file ids are not accessible")
+	}
+
+	// SECURITY: owner-check для stable mode
+	if meta != nil && meta.UserID != uid {
+		return nil, status.Error(codes.PermissionDenied, "forbidden")
+	}
 
 	resp := &filev1.GetFileInfoResponse{
 		Id:          req.Id,
 		DownloadUrl: h.service.GetFileURL(req.Id),
+		Name:        req.Id,
 	}
 
-	// if metadata exists (stable mode)
 	if meta != nil {
 		resp.Id = meta.ID
 		resp.Name = meta.FileName
 		resp.Size = meta.Size
 		resp.FileType = meta.FileType
 		resp.DownloadUrl = h.service.GetFileURL(meta.ID)
-	} else {
-		// legacy: unknown original name
-		resp.Name = req.Id
 	}
 
 	return resp, nil
@@ -122,9 +151,21 @@ func (h *Handler) DownloadFile(req *filev1.DownloadFileRequest, stream filev1.Fi
 		return status.Error(codes.InvalidArgument, "id is required")
 	}
 
-	path, _, err := h.service.ResolveFilePath(stream.Context(), req.Id)
+	uid := callerUserID(stream.Context())
+	if uid <= 0 {
+		return status.Error(codes.Unauthenticated, "missing x-user-id")
+	}
+
+	path, meta, err := h.service.ResolveFilePath(stream.Context(), req.Id)
 	if err != nil {
 		return status.Errorf(codes.NotFound, "file not found")
+	}
+
+	if meta == nil && !isInternalCaller(stream.Context()) {
+		return status.Error(codes.PermissionDenied, "legacy file ids are not accessible")
+	}
+	if meta != nil && meta.UserID != uid {
+		return status.Error(codes.PermissionDenied, "forbidden")
 	}
 
 	f, err := os.Open(path)
@@ -148,21 +189,51 @@ func (h *Handler) DownloadFile(req *filev1.DownloadFileRequest, stream filev1.Fi
 			return status.Errorf(codes.Internal, "failed to read file: %v", rerr)
 		}
 	}
+
 	return nil
 }
+
 func (h *Handler) DeleteFile(ctx context.Context, req *filev1.DeleteFileRequest) (*filev1.DeleteFileResponse, error) {
 	if req.Id == "" {
 		return nil, status.Error(codes.InvalidArgument, "id is required")
 	}
 
-	if err := h.service.DeleteFile(ctx, req.Id, req.UserId); err != nil {
+	uid := callerUserID(ctx)
+	if uid <= 0 {
+		return nil, status.Error(codes.Unauthenticated, "missing x-user-id")
+	}
+
+	// SECURITY: не доверяем req.UserId
+	if err := h.service.DeleteFile(ctx, req.Id, uid); err != nil {
 		h.logger.Error("DeleteFile failed", zap.Error(err))
+		// лучше маппить permission denied отдельно, но минимум так:
 		return nil, status.Errorf(codes.Internal, "failed to delete file: %v", err)
 	}
 
-	h.logger.Info("File deleted", zap.String("id", req.Id))
+	h.logger.Info("File deleted", zap.String("id", req.Id), zap.Int64("user_id", uid))
 	return &filev1.DeleteFileResponse{Success: true}, nil
 }
+
 func (h *Handler) CleanupOrphanedTempFiles(maxAge time.Duration) int {
 	return h.service.CleanupOrphanedTempFiles(maxAge)
+}
+func callerUserID(ctx context.Context) int64 {
+	md, ok := metadata.FromIncomingContext(ctx)
+	if !ok {
+		return 0
+	}
+	vals := md.Get("x-user-id")
+	if len(vals) == 0 {
+		return 0
+	}
+	id, _ := strconv.ParseInt(vals[0], 10, 64)
+	return id
+}
+func isInternalCaller(ctx context.Context) bool {
+	md, ok := metadata.FromIncomingContext(ctx)
+	if !ok || md == nil {
+		return false
+	}
+	v := md.Get("x-internal-service")
+	return len(v) > 0 && v[0] != ""
 }

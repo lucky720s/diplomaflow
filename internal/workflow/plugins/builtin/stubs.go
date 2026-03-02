@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"strings"
 	"time"
 
 	"github.com/lucky720s/diplomaflow/internal/workflow/plugins"
@@ -500,32 +501,22 @@ func (p *DocumentGeneratorPlugin) Validate(config map[string]interface{}) error 
 	}
 	return nil
 }
-
 func (p *DocumentGeneratorPlugin) Execute(ctx context.Context, actx *plugins.ActionContext) *plugins.ActionResult {
-	templateName, _ := actx.Config["template_name"].(string)
-	if templateName == "" {
-		return &plugins.ActionResult{
-			Success: false,
-			Error:   fmt.Errorf("template_name is not configured"),
-		}
+	templateRaw, _ := actx.Config["template_name"].(string)
+	templateName, err := sanitizeTemplateName(templateRaw)
+	if err != nil {
+		return &plugins.ActionResult{Success: false, Error: err}
 	}
 
 	outputFilename := "generated_document.docx"
-	if of, ok := actx.Config["output_filename"].(string); ok && of != "" {
-		outputFilename = of
+	if of, ok := actx.Config["output_filename"].(string); ok && strings.TrimSpace(of) != "" {
+		outputFilename = strings.TrimSpace(of)
 	}
 
+	// SECURITY: фиксированные каталоги внутри контейнера/сервиса
 	templatesDir := "templates/docx"
-	if td, ok := actx.Config["templates_dir"].(string); ok && td != "" {
-		templatesDir = td
-	}
-
 	outputDir := "/tmp/diplomaflow/generated"
-	if od, ok := actx.Config["output_dir"].(string); ok && od != "" {
-		outputDir = od
-	}
 
-	// ===== Собираем replacements =====
 	replacements := godocx.PlaceholderMap{
 		"ProjectID":    fmt.Sprintf("%d", actx.ProjectID),
 		"StateID":      fmt.Sprintf("%d", actx.StateID),
@@ -534,7 +525,6 @@ func (p *DocumentGeneratorPlugin) Execute(ctx context.Context, actx *plugins.Act
 		"AcademicYear": getCurrentAcademicYear(),
 	}
 
-	// Данные из project_data
 	projectDataFields := map[string]string{
 		"StudentName":    "student_name",
 		"StudentID":      "student_id",
@@ -547,7 +537,6 @@ func (p *DocumentGeneratorPlugin) Execute(ctx context.Context, actx *plugins.Act
 		"DepartmentName": "department_name",
 		"GroupName":      "group_name",
 	}
-
 	for placeholder, dataKey := range projectDataFields {
 		if val, ok := actx.ProjectData[dataKey]; ok {
 			if strVal, ok := val.(string); ok && strVal != "" {
@@ -556,85 +545,63 @@ func (p *DocumentGeneratorPlugin) Execute(ctx context.Context, actx *plugins.Act
 		}
 	}
 
-	// Дополнительные плейсхолдеры из конфига
 	if customPlaceholders, ok := actx.Config["placeholders"].(map[string]interface{}); ok {
 		for placeholder, dataKeyRaw := range customPlaceholders {
-			if dataKey, ok := dataKeyRaw.(string); ok {
-				if val, ok := actx.ProjectData[dataKey]; ok {
-					if strVal, ok := val.(string); ok {
-						replacements[placeholder] = strVal
-					}
+			dataKey, ok := dataKeyRaw.(string)
+			if !ok || dataKey == "" {
+				continue
+			}
+			if val, ok := actx.ProjectData[dataKey]; ok {
+				if strVal, ok := val.(string); ok {
+					replacements[placeholder] = strVal
 				}
 			}
 		}
 	}
 
-	// ===== Проверяем наличие шаблона =====
 	templatePath := filepath.Join(templatesDir, templateName+".docx")
 	if _, err := os.Stat(templatePath); os.IsNotExist(err) {
+		// Не палим абсолютные пути
 		return &plugins.ActionResult{
 			Success: true,
 			Data: map[string]interface{}{
-				"template_name":   templateName,
-				"template_path":   templatePath,
-				"output_filename": outputFilename,
-				"replacements":    replacementsToMap(replacements),
-				"status":          "template_not_found",
-				"message":         fmt.Sprintf("Template '%s' not found at '%s'. Document generation skipped. Place the template and retry.", templateName, templatePath),
-				"generated_at":    time.Now().UTC().Format(time.RFC3339),
+				"template_name": templateName,
+				"status":        "template_not_found",
+				"message":       "Template not found. Place template into templates/docx and retry.",
+				"generated_at":  time.Now().UTC().Format(time.RFC3339),
 			},
 		}
 	}
 
-	// ===== Генерация DOCX =====
 	doc, err := godocx.Open(templatePath)
 	if err != nil {
-		return &plugins.ActionResult{
-			Success: false,
-			Error:   fmt.Errorf("failed to open template '%s': %w", templatePath, err),
-		}
+		return &plugins.ActionResult{Success: false, Error: fmt.Errorf("failed to open template: %w", err)}
 	}
 
 	if err := doc.ReplaceAll(replacements); err != nil {
-		return &plugins.ActionResult{
-			Success: false,
-			Error:   fmt.Errorf("failed to replace placeholders: %w", err),
-		}
+		return &plugins.ActionResult{Success: false, Error: fmt.Errorf("failed to replace placeholders: %w", err)}
 	}
 
-	// Создаём output директорию
 	if err := os.MkdirAll(outputDir, 0755); err != nil {
-		return &plugins.ActionResult{
-			Success: false,
-			Error:   fmt.Errorf("failed to create output dir '%s': %w", outputDir, err),
-		}
+		return &plugins.ActionResult{Success: false, Error: fmt.Errorf("failed to create output dir: %w", err)}
 	}
 
-	// Уникальное имя файла: project_id + timestamp
 	uniqueName := fmt.Sprintf("p%d_%d_%s", actx.ProjectID, time.Now().Unix(), outputFilename)
 	outputPath := filepath.Join(outputDir, uniqueName)
 
 	if err := doc.WriteToFile(outputPath); err != nil {
-		return &plugins.ActionResult{
-			Success: false,
-			Error:   fmt.Errorf("failed to write document to '%s': %w", outputPath, err),
-		}
+		return &plugins.ActionResult{Success: false, Error: fmt.Errorf("failed to write document: %w", err)}
 	}
 
-	// TODO (Phase 2): Upload to file_service via gRPC streaming and get file_id
-	// fileID, err := uploadToFileService(ctx, outputPath, actx.ProjectID)
-
+	// SECURITY: не возвращаем output_path наружу
 	return &plugins.ActionResult{
 		Success: true,
 		Data: map[string]interface{}{
 			"template_name":   templateName,
 			"output_filename": uniqueName,
-			"output_path":     outputPath,
-			"replacements":    replacementsToMap(replacements),
 			"status":          "generated",
 			"message":         "Document generated successfully",
 			"generated_at":    time.Now().UTC().Format(time.RFC3339),
-			// "file_id": fileID, // Phase 2
 		},
 	}
 }
@@ -703,3 +670,17 @@ func (p *WebhookPlugin) Execute(ctx context.Context, actx *plugins.ActionContext
 	}
 }
 func (p *WebhookPlugin) Rollback(ctx context.Context, actx *plugins.ActionContext) error { return nil }
+func sanitizeTemplateName(name string) (string, error) {
+	name = strings.TrimSpace(name)
+	if name == "" {
+		return "", fmt.Errorf("template_name is empty")
+	}
+	base := filepath.Base(name)
+	if base != name {
+		return "", fmt.Errorf("invalid template_name")
+	}
+	if strings.Contains(base, "..") {
+		return "", fmt.Errorf("invalid template_name")
+	}
+	return base, nil
+}

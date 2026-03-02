@@ -1,11 +1,14 @@
 package handler
 
 import (
+	"context"
 	"net/http"
 	"strconv"
+	"strings"
 
 	"github.com/gin-gonic/gin"
 	authv1 "github.com/lucky720s/diplomaflow/pkg/protobuf/auth/v1"
+	"google.golang.org/grpc/metadata"
 )
 
 const (
@@ -15,37 +18,51 @@ const (
 
 func (h *Handler) RefreshToken(c *gin.Context) {
 	cookieToken, err := c.Cookie(RefreshTokenCookieName)
-	if err != nil {
+	if err != nil || cookieToken == "" {
 		c.JSON(http.StatusUnauthorized, gin.H{"error": "refresh token cookie missing"})
 		return
 	}
-	resp, err := h.authClient.RefreshToken(c.Request.Context(), &authv1.RefreshTokenRequest{
+
+	ctx := metadata.AppendToOutgoingContext(c.Request.Context(), "x-internal-service", "api_gateway")
+	resp, err := h.authClient.RefreshToken(ctx, &authv1.RefreshTokenRequest{
 		RefreshToken: cookieToken,
 		UserAgent:    c.Request.UserAgent(),
 		IpAddress:    c.ClientIP(),
 	})
-
 	if err != nil {
-		c.SetCookie(RefreshTokenCookieName, "", -1, RefreshTokenPath, "", false, true)
+		clearRefreshCookie(c)
 		MapGRPCError(c, err)
 		return
 	}
-	c.SetCookie(
-		RefreshTokenCookieName,
-		resp.RefreshToken,
-		3600*24*30,
-		RefreshTokenPath,
-		"",
-		false,
-		true,
-	)
+
+	setRefreshCookie(c, resp.RefreshToken, 3600*24*30)
 
 	c.JSON(http.StatusOK, gin.H{
 		"access_token": resp.AccessToken,
 	})
 }
+
 func (h *Handler) Logout(c *gin.Context) {
-	c.SetCookie(RefreshTokenCookieName, "", -1, RefreshTokenPath, "", false, true)
+	userID := c.GetInt64("userId")
+	if userID == 0 {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "unauthorized"})
+		return
+	}
+
+	cookieToken, _ := c.Cookie(RefreshTokenCookieName)
+	if cookieToken != "" {
+		parts := strings.Split(cookieToken, ".")
+		if len(parts) == 2 {
+			if sid, err := strconv.ParseUint(parts[0], 10, 64); err == nil && sid > 0 {
+				_, _ = h.authClient.RevokeSession(authGatewayCtx(c), &authv1.RevokeSessionRequest{
+					UserId:    userID,
+					SessionId: sid,
+				})
+			}
+		}
+	}
+	clearRefreshCookie(c)
+
 	c.JSON(http.StatusOK, gin.H{"message": "logged out"})
 }
 
@@ -85,7 +102,7 @@ func (h *Handler) Login(c *gin.Context) {
 		3600*24*30,
 		RefreshTokenPath,
 		"",
-		false,
+		true,
 		true,
 	)
 
@@ -138,7 +155,7 @@ func (h *Handler) AssignRole(c *gin.Context) {
 		return
 	}
 
-	res, err := h.authClient.AssignRole(c.Request.Context(), &authv1.AssignRoleRequest{
+	res, err := h.authClient.AssignRole(authGatewayCtx(c), &authv1.AssignRoleRequest{
 		UserId: req.UserID,
 		Role:   req.Role,
 	})
@@ -175,5 +192,32 @@ func (h *Handler) GetMe(c *gin.Context) {
 		"university_id": universityID,
 		"department_id": departmentID,
 		"dept_roles":    deptRoles,
+	})
+}
+func authGatewayCtx(c *gin.Context) context.Context {
+	ctx := outgoingCtx(c)
+	return metadata.AppendToOutgoingContext(ctx, "x-internal-service", "api_gateway")
+}
+func setRefreshCookie(c *gin.Context, token string, maxAge int) {
+	http.SetCookie(c.Writer, &http.Cookie{
+		Name:     RefreshTokenCookieName,
+		Value:    token,
+		Path:     RefreshTokenPath,
+		MaxAge:   maxAge,
+		Secure:   true,
+		HttpOnly: true,
+		SameSite: http.SameSiteLaxMode, // важно
+	})
+}
+
+func clearRefreshCookie(c *gin.Context) {
+	http.SetCookie(c.Writer, &http.Cookie{
+		Name:     RefreshTokenCookieName,
+		Value:    "",
+		Path:     RefreshTokenPath,
+		MaxAge:   -1,
+		Secure:   true,
+		HttpOnly: true,
+		SameSite: http.SameSiteLaxMode,
 	})
 }

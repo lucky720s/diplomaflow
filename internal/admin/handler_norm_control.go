@@ -33,11 +33,10 @@ func deptIDFromMD(ctx context.Context) int64 {
 }
 
 func (h *Handler) ListPendingDocuments(ctx context.Context, req *adminv1.ListPendingDocumentsRequest) (*adminv1.ListPendingDocumentsResponse, error) {
-	deptID := req.DepartmentId
+	deptID := deptIDFromMD(ctx)
 	if deptID == 0 {
-		deptID = deptIDFromMD(ctx)
+		return nil, status.Error(codes.PermissionDenied, "department_id is required in metadata")
 	}
-
 	page := int(req.Page)
 	if page <= 0 {
 		page = 1
@@ -348,9 +347,14 @@ func (h *Handler) GetCheckHistory(ctx context.Context, req *adminv1.GetCheckHist
 }
 
 func (h *Handler) GetErrorStatistics(ctx context.Context, req *adminv1.GetStatisticsRequest) (*adminv1.GetStatisticsResponse, error) {
-	deptID := req.DepartmentId
-	if deptID == 0 {
-		deptID = deptIDFromMD(ctx)
+	mdDept := deptIDFromMD(ctx)
+	if mdDept == 0 {
+		return nil, status.Error(codes.PermissionDenied, "department_id is required in metadata")
+	}
+
+	deptID := mdDept
+	if roleFromMD(ctx) == "admin" && req.DepartmentId != 0 {
+		deptID = req.DepartmentId
 	}
 
 	stats, err := h.service.NormStats(ctx, deptID)
@@ -414,4 +418,12 @@ func (h *Handler) CreateChecklist(ctx context.Context, req *adminv1.CreateCheckl
 			IsActive:  c.IsActive,
 		},
 	}, nil
+}
+func roleFromMD(ctx context.Context) string {
+	if md, ok := metadata.FromIncomingContext(ctx); ok && md != nil {
+		if v := md.Get("x-user-role"); len(v) > 0 {
+			return v[0]
+		}
+	}
+	return ""
 }

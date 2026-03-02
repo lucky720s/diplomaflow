@@ -92,18 +92,19 @@ func (h *Handler) GetProject(ctx context.Context, req *projectv1.GetProjectReque
 		return nil, status.Error(codes.InvalidArgument, "project_id is required")
 	}
 
+	internalSvc := getInternalService(ctx)
+
 	var p *Project
 	var err error
 
-	internalSvc := getInternalService(ctx)
-
 	if internalSvc != "" {
-		if permErr := requireInternal(ctx, "admin_service", "workflow_service", "api_gateway"); permErr != nil {
+		// SECURITY: internal доступ только для реальных внутренних сервисов, НЕ для api_gateway
+		if permErr := requireInternal(ctx, "admin_service", "workflow_service"); permErr != nil {
 			return nil, permErr
 		}
+
 		p, err = h.service.GetProject(ctx, req.ProjectId)
 		if err != nil {
-			// если у тебя service/repo умеет различать not found — мапь тут
 			return nil, status.Errorf(codes.NotFound, "project not found: %v", err)
 		}
 		if p == nil {
@@ -226,24 +227,19 @@ func (h *Handler) PerformAction(ctx context.Context, req *projectv1.PerformActio
 	userID := getRequesterID(ctx)
 	role := getRequesterRole(ctx)
 
-	// Разрешаем internal вызовы от admin_service
-	// admin_service передаёт x-internal-service + x-user-id + x-user-role
 	internalSvc := getInternalService(ctx)
 	if internalSvc != "" {
+		// internal calls allowed only from admin_service
 		if permErr := requireInternal(ctx, "admin_service"); permErr != nil {
 			return nil, permErr
 		}
-		// userID и role уже прочитаны из metadata (admin_service их передаёт)
-		// Если по какой-то причине не пришли — fallback
-		if userID == 0 {
-			userID = 1 // system fallback
-		}
-		if role == "" {
-			role = "system"
+		// SECURITY: internal обязан передать актёра
+		if userID <= 0 || role == "" {
+			return nil, status.Error(codes.Unauthenticated, "missing user identity in metadata")
 		}
 	}
 
-	if userID == 0 {
+	if userID <= 0 || role == "" {
 		return nil, status.Error(codes.Unauthenticated, "unauthorized")
 	}
 
@@ -255,14 +251,46 @@ func (h *Handler) PerformAction(ctx context.Context, req *projectv1.PerformActio
 }
 
 func (h *Handler) GetProjectRuntime(ctx context.Context, req *projectv1.GetProjectRuntimeRequest) (*projectv1.GetProjectRuntimeResponse, error) {
-	if err := requireInternal(ctx, "workflow_service", "admin_service", "api_gateway"); err != nil {
-		return nil, err
-	}
-
 	if req.ProjectId <= 0 {
 		return nil, status.Error(codes.InvalidArgument, "project_id is required")
 	}
-	return h.service.GetProjectRuntime(ctx, req.ProjectId)
+
+	internalSvc := getInternalService(ctx)
+	if internalSvc == "" {
+		return nil, status.Error(codes.PermissionDenied, "forbidden")
+	}
+
+	switch internalSvc {
+	case "workflow_service", "admin_service":
+		// ok, no user-check
+		return h.service.GetProjectRuntime(ctx, req.ProjectId)
+
+	case "api_gateway":
+		uid := getRequesterID(ctx)
+		if uid <= 0 {
+			return nil, status.Error(codes.Unauthenticated, "missing x-user-id")
+		}
+
+		visible, err := h.service.GetStudentProjects(ctx, uid)
+		if err != nil {
+			return nil, status.Errorf(codes.Internal, "failed: %v", err)
+		}
+		allowed := false
+		for _, p := range visible {
+			if p != nil && p.ID == req.ProjectId {
+				allowed = true
+				break
+			}
+		}
+		if !allowed {
+			return nil, status.Error(codes.NotFound, "project not found")
+		}
+
+		return h.service.GetProjectRuntime(ctx, req.ProjectId)
+
+	default:
+		return nil, status.Error(codes.PermissionDenied, "forbidden")
+	}
 }
 
 func (h *Handler) CommitTransition(ctx context.Context, req *projectv1.CommitTransitionRequest) (*projectv1.CommitTransitionResponse, error) {

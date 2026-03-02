@@ -11,16 +11,18 @@ import (
 func (h *Handler) ListUsers(c *gin.Context) {
 	universityID := c.GetInt64("universityId")
 	departmentID := c.GetInt64("departmentId")
+	roleFromToken := c.GetString("role")
 
-	// allow explicit override (useful for admin panels)
-	if v := c.Query("department_id"); v != "" {
-		if did, err := strconv.ParseInt(v, 10, 64); err == nil && did > 0 {
-			departmentID = did
+	if roleFromToken == "admin" {
+		if v := c.Query("department_id"); v != "" {
+			if did, err := strconv.ParseInt(v, 10, 64); err == nil && did > 0 {
+				departmentID = did
+			}
 		}
-	}
-	if v := c.Query("university_id"); v != "" {
-		if uid, err := strconv.ParseInt(v, 10, 64); err == nil && uid > 0 {
-			universityID = uid
+		if v := c.Query("university_id"); v != "" {
+			if uid, err := strconv.ParseInt(v, 10, 64); err == nil && uid > 0 {
+				universityID = uid
+			}
 		}
 	}
 
@@ -40,9 +42,9 @@ func (h *Handler) ListUsers(c *gin.Context) {
 		}
 	}
 
-	res, err := h.authClient.ListUsers(c.Request.Context(), &authv1.ListUsersRequest{
+	res, err := h.authClient.ListUsers(authGatewayCtx(c), &authv1.ListUsersRequest{
 		UniversityId: universityID,
-		DepartmentId: departmentID, // ✅ IMPORTANT
+		DepartmentId: departmentID,
 		Role:         role,
 		Page:         page,
 		PageSize:     pageSize,
