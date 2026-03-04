@@ -78,6 +78,8 @@ func main() {
 		{
 			users.GET("/me", handler.GetMe)
 			users.GET("", handler.ListUsers)
+			users.GET("/:id", handler.GetUser)
+			users.PUT("/:id", handler.UpdateUser)
 		}
 
 		universities := v1.Group("/universities")
@@ -93,6 +95,9 @@ func main() {
 		{
 			admin.POST("/universities", handler.CreateUniversity)
 			admin.POST("/departments", handler.CreateDepartment)
+			admin.GET("/departments/:id", handler.GetDepartment)
+			admin.PUT("/departments/:id", handler.UpdateDepartment)
+			admin.DELETE("/departments/:id", handler.DeleteDepartment)
 			admin.POST("/workflows", handler.CreateWorkflow)
 			admin.POST("/workflows/:id/states", handler.CreateState)
 			admin.POST("/workflows/:id/activate", handler.SetActiveWorkflow)
@@ -101,6 +106,7 @@ func main() {
 			admin.POST("/users/:id/department-roles", handler.AssignUserDepartmentRole)
 			admin.DELETE("/users/:id/department-roles/:role_id", handler.RevokeUserDepartmentRole)
 			admin.GET("/users/:id/department-roles", handler.ListUserDepartmentRoles)
+			admin.DELETE("/users/:id", handler.AdminDeleteUser)
 			admin.POST("/workflows/:id/clone", handler.CloneWorkflow)
 			admin.POST("/workflows/:id/version", handler.CreateNewVersion)
 			admin.POST("/workflows/:id/validate", handler.ValidateWorkflow)

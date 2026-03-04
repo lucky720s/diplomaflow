@@ -18,21 +18,18 @@ type AuthService interface {
 	Login(ctx context.Context, email, password, userAgent, ip string) (string, string, error)
 	Validate(ctx context.Context, token string) (*JwtClaims, error)
 	ListUsers(ctx context.Context, universityID int64, departmentID int64, role string, page, pageSize int32, excludeUserID int64) ([]*User, int64, error)
-
-	// Base role
 	AssignRole(ctx context.Context, userID int64, role string) error
-
 	BatchGetUserPreviews(ctx context.Context, ids []int64) ([]*User, error)
-
-	// Dynamic department roles (directory + assignments)
 	CreateDepartmentRole(ctx context.Context, departmentID int64, slug string) (*DepartmentRole, error)
 	ListDepartmentRoles(ctx context.Context, departmentID int64) ([]*DepartmentRole, error)
 	GetDepartmentRole(ctx context.Context, roleID int64) (*DepartmentRole, error)
 	DeleteDepartmentRole(ctx context.Context, roleID int64) error
-
 	AssignDepartmentRole(ctx context.Context, userID, departmentID, roleID int64, assignedBy int64, comment string) error
 	RevokeDepartmentRole(ctx context.Context, userID, departmentID, roleID int64, revokedBy int64, comment string) error
 	ListUserDepartmentRoleSlugs(ctx context.Context, userID, departmentID int64) ([]string, error)
+	GetUser(ctx context.Context, userID int64) (*User, error)
+	UpdateUser(ctx context.Context, userID int64, email, firstName, lastName, role string, universityID, departmentID int64, requesterRole string) (*User, error)
+	DeleteUser(ctx context.Context, userID, requesterID int64) error
 }
 
 type Handler struct {
@@ -92,7 +89,23 @@ func mdInt64(md metadata.MD, key string) int64 {
 	return n
 }
 
-// ==================== Existing RPCs ====================
+func requireInternalOneOf(ctx context.Context, expected ...string) error {
+	md, ok := metadata.FromIncomingContext(ctx)
+	if !ok || md == nil {
+		return status.Error(codes.PermissionDenied, "missing metadata")
+	}
+	v := md.Get("x-internal-service")
+	if len(v) == 0 {
+		return status.Error(codes.PermissionDenied, "forbidden")
+	}
+	got := v[0]
+	for _, e := range expected {
+		if got == e {
+			return nil
+		}
+	}
+	return status.Error(codes.PermissionDenied, "forbidden")
+}
 
 func (h *Handler) Register(ctx context.Context, req *authv1.RegisterRequest) (*authv1.RegisterResponse, error) {
 	if req.Email == "" || req.Password == "" {
@@ -172,9 +185,8 @@ func (h *Handler) ListUsers(ctx context.Context, req *authv1.ListUsersRequest) (
 	}
 	switch callerRole {
 	case "admin":
-		// ok
 	case "teacher":
-		dept := mdInt64(md, "x-department-id") // optional
+		dept := mdInt64(md, "x-department-id")
 		univ := mdInt64(md, "x-university-id")
 		req.DepartmentId = dept
 		req.UniversityId = univ
@@ -243,7 +255,6 @@ func (h *Handler) AssignRole(ctx context.Context, req *authv1.AssignRoleRequest)
 }
 
 func (h *Handler) BatchGetUserPreviews(ctx context.Context, req *authv1.BatchGetUserPreviewsRequest) (*authv1.BatchGetUserPreviewsResponse, error) {
-	// Restrict to internal services
 	md, _ := metadata.FromIncomingContext(ctx)
 	internal := ""
 	if md != nil {
@@ -276,9 +287,6 @@ func (h *Handler) BatchGetUserPreviews(ctx context.Context, req *authv1.BatchGet
 	return &authv1.BatchGetUserPreviewsResponse{Users: pb}, nil
 }
 
-// ==================== NEW: dynamic department roles (compile after proto update) ====================
-
-// CreateDepartmentRole
 func (h *Handler) CreateDepartmentRole(ctx context.Context, req *authv1.CreateDepartmentRoleRequest) (*authv1.CreateDepartmentRoleResponse, error) {
 	if err := requireInternal(ctx, "api_gateway"); err != nil {
 		return nil, err
@@ -432,20 +440,117 @@ func (h *Handler) ListUserDepartmentRoles(ctx context.Context, req *authv1.ListU
 
 	return &authv1.ListUserDepartmentRolesResponse{Slugs: slugs}, nil
 }
-func requireInternalOneOf(ctx context.Context, expected ...string) error {
-	md, ok := metadata.FromIncomingContext(ctx)
-	if !ok || md == nil {
-		return status.Error(codes.PermissionDenied, "missing metadata")
+
+func (h *Handler) GetUser(ctx context.Context, req *authv1.GetUserRequest) (*authv1.GetUserResponse, error) {
+	// Валидация
+	if req.UserId <= 0 {
+		return nil, status.Error(codes.InvalidArgument, "user_id is required")
 	}
-	v := md.Get("x-internal-service")
-	if len(v) == 0 {
-		return status.Error(codes.PermissionDenied, "forbidden")
+
+	if err := requireInternalOneOf(ctx, "api_gateway", "admin_service"); err != nil {
+		return nil, err
 	}
-	got := v[0]
-	for _, e := range expected {
-		if got == e {
-			return nil
+
+	user, err := h.service.GetUser(ctx, req.UserId)
+	if err != nil {
+		if err == ErrUserNotFound {
+			return nil, status.Error(codes.NotFound, "user not found")
+		}
+		return nil, status.Errorf(codes.Internal, "failed to get user: %v", err)
+	}
+
+	return &authv1.GetUserResponse{
+		User: &authv1.UserPreview{
+			Id:           user.ID,
+			Email:        user.Email,
+			FirstName:    user.FirstName,
+			LastName:     user.LastName,
+			Role:         user.Role,
+			UniversityId: user.UniversityID,
+			DepartmentId: user.DepartmentID,
+		},
+	}, nil
+}
+
+func (h *Handler) UpdateUser(ctx context.Context, req *authv1.UpdateUserRequest) (*authv1.UpdateUserResponse, error) {
+	if req.UserId <= 0 {
+		return nil, status.Error(codes.InvalidArgument, "user_id is required")
+	}
+
+	if err := requireInternalOneOf(ctx, "api_gateway", "admin_service"); err != nil {
+		return nil, err
+	}
+
+	md, _ := metadata.FromIncomingContext(ctx)
+	requesterRole := ""
+	if md != nil {
+		if v := md.Get("x-user-role"); len(v) > 0 {
+			requesterRole = v[0]
 		}
 	}
-	return status.Error(codes.PermissionDenied, "forbidden")
+
+	user, err := h.service.UpdateUser(
+		ctx,
+		req.UserId,
+		req.Email,
+		req.FirstName,
+		req.LastName,
+		req.Role,
+		req.UniversityId,
+		req.DepartmentId,
+		requesterRole,
+	)
+	if err != nil {
+		switch err {
+		case ErrUserNotFound:
+			return nil, status.Error(codes.NotFound, "user not found")
+		case ErrEmailTaken:
+			return nil, status.Error(codes.AlreadyExists, "email already taken")
+		default:
+			return nil, status.Errorf(codes.Internal, "failed to update user: %v", err)
+		}
+	}
+
+	return &authv1.UpdateUserResponse{
+		User: &authv1.UserPreview{
+			Id:           user.ID,
+			Email:        user.Email,
+			FirstName:    user.FirstName,
+			LastName:     user.LastName,
+			Role:         user.Role,
+			UniversityId: user.UniversityID,
+			DepartmentId: user.DepartmentID,
+		},
+	}, nil
+}
+
+func (h *Handler) DeleteUser(ctx context.Context, req *authv1.DeleteUserRequest) (*authv1.DeleteUserResponse, error) {
+	if req.UserId <= 0 {
+		return nil, status.Error(codes.InvalidArgument, "user_id is required")
+	}
+	if req.RequesterId <= 0 {
+		return nil, status.Error(codes.InvalidArgument, "requester_id is required")
+	}
+
+	if err := requireInternalOneOf(ctx, "api_gateway", "admin_service"); err != nil {
+		return nil, err
+	}
+
+	if err := requireAdmin(ctx); err != nil {
+		return nil, err
+	}
+
+	err := h.service.DeleteUser(ctx, req.UserId, req.RequesterId)
+	if err != nil {
+		switch err {
+		case ErrSelfDelete:
+			return nil, status.Error(codes.FailedPrecondition, "cannot delete yourself")
+		case ErrUserNotFound:
+			return nil, status.Error(codes.NotFound, "user not found")
+		default:
+			return nil, status.Errorf(codes.Internal, "failed to delete user: %v", err)
+		}
+	}
+
+	return &authv1.DeleteUserResponse{Success: true}, nil
 }

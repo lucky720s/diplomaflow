@@ -28,6 +28,9 @@ const (
 	AuthService_RevokeSession_FullMethodName           = "/auth.v1.AuthService/RevokeSession"
 	AuthService_AssignRole_FullMethodName              = "/auth.v1.AuthService/AssignRole"
 	AuthService_BatchGetUserPreviews_FullMethodName    = "/auth.v1.AuthService/BatchGetUserPreviews"
+	AuthService_GetUser_FullMethodName                 = "/auth.v1.AuthService/GetUser"
+	AuthService_UpdateUser_FullMethodName              = "/auth.v1.AuthService/UpdateUser"
+	AuthService_DeleteUser_FullMethodName              = "/auth.v1.AuthService/DeleteUser"
 	AuthService_CreateDepartmentRole_FullMethodName    = "/auth.v1.AuthService/CreateDepartmentRole"
 	AuthService_ListDepartmentRoles_FullMethodName     = "/auth.v1.AuthService/ListDepartmentRoles"
 	AuthService_GetDepartmentRole_FullMethodName       = "/auth.v1.AuthService/GetDepartmentRole"
@@ -52,6 +55,12 @@ type AuthServiceClient interface {
 	AssignRole(ctx context.Context, in *AssignRoleRequest, opts ...grpc.CallOption) (*AssignRoleResponse, error)
 	// Internal
 	BatchGetUserPreviews(ctx context.Context, in *BatchGetUserPreviewsRequest, opts ...grpc.CallOption) (*BatchGetUserPreviewsResponse, error)
+	// =========================
+	// NEW: Users CRUD
+	// =========================
+	GetUser(ctx context.Context, in *GetUserRequest, opts ...grpc.CallOption) (*GetUserResponse, error)
+	UpdateUser(ctx context.Context, in *UpdateUserRequest, opts ...grpc.CallOption) (*UpdateUserResponse, error)
+	DeleteUser(ctx context.Context, in *DeleteUserRequest, opts ...grpc.CallOption) (*DeleteUserResponse, error)
 	// Directory (CRUD)
 	CreateDepartmentRole(ctx context.Context, in *CreateDepartmentRoleRequest, opts ...grpc.CallOption) (*CreateDepartmentRoleResponse, error)
 	ListDepartmentRoles(ctx context.Context, in *ListDepartmentRolesRequest, opts ...grpc.CallOption) (*ListDepartmentRolesResponse, error)
@@ -161,6 +170,36 @@ func (c *authServiceClient) BatchGetUserPreviews(ctx context.Context, in *BatchG
 	return out, nil
 }
 
+func (c *authServiceClient) GetUser(ctx context.Context, in *GetUserRequest, opts ...grpc.CallOption) (*GetUserResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(GetUserResponse)
+	err := c.cc.Invoke(ctx, AuthService_GetUser_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *authServiceClient) UpdateUser(ctx context.Context, in *UpdateUserRequest, opts ...grpc.CallOption) (*UpdateUserResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(UpdateUserResponse)
+	err := c.cc.Invoke(ctx, AuthService_UpdateUser_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *authServiceClient) DeleteUser(ctx context.Context, in *DeleteUserRequest, opts ...grpc.CallOption) (*DeleteUserResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(DeleteUserResponse)
+	err := c.cc.Invoke(ctx, AuthService_DeleteUser_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 func (c *authServiceClient) CreateDepartmentRole(ctx context.Context, in *CreateDepartmentRoleRequest, opts ...grpc.CallOption) (*CreateDepartmentRoleResponse, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
 	out := new(CreateDepartmentRoleResponse)
@@ -246,6 +285,12 @@ type AuthServiceServer interface {
 	AssignRole(context.Context, *AssignRoleRequest) (*AssignRoleResponse, error)
 	// Internal
 	BatchGetUserPreviews(context.Context, *BatchGetUserPreviewsRequest) (*BatchGetUserPreviewsResponse, error)
+	// =========================
+	// NEW: Users CRUD
+	// =========================
+	GetUser(context.Context, *GetUserRequest) (*GetUserResponse, error)
+	UpdateUser(context.Context, *UpdateUserRequest) (*UpdateUserResponse, error)
+	DeleteUser(context.Context, *DeleteUserRequest) (*DeleteUserResponse, error)
 	// Directory (CRUD)
 	CreateDepartmentRole(context.Context, *CreateDepartmentRoleRequest) (*CreateDepartmentRoleResponse, error)
 	ListDepartmentRoles(context.Context, *ListDepartmentRolesRequest) (*ListDepartmentRolesResponse, error)
@@ -291,6 +336,15 @@ func (UnimplementedAuthServiceServer) AssignRole(context.Context, *AssignRoleReq
 }
 func (UnimplementedAuthServiceServer) BatchGetUserPreviews(context.Context, *BatchGetUserPreviewsRequest) (*BatchGetUserPreviewsResponse, error) {
 	return nil, status.Error(codes.Unimplemented, "method BatchGetUserPreviews not implemented")
+}
+func (UnimplementedAuthServiceServer) GetUser(context.Context, *GetUserRequest) (*GetUserResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method GetUser not implemented")
+}
+func (UnimplementedAuthServiceServer) UpdateUser(context.Context, *UpdateUserRequest) (*UpdateUserResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method UpdateUser not implemented")
+}
+func (UnimplementedAuthServiceServer) DeleteUser(context.Context, *DeleteUserRequest) (*DeleteUserResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method DeleteUser not implemented")
 }
 func (UnimplementedAuthServiceServer) CreateDepartmentRole(context.Context, *CreateDepartmentRoleRequest) (*CreateDepartmentRoleResponse, error) {
 	return nil, status.Error(codes.Unimplemented, "method CreateDepartmentRole not implemented")
@@ -496,6 +550,60 @@ func _AuthService_BatchGetUserPreviews_Handler(srv interface{}, ctx context.Cont
 	return interceptor(ctx, in, info, handler)
 }
 
+func _AuthService_GetUser_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetUserRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(AuthServiceServer).GetUser(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: AuthService_GetUser_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(AuthServiceServer).GetUser(ctx, req.(*GetUserRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _AuthService_UpdateUser_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(UpdateUserRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(AuthServiceServer).UpdateUser(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: AuthService_UpdateUser_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(AuthServiceServer).UpdateUser(ctx, req.(*UpdateUserRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _AuthService_DeleteUser_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(DeleteUserRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(AuthServiceServer).DeleteUser(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: AuthService_DeleteUser_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(AuthServiceServer).DeleteUser(ctx, req.(*DeleteUserRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 func _AuthService_CreateDepartmentRole_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(CreateDepartmentRoleRequest)
 	if err := dec(in); err != nil {
@@ -664,6 +772,18 @@ var AuthService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "BatchGetUserPreviews",
 			Handler:    _AuthService_BatchGetUserPreviews_Handler,
+		},
+		{
+			MethodName: "GetUser",
+			Handler:    _AuthService_GetUser_Handler,
+		},
+		{
+			MethodName: "UpdateUser",
+			Handler:    _AuthService_UpdateUser_Handler,
+		},
+		{
+			MethodName: "DeleteUser",
+			Handler:    _AuthService_DeleteUser_Handler,
 		},
 		{
 			MethodName: "CreateDepartmentRole",

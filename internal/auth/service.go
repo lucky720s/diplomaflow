@@ -12,6 +12,16 @@ import (
 	"gorm.io/gorm"
 )
 
+// =====================================================
+// Error definitions
+// =====================================================
+
+var (
+	ErrUserNotFound = errors.New("user not found")
+	ErrSelfDelete   = errors.New("cannot delete yourself")
+	ErrEmailTaken   = errors.New("email already taken")
+)
+
 type Service struct {
 	repo       Repository
 	iamRepo    IAMRepository
@@ -144,7 +154,7 @@ func (s *Service) RefreshToken(ctx context.Context, clientToken, userAgent, ip s
 		return "", "", err
 	}
 
-	if err := s.repo.RevokeRefreshToken(ctx, storedToken.ID); err != nil { //nolint:govet
+	if err := s.repo.RevokeRefreshToken(ctx, storedToken.ID); err != nil {
 		return "", "", err
 	}
 
@@ -257,4 +267,132 @@ func (s *Service) BatchGetUserPreviews(ctx context.Context, ids []int64) ([]*Use
 	}
 
 	return s.repo.GetByIDs(ctx, uniq)
+}
+
+func (s *Service) GetUser(ctx context.Context, userID int64) (*User, error) {
+	if userID <= 0 {
+		return nil, ErrUserNotFound
+	}
+
+	user, err := s.repo.GetByID(ctx, userID)
+	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return nil, ErrUserNotFound
+		}
+		s.logger.Error("GetUser failed", zap.Int64("user_id", userID), zap.Error(err))
+		return nil, err
+	}
+
+	return user, nil
+}
+
+func (s *Service) UpdateUser(ctx context.Context, userID int64, email, firstName, lastName, role string, universityID, departmentID int64, requesterRole string) (*User, error) {
+	if userID <= 0 {
+		return nil, ErrUserNotFound
+	}
+
+	user, err := s.repo.GetByID(ctx, userID)
+	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return nil, ErrUserNotFound
+		}
+		s.logger.Error("UpdateUser: failed to get user", zap.Int64("user_id", userID), zap.Error(err))
+		return nil, err
+	}
+
+	if email != "" && email != user.Email {
+		existingUser, err := s.repo.GetByEmail(ctx, email)
+		if err == nil && existingUser != nil && existingUser.ID != userID {
+			return nil, ErrEmailTaken
+		}
+		user.Email = email
+	}
+
+	if firstName != "" {
+		user.FirstName = firstName
+	}
+	if lastName != "" {
+		user.LastName = lastName
+	}
+
+	if requesterRole == "admin" {
+		if role != "" {
+			validRoles := map[string]bool{
+				"student": true,
+				"teacher": true,
+				"admin":   true,
+			}
+			if !validRoles[role] {
+				return nil, fmt.Errorf("invalid role: %s", role)
+			}
+			user.Role = role
+		}
+		if universityID > 0 {
+			user.UniversityID = universityID
+		}
+		if departmentID > 0 {
+			user.DepartmentID = departmentID
+		}
+	} else {
+		if role != "" || universityID > 0 || departmentID > 0 {
+			s.logger.Warn("Non-admin tried to change restricted fields",
+				zap.Int64("user_id", userID),
+				zap.String("requester_role", requesterRole),
+			)
+		}
+	}
+
+	if err := s.repo.Update(ctx, user); err != nil {
+		s.logger.Error("UpdateUser failed", zap.Int64("user_id", userID), zap.Error(err))
+		return nil, err
+	}
+
+	s.logger.Info("User updated",
+		zap.Int64("user_id", userID),
+		zap.String("updated_by_role", requesterRole),
+	)
+
+	return user, nil
+}
+
+func (s *Service) DeleteUser(ctx context.Context, userID, requesterID int64) error {
+	if userID <= 0 {
+		return ErrUserNotFound
+	}
+
+	if userID == requesterID {
+		s.logger.Warn("Self-delete attempted",
+			zap.Int64("user_id", userID),
+			zap.Int64("requester_id", requesterID),
+		)
+		return ErrSelfDelete
+	}
+
+	_, err := s.repo.GetByID(ctx, userID)
+	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return ErrUserNotFound
+		}
+		s.logger.Error("DeleteUser: failed to get user", zap.Int64("user_id", userID), zap.Error(err))
+		return err
+	}
+
+	if err := s.repo.RevokeAllUserTokens(ctx, userID); err != nil {
+		s.logger.Warn("Failed to revoke user tokens before delete",
+			zap.Int64("user_id", userID),
+			zap.Error(err),
+		)
+	}
+
+	if err := s.repo.Delete(ctx, userID); err != nil {
+		s.logger.Error("DeleteUser failed", zap.Int64("user_id", userID), zap.Error(err))
+		return err
+	}
+
+	s.logger.Info("User deleted",
+		zap.Int64("user_id", userID),
+		zap.Int64("deleted_by", requesterID),
+	)
+
+	return nil
 }

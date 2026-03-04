@@ -22,6 +22,13 @@ service AuthService {
   rpc BatchGetUserPreviews(BatchGetUserPreviewsRequest) returns (BatchGetUserPreviewsResponse);
 
   // =========================
+  // NEW: Users CRUD
+  // =========================
+  rpc GetUser (GetUserRequest) returns (GetUserResponse);
+  rpc UpdateUser (UpdateUserRequest) returns (UpdateUserResponse);
+  rpc DeleteUser (DeleteUserRequest) returns (DeleteUserResponse);
+
+  // =========================
   // Dynamic department roles (directory + assignments)
   // =========================
 
@@ -149,6 +156,41 @@ message AssignRoleResponse {
 
 message BatchGetUserPreviewsRequest { repeated int64 ids = 1; }
 message BatchGetUserPreviewsResponse { repeated UserPreview users = 1; }
+
+message GetUserRequest {
+  int64 user_id = 1 [(validate.rules).int64.gt = 0];
+}
+
+message GetUserResponse {
+  UserPreview user = 1;
+}
+
+message UpdateUserRequest {
+  int64 user_id = 1 [(validate.rules).int64.gt = 0];
+
+  // Базовые поля (доступны владельцу профиля)
+  string email = 2;
+  string first_name = 3;
+  string last_name = 4;
+
+  // Привилегированные поля (только admin)
+  string role = 5;           // student|teacher|admin
+  int64 university_id = 6;
+  int64 department_id = 7;
+}
+
+message UpdateUserResponse {
+  UserPreview user = 1;
+}
+
+message DeleteUserRequest {
+  int64 user_id = 1 [(validate.rules).int64.gt = 0];
+  int64 requester_id = 2 [(validate.rules).int64.gt = 0];
+}
+
+message DeleteUserResponse {
+  bool success = 1;
+}
 
 // =========================
 // Dynamic department roles

@@ -22,6 +22,9 @@ type Repository interface {
 
 	Update(ctx context.Context, user *User) error
 	GetByIDs(ctx context.Context, ids []int64) ([]*User, error)
+
+	// NEW: Delete user (soft delete)
+	Delete(ctx context.Context, id int64) error
 }
 
 type UserFilter struct {
@@ -67,7 +70,6 @@ func (r *repository) ListUsers(ctx context.Context, filter UserFilter) ([]*User,
 
 	query := r.db.WithContext(ctx).Model(&User{})
 
-	// ✅ filters
 	if filter.UniversityID != 0 {
 		query = query.Where("university_id = ?", filter.UniversityID)
 	}
@@ -156,4 +158,15 @@ func (r *repository) GetByIDs(ctx context.Context, ids []int64) ([]*User, error)
 		Where("id IN ?", ids).
 		Find(&users).Error
 	return users, err
+}
+
+func (r *repository) Delete(ctx context.Context, id int64) error {
+	result := r.db.WithContext(ctx).Delete(&User{}, id)
+	if result.Error != nil {
+		return result.Error
+	}
+	if result.RowsAffected == 0 {
+		return gorm.ErrRecordNotFound
+	}
+	return nil
 }
