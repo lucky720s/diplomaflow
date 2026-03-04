@@ -115,7 +115,7 @@ func (h *Handler) UploadProjectDocument(c *gin.Context) {
 	defer file.Close()
 
 	// 1. Загружаем файл через file_service (streaming)
-	stream, err := h.fileClient.UploadFile(c.Request.Context())
+	stream, err := h.fileClient.UploadFile(outgoingCtx(c))
 	if err != nil {
 		MapGRPCError(c, err)
 		return
