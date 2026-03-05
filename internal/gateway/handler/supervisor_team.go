@@ -129,3 +129,48 @@ func (h *Handler) GetAvailableTeams(c *gin.Context) {
 		"total_count": resp.TotalCount,
 	})
 }
+func (h *Handler) ListSupervisorsForStudents(c *gin.Context) {
+	page, _ := strconv.Atoi(c.DefaultQuery("page", "1"))
+	pageSize, _ := strconv.Atoi(c.DefaultQuery("page_size", "50"))
+
+	resp, err := h.adminClient.ListSupervisors(
+		adminPanelCtx(c),
+		&adminv1.ListSupervisorsRequest{
+			DepartmentId: c.GetInt64("departmentId"),
+			UniversityId: c.GetInt64("universityId"),
+			Page:         int32(page),
+			PageSize:     int32(pageSize),
+		},
+	)
+	if err != nil {
+		MapGRPCError(c, err)
+		return
+	}
+
+	// Возвращаем с teams_count и max_teams
+	type supervisorResp struct {
+		ID         int64  `json:"id"`
+		FullName   string `json:"full_name"`
+		Email      string `json:"email"`
+		Position   string `json:"position"`
+		TeamsCount int32  `json:"teams_count"`
+		MaxTeams   int32  `json:"max_teams"`
+	}
+
+	supervisors := make([]supervisorResp, 0, len(resp.Supervisors))
+	for _, s := range resp.Supervisors {
+		supervisors = append(supervisors, supervisorResp{
+			ID:         s.Id,
+			FullName:   s.FullName,
+			Email:      s.Email,
+			Position:   s.Position,
+			TeamsCount: s.TeamsCount,
+			MaxTeams:   s.MaxTeams,
+		})
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"supervisors": supervisors,
+		"total_count": resp.TotalCount,
+	})
+}

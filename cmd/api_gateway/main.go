@@ -214,6 +214,8 @@ func main() {
 
 			// NEW: team-first supervisor request (до создания проекта)
 			teams.POST("/:id/supervisor-request", handler.CreateSupervisorRequestByTeam)
+
+			teams.GET("/supervisors", handler.ListSupervisorsForStudents)
 		}
 
 		invites := v1.Group("/invites")
