@@ -621,7 +621,8 @@ func (s *Service) ListAllTeams(ctx context.Context, req *ListAllTeamsRequest) ([
 
 type SupervisorData struct {
 	ID         int64
-	FullName   string
+	FirstName  string
+	LastName   string
 	Email      string
 	Position   string
 	TeamsCount int32
@@ -671,7 +672,8 @@ func (s *Service) ListSupervisors(ctx context.Context, departmentID, universityI
 
 		supervisors = append(supervisors, &SupervisorData{
 			ID:         u.Id,
-			FullName:   u.FirstName + " " + u.LastName,
+			FirstName:  u.FirstName,
+			LastName:   u.LastName,
 			Email:      u.Email,
 			Position:   "Teacher",
 			TeamsCount: teamCounts[u.Id],

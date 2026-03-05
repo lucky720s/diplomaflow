@@ -2674,12 +2674,13 @@ func (x *ListSupervisorsResponse) GetTotalCount() int64 {
 type SupervisorDetails struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	Id            int64                  `protobuf:"varint,1,opt,name=id,proto3" json:"id,omitempty"`
-	FullName      string                 `protobuf:"bytes,2,opt,name=full_name,json=fullName,proto3" json:"full_name,omitempty"`
-	Email         string                 `protobuf:"bytes,3,opt,name=email,proto3" json:"email,omitempty"`
-	Position      string                 `protobuf:"bytes,4,opt,name=position,proto3" json:"position,omitempty"`
-	TeamsCount    int32                  `protobuf:"varint,5,opt,name=teams_count,json=teamsCount,proto3" json:"teams_count,omitempty"`
-	MaxTeams      int32                  `protobuf:"varint,6,opt,name=max_teams,json=maxTeams,proto3" json:"max_teams,omitempty"`
-	AssignedTeams []*TeamPreview         `protobuf:"bytes,7,rep,name=assigned_teams,json=assignedTeams,proto3" json:"assigned_teams,omitempty"`
+	FirstName     string                 `protobuf:"bytes,2,opt,name=first_name,json=firstName,proto3" json:"first_name,omitempty"`
+	LastName      string                 `protobuf:"bytes,3,opt,name=last_name,json=lastName,proto3" json:"last_name,omitempty"`
+	Email         string                 `protobuf:"bytes,4,opt,name=email,proto3" json:"email,omitempty"`
+	Position      string                 `protobuf:"bytes,5,opt,name=position,proto3" json:"position,omitempty"`
+	TeamsCount    int32                  `protobuf:"varint,6,opt,name=teams_count,json=teamsCount,proto3" json:"teams_count,omitempty"`
+	MaxTeams      int32                  `protobuf:"varint,7,opt,name=max_teams,json=maxTeams,proto3" json:"max_teams,omitempty"`
+	AssignedTeams []*TeamPreview         `protobuf:"bytes,8,rep,name=assigned_teams,json=assignedTeams,proto3" json:"assigned_teams,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -2721,9 +2722,16 @@ func (x *SupervisorDetails) GetId() int64 {
 	return 0
 }
 
-func (x *SupervisorDetails) GetFullName() string {
+func (x *SupervisorDetails) GetFirstName() string {
 	if x != nil {
-		return x.FullName
+		return x.FirstName
+	}
+	return ""
+}
+
+func (x *SupervisorDetails) GetLastName() string {
+	if x != nil {
+		return x.LastName
 	}
 	return ""
 }
@@ -8991,16 +8999,18 @@ const file_admin_v1_admin_proto_rawDesc = "" +
 	"\x17ListSupervisorsResponse\x12=\n" +
 	"\vsupervisors\x18\x01 \x03(\v2\x1b.admin.v1.SupervisorDetailsR\vsupervisors\x12\x1f\n" +
 	"\vtotal_count\x18\x02 \x01(\x03R\n" +
-	"totalCount\"\xee\x01\n" +
+	"totalCount\"\x8d\x02\n" +
 	"\x11SupervisorDetails\x12\x0e\n" +
-	"\x02id\x18\x01 \x01(\x03R\x02id\x12\x1b\n" +
-	"\tfull_name\x18\x02 \x01(\tR\bfullName\x12\x14\n" +
-	"\x05email\x18\x03 \x01(\tR\x05email\x12\x1a\n" +
-	"\bposition\x18\x04 \x01(\tR\bposition\x12\x1f\n" +
-	"\vteams_count\x18\x05 \x01(\x05R\n" +
+	"\x02id\x18\x01 \x01(\x03R\x02id\x12\x1d\n" +
+	"\n" +
+	"first_name\x18\x02 \x01(\tR\tfirstName\x12\x1b\n" +
+	"\tlast_name\x18\x03 \x01(\tR\blastName\x12\x14\n" +
+	"\x05email\x18\x04 \x01(\tR\x05email\x12\x1a\n" +
+	"\bposition\x18\x05 \x01(\tR\bposition\x12\x1f\n" +
+	"\vteams_count\x18\x06 \x01(\x05R\n" +
 	"teamsCount\x12\x1b\n" +
-	"\tmax_teams\x18\x06 \x01(\x05R\bmaxTeams\x12<\n" +
-	"\x0eassigned_teams\x18\a \x03(\v2\x15.admin.v1.TeamPreviewR\rassignedTeams\"V\n" +
+	"\tmax_teams\x18\a \x01(\x05R\bmaxTeams\x12<\n" +
+	"\x0eassigned_teams\x18\b \x03(\v2\x15.admin.v1.TeamPreviewR\rassignedTeams\"V\n" +
 	"\vTeamPreview\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\x03R\x02id\x12\x12\n" +
 	"\x04name\x18\x02 \x01(\tR\x04name\x12#\n" +

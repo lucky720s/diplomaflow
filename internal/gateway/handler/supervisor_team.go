@@ -165,7 +165,8 @@ func (h *Handler) ListSupervisorsPublic(c *gin.Context) {
 	}
 	type supervisorJSON struct {
 		ID         int64  `json:"id"`
-		FullName   string `json:"full_name"`
+		FirstName  string `json:"first_name"`
+		LastName   string `json:"last_name"`
 		Email      string `json:"email"`
 		Position   string `json:"position"`
 		TeamsCount int32  `json:"teams_count"`
@@ -176,7 +177,8 @@ func (h *Handler) ListSupervisorsPublic(c *gin.Context) {
 	for _, s := range resp.Supervisors {
 		users = append(users, supervisorJSON{
 			ID:         s.Id,
-			FullName:   s.FullName,
+			FirstName:  s.FirstName,
+			LastName:   s.LastName,
 			Email:      s.Email,
 			Position:   s.Position,
 			TeamsCount: s.TeamsCount,

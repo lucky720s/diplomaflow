@@ -402,7 +402,8 @@ func (h *Handler) ListSupervisors(ctx context.Context, req *adminv1.ListSupervis
 	for _, s := range supervisors {
 		pbSupervisors = append(pbSupervisors, &adminv1.SupervisorDetails{
 			Id:         s.ID,
-			FullName:   s.FullName,
+			FirstName:  s.FirstName,
+			LastName:   s.LastName,
 			Email:      s.Email,
 			Position:   s.Position,
 			TeamsCount: s.TeamsCount,

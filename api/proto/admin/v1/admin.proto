@@ -371,12 +371,13 @@ message ListSupervisorsResponse {
 
 message SupervisorDetails {
   int64 id = 1;
-  string full_name = 2;
-  string email = 3;
-  string position = 4;
-  int32 teams_count = 5;
-  int32 max_teams = 6;
-  repeated TeamPreview assigned_teams = 7;
+  string first_name = 2;
+  string last_name =3;
+  string email = 4;
+  string position = 5;
+  int32 teams_count = 6;
+  int32 max_teams = 7;
+  repeated TeamPreview assigned_teams = 8;
 }
 
 message TeamPreview {
