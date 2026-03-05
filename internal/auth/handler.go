@@ -172,7 +172,7 @@ func (h *Handler) ValidateToken(ctx context.Context, req *authv1.ValidateTokenRe
 }
 
 func (h *Handler) ListUsers(ctx context.Context, req *authv1.ListUsersRequest) (*authv1.ListUsersResponse, error) {
-	if err := requireInternalOneOf(ctx, "api_gateway", "admin_service"); err != nil {
+	if err := requireInternalOneOf(ctx, "api_gateway", "admin_service", "team_service"); err != nil {
 		return nil, err
 	}
 
