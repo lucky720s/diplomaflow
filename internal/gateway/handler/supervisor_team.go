@@ -163,5 +163,29 @@ func (h *Handler) ListSupervisorsPublic(c *gin.Context) {
 		MapGRPCError(c, err)
 		return
 	}
-	c.JSON(http.StatusOK, resp)
+	type supervisorJSON struct {
+		ID         int64  `json:"id"`
+		FullName   string `json:"full_name"`
+		Email      string `json:"email"`
+		Position   string `json:"position"`
+		TeamsCount int32  `json:"teams_count"`
+		MaxTeams   int32  `json:"max_teams"`
+	}
+
+	users := make([]supervisorJSON, 0, len(resp.Supervisors))
+	for _, s := range resp.Supervisors {
+		users = append(users, supervisorJSON{
+			ID:         s.Id,
+			FullName:   s.FullName,
+			Email:      s.Email,
+			Position:   s.Position,
+			TeamsCount: s.TeamsCount,
+			MaxTeams:   s.MaxTeams,
+		})
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"supervisors": users,
+		"total_count": resp.TotalCount,
+	})
 }
