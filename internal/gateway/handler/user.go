@@ -5,6 +5,7 @@ import (
 	"strconv"
 
 	"github.com/gin-gonic/gin"
+	adminv1 "github.com/lucky720s/diplomaflow/pkg/protobuf/admin/v1"
 	authv1 "github.com/lucky720s/diplomaflow/pkg/protobuf/auth/v1"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/metadata"
@@ -12,52 +13,80 @@ import (
 )
 
 func (h *Handler) ListUsers(c *gin.Context) {
-	universityID := c.GetInt64("universityId")
-	departmentID := c.GetInt64("departmentId")
-	roleFromToken := c.GetString("role")
-
-	if roleFromToken == "admin" {
-		if v := c.Query("department_id"); v != "" {
-			if did, err := strconv.ParseInt(v, 10, 64); err == nil && did > 0 {
-				departmentID = did
-			}
-		}
-		if v := c.Query("university_id"); v != "" {
-			if uid, err := strconv.ParseInt(v, 10, 64); err == nil && uid > 0 {
-				universityID = uid
-			}
-		}
-	}
-
 	role := c.Query("role")
+	page, _ := strconv.Atoi(c.DefaultQuery("page", "1"))
+	pageSize, _ := strconv.Atoi(c.DefaultQuery("page_size", "20"))
 
-	page := int32(1)
-	pageSize := int32(20)
-
-	if p := c.Query("page"); p != "" {
-		if v, err := strconv.ParseInt(p, 10, 32); err == nil && v > 0 {
-			page = int32(v)
-		}
-	}
-	if ps := c.Query("page_size"); ps != "" {
-		if v, err := strconv.ParseInt(ps, 10, 32); err == nil && v > 0 {
-			pageSize = int32(v)
-		}
-	}
-
-	res, err := h.authClient.ListUsers(authGatewayCtx(c), &authv1.ListUsersRequest{
-		UniversityId: universityID,
-		DepartmentId: departmentID,
+	resp, err := h.authClient.ListUsers(authGatewayCtx(c), &authv1.ListUsersRequest{
+		UniversityId: c.GetInt64("universityId"),
+		DepartmentId: c.GetInt64("departmentId"),
 		Role:         role,
-		Page:         page,
-		PageSize:     pageSize,
+		Page:         int32(page),
+		PageSize:     int32(pageSize),
 	})
 	if err != nil {
 		MapGRPCError(c, err)
 		return
 	}
 
-	c.JSON(http.StatusOK, res)
+	// Если role=teacher — обогащаем teams_count и max_teams
+	if role == "teacher" && len(resp.Users) > 0 {
+		supResp, supErr := h.adminClient.ListSupervisors(adminPanelCtx(c), &adminv1.ListSupervisorsRequest{
+			UniversityId: c.GetInt64("universityId"),
+			DepartmentId: c.GetInt64("departmentId"),
+			Page:         1,
+			PageSize:     200,
+		})
+
+		if supErr == nil && supResp != nil {
+			supMap := make(map[int64]*adminv1.SupervisorDetails)
+			for _, s := range supResp.Supervisors {
+				supMap[s.Id] = s
+			}
+
+			type teacherResp struct {
+				ID           int64  `json:"id"`
+				Email        string `json:"email"`
+				FirstName    string `json:"first_name"`
+				LastName     string `json:"last_name"`
+				Role         string `json:"role"`
+				UniversityID int64  `json:"university_id"`
+				DepartmentID int64  `json:"department_id"`
+				TeamsCount   int32  `json:"teams_count"`
+				MaxTeams     int32  `json:"max_teams"`
+			}
+
+			users := make([]teacherResp, 0, len(resp.Users))
+			for _, u := range resp.Users {
+				t := teacherResp{
+					ID:           u.Id,
+					Email:        u.Email,
+					FirstName:    u.FirstName,
+					LastName:     u.LastName,
+					Role:         u.Role,
+					UniversityID: u.UniversityId,
+					DepartmentID: u.DepartmentId,
+				}
+				if sup, ok := supMap[u.Id]; ok {
+					t.TeamsCount = sup.TeamsCount
+					t.MaxTeams = sup.MaxTeams
+				}
+				users = append(users, t)
+			}
+
+			c.JSON(http.StatusOK, gin.H{
+				"users":       users,
+				"total_count": resp.TotalCount,
+			})
+			return
+		}
+		// fallback если admin_service недоступен
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"users":       resp.Users,
+		"total_count": resp.TotalCount,
+	})
 }
 
 func (h *Handler) GetUser(c *gin.Context) {
