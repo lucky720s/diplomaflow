@@ -214,8 +214,6 @@ func main() {
 
 			// NEW: team-first supervisor request (до создания проекта)
 			teams.POST("/:id/supervisor-request", handler.CreateSupervisorRequestByTeam)
-
-			teams.GET("/supervisors", handler.ListSupervisorsForStudents)
 		}
 
 		invites := v1.Group("/invites")
@@ -342,7 +340,7 @@ func main() {
 		supervisors := v1.Group("/supervisors")
 		supervisors.Use(middleware.AuthMiddleware(cfg.JWTSecret))
 		{
-			supervisors.GET("", handler.ListSupervisors)
+			supervisors.GET("", handler.ListSupervisorsPublic)
 		}
 		supervisorsPanel := supervisors.Group("")
 		supervisorsPanel.Use(middleware.RBACMiddleware("teacher", "admin"))

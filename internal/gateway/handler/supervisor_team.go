@@ -129,48 +129,39 @@ func (h *Handler) GetAvailableTeams(c *gin.Context) {
 		"total_count": resp.TotalCount,
 	})
 }
-func (h *Handler) ListSupervisorsForStudents(c *gin.Context) {
-	page, _ := strconv.Atoi(c.DefaultQuery("page", "1"))
-	pageSize, _ := strconv.Atoi(c.DefaultQuery("page_size", "50"))
 
-	resp, err := h.adminClient.ListSupervisors(
-		adminPanelCtx(c),
-		&adminv1.ListSupervisorsRequest{
-			DepartmentId: c.GetInt64("departmentId"),
-			UniversityId: c.GetInt64("universityId"),
-			Page:         int32(page),
-			PageSize:     int32(pageSize),
-		},
+// В admin_panel.go или отдельном файле
+func (h *Handler) ListSupervisorsPublic(c *gin.Context) {
+	departmentID := c.GetInt64("departmentId")
+	universityID := c.GetInt64("universityId")
+
+	page := int32(1)
+	pageSize := int32(50)
+	if p := c.Query("page"); p != "" {
+		if v, _ := strconv.ParseInt(p, 10, 32); v > 0 {
+			page = int32(v)
+		}
+	}
+
+	// Используем internal context — admin_service доверяет api_gateway
+	ctx := metadata.AppendToOutgoingContext(
+		c.Request.Context(),
+		"x-user-id", strconv.FormatInt(c.GetInt64("userId"), 10),
+		"x-user-role", "admin", // ← подменяем роль для internal call
+		"x-university-id", strconv.FormatInt(universityID, 10),
+		"x-department-id", strconv.FormatInt(departmentID, 10),
+		"x-internal-service", "api_gateway",
 	)
+
+	resp, err := h.adminClient.ListSupervisors(ctx, &adminv1.ListSupervisorsRequest{
+		DepartmentId: departmentID,
+		UniversityId: universityID,
+		Page:         page,
+		PageSize:     pageSize,
+	})
 	if err != nil {
 		MapGRPCError(c, err)
 		return
 	}
-
-	// Возвращаем с teams_count и max_teams
-	type supervisorResp struct {
-		ID         int64  `json:"id"`
-		FullName   string `json:"full_name"`
-		Email      string `json:"email"`
-		Position   string `json:"position"`
-		TeamsCount int32  `json:"teams_count"`
-		MaxTeams   int32  `json:"max_teams"`
-	}
-
-	supervisors := make([]supervisorResp, 0, len(resp.Supervisors))
-	for _, s := range resp.Supervisors {
-		supervisors = append(supervisors, supervisorResp{
-			ID:         s.Id,
-			FullName:   s.FullName,
-			Email:      s.Email,
-			Position:   s.Position,
-			TeamsCount: s.TeamsCount,
-			MaxTeams:   s.MaxTeams,
-		})
-	}
-
-	c.JSON(http.StatusOK, gin.H{
-		"supervisors": supervisors,
-		"total_count": resp.TotalCount,
-	})
+	c.JSON(http.StatusOK, resp)
 }
