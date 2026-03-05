@@ -62,7 +62,19 @@ func NewService(
 // ==================== Helpers ====================
 
 func (s *Service) internalCtx(ctx context.Context) context.Context {
-	return metadata.AppendToOutgoingContext(ctx, "x-internal-service", "admin_service")
+	outCtx := ctx
+	if md, ok := metadata.FromIncomingContext(ctx); ok {
+		pairs := make([]string, 0, 10)
+		for _, key := range []string{"x-user-id", "x-user-role", "x-university-id", "x-department-id"} {
+			if vals := md.Get(key); len(vals) > 0 {
+				pairs = append(pairs, key, vals[0])
+			}
+		}
+		if len(pairs) > 0 {
+			outCtx = metadata.AppendToOutgoingContext(ctx, pairs...)
+		}
+	}
+	return metadata.AppendToOutgoingContext(outCtx, "x-internal-service", "admin_service")
 }
 
 func (s *Service) callerFromContext(ctx context.Context, fallbackUserID int64, fallbackRole string) (int64, string) {
@@ -617,13 +629,14 @@ type SupervisorData struct {
 }
 
 func (s *Service) ListSupervisors(ctx context.Context, departmentID, universityID int64, page, pageSize int32) ([]*SupervisorData, int64, error) {
-	resp, err := s.authClient.ListUsers(ctx, &authv1.ListUsersRequest{
+	resp, err := s.authClient.ListUsers(s.internalCtx(ctx), &authv1.ListUsersRequest{
 		UniversityId: universityID,
 		DepartmentId: departmentID,
 		Role:         "teacher",
 		Page:         page,
 		PageSize:     pageSize,
 	})
+
 	if err != nil {
 		return nil, 0, fmt.Errorf("failed to list supervisors: %w", err)
 	}
