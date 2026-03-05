@@ -14,4 +14,7 @@ type AuthService interface {
 	ListUsers(ctx context.Context, universityID int64, departmentID int64, role string, page, pageSize int32, excludeUserID int64) ([]*auth.User, int64, error)
 	ListSessions(ctx context.Context, userID int64) ([]*auth.RefreshToken, error)
 	RevokeSession(ctx context.Context, userID int64, sessionID uint64) error
+	GetUser(ctx context.Context, userID int64) (*auth.User, error)
+	UpdateUser(ctx context.Context, userID int64, email, firstName, lastName, role string, universityID, departmentID int64, password string) (*auth.User, error)
+	DeleteUser(ctx context.Context, userID, requesterID int64) error
 }

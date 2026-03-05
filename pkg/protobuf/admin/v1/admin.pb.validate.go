@@ -16061,3 +16061,479 @@ var _ interface {
 	Cause() error
 	ErrorName() string
 } = SubmitDocumentResponseValidationError{}
+
+// Validate checks the field values on GetSupervisorSettingsRequest with the
+// rules defined in the proto definition for this message. If any rules are
+// violated, the first error encountered is returned, or nil if there are no violations.
+func (m *GetSupervisorSettingsRequest) Validate() error {
+	return m.validate(false)
+}
+
+// ValidateAll checks the field values on GetSupervisorSettingsRequest with the
+// rules defined in the proto definition for this message. If any rules are
+// violated, the result is a list of violation errors wrapped in
+// GetSupervisorSettingsRequestMultiError, or nil if none found.
+func (m *GetSupervisorSettingsRequest) ValidateAll() error {
+	return m.validate(true)
+}
+
+func (m *GetSupervisorSettingsRequest) validate(all bool) error {
+	if m == nil {
+		return nil
+	}
+
+	var errors []error
+
+	if m.GetSupervisorId() <= 0 {
+		err := GetSupervisorSettingsRequestValidationError{
+			field:  "SupervisorId",
+			reason: "value must be greater than 0",
+		}
+		if !all {
+			return err
+		}
+		errors = append(errors, err)
+	}
+
+	// no validation rules for DepartmentId
+
+	if len(errors) > 0 {
+		return GetSupervisorSettingsRequestMultiError(errors)
+	}
+
+	return nil
+}
+
+// GetSupervisorSettingsRequestMultiError is an error wrapping multiple
+// validation errors returned by GetSupervisorSettingsRequest.ValidateAll() if
+// the designated constraints aren't met.
+type GetSupervisorSettingsRequestMultiError []error
+
+// Error returns a concatenation of all the error messages it wraps.
+func (m GetSupervisorSettingsRequestMultiError) Error() string {
+	msgs := make([]string, 0, len(m))
+	for _, err := range m {
+		msgs = append(msgs, err.Error())
+	}
+	return strings.Join(msgs, "; ")
+}
+
+// AllErrors returns a list of validation violation errors.
+func (m GetSupervisorSettingsRequestMultiError) AllErrors() []error { return m }
+
+// GetSupervisorSettingsRequestValidationError is the validation error returned
+// by GetSupervisorSettingsRequest.Validate if the designated constraints
+// aren't met.
+type GetSupervisorSettingsRequestValidationError struct {
+	field  string
+	reason string
+	cause  error
+	key    bool
+}
+
+// Field function returns field value.
+func (e GetSupervisorSettingsRequestValidationError) Field() string { return e.field }
+
+// Reason function returns reason value.
+func (e GetSupervisorSettingsRequestValidationError) Reason() string { return e.reason }
+
+// Cause function returns cause value.
+func (e GetSupervisorSettingsRequestValidationError) Cause() error { return e.cause }
+
+// Key function returns key value.
+func (e GetSupervisorSettingsRequestValidationError) Key() bool { return e.key }
+
+// ErrorName returns error name.
+func (e GetSupervisorSettingsRequestValidationError) ErrorName() string {
+	return "GetSupervisorSettingsRequestValidationError"
+}
+
+// Error satisfies the builtin error interface
+func (e GetSupervisorSettingsRequestValidationError) Error() string {
+	cause := ""
+	if e.cause != nil {
+		cause = fmt.Sprintf(" | caused by: %v", e.cause)
+	}
+
+	key := ""
+	if e.key {
+		key = "key for "
+	}
+
+	return fmt.Sprintf(
+		"invalid %sGetSupervisorSettingsRequest.%s: %s%s",
+		key,
+		e.field,
+		e.reason,
+		cause)
+}
+
+var _ error = GetSupervisorSettingsRequestValidationError{}
+
+var _ interface {
+	Field() string
+	Reason() string
+	Key() bool
+	Cause() error
+	ErrorName() string
+} = GetSupervisorSettingsRequestValidationError{}
+
+// Validate checks the field values on GetSupervisorSettingsResponse with the
+// rules defined in the proto definition for this message. If any rules are
+// violated, the first error encountered is returned, or nil if there are no violations.
+func (m *GetSupervisorSettingsResponse) Validate() error {
+	return m.validate(false)
+}
+
+// ValidateAll checks the field values on GetSupervisorSettingsResponse with
+// the rules defined in the proto definition for this message. If any rules
+// are violated, the result is a list of violation errors wrapped in
+// GetSupervisorSettingsResponseMultiError, or nil if none found.
+func (m *GetSupervisorSettingsResponse) ValidateAll() error {
+	return m.validate(true)
+}
+
+func (m *GetSupervisorSettingsResponse) validate(all bool) error {
+	if m == nil {
+		return nil
+	}
+
+	var errors []error
+
+	// no validation rules for SupervisorId
+
+	// no validation rules for MaxTeams
+
+	// no validation rules for CurrentTeams
+
+	// no validation rules for EffectiveMaxTeams
+
+	// no validation rules for IsCustom
+
+	if len(errors) > 0 {
+		return GetSupervisorSettingsResponseMultiError(errors)
+	}
+
+	return nil
+}
+
+// GetSupervisorSettingsResponseMultiError is an error wrapping multiple
+// validation errors returned by GetSupervisorSettingsResponse.ValidateAll()
+// if the designated constraints aren't met.
+type GetSupervisorSettingsResponseMultiError []error
+
+// Error returns a concatenation of all the error messages it wraps.
+func (m GetSupervisorSettingsResponseMultiError) Error() string {
+	msgs := make([]string, 0, len(m))
+	for _, err := range m {
+		msgs = append(msgs, err.Error())
+	}
+	return strings.Join(msgs, "; ")
+}
+
+// AllErrors returns a list of validation violation errors.
+func (m GetSupervisorSettingsResponseMultiError) AllErrors() []error { return m }
+
+// GetSupervisorSettingsResponseValidationError is the validation error
+// returned by GetSupervisorSettingsResponse.Validate if the designated
+// constraints aren't met.
+type GetSupervisorSettingsResponseValidationError struct {
+	field  string
+	reason string
+	cause  error
+	key    bool
+}
+
+// Field function returns field value.
+func (e GetSupervisorSettingsResponseValidationError) Field() string { return e.field }
+
+// Reason function returns reason value.
+func (e GetSupervisorSettingsResponseValidationError) Reason() string { return e.reason }
+
+// Cause function returns cause value.
+func (e GetSupervisorSettingsResponseValidationError) Cause() error { return e.cause }
+
+// Key function returns key value.
+func (e GetSupervisorSettingsResponseValidationError) Key() bool { return e.key }
+
+// ErrorName returns error name.
+func (e GetSupervisorSettingsResponseValidationError) ErrorName() string {
+	return "GetSupervisorSettingsResponseValidationError"
+}
+
+// Error satisfies the builtin error interface
+func (e GetSupervisorSettingsResponseValidationError) Error() string {
+	cause := ""
+	if e.cause != nil {
+		cause = fmt.Sprintf(" | caused by: %v", e.cause)
+	}
+
+	key := ""
+	if e.key {
+		key = "key for "
+	}
+
+	return fmt.Sprintf(
+		"invalid %sGetSupervisorSettingsResponse.%s: %s%s",
+		key,
+		e.field,
+		e.reason,
+		cause)
+}
+
+var _ error = GetSupervisorSettingsResponseValidationError{}
+
+var _ interface {
+	Field() string
+	Reason() string
+	Key() bool
+	Cause() error
+	ErrorName() string
+} = GetSupervisorSettingsResponseValidationError{}
+
+// Validate checks the field values on UpdateSupervisorMaxTeamsRequest with the
+// rules defined in the proto definition for this message. If any rules are
+// violated, the first error encountered is returned, or nil if there are no violations.
+func (m *UpdateSupervisorMaxTeamsRequest) Validate() error {
+	return m.validate(false)
+}
+
+// ValidateAll checks the field values on UpdateSupervisorMaxTeamsRequest with
+// the rules defined in the proto definition for this message. If any rules
+// are violated, the result is a list of violation errors wrapped in
+// UpdateSupervisorMaxTeamsRequestMultiError, or nil if none found.
+func (m *UpdateSupervisorMaxTeamsRequest) ValidateAll() error {
+	return m.validate(true)
+}
+
+func (m *UpdateSupervisorMaxTeamsRequest) validate(all bool) error {
+	if m == nil {
+		return nil
+	}
+
+	var errors []error
+
+	if m.GetSupervisorId() <= 0 {
+		err := UpdateSupervisorMaxTeamsRequestValidationError{
+			field:  "SupervisorId",
+			reason: "value must be greater than 0",
+		}
+		if !all {
+			return err
+		}
+		errors = append(errors, err)
+	}
+
+	if m.GetDepartmentId() <= 0 {
+		err := UpdateSupervisorMaxTeamsRequestValidationError{
+			field:  "DepartmentId",
+			reason: "value must be greater than 0",
+		}
+		if !all {
+			return err
+		}
+		errors = append(errors, err)
+	}
+
+	if val := m.GetMaxTeams(); val < 0 || val > 100 {
+		err := UpdateSupervisorMaxTeamsRequestValidationError{
+			field:  "MaxTeams",
+			reason: "value must be inside range [0, 100]",
+		}
+		if !all {
+			return err
+		}
+		errors = append(errors, err)
+	}
+
+	if len(errors) > 0 {
+		return UpdateSupervisorMaxTeamsRequestMultiError(errors)
+	}
+
+	return nil
+}
+
+// UpdateSupervisorMaxTeamsRequestMultiError is an error wrapping multiple
+// validation errors returned by UpdateSupervisorMaxTeamsRequest.ValidateAll()
+// if the designated constraints aren't met.
+type UpdateSupervisorMaxTeamsRequestMultiError []error
+
+// Error returns a concatenation of all the error messages it wraps.
+func (m UpdateSupervisorMaxTeamsRequestMultiError) Error() string {
+	msgs := make([]string, 0, len(m))
+	for _, err := range m {
+		msgs = append(msgs, err.Error())
+	}
+	return strings.Join(msgs, "; ")
+}
+
+// AllErrors returns a list of validation violation errors.
+func (m UpdateSupervisorMaxTeamsRequestMultiError) AllErrors() []error { return m }
+
+// UpdateSupervisorMaxTeamsRequestValidationError is the validation error
+// returned by UpdateSupervisorMaxTeamsRequest.Validate if the designated
+// constraints aren't met.
+type UpdateSupervisorMaxTeamsRequestValidationError struct {
+	field  string
+	reason string
+	cause  error
+	key    bool
+}
+
+// Field function returns field value.
+func (e UpdateSupervisorMaxTeamsRequestValidationError) Field() string { return e.field }
+
+// Reason function returns reason value.
+func (e UpdateSupervisorMaxTeamsRequestValidationError) Reason() string { return e.reason }
+
+// Cause function returns cause value.
+func (e UpdateSupervisorMaxTeamsRequestValidationError) Cause() error { return e.cause }
+
+// Key function returns key value.
+func (e UpdateSupervisorMaxTeamsRequestValidationError) Key() bool { return e.key }
+
+// ErrorName returns error name.
+func (e UpdateSupervisorMaxTeamsRequestValidationError) ErrorName() string {
+	return "UpdateSupervisorMaxTeamsRequestValidationError"
+}
+
+// Error satisfies the builtin error interface
+func (e UpdateSupervisorMaxTeamsRequestValidationError) Error() string {
+	cause := ""
+	if e.cause != nil {
+		cause = fmt.Sprintf(" | caused by: %v", e.cause)
+	}
+
+	key := ""
+	if e.key {
+		key = "key for "
+	}
+
+	return fmt.Sprintf(
+		"invalid %sUpdateSupervisorMaxTeamsRequest.%s: %s%s",
+		key,
+		e.field,
+		e.reason,
+		cause)
+}
+
+var _ error = UpdateSupervisorMaxTeamsRequestValidationError{}
+
+var _ interface {
+	Field() string
+	Reason() string
+	Key() bool
+	Cause() error
+	ErrorName() string
+} = UpdateSupervisorMaxTeamsRequestValidationError{}
+
+// Validate checks the field values on UpdateSupervisorMaxTeamsResponse with
+// the rules defined in the proto definition for this message. If any rules
+// are violated, the first error encountered is returned, or nil if there are
+// no violations.
+func (m *UpdateSupervisorMaxTeamsResponse) Validate() error {
+	return m.validate(false)
+}
+
+// ValidateAll checks the field values on UpdateSupervisorMaxTeamsResponse with
+// the rules defined in the proto definition for this message. If any rules
+// are violated, the result is a list of violation errors wrapped in
+// UpdateSupervisorMaxTeamsResponseMultiError, or nil if none found.
+func (m *UpdateSupervisorMaxTeamsResponse) ValidateAll() error {
+	return m.validate(true)
+}
+
+func (m *UpdateSupervisorMaxTeamsResponse) validate(all bool) error {
+	if m == nil {
+		return nil
+	}
+
+	var errors []error
+
+	// no validation rules for Success
+
+	// no validation rules for Message
+
+	// no validation rules for NewMaxTeams
+
+	if len(errors) > 0 {
+		return UpdateSupervisorMaxTeamsResponseMultiError(errors)
+	}
+
+	return nil
+}
+
+// UpdateSupervisorMaxTeamsResponseMultiError is an error wrapping multiple
+// validation errors returned by
+// UpdateSupervisorMaxTeamsResponse.ValidateAll() if the designated
+// constraints aren't met.
+type UpdateSupervisorMaxTeamsResponseMultiError []error
+
+// Error returns a concatenation of all the error messages it wraps.
+func (m UpdateSupervisorMaxTeamsResponseMultiError) Error() string {
+	msgs := make([]string, 0, len(m))
+	for _, err := range m {
+		msgs = append(msgs, err.Error())
+	}
+	return strings.Join(msgs, "; ")
+}
+
+// AllErrors returns a list of validation violation errors.
+func (m UpdateSupervisorMaxTeamsResponseMultiError) AllErrors() []error { return m }
+
+// UpdateSupervisorMaxTeamsResponseValidationError is the validation error
+// returned by UpdateSupervisorMaxTeamsResponse.Validate if the designated
+// constraints aren't met.
+type UpdateSupervisorMaxTeamsResponseValidationError struct {
+	field  string
+	reason string
+	cause  error
+	key    bool
+}
+
+// Field function returns field value.
+func (e UpdateSupervisorMaxTeamsResponseValidationError) Field() string { return e.field }
+
+// Reason function returns reason value.
+func (e UpdateSupervisorMaxTeamsResponseValidationError) Reason() string { return e.reason }
+
+// Cause function returns cause value.
+func (e UpdateSupervisorMaxTeamsResponseValidationError) Cause() error { return e.cause }
+
+// Key function returns key value.
+func (e UpdateSupervisorMaxTeamsResponseValidationError) Key() bool { return e.key }
+
+// ErrorName returns error name.
+func (e UpdateSupervisorMaxTeamsResponseValidationError) ErrorName() string {
+	return "UpdateSupervisorMaxTeamsResponseValidationError"
+}
+
+// Error satisfies the builtin error interface
+func (e UpdateSupervisorMaxTeamsResponseValidationError) Error() string {
+	cause := ""
+	if e.cause != nil {
+		cause = fmt.Sprintf(" | caused by: %v", e.cause)
+	}
+
+	key := ""
+	if e.key {
+		key = "key for "
+	}
+
+	return fmt.Sprintf(
+		"invalid %sUpdateSupervisorMaxTeamsResponse.%s: %s%s",
+		key,
+		e.field,
+		e.reason,
+		cause)
+}
+
+var _ error = UpdateSupervisorMaxTeamsResponseValidationError{}
+
+var _ interface {
+	Field() string
+	Reason() string
+	Key() bool
+	Cause() error
+	ErrorName() string
+} = UpdateSupervisorMaxTeamsResponseValidationError{}

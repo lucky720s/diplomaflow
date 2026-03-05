@@ -125,7 +125,7 @@ func (h *Handler) UpdateUser(c *gin.Context) {
 		DepartmentID int64  `json:"department_id"`
 	}
 
-	if err := c.ShouldBindJSON(&req); err != nil {
+	if err = c.ShouldBindJSON(&req); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid request body"})
 		return
 	}

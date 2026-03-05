@@ -2,6 +2,7 @@ package admin
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"time"
 
@@ -123,6 +124,11 @@ type Repository interface {
 	CreateNormChecklist(ctx context.Context, c *NormControlChecklist) error
 
 	StatsNormIssuesByCategory(ctx context.Context, departmentID int64) (map[string]int64, error)
+
+	// Supervisor Settings
+	GetSupervisorSettings(ctx context.Context, userID, departmentID int64) (*SupervisorSettings, error)
+	UpsertSupervisorSettings(ctx context.Context, s *SupervisorSettings) error
+	CountSupervisorTeams(ctx context.Context, supervisorID int64) (int32, error)
 }
 
 type TopicRegistrationFilter struct {
@@ -1306,4 +1312,34 @@ func (r *repository) SetProjectTopicRegisteredAt(ctx context.Context, projectID 
 		Table("projects").
 		Where("id = ?", projectID).
 		Update("topic_registered_at", t).Error
+}
+func (r *repository) GetSupervisorSettings(ctx context.Context, userID, departmentID int64) (*SupervisorSettings, error) {
+	var s SupervisorSettings
+	err := r.db.WithContext(ctx).
+		Where("user_id = ? AND department_id = ?", userID, departmentID).
+		First(&s).Error
+	if errors.Is(err, gorm.ErrRecordNotFound) {
+		return nil, nil // нет индивидуальных настроек — используем дефолт
+	}
+	return &s, err
+}
+
+func (r *repository) UpsertSupervisorSettings(ctx context.Context, s *SupervisorSettings) error {
+	return r.db.WithContext(ctx).
+		Where("user_id = ? AND department_id = ?", s.UserID, s.DepartmentID).
+		Assign(map[string]interface{}{
+			"max_teams":  s.MaxTeams,
+			"updated_by": s.UpdatedBy,
+			"updated_at": time.Now(),
+		}).
+		FirstOrCreate(s).Error
+}
+
+func (r *repository) CountSupervisorTeams(ctx context.Context, supervisorID int64) (int32, error) {
+	var count int64
+	err := r.db.WithContext(ctx).
+		Model(&SupervisorAssignment{}).
+		Where("supervisor_id = ?", supervisorID).
+		Count(&count).Error
+	return int32(count), err
 }

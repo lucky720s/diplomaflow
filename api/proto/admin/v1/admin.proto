@@ -73,6 +73,11 @@ service AdminService {
   rpc ListPendingReviews(ListPendingReviewsRequest) returns (ListPendingReviewsResponse);
   rpc ListAvailableTeams(ListAvailableTeamsRequest) returns (ListAvailableTeamsResponse);
   rpc SubmitDocument(SubmitDocumentRequest) returns (SubmitDocumentResponse);
+
+  // ==================== Supervisor Settings ====================
+  rpc GetSupervisorSettings(GetSupervisorSettingsRequest) returns (GetSupervisorSettingsResponse);
+  rpc UpdateSupervisorMaxTeams(UpdateSupervisorMaxTeamsRequest) returns (UpdateSupervisorMaxTeamsResponse);
+
 }
 
 // ==================== Topic Registration Messages ====================
@@ -1001,4 +1006,30 @@ message SubmitDocumentResponse {
   string submission_id = 2;
   string new_state = 3;
   string message = 4;
+}
+
+message GetSupervisorSettingsRequest {
+  int64 supervisor_id = 1 [(validate.rules).int64.gt = 0];
+  int64 department_id = 2;
+}
+
+message GetSupervisorSettingsResponse {
+  int64 supervisor_id = 1;
+  int32 max_teams = 2;          // текущий лимит (0 = дефолт)
+  int32 current_teams = 3;      // сколько команд сейчас
+  int32 effective_max_teams = 4; // реальный лимит (с учётом дефолта)
+  bool is_custom = 5;           // true если лимит индивидуальный
+}
+
+message UpdateSupervisorMaxTeamsRequest {
+  int64 supervisor_id = 1 [(validate.rules).int64.gt = 0];
+  int64 department_id = 2 [(validate.rules).int64.gt = 0];
+  int32 max_teams = 3 [(validate.rules).int32 = {gte: 0, lte: 100}];
+  // 0 = сбросить на дефолт
+}
+
+message UpdateSupervisorMaxTeamsResponse {
+  bool success = 1;
+  string message = 2;
+  int32 new_max_teams = 3;
 }

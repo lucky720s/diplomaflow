@@ -163,6 +163,9 @@ func main() {
 			adminPanel.POST("/pre-defenses/:id/commission", handler.AddPreDefenseCommissionMemberGW)
 			adminPanel.DELETE("/pre-defenses/:id/commission/:user_id", handler.RemovePreDefenseCommissionMemberGW)
 
+			adminPanel.GET("/supervisors/:id/settings", handler.GetSupervisorSettings)
+			adminPanel.PUT("/supervisors/:id/max-teams", handler.UpdateSupervisorMaxTeams)
+
 		}
 
 		projects := v1.Group("/projects")

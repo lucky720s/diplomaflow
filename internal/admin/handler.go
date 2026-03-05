@@ -3,6 +3,7 @@ package admin
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"strconv"
 	"time"
 
@@ -1302,5 +1303,63 @@ func (h *Handler) SubmitDocument(ctx context.Context, req *adminv1.SubmitDocumen
 		SubmissionId: sub.ID,
 		NewState:     "",
 		Message:      "Document submitted successfully",
+	}, nil
+}
+func (h *Handler) GetSupervisorSettings(ctx context.Context, req *adminv1.GetSupervisorSettingsRequest) (*adminv1.GetSupervisorSettingsResponse, error) {
+	if req.SupervisorId <= 0 {
+		return nil, status.Error(codes.InvalidArgument, "supervisor_id is required")
+	}
+
+	departmentID := req.DepartmentId
+	if departmentID == 0 {
+		departmentID = deptIDFromMD(ctx)
+	}
+
+	currentCount, err := h.service.repo.CountSupervisorTeams(ctx, req.SupervisorId)
+	if err != nil {
+		return nil, status.Errorf(codes.Internal, "count teams: %v", err)
+	}
+
+	maxTeams, isCustom, err := h.service.getEffectiveMaxTeams(ctx, req.SupervisorId, departmentID)
+	if err != nil {
+		return nil, status.Errorf(codes.Internal, "get max teams: %v", err)
+	}
+
+	rawMax := int32(0)
+	if isCustom {
+		rawMax = maxTeams
+	}
+
+	return &adminv1.GetSupervisorSettingsResponse{
+		SupervisorId:      req.SupervisorId,
+		MaxTeams:          rawMax,
+		CurrentTeams:      currentCount,
+		EffectiveMaxTeams: maxTeams,
+		IsCustom:          isCustom,
+	}, nil
+}
+
+func (h *Handler) UpdateSupervisorMaxTeams(ctx context.Context, req *adminv1.UpdateSupervisorMaxTeamsRequest) (*adminv1.UpdateSupervisorMaxTeamsResponse, error) {
+	if req.SupervisorId <= 0 || req.DepartmentId <= 0 {
+		return nil, status.Error(codes.InvalidArgument, "supervisor_id and department_id are required")
+	}
+
+	actorID := getActorIDFromContext(ctx)
+
+	s := &SupervisorSettings{
+		UserID:       req.SupervisorId,
+		DepartmentID: req.DepartmentId,
+		MaxTeams:     req.MaxTeams,
+		UpdatedBy:    &actorID,
+	}
+
+	if err := h.service.repo.UpsertSupervisorSettings(ctx, s); err != nil {
+		return nil, status.Errorf(codes.Internal, "upsert: %v", err)
+	}
+
+	return &adminv1.UpdateSupervisorMaxTeamsResponse{
+		Success:     true,
+		Message:     fmt.Sprintf("Max teams set to %d", req.MaxTeams),
+		NewMaxTeams: req.MaxTeams,
 	}, nil
 }

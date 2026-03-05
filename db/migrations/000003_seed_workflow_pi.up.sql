@@ -36,7 +36,7 @@ VALUES (
            v_pi_id,
            1,
            TRUE,
-           '{"team_required": true, "min_team_size": 1, "max_team_size": 4, "allow_solo_project": true, "academic_year":"2025-2026"}'::jsonb
+           '{"team_required": true, "min_team_size": 1, "max_team_size": 4, "allow_solo_project": true, "academic_year":"2025-2026", "default_supervisor_max_teams": 5}'::jsonb
        )
     ON CONFLICT (name, department_id, version) DO NOTHING;
 

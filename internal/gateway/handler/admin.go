@@ -6,6 +6,7 @@ import (
 	"strconv"
 
 	"github.com/gin-gonic/gin"
+	adminv1 "github.com/lucky720s/diplomaflow/pkg/protobuf/admin/v1"
 	authv1 "github.com/lucky720s/diplomaflow/pkg/protobuf/auth/v1"
 	universityv1 "github.com/lucky720s/diplomaflow/pkg/protobuf/university/v1"
 	workflowv1 "github.com/lucky720s/diplomaflow/pkg/protobuf/workflow/v1"
@@ -253,7 +254,7 @@ func (h *Handler) UpdateDepartment(c *gin.Context) {
 		UniversityID int64  `json:"university_id"`
 	}
 
-	if err := c.ShouldBindJSON(&req); err != nil {
+	if err := c.ShouldBindJSON(&req); err != nil { //nolint:govet
 		c.JSON(http.StatusBadRequest, gin.H{"error": "name is required"})
 		return
 	}
@@ -356,4 +357,55 @@ func mapDepartmentToResponse(d *universityv1.Department) map[string]interface{} 
 		"name":          d.Name,
 		"university_id": d.UniversityId,
 	}
+}
+
+// GET /api/v1/admin-panel/supervisors/:id/settings
+func (h *Handler) GetSupervisorSettings(c *gin.Context) {
+	supervisorID, err := strconv.ParseInt(c.Param("id"), 10, 64)
+	if err != nil || supervisorID <= 0 {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid supervisor_id"})
+		return
+	}
+
+	departmentID := c.GetInt64("departmentId")
+
+	resp, err := h.adminClient.GetSupervisorSettings(adminPanelCtx(c), &adminv1.GetSupervisorSettingsRequest{
+		SupervisorId: supervisorID,
+		DepartmentId: departmentID,
+	})
+	if err != nil {
+		MapGRPCError(c, err)
+		return
+	}
+	c.JSON(http.StatusOK, resp)
+}
+
+// PUT /api/v1/admin-panel/supervisors/:id/max-teams
+func (h *Handler) UpdateSupervisorMaxTeams(c *gin.Context) {
+	supervisorID, err := strconv.ParseInt(c.Param("id"), 10, 64)
+	if err != nil || supervisorID <= 0 {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid supervisor_id"})
+		return
+	}
+
+	var req struct {
+		MaxTeams int32 `json:"max_teams" binding:"min=0,max=100"`
+	}
+	if err := c.ShouldBindJSON(&req); err != nil { //nolint:govet
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	departmentID := c.GetInt64("departmentId")
+
+	resp, err := h.adminClient.UpdateSupervisorMaxTeams(adminPanelCtx(c), &adminv1.UpdateSupervisorMaxTeamsRequest{
+		SupervisorId: supervisorID,
+		DepartmentId: departmentID,
+		MaxTeams:     req.MaxTeams,
+	})
+	if err != nil {
+		MapGRPCError(c, err)
+		return
+	}
+	c.JSON(http.StatusOK, resp)
 }

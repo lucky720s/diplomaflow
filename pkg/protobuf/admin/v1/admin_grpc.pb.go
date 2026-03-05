@@ -61,6 +61,8 @@ const (
 	AdminService_ListPendingReviews_FullMethodName               = "/admin.v1.AdminService/ListPendingReviews"
 	AdminService_ListAvailableTeams_FullMethodName               = "/admin.v1.AdminService/ListAvailableTeams"
 	AdminService_SubmitDocument_FullMethodName                   = "/admin.v1.AdminService/SubmitDocument"
+	AdminService_GetSupervisorSettings_FullMethodName            = "/admin.v1.AdminService/GetSupervisorSettings"
+	AdminService_UpdateSupervisorMaxTeams_FullMethodName         = "/admin.v1.AdminService/UpdateSupervisorMaxTeams"
 )
 
 // AdminServiceClient is the client API for AdminService service.
@@ -120,6 +122,9 @@ type AdminServiceClient interface {
 	ListPendingReviews(ctx context.Context, in *ListPendingReviewsRequest, opts ...grpc.CallOption) (*ListPendingReviewsResponse, error)
 	ListAvailableTeams(ctx context.Context, in *ListAvailableTeamsRequest, opts ...grpc.CallOption) (*ListAvailableTeamsResponse, error)
 	SubmitDocument(ctx context.Context, in *SubmitDocumentRequest, opts ...grpc.CallOption) (*SubmitDocumentResponse, error)
+	// ==================== Supervisor Settings ====================
+	GetSupervisorSettings(ctx context.Context, in *GetSupervisorSettingsRequest, opts ...grpc.CallOption) (*GetSupervisorSettingsResponse, error)
+	UpdateSupervisorMaxTeams(ctx context.Context, in *UpdateSupervisorMaxTeamsRequest, opts ...grpc.CallOption) (*UpdateSupervisorMaxTeamsResponse, error)
 }
 
 type adminServiceClient struct {
@@ -540,6 +545,26 @@ func (c *adminServiceClient) SubmitDocument(ctx context.Context, in *SubmitDocum
 	return out, nil
 }
 
+func (c *adminServiceClient) GetSupervisorSettings(ctx context.Context, in *GetSupervisorSettingsRequest, opts ...grpc.CallOption) (*GetSupervisorSettingsResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(GetSupervisorSettingsResponse)
+	err := c.cc.Invoke(ctx, AdminService_GetSupervisorSettings_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *adminServiceClient) UpdateSupervisorMaxTeams(ctx context.Context, in *UpdateSupervisorMaxTeamsRequest, opts ...grpc.CallOption) (*UpdateSupervisorMaxTeamsResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(UpdateSupervisorMaxTeamsResponse)
+	err := c.cc.Invoke(ctx, AdminService_UpdateSupervisorMaxTeams_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // AdminServiceServer is the server API for AdminService service.
 // All implementations must embed UnimplementedAdminServiceServer
 // for forward compatibility.
@@ -597,6 +622,9 @@ type AdminServiceServer interface {
 	ListPendingReviews(context.Context, *ListPendingReviewsRequest) (*ListPendingReviewsResponse, error)
 	ListAvailableTeams(context.Context, *ListAvailableTeamsRequest) (*ListAvailableTeamsResponse, error)
 	SubmitDocument(context.Context, *SubmitDocumentRequest) (*SubmitDocumentResponse, error)
+	// ==================== Supervisor Settings ====================
+	GetSupervisorSettings(context.Context, *GetSupervisorSettingsRequest) (*GetSupervisorSettingsResponse, error)
+	UpdateSupervisorMaxTeams(context.Context, *UpdateSupervisorMaxTeamsRequest) (*UpdateSupervisorMaxTeamsResponse, error)
 	mustEmbedUnimplementedAdminServiceServer()
 }
 
@@ -729,6 +757,12 @@ func (UnimplementedAdminServiceServer) ListAvailableTeams(context.Context, *List
 }
 func (UnimplementedAdminServiceServer) SubmitDocument(context.Context, *SubmitDocumentRequest) (*SubmitDocumentResponse, error) {
 	return nil, status.Error(codes.Unimplemented, "method SubmitDocument not implemented")
+}
+func (UnimplementedAdminServiceServer) GetSupervisorSettings(context.Context, *GetSupervisorSettingsRequest) (*GetSupervisorSettingsResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method GetSupervisorSettings not implemented")
+}
+func (UnimplementedAdminServiceServer) UpdateSupervisorMaxTeams(context.Context, *UpdateSupervisorMaxTeamsRequest) (*UpdateSupervisorMaxTeamsResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method UpdateSupervisorMaxTeams not implemented")
 }
 func (UnimplementedAdminServiceServer) mustEmbedUnimplementedAdminServiceServer() {}
 func (UnimplementedAdminServiceServer) testEmbeddedByValue()                      {}
@@ -1489,6 +1523,42 @@ func _AdminService_SubmitDocument_Handler(srv interface{}, ctx context.Context, 
 	return interceptor(ctx, in, info, handler)
 }
 
+func _AdminService_GetSupervisorSettings_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetSupervisorSettingsRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(AdminServiceServer).GetSupervisorSettings(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: AdminService_GetSupervisorSettings_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(AdminServiceServer).GetSupervisorSettings(ctx, req.(*GetSupervisorSettingsRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _AdminService_UpdateSupervisorMaxTeams_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(UpdateSupervisorMaxTeamsRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(AdminServiceServer).UpdateSupervisorMaxTeams(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: AdminService_UpdateSupervisorMaxTeams_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(AdminServiceServer).UpdateSupervisorMaxTeams(ctx, req.(*UpdateSupervisorMaxTeamsRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // AdminService_ServiceDesc is the grpc.ServiceDesc for AdminService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -1659,6 +1729,14 @@ var AdminService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "SubmitDocument",
 			Handler:    _AdminService_SubmitDocument_Handler,
+		},
+		{
+			MethodName: "GetSupervisorSettings",
+			Handler:    _AdminService_GetSupervisorSettings_Handler,
+		},
+		{
+			MethodName: "UpdateSupervisorMaxTeams",
+			Handler:    _AdminService_UpdateSupervisorMaxTeams_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

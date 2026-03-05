@@ -154,7 +154,7 @@ func (s *Service) RefreshToken(ctx context.Context, clientToken, userAgent, ip s
 		return "", "", err
 	}
 
-	if err := s.repo.RevokeRefreshToken(ctx, storedToken.ID); err != nil {
+	if err = s.repo.RevokeRefreshToken(ctx, storedToken.ID); err != nil {
 		return "", "", err
 	}
 

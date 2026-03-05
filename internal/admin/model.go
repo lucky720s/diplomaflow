@@ -261,6 +261,19 @@ type AvailableTeamData struct {
 	MemberCount int32
 	Members     []*TeamMemberDetails
 }
+type SupervisorSettings struct {
+	ID           int64 `gorm:"primaryKey"`
+	UserID       int64 `gorm:"uniqueIndex:ux_sup_settings_user_dept;not null"`
+	DepartmentID int64 `gorm:"uniqueIndex:ux_sup_settings_user_dept;not null"`
+	MaxTeams     int32 `gorm:"default:0"`
+	UpdatedBy    *int64
+	CreatedAt    time.Time
+	UpdatedAt    time.Time
+}
+
+func (SupervisorSettings) TableName() string {
+	return "supervisor_settings"
+}
 
 // ==================== TableName overrides ====================
 

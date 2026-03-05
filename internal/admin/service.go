@@ -632,6 +632,7 @@ func (s *Service) ListSupervisors(ctx context.Context, departmentID, universityI
 	for _, u := range resp.Users {
 		teacherIDs = append(teacherIDs, u.Id)
 	}
+
 	teamCounts := make(map[int64]int32)
 	if len(teacherIDs) > 0 {
 		batchCounts, err := s.repo.BatchCountTeamsBySupervisors(ctx, teacherIDs)
@@ -642,15 +643,26 @@ func (s *Service) ListSupervisors(ctx context.Context, departmentID, universityI
 		}
 	}
 
+	// Дефолтный лимит из workflow
+	defaultMax := s.getDefaultMaxTeams(ctx, departmentID)
+
 	var supervisors []*SupervisorData
 	for _, u := range resp.Users {
+		effectiveMax := defaultMax
+
+		// Проверяем индивидуальный лимит
+		settings, sErr := s.repo.GetSupervisorSettings(ctx, u.Id, departmentID)
+		if sErr == nil && settings != nil && settings.MaxTeams > 0 {
+			effectiveMax = settings.MaxTeams
+		}
+
 		supervisors = append(supervisors, &SupervisorData{
 			ID:         u.Id,
 			FullName:   u.FirstName + " " + u.LastName,
 			Email:      u.Email,
 			Position:   "Teacher",
 			TeamsCount: teamCounts[u.Id],
-			MaxTeams:   5,
+			MaxTeams:   effectiveMax,
 		})
 	}
 
@@ -658,6 +670,13 @@ func (s *Service) ListSupervisors(ctx context.Context, departmentID, universityI
 }
 
 func (s *Service) AssignSupervisor(ctx context.Context, teamID, supervisorID, assignedBy int64, silent bool) error {
+	tc, tcErr := s.repo.GetTeamContext(ctx, teamID)
+	if tcErr != nil {
+		return fmt.Errorf("GetTeamContext failed: %w", tcErr)
+	}
+	if err := s.checkSupervisorCapacity(ctx, supervisorID, tc.DepartmentID); err != nil {
+		return err
+	}
 	updated := false //nolint:govet,govet,govet
 	prevSupervisorID := int64(0)
 
@@ -1008,6 +1027,14 @@ func (s *Service) CreateSupervisorRequest(ctx context.Context, req *CreateSuperv
 		teamID = req.TeamID
 		projectIDPtr = nil
 	}
+	tc, tcErr := s.repo.GetTeamContext(ctx, teamID)
+	if tcErr != nil {
+		return nil, fmt.Errorf("GetTeamContext failed: %w", tcErr)
+	}
+	if err := s.checkSupervisorCapacity(ctx, req.SupervisorID, tc.DepartmentID); err != nil {
+		return nil, err
+	}
+
 	actorID, actorRole := s.callerFromContext(ctx, req.RequestedBy, "")
 	isTeacherSelfClaim := (actorRole == "teacher" || actorRole == "admin") &&
 		actorID > 0 &&
@@ -1274,25 +1301,34 @@ func (s *Service) RespondToSupervisorRequest(ctx context.Context, req *RespondTo
 	switch req.Action {
 	case "approve":
 		if supervisorReq.ProjectID == nil || *supervisorReq.ProjectID <= 0 {
+			// team-first: создаём проект
 			if supervisorReq.TeamID <= 0 {
 				return nil, errors.New("cannot approve: request has no team_id and no project_id")
+			}
+			tc, tcErr := s.repo.GetTeamContext(ctx, supervisorReq.TeamID)
+			if tcErr != nil {
+				return nil, fmt.Errorf("GetTeamContext failed: %w", tcErr)
+			}
+			if err := s.checkSupervisorCapacity(ctx, supervisorReq.SupervisorID, tc.DepartmentID); err != nil {
+				return nil, err
 			}
 			pid, err := s.createProjectForTeamOnApprove(ctx, supervisorReq.TeamID, supervisorReq.SupervisorID, supervisorReq.ProposedTopic)
 			if err != nil {
 				return nil, err
 			}
 			supervisorReq.ProjectID = &pid
-		}
-
-		// Assignment (projection)
-		if supervisorReq.TeamID > 0 {
-			if err := s.AssignSupervisor(ctx, supervisorReq.TeamID, supervisorReq.SupervisorID, supervisorReq.SupervisorID, true); err != nil {
-				return nil, fmt.Errorf("failed to assign supervisor: %w", err)
+		} else {
+			// project-first: проект уже есть, но лимит всё равно проверяем
+			if supervisorReq.TeamID > 0 {
+				tc, tcErr := s.repo.GetTeamContext(ctx, supervisorReq.TeamID)
+				if tcErr != nil {
+					return nil, fmt.Errorf("GetTeamContext failed: %w", tcErr)
+				}
+				if err := s.checkSupervisorCapacity(ctx, supervisorReq.SupervisorID, tc.DepartmentID); err != nil {
+					return nil, err
+				}
 			}
-
 		}
-
-		supervisorReq.Status = SupervisorRequestStatusApproved
 
 	case "reject":
 		supervisorReq.Status = SupervisorRequestStatusRejected
@@ -1722,4 +1758,54 @@ func deptIDFromIncomingMD(ctx context.Context) int64 {
 		}
 	}
 	return 0
+}
+func (s *Service) checkSupervisorCapacity(ctx context.Context, supervisorID, departmentID int64) error {
+	currentCount, err := s.repo.CountSupervisorTeams(ctx, supervisorID)
+	if err != nil {
+		return fmt.Errorf("failed to count supervisor teams: %w", err)
+	}
+	settings, err := s.repo.GetSupervisorSettings(ctx, supervisorID, departmentID)
+	if err != nil {
+		return fmt.Errorf("failed to get supervisor settings: %w", err)
+	}
+
+	var maxTeams int32
+	if settings != nil && settings.MaxTeams > 0 {
+		maxTeams = settings.MaxTeams
+	} else {
+		maxTeams = s.getDefaultMaxTeams(ctx, departmentID)
+	}
+
+	if maxTeams > 0 && currentCount >= maxTeams {
+		return status.Errorf(codes.FailedPrecondition,
+			"supervisor has reached team limit (%d/%d). Contact support to increase the limit.",
+			currentCount, maxTeams)
+	}
+
+	return nil
+}
+
+func (s *Service) getDefaultMaxTeams(ctx context.Context, departmentID int64) int32 {
+	wf, err := s.workflowClient.GetActiveWorkflowByDepartment(
+		s.internalCtx(ctx),
+		&workflowv1.GetActiveWorkflowByDepartmentRequest{DepartmentId: departmentID})
+	if err != nil || wf == nil || wf.Settings == nil {
+		return 0
+	}
+	if v, ok := wf.Settings.AsMap()["default_supervisor_max_teams"]; ok {
+		if f, ok := v.(float64); ok {
+			return int32(f)
+		}
+	}
+	return 0
+}
+func (s *Service) getEffectiveMaxTeams(ctx context.Context, supervisorID, departmentID int64) (maxTeams int32, isCustom bool, err error) {
+	settings, err := s.repo.GetSupervisorSettings(ctx, supervisorID, departmentID)
+	if err != nil {
+		return 0, false, err
+	}
+	if settings != nil && settings.MaxTeams > 0 {
+		return settings.MaxTeams, true, nil
+	}
+	return s.getDefaultMaxTeams(ctx, departmentID), false, nil
 }

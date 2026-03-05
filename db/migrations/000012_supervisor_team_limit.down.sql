@@ -1,0 +1,3 @@
+BEGIN;
+DROP TABLE IF EXISTS supervisor_settings CASCADE;
+COMMIT;
