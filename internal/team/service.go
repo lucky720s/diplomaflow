@@ -73,12 +73,28 @@ func (s *Service) notifyBestEffort(ctx context.Context, userID int64, title, mes
 	}
 }
 
-func (s *Service) workflowInternalCtx(ctx context.Context) context.Context {
-	return metadata.AppendToOutgoingContext(ctx, "x-internal-service", "team_service")
+func (s *Service) internalCtx(ctx context.Context) context.Context {
+	outCtx := ctx
+	if md, ok := metadata.FromIncomingContext(ctx); ok {
+		pairs := make([]string, 0, 10)
+		for _, key := range []string{"x-user-id", "x-user-role", "x-university-id", "x-department-id"} {
+			if vals := md.Get(key); len(vals) > 0 {
+				pairs = append(pairs, key, vals[0])
+			}
+		}
+		if len(pairs) > 0 {
+			outCtx = metadata.AppendToOutgoingContext(ctx, pairs...)
+		}
+	}
+	return metadata.AppendToOutgoingContext(outCtx, "x-internal-service", "team_service")
 }
 
 func (s *Service) authInternalCtx(ctx context.Context) context.Context {
-	return metadata.AppendToOutgoingContext(ctx, "x-internal-service", "team_service")
+	return s.internalCtx(ctx)
+}
+
+func (s *Service) workflowInternalCtx(ctx context.Context) context.Context {
+	return s.internalCtx(ctx)
 }
 
 func (s *Service) CreateTeam(
