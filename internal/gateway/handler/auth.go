@@ -195,9 +195,16 @@ func (h *Handler) GetMe(c *gin.Context) {
 	})
 }
 func authGatewayCtx(c *gin.Context) context.Context {
-	ctx := outgoingCtx(c)
-	return metadata.AppendToOutgoingContext(ctx, "x-internal-service", "api_gateway")
+	return metadata.AppendToOutgoingContext(
+		c.Request.Context(),
+		"x-internal-service", "api_gateway",
+		"x-user-id", strconv.FormatInt(c.GetInt64("userId"), 10),
+		"x-user-role", c.GetString("role"),
+		"x-university-id", strconv.FormatInt(c.GetInt64("universityId"), 10),
+		"x-department-id", strconv.FormatInt(c.GetInt64("departmentId"), 10),
+	)
 }
+
 func setRefreshCookie(c *gin.Context, token string, maxAge int) {
 	http.SetCookie(c.Writer, &http.Cookie{
 		Name:     RefreshTokenCookieName,
