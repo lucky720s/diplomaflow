@@ -511,7 +511,7 @@ type StudentData struct {
 }
 
 func (s *Service) ListStudents(ctx context.Context, req *ListStudentsRequest) ([]*StudentData, int64, error) {
-	resp, err := s.authClient.ListUsers(ctx, &authv1.ListUsersRequest{
+	resp, err := s.authClient.ListUsers(s.internalCtx(ctx), &authv1.ListUsersRequest{
 		UniversityId: req.UniversityID,
 		DepartmentId: req.DepartmentID,
 		Role:         "student",
@@ -1313,11 +1313,8 @@ func (s *Service) RespondToSupervisorRequest(ctx context.Context, req *RespondTo
 
 	switch req.Action {
 	case "approve":
-		if supervisorReq.ProjectID == nil || *supervisorReq.ProjectID <= 0 {
-			// team-first: создаём проект
-			if supervisorReq.TeamID <= 0 {
-				return nil, errors.New("cannot approve: request has no team_id and no project_id")
-			}
+		// Проверяем лимит для ОБОИХ путей
+		if supervisorReq.TeamID > 0 {
 			tc, tcErr := s.repo.GetTeamContext(ctx, supervisorReq.TeamID)
 			if tcErr != nil {
 				return nil, fmt.Errorf("GetTeamContext failed: %w", tcErr)
@@ -1325,21 +1322,27 @@ func (s *Service) RespondToSupervisorRequest(ctx context.Context, req *RespondTo
 			if err := s.checkSupervisorCapacity(ctx, supervisorReq.SupervisorID, tc.DepartmentID); err != nil {
 				return nil, err
 			}
+		}
+
+		if supervisorReq.ProjectID == nil || *supervisorReq.ProjectID <= 0 {
+			// team-first: создаём проект
+			if supervisorReq.TeamID <= 0 {
+				return nil, errors.New("cannot approve: request has no team_id and no project_id")
+			}
 			pid, err := s.createProjectForTeamOnApprove(ctx, supervisorReq.TeamID, supervisorReq.SupervisorID, supervisorReq.ProposedTopic)
 			if err != nil {
 				return nil, err
 			}
 			supervisorReq.ProjectID = &pid
-		} else {
-			// project-first: проект уже есть, но лимит всё равно проверяем
-			if supervisorReq.TeamID > 0 {
-				tc, tcErr := s.repo.GetTeamContext(ctx, supervisorReq.TeamID)
-				if tcErr != nil {
-					return nil, fmt.Errorf("GetTeamContext failed: %w", tcErr)
-				}
-				if err := s.checkSupervisorCapacity(ctx, supervisorReq.SupervisorID, tc.DepartmentID); err != nil {
-					return nil, err
-				}
+		}
+
+		// ✅ ЭТО БЫЛО ПРОПУЩЕНО — статус approve
+		supervisorReq.Status = SupervisorRequestStatusApproved
+
+		// Assignment
+		if supervisorReq.TeamID > 0 {
+			if err := s.AssignSupervisor(ctx, supervisorReq.TeamID, supervisorReq.SupervisorID, supervisorReq.SupervisorID, true); err != nil {
+				return nil, fmt.Errorf("failed to assign supervisor: %w", err)
 			}
 		}
 
@@ -1384,7 +1387,6 @@ func (s *Service) RespondToSupervisorRequest(ctx context.Context, req *RespondTo
 	}
 
 	if req.Action == "approve" {
-		// после approve у команды уже создаётся project (team-first) и дальше жизнь в дипломе
 		s.notifyTeamBestEffort(ctx, supervisorReq.TeamID,
 			"Научный руководитель одобрил заявку",
 			fmt.Sprintf("Заявка одобрена. Руководитель: %s. Теперь можно продолжать работу над дипломом.", details.SupervisorName),
@@ -1392,7 +1394,6 @@ func (s *Service) RespondToSupervisorRequest(ctx context.Context, req *RespondTo
 			"supervisor_request_approved",
 		)
 	} else if req.Action == "reject" {
-		// после reject логично вернуть на страницу команды, чтобы выбрать другого и отправить заявку
 		reason := req.RejectReason
 		if reason == "" {
 			reason = "Причина не указана"
