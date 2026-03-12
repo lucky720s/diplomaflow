@@ -548,6 +548,30 @@ func (h *Handler) LockTeamComposition(ctx context.Context, req *teamv1.LockTeamC
 	}
 	return &teamv1.LockTeamCompositionResponse{Success: true}, nil
 }
+func (h *Handler) CreateTeamAdmin(ctx context.Context, req *teamv1.CreateTeamAdminRequest) (*teamv1.CreateTeamResponse, error) {
+	// internal-only
+	if getInternalService(ctx) != "admin_service" {
+		return nil, status.Error(codes.PermissionDenied, "forbidden")
+	}
+
+	if req.Name == "" {
+		return nil, status.Error(codes.InvalidArgument, "name is required")
+	}
+	if req.UniversityId <= 0 || req.DepartmentId <= 0 {
+		return nil, status.Error(codes.InvalidArgument, "university_id and department_id are required")
+	}
+	if req.LeaderId <= 0 {
+		return nil, status.Error(codes.InvalidArgument, "leader_id is required")
+	}
+
+	teamID, err := h.service.CreateTeam(ctx, req.Name, req.LeaderId, req.MemberIds, req.DepartmentId, req.UniversityId)
+	if err != nil {
+		h.logger.Error("CreateTeamAdmin failed", zap.Error(err))
+		return nil, mapError(err)
+	}
+
+	return &teamv1.CreateTeamResponse{TeamId: teamID}, nil
+}
 
 // ---- error mapping ----
 

@@ -10,14 +10,13 @@ service ProjectService {
   rpc CreateProject (CreateProjectRequest) returns (CreateProjectResponse);
   rpc GetProject (GetProjectRequest) returns (GetProjectResponse);
   rpc GetStudentProjects (GetStudentProjectsRequest) returns (GetStudentProjectsResponse);
-
-  // Legacy endpoint (frontend compatibility):
-  // action_name MUST equal workflow Transition.event_name
   rpc PerformAction (PerformActionRequest) returns (PerformActionResponse);
-
-  // ===== Internal runtime API for workflow ядра =====
   rpc GetProjectRuntime (GetProjectRuntimeRequest) returns (GetProjectRuntimeResponse);
   rpc CommitTransition (CommitTransitionRequest) returns (CommitTransitionResponse);
+  rpc UpdateProject (UpdateProjectRequest) returns (UpdateProjectResponse);
+  rpc ArchiveProject (ArchiveProjectRequest) returns (ArchiveProjectResponse);
+  rpc DeleteProject (DeleteProjectRequest) returns (DeleteProjectResponse);
+
 }
 
 message CreateProjectRequest {
@@ -148,3 +147,19 @@ message CommitTransitionResponse {
   string new_state_name = 4;
   string status = 5;
 }
+message UpdateProjectRequest {
+  int64 project_id = 1;
+  string title = 2;
+  string description = 3;
+  int64 student_id = 4;
+  int64 team_id = 5;
+  google.protobuf.Struct data_patch = 6;
+}
+
+message UpdateProjectResponse { bool success = 1; }
+
+message ArchiveProjectRequest { int64 project_id = 1; string reason = 2; }
+message ArchiveProjectResponse { bool success = 1; string status = 2; }
+
+message DeleteProjectRequest { int64 project_id = 1; string reason = 2; }
+message DeleteProjectResponse { bool success = 1; }

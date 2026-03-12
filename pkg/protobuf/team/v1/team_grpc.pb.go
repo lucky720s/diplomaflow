@@ -36,6 +36,7 @@ const (
 	TeamService_JoinTeamByCode_FullMethodName       = "/team.v1.TeamService/JoinTeamByCode"
 	TeamService_RegenerateInviteCode_FullMethodName = "/team.v1.TeamService/RegenerateInviteCode"
 	TeamService_LockTeamComposition_FullMethodName  = "/team.v1.TeamService/LockTeamComposition"
+	TeamService_CreateTeamAdmin_FullMethodName      = "/team.v1.TeamService/CreateTeamAdmin"
 )
 
 // TeamServiceClient is the client API for TeamService service.
@@ -58,6 +59,7 @@ type TeamServiceClient interface {
 	JoinTeamByCode(ctx context.Context, in *JoinTeamByCodeRequest, opts ...grpc.CallOption) (*JoinTeamByCodeResponse, error)
 	RegenerateInviteCode(ctx context.Context, in *RegenerateInviteCodeRequest, opts ...grpc.CallOption) (*RegenerateInviteCodeResponse, error)
 	LockTeamComposition(ctx context.Context, in *LockTeamCompositionRequest, opts ...grpc.CallOption) (*LockTeamCompositionResponse, error)
+	CreateTeamAdmin(ctx context.Context, in *CreateTeamAdminRequest, opts ...grpc.CallOption) (*CreateTeamResponse, error)
 }
 
 type teamServiceClient struct {
@@ -228,6 +230,16 @@ func (c *teamServiceClient) LockTeamComposition(ctx context.Context, in *LockTea
 	return out, nil
 }
 
+func (c *teamServiceClient) CreateTeamAdmin(ctx context.Context, in *CreateTeamAdminRequest, opts ...grpc.CallOption) (*CreateTeamResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(CreateTeamResponse)
+	err := c.cc.Invoke(ctx, TeamService_CreateTeamAdmin_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // TeamServiceServer is the server API for TeamService service.
 // All implementations must embed UnimplementedTeamServiceServer
 // for forward compatibility.
@@ -248,6 +260,7 @@ type TeamServiceServer interface {
 	JoinTeamByCode(context.Context, *JoinTeamByCodeRequest) (*JoinTeamByCodeResponse, error)
 	RegenerateInviteCode(context.Context, *RegenerateInviteCodeRequest) (*RegenerateInviteCodeResponse, error)
 	LockTeamComposition(context.Context, *LockTeamCompositionRequest) (*LockTeamCompositionResponse, error)
+	CreateTeamAdmin(context.Context, *CreateTeamAdminRequest) (*CreateTeamResponse, error)
 	mustEmbedUnimplementedTeamServiceServer()
 }
 
@@ -305,6 +318,9 @@ func (UnimplementedTeamServiceServer) RegenerateInviteCode(context.Context, *Reg
 }
 func (UnimplementedTeamServiceServer) LockTeamComposition(context.Context, *LockTeamCompositionRequest) (*LockTeamCompositionResponse, error) {
 	return nil, status.Error(codes.Unimplemented, "method LockTeamComposition not implemented")
+}
+func (UnimplementedTeamServiceServer) CreateTeamAdmin(context.Context, *CreateTeamAdminRequest) (*CreateTeamResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method CreateTeamAdmin not implemented")
 }
 func (UnimplementedTeamServiceServer) mustEmbedUnimplementedTeamServiceServer() {}
 func (UnimplementedTeamServiceServer) testEmbeddedByValue()                     {}
@@ -615,6 +631,24 @@ func _TeamService_LockTeamComposition_Handler(srv interface{}, ctx context.Conte
 	return interceptor(ctx, in, info, handler)
 }
 
+func _TeamService_CreateTeamAdmin_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(CreateTeamAdminRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(TeamServiceServer).CreateTeamAdmin(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: TeamService_CreateTeamAdmin_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(TeamServiceServer).CreateTeamAdmin(ctx, req.(*CreateTeamAdminRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // TeamService_ServiceDesc is the grpc.ServiceDesc for TeamService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -685,6 +719,10 @@ var TeamService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "LockTeamComposition",
 			Handler:    _TeamService_LockTeamComposition_Handler,
+		},
+		{
+			MethodName: "CreateTeamAdmin",
+			Handler:    _TeamService_CreateTeamAdmin_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

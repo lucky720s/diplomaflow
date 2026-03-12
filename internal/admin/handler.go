@@ -8,6 +8,7 @@ import (
 	"time"
 
 	adminv1 "github.com/lucky720s/diplomaflow/pkg/protobuf/admin/v1"
+	projectv1 "github.com/lucky720s/diplomaflow/pkg/protobuf/project/v1"
 	"go.uber.org/zap"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/metadata"
@@ -1363,4 +1364,208 @@ func (h *Handler) UpdateSupervisorMaxTeams(ctx context.Context, req *adminv1.Upd
 		Message:     fmt.Sprintf("Max teams set to %d", req.MaxTeams),
 		NewMaxTeams: req.MaxTeams,
 	}, nil
+}
+
+// ==================== Teams ====================
+
+func (h *Handler) CreateTeamAdmin(ctx context.Context, req *adminv1.CreateTeamAdminRequest) (*adminv1.CreateTeamAdminResponse, error) {
+	if req.GetName() == "" {
+		return nil, status.Error(codes.InvalidArgument, "name is required")
+	}
+	if req.GetUniversityId() <= 0 || req.GetDepartmentId() <= 0 {
+		return nil, status.Error(codes.InvalidArgument, "university_id and department_id are required")
+	}
+	if req.GetLeaderId() <= 0 {
+		return nil, status.Error(codes.InvalidArgument, "leader_id is required")
+	}
+
+	id, err := h.service.CreateTeamAdmin(ctx, req.Name, req.UniversityId, req.DepartmentId, req.LeaderId, req.MemberIds)
+	if err != nil {
+		return nil, err
+	}
+	return &adminv1.CreateTeamAdminResponse{TeamId: id}, nil
+}
+
+// ==================== Projects ====================
+
+func (h *Handler) ListProjectsAdmin(ctx context.Context, req *adminv1.ListProjectsAdminRequest) (*adminv1.ListProjectsAdminResponse, error) {
+	page := int(req.GetPage())
+	if page <= 0 {
+		page = 1
+	}
+	pageSize := int(req.GetPageSize())
+	if pageSize <= 0 {
+		pageSize = 20
+	}
+	if pageSize > 200 {
+		pageSize = 200
+	}
+
+	deptID := req.GetDepartmentId()
+	if deptID == 0 {
+		deptID = deptIDFromMD(ctx)
+	}
+	if deptID == 0 {
+		return nil, status.Error(codes.InvalidArgument, "department_id is required (in request or metadata)")
+	}
+
+	rows, total, err := h.service.ListProjectsAdmin(ctx, ProjectsAdminFilter{
+		DepartmentID: deptID,
+		TeamID:       req.GetTeamId(),
+		StudentID:    req.GetStudentId(),
+		Status:       req.GetStatus(),
+		Q:            req.GetQ(),
+		Limit:        pageSize,
+		Offset:       (page - 1) * pageSize,
+	})
+	if err != nil {
+		return nil, status.Errorf(codes.Internal, "list projects failed: %v", err)
+	}
+
+	out := &adminv1.ListProjectsAdminResponse{TotalCount: total}
+	for _, r := range rows {
+		if r == nil {
+			continue
+		}
+		item := &adminv1.ProjectAdminListItem{
+			ProjectId:        r.ProjectID,
+			Title:            r.Title,
+			Description:      r.Description,
+			StudentId:        r.StudentID,
+			TeamId:           r.TeamID,
+			UniversityId:     r.UniversityID,
+			DepartmentId:     r.DepartmentID,
+			WorkflowName:     r.WorkflowName,
+			CurrentStateName: r.CurrentStateName,
+			Status:           r.Status,
+			CreatedAt:        timestamppb.New(r.CreatedAt),
+			UpdatedAt:        timestamppb.New(r.UpdatedAt),
+		}
+		if r.DeadlineAt != nil {
+			item.DeadlineAt = timestamppb.New(*r.DeadlineAt)
+		}
+		if r.TopicRegisteredAt != nil {
+			item.TopicRegisteredAt = timestamppb.New(*r.TopicRegisteredAt)
+		}
+		out.Projects = append(out.Projects, item)
+	}
+
+	return out, nil
+}
+
+func (h *Handler) GetProjectAdmin(ctx context.Context, req *adminv1.GetProjectAdminRequest) (*adminv1.GetProjectAdminResponse, error) {
+	if req.GetProjectId() <= 0 {
+		return nil, status.Error(codes.InvalidArgument, "project_id is required")
+	}
+
+	p, rt, err := h.service.GetProjectAdmin(ctx, req.ProjectId)
+	if err != nil {
+		return nil, err
+	}
+	if p == nil {
+		return nil, status.Error(codes.NotFound, "project not found")
+	}
+
+	d := &adminv1.ProjectAdminDetails{
+		ProjectId:         p.ProjectId,
+		Title:             p.Title,
+		Description:       p.Description,
+		StudentId:         p.StudentId,
+		TeamId:            p.TeamId,
+		WorkflowName:      p.WorkflowName,
+		CurrentState:      p.CurrentState,
+		CurrentStateName:  p.CurrentState, // fallback
+		Status:            p.Status,
+		TopicRegisteredAt: p.TopicRegisteredAt,
+	}
+	// prefer runtime values if available
+	if rt != nil {
+		d.UniversityId = rt.UniversityId
+		d.DepartmentId = rt.DepartmentId
+		d.TeamId = rt.TeamId
+		d.StudentId = rt.StudentId
+		d.WorkflowName = rt.WorkflowName
+		d.CurrentStateName = rt.CurrentStateName
+		d.Status = rt.Status
+		d.Data = rt.Data
+		d.DeadlineAt = rt.DeadlineAt
+		if rt.TopicRegisteredAt != nil {
+			d.TopicRegisteredAt = rt.TopicRegisteredAt
+		}
+	}
+
+	return &adminv1.GetProjectAdminResponse{Project: d}, nil
+}
+
+func (h *Handler) CreateProjectAdmin(ctx context.Context, req *adminv1.CreateProjectAdminRequest) (*adminv1.CreateProjectAdminResponse, error) {
+	if req.GetTitle() == "" {
+		return nil, status.Error(codes.InvalidArgument, "title is required")
+	}
+	if req.GetStudentId() <= 0 {
+		return nil, status.Error(codes.InvalidArgument, "student_id is required")
+	}
+	if req.GetWorkflowName() == "" {
+		return nil, status.Error(codes.InvalidArgument, "workflow_name is required")
+	}
+
+	// FIX: team-first (команда обязательна)
+	if req.GetTeamId() <= 0 {
+		return nil, status.Error(codes.InvalidArgument, "team_id is required")
+	}
+
+	// FIX: university_id / department_id могут быть 0 — service подтянет из TeamContext [[12]]
+	resp, err := h.service.CreateProjectAdmin(ctx, &projectv1.CreateProjectRequest{
+		Title:        req.Title,
+		Description:  req.Description,
+		StudentId:    req.StudentId,
+		WorkflowName: req.WorkflowName,
+		UniversityId: req.UniversityId,
+		DepartmentId: req.DepartmentId,
+		TeamId:       req.TeamId,
+	})
+	if err != nil {
+		return nil, err
+	}
+	return &adminv1.CreateProjectAdminResponse{ProjectId: resp.ProjectId, Status: resp.Status}, nil
+}
+
+func (h *Handler) UpdateProjectAdmin(ctx context.Context, req *adminv1.UpdateProjectAdminRequest) (*adminv1.UpdateProjectAdminResponse, error) {
+	if req.GetProjectId() <= 0 {
+		return nil, status.Error(codes.InvalidArgument, "project_id is required")
+	}
+
+	_, err := h.service.UpdateProjectAdmin(ctx, &projectv1.UpdateProjectRequest{
+		ProjectId:   req.ProjectId,
+		Title:       req.Title,
+		Description: req.Description,
+		StudentId:   req.StudentId,
+		TeamId:      req.TeamId,
+		DataPatch:   req.DataPatch,
+	})
+	if err != nil {
+		return nil, err
+	}
+	return &adminv1.UpdateProjectAdminResponse{Success: true}, nil
+}
+
+func (h *Handler) ArchiveProjectAdmin(ctx context.Context, req *adminv1.ArchiveProjectAdminRequest) (*adminv1.ArchiveProjectAdminResponse, error) {
+	if req.GetProjectId() <= 0 {
+		return nil, status.Error(codes.InvalidArgument, "project_id is required")
+	}
+	resp, err := h.service.ArchiveProjectAdmin(ctx, req.ProjectId, req.Reason)
+	if err != nil {
+		return nil, err
+	}
+	return &adminv1.ArchiveProjectAdminResponse{Success: resp.Success, Status: resp.Status}, nil
+}
+
+func (h *Handler) DeleteArchivedProjectAdmin(ctx context.Context, req *adminv1.DeleteArchivedProjectAdminRequest) (*adminv1.DeleteArchivedProjectAdminResponse, error) {
+	if req.GetProjectId() <= 0 {
+		return nil, status.Error(codes.InvalidArgument, "project_id is required")
+	}
+	_, err := h.service.DeleteArchivedProjectAdmin(ctx, req.ProjectId, req.Reason)
+	if err != nil {
+		return nil, err
+	}
+	return &adminv1.DeleteArchivedProjectAdminResponse{Success: true}, nil
 }

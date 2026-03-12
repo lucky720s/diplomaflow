@@ -375,6 +375,28 @@ func main() {
 			norm.GET("/checklists", handler.NormListChecklists)
 			norm.POST("/checklists", handler.NormCreateChecklist)
 		}
+		adminTech := v1.Group("/admin-tech")
+		adminTech.Use(middleware.AuthMiddleware(cfg.JWTSecret))
+		adminTech.Use(middleware.RBACMiddleware("admin"))
+		{
+			// teams
+			adminTech.GET("/teams", handler.AdminTechListTeams)
+			adminTech.POST("/teams", handler.AdminTechCreateTeam)
+			adminTech.GET("/teams/:id", handler.AdminTechGetTeam)
+			adminTech.PATCH("/teams/:id", handler.AdminTechUpdateTeam)
+			adminTech.DELETE("/teams/:id", handler.AdminTechDeleteTeam)
+
+			// projects
+			adminTech.GET("/projects", handler.AdminTechListProjects)
+			adminTech.POST("/projects", handler.AdminTechCreateProject)
+			adminTech.GET("/projects/:id", handler.AdminTechGetProject)
+			adminTech.PATCH("/projects/:id", handler.AdminTechUpdateProject)
+			adminTech.POST("/projects/:id/archive", handler.AdminTechArchiveProject)
+			adminTech.DELETE("/projects/:id", handler.AdminTechDeleteProject)
+
+			// convenience: projects by team
+			adminTech.GET("/teams/:id/projects", handler.AdminTechListTeamProjects)
+		}
 
 	}
 

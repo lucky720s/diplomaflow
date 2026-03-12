@@ -63,6 +63,13 @@ const (
 	AdminService_SubmitDocument_FullMethodName                   = "/admin.v1.AdminService/SubmitDocument"
 	AdminService_GetSupervisorSettings_FullMethodName            = "/admin.v1.AdminService/GetSupervisorSettings"
 	AdminService_UpdateSupervisorMaxTeams_FullMethodName         = "/admin.v1.AdminService/UpdateSupervisorMaxTeams"
+	AdminService_CreateTeamAdmin_FullMethodName                  = "/admin.v1.AdminService/CreateTeamAdmin"
+	AdminService_ListProjectsAdmin_FullMethodName                = "/admin.v1.AdminService/ListProjectsAdmin"
+	AdminService_GetProjectAdmin_FullMethodName                  = "/admin.v1.AdminService/GetProjectAdmin"
+	AdminService_CreateProjectAdmin_FullMethodName               = "/admin.v1.AdminService/CreateProjectAdmin"
+	AdminService_UpdateProjectAdmin_FullMethodName               = "/admin.v1.AdminService/UpdateProjectAdmin"
+	AdminService_ArchiveProjectAdmin_FullMethodName              = "/admin.v1.AdminService/ArchiveProjectAdmin"
+	AdminService_DeleteArchivedProjectAdmin_FullMethodName       = "/admin.v1.AdminService/DeleteArchivedProjectAdmin"
 )
 
 // AdminServiceClient is the client API for AdminService service.
@@ -125,6 +132,16 @@ type AdminServiceClient interface {
 	// ==================== Supervisor Settings ====================
 	GetSupervisorSettings(ctx context.Context, in *GetSupervisorSettingsRequest, opts ...grpc.CallOption) (*GetSupervisorSettingsResponse, error)
 	UpdateSupervisorMaxTeams(ctx context.Context, in *UpdateSupervisorMaxTeamsRequest, opts ...grpc.CallOption) (*UpdateSupervisorMaxTeamsResponse, error)
+	// Teams
+	CreateTeamAdmin(ctx context.Context, in *CreateTeamAdminRequest, opts ...grpc.CallOption) (*CreateTeamAdminResponse, error)
+	// Projects
+	ListProjectsAdmin(ctx context.Context, in *ListProjectsAdminRequest, opts ...grpc.CallOption) (*ListProjectsAdminResponse, error)
+	GetProjectAdmin(ctx context.Context, in *GetProjectAdminRequest, opts ...grpc.CallOption) (*GetProjectAdminResponse, error)
+	CreateProjectAdmin(ctx context.Context, in *CreateProjectAdminRequest, opts ...grpc.CallOption) (*CreateProjectAdminResponse, error)
+	UpdateProjectAdmin(ctx context.Context, in *UpdateProjectAdminRequest, opts ...grpc.CallOption) (*UpdateProjectAdminResponse, error)
+	ArchiveProjectAdmin(ctx context.Context, in *ArchiveProjectAdminRequest, opts ...grpc.CallOption) (*ArchiveProjectAdminResponse, error)
+	// Delete allowed only if project is archived
+	DeleteArchivedProjectAdmin(ctx context.Context, in *DeleteArchivedProjectAdminRequest, opts ...grpc.CallOption) (*DeleteArchivedProjectAdminResponse, error)
 }
 
 type adminServiceClient struct {
@@ -565,6 +582,76 @@ func (c *adminServiceClient) UpdateSupervisorMaxTeams(ctx context.Context, in *U
 	return out, nil
 }
 
+func (c *adminServiceClient) CreateTeamAdmin(ctx context.Context, in *CreateTeamAdminRequest, opts ...grpc.CallOption) (*CreateTeamAdminResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(CreateTeamAdminResponse)
+	err := c.cc.Invoke(ctx, AdminService_CreateTeamAdmin_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *adminServiceClient) ListProjectsAdmin(ctx context.Context, in *ListProjectsAdminRequest, opts ...grpc.CallOption) (*ListProjectsAdminResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(ListProjectsAdminResponse)
+	err := c.cc.Invoke(ctx, AdminService_ListProjectsAdmin_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *adminServiceClient) GetProjectAdmin(ctx context.Context, in *GetProjectAdminRequest, opts ...grpc.CallOption) (*GetProjectAdminResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(GetProjectAdminResponse)
+	err := c.cc.Invoke(ctx, AdminService_GetProjectAdmin_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *adminServiceClient) CreateProjectAdmin(ctx context.Context, in *CreateProjectAdminRequest, opts ...grpc.CallOption) (*CreateProjectAdminResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(CreateProjectAdminResponse)
+	err := c.cc.Invoke(ctx, AdminService_CreateProjectAdmin_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *adminServiceClient) UpdateProjectAdmin(ctx context.Context, in *UpdateProjectAdminRequest, opts ...grpc.CallOption) (*UpdateProjectAdminResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(UpdateProjectAdminResponse)
+	err := c.cc.Invoke(ctx, AdminService_UpdateProjectAdmin_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *adminServiceClient) ArchiveProjectAdmin(ctx context.Context, in *ArchiveProjectAdminRequest, opts ...grpc.CallOption) (*ArchiveProjectAdminResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(ArchiveProjectAdminResponse)
+	err := c.cc.Invoke(ctx, AdminService_ArchiveProjectAdmin_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *adminServiceClient) DeleteArchivedProjectAdmin(ctx context.Context, in *DeleteArchivedProjectAdminRequest, opts ...grpc.CallOption) (*DeleteArchivedProjectAdminResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(DeleteArchivedProjectAdminResponse)
+	err := c.cc.Invoke(ctx, AdminService_DeleteArchivedProjectAdmin_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // AdminServiceServer is the server API for AdminService service.
 // All implementations must embed UnimplementedAdminServiceServer
 // for forward compatibility.
@@ -625,6 +712,16 @@ type AdminServiceServer interface {
 	// ==================== Supervisor Settings ====================
 	GetSupervisorSettings(context.Context, *GetSupervisorSettingsRequest) (*GetSupervisorSettingsResponse, error)
 	UpdateSupervisorMaxTeams(context.Context, *UpdateSupervisorMaxTeamsRequest) (*UpdateSupervisorMaxTeamsResponse, error)
+	// Teams
+	CreateTeamAdmin(context.Context, *CreateTeamAdminRequest) (*CreateTeamAdminResponse, error)
+	// Projects
+	ListProjectsAdmin(context.Context, *ListProjectsAdminRequest) (*ListProjectsAdminResponse, error)
+	GetProjectAdmin(context.Context, *GetProjectAdminRequest) (*GetProjectAdminResponse, error)
+	CreateProjectAdmin(context.Context, *CreateProjectAdminRequest) (*CreateProjectAdminResponse, error)
+	UpdateProjectAdmin(context.Context, *UpdateProjectAdminRequest) (*UpdateProjectAdminResponse, error)
+	ArchiveProjectAdmin(context.Context, *ArchiveProjectAdminRequest) (*ArchiveProjectAdminResponse, error)
+	// Delete allowed only if project is archived
+	DeleteArchivedProjectAdmin(context.Context, *DeleteArchivedProjectAdminRequest) (*DeleteArchivedProjectAdminResponse, error)
 	mustEmbedUnimplementedAdminServiceServer()
 }
 
@@ -763,6 +860,27 @@ func (UnimplementedAdminServiceServer) GetSupervisorSettings(context.Context, *G
 }
 func (UnimplementedAdminServiceServer) UpdateSupervisorMaxTeams(context.Context, *UpdateSupervisorMaxTeamsRequest) (*UpdateSupervisorMaxTeamsResponse, error) {
 	return nil, status.Error(codes.Unimplemented, "method UpdateSupervisorMaxTeams not implemented")
+}
+func (UnimplementedAdminServiceServer) CreateTeamAdmin(context.Context, *CreateTeamAdminRequest) (*CreateTeamAdminResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method CreateTeamAdmin not implemented")
+}
+func (UnimplementedAdminServiceServer) ListProjectsAdmin(context.Context, *ListProjectsAdminRequest) (*ListProjectsAdminResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method ListProjectsAdmin not implemented")
+}
+func (UnimplementedAdminServiceServer) GetProjectAdmin(context.Context, *GetProjectAdminRequest) (*GetProjectAdminResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method GetProjectAdmin not implemented")
+}
+func (UnimplementedAdminServiceServer) CreateProjectAdmin(context.Context, *CreateProjectAdminRequest) (*CreateProjectAdminResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method CreateProjectAdmin not implemented")
+}
+func (UnimplementedAdminServiceServer) UpdateProjectAdmin(context.Context, *UpdateProjectAdminRequest) (*UpdateProjectAdminResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method UpdateProjectAdmin not implemented")
+}
+func (UnimplementedAdminServiceServer) ArchiveProjectAdmin(context.Context, *ArchiveProjectAdminRequest) (*ArchiveProjectAdminResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method ArchiveProjectAdmin not implemented")
+}
+func (UnimplementedAdminServiceServer) DeleteArchivedProjectAdmin(context.Context, *DeleteArchivedProjectAdminRequest) (*DeleteArchivedProjectAdminResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method DeleteArchivedProjectAdmin not implemented")
 }
 func (UnimplementedAdminServiceServer) mustEmbedUnimplementedAdminServiceServer() {}
 func (UnimplementedAdminServiceServer) testEmbeddedByValue()                      {}
@@ -1559,6 +1677,132 @@ func _AdminService_UpdateSupervisorMaxTeams_Handler(srv interface{}, ctx context
 	return interceptor(ctx, in, info, handler)
 }
 
+func _AdminService_CreateTeamAdmin_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(CreateTeamAdminRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(AdminServiceServer).CreateTeamAdmin(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: AdminService_CreateTeamAdmin_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(AdminServiceServer).CreateTeamAdmin(ctx, req.(*CreateTeamAdminRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _AdminService_ListProjectsAdmin_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(ListProjectsAdminRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(AdminServiceServer).ListProjectsAdmin(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: AdminService_ListProjectsAdmin_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(AdminServiceServer).ListProjectsAdmin(ctx, req.(*ListProjectsAdminRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _AdminService_GetProjectAdmin_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetProjectAdminRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(AdminServiceServer).GetProjectAdmin(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: AdminService_GetProjectAdmin_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(AdminServiceServer).GetProjectAdmin(ctx, req.(*GetProjectAdminRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _AdminService_CreateProjectAdmin_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(CreateProjectAdminRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(AdminServiceServer).CreateProjectAdmin(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: AdminService_CreateProjectAdmin_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(AdminServiceServer).CreateProjectAdmin(ctx, req.(*CreateProjectAdminRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _AdminService_UpdateProjectAdmin_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(UpdateProjectAdminRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(AdminServiceServer).UpdateProjectAdmin(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: AdminService_UpdateProjectAdmin_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(AdminServiceServer).UpdateProjectAdmin(ctx, req.(*UpdateProjectAdminRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _AdminService_ArchiveProjectAdmin_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(ArchiveProjectAdminRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(AdminServiceServer).ArchiveProjectAdmin(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: AdminService_ArchiveProjectAdmin_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(AdminServiceServer).ArchiveProjectAdmin(ctx, req.(*ArchiveProjectAdminRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _AdminService_DeleteArchivedProjectAdmin_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(DeleteArchivedProjectAdminRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(AdminServiceServer).DeleteArchivedProjectAdmin(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: AdminService_DeleteArchivedProjectAdmin_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(AdminServiceServer).DeleteArchivedProjectAdmin(ctx, req.(*DeleteArchivedProjectAdminRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // AdminService_ServiceDesc is the grpc.ServiceDesc for AdminService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -1737,6 +1981,34 @@ var AdminService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "UpdateSupervisorMaxTeams",
 			Handler:    _AdminService_UpdateSupervisorMaxTeams_Handler,
+		},
+		{
+			MethodName: "CreateTeamAdmin",
+			Handler:    _AdminService_CreateTeamAdmin_Handler,
+		},
+		{
+			MethodName: "ListProjectsAdmin",
+			Handler:    _AdminService_ListProjectsAdmin_Handler,
+		},
+		{
+			MethodName: "GetProjectAdmin",
+			Handler:    _AdminService_GetProjectAdmin_Handler,
+		},
+		{
+			MethodName: "CreateProjectAdmin",
+			Handler:    _AdminService_CreateProjectAdmin_Handler,
+		},
+		{
+			MethodName: "UpdateProjectAdmin",
+			Handler:    _AdminService_UpdateProjectAdmin_Handler,
+		},
+		{
+			MethodName: "ArchiveProjectAdmin",
+			Handler:    _AdminService_ArchiveProjectAdmin_Handler,
+		},
+		{
+			MethodName: "DeleteArchivedProjectAdmin",
+			Handler:    _AdminService_DeleteArchivedProjectAdmin_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

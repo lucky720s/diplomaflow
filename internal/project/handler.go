@@ -22,6 +22,9 @@ type ProjectUseCase interface {
 
 	GetProjectRuntime(ctx context.Context, projectID int64) (*projectv1.GetProjectRuntimeResponse, error)
 	CommitTransition(ctx context.Context, req *projectv1.CommitTransitionRequest) (*projectv1.CommitTransitionResponse, error)
+	UpdateProject(ctx context.Context, req *projectv1.UpdateProjectRequest) (*projectv1.UpdateProjectResponse, error)
+	ArchiveProject(ctx context.Context, req *projectv1.ArchiveProjectRequest) (*projectv1.ArchiveProjectResponse, error)
+	DeleteProject(ctx context.Context, req *projectv1.DeleteProjectRequest) (*projectv1.DeleteProjectResponse, error)
 }
 
 type Handler struct {
@@ -302,4 +305,33 @@ func (h *Handler) CommitTransition(ctx context.Context, req *projectv1.CommitTra
 		return nil, status.Error(codes.InvalidArgument, "project_id, expected_from_state_id, to_state_id, event_name are required")
 	}
 	return h.service.CommitTransition(ctx, req)
+}
+func (h *Handler) UpdateProject(ctx context.Context, req *projectv1.UpdateProjectRequest) (*projectv1.UpdateProjectResponse, error) {
+	if err := requireInternal(ctx, "admin_service"); err != nil {
+		return nil, err
+	}
+	if req.ProjectId <= 0 {
+		return nil, status.Error(codes.InvalidArgument, "project_id is required")
+	}
+	return h.service.UpdateProject(ctx, req)
+}
+
+func (h *Handler) ArchiveProject(ctx context.Context, req *projectv1.ArchiveProjectRequest) (*projectv1.ArchiveProjectResponse, error) {
+	if err := requireInternal(ctx, "admin_service"); err != nil {
+		return nil, err
+	}
+	if req.ProjectId <= 0 {
+		return nil, status.Error(codes.InvalidArgument, "project_id is required")
+	}
+	return h.service.ArchiveProject(ctx, req)
+}
+
+func (h *Handler) DeleteProject(ctx context.Context, req *projectv1.DeleteProjectRequest) (*projectv1.DeleteProjectResponse, error) {
+	if err := requireInternal(ctx, "admin_service"); err != nil {
+		return nil, err
+	}
+	if req.ProjectId <= 0 {
+		return nil, status.Error(codes.InvalidArgument, "project_id is required")
+	}
+	return h.service.DeleteProject(ctx, req)
 }

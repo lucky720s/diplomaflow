@@ -4296,3 +4296,113 @@ var _ interface {
 	Cause() error
 	ErrorName() string
 } = LockTeamCompositionResponseValidationError{}
+
+// Validate checks the field values on CreateTeamAdminRequest with the rules
+// defined in the proto definition for this message. If any rules are
+// violated, the first error encountered is returned, or nil if there are no violations.
+func (m *CreateTeamAdminRequest) Validate() error {
+	return m.validate(false)
+}
+
+// ValidateAll checks the field values on CreateTeamAdminRequest with the rules
+// defined in the proto definition for this message. If any rules are
+// violated, the result is a list of violation errors wrapped in
+// CreateTeamAdminRequestMultiError, or nil if none found.
+func (m *CreateTeamAdminRequest) ValidateAll() error {
+	return m.validate(true)
+}
+
+func (m *CreateTeamAdminRequest) validate(all bool) error {
+	if m == nil {
+		return nil
+	}
+
+	var errors []error
+
+	// no validation rules for Name
+
+	// no validation rules for UniversityId
+
+	// no validation rules for DepartmentId
+
+	// no validation rules for LeaderId
+
+	if len(errors) > 0 {
+		return CreateTeamAdminRequestMultiError(errors)
+	}
+
+	return nil
+}
+
+// CreateTeamAdminRequestMultiError is an error wrapping multiple validation
+// errors returned by CreateTeamAdminRequest.ValidateAll() if the designated
+// constraints aren't met.
+type CreateTeamAdminRequestMultiError []error
+
+// Error returns a concatenation of all the error messages it wraps.
+func (m CreateTeamAdminRequestMultiError) Error() string {
+	msgs := make([]string, 0, len(m))
+	for _, err := range m {
+		msgs = append(msgs, err.Error())
+	}
+	return strings.Join(msgs, "; ")
+}
+
+// AllErrors returns a list of validation violation errors.
+func (m CreateTeamAdminRequestMultiError) AllErrors() []error { return m }
+
+// CreateTeamAdminRequestValidationError is the validation error returned by
+// CreateTeamAdminRequest.Validate if the designated constraints aren't met.
+type CreateTeamAdminRequestValidationError struct {
+	field  string
+	reason string
+	cause  error
+	key    bool
+}
+
+// Field function returns field value.
+func (e CreateTeamAdminRequestValidationError) Field() string { return e.field }
+
+// Reason function returns reason value.
+func (e CreateTeamAdminRequestValidationError) Reason() string { return e.reason }
+
+// Cause function returns cause value.
+func (e CreateTeamAdminRequestValidationError) Cause() error { return e.cause }
+
+// Key function returns key value.
+func (e CreateTeamAdminRequestValidationError) Key() bool { return e.key }
+
+// ErrorName returns error name.
+func (e CreateTeamAdminRequestValidationError) ErrorName() string {
+	return "CreateTeamAdminRequestValidationError"
+}
+
+// Error satisfies the builtin error interface
+func (e CreateTeamAdminRequestValidationError) Error() string {
+	cause := ""
+	if e.cause != nil {
+		cause = fmt.Sprintf(" | caused by: %v", e.cause)
+	}
+
+	key := ""
+	if e.key {
+		key = "key for "
+	}
+
+	return fmt.Sprintf(
+		"invalid %sCreateTeamAdminRequest.%s: %s%s",
+		key,
+		e.field,
+		e.reason,
+		cause)
+}
+
+var _ error = CreateTeamAdminRequestValidationError{}
+
+var _ interface {
+	Field() string
+	Reason() string
+	Key() bool
+	Cause() error
+	ErrorName() string
+} = CreateTeamAdminRequestValidationError{}

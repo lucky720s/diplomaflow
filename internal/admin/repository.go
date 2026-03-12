@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"strings"
 	"time"
 
 	"gorm.io/gorm"
@@ -129,6 +130,8 @@ type Repository interface {
 	GetSupervisorSettings(ctx context.Context, userID, departmentID int64) (*SupervisorSettings, error)
 	UpsertSupervisorSettings(ctx context.Context, s *SupervisorSettings) error
 	CountSupervisorTeams(ctx context.Context, supervisorID int64) (int32, error)
+	// ==================== Admin-tech Projects ====================
+	ListProjectsAdmin(ctx context.Context, filter ProjectsAdminFilter) ([]*ProjectAdminRow, int64, error)
 }
 
 type TopicRegistrationFilter struct {
@@ -190,6 +193,32 @@ type TeamContext struct {
 	UniversityID int64
 	DepartmentID int64
 	LeaderUserID int64
+}
+type ProjectsAdminFilter struct {
+	DepartmentID int64
+	TeamID       int64
+	StudentID    int64
+	Status       string
+	Q            string
+	Limit        int
+	Offset       int
+}
+
+type ProjectAdminRow struct {
+	ProjectID         int64      `gorm:"column:project_id"`
+	Title             string     `gorm:"column:title"`
+	Description       string     `gorm:"column:description"`
+	StudentID         int64      `gorm:"column:student_id"`
+	TeamID            int64      `gorm:"column:team_id"`
+	UniversityID      int64      `gorm:"column:university_id"`
+	DepartmentID      int64      `gorm:"column:department_id"`
+	WorkflowName      string     `gorm:"column:workflow_name"`
+	CurrentStateName  string     `gorm:"column:current_state_name"`
+	Status            string     `gorm:"column:status"`
+	DeadlineAt        *time.Time `gorm:"column:deadline_at"`
+	TopicRegisteredAt *time.Time `gorm:"column:topic_registered_at"`
+	CreatedAt         time.Time  `gorm:"column:created_at"`
+	UpdatedAt         time.Time  `gorm:"column:updated_at"`
 }
 
 type repository struct{ db *gorm.DB }
@@ -867,96 +896,158 @@ func (r *repository) GetTeamFullDetails(ctx context.Context, teamID int64) (*Tea
 
 func (r *repository) UpdateTeamByAdmin(ctx context.Context, teamID int64, updates *TeamAdminUpdateData) error {
 	return r.db.WithContext(ctx).Transaction(func(tx *gorm.DB) error {
-		if updates.Name != nil && *updates.Name != "" {
-			if err := tx.Table("teams").Where("id = ?", teamID).Update("name", *updates.Name).Error; err != nil {
+		now := time.Now().UTC()
+
+		// name
+		if updates != nil && updates.Name != nil && strings.TrimSpace(*updates.Name) != "" {
+			if err := tx.Table("teams").
+				Where("id = ?", teamID).
+				Updates(map[string]any{
+					"name":       strings.TrimSpace(*updates.Name),
+					"updated_at": now,
+				}).Error; err != nil {
 				return err
 			}
 		}
 
-		if updates.SupervisorID != nil && *updates.SupervisorID > 0 {
-			var count int64
-			tx.Table("admin_supervisor_assignments").Where("team_id = ?", teamID).Count(&count)
-			if count > 0 {
-				if err := tx.Table("admin_supervisor_assignments").
-					Where("team_id = ?", teamID).
-					Updates(map[string]interface{}{
-						"supervisor_id": *updates.SupervisorID,
-						"updated_at":    time.Now(),
-					}).Error; err != nil {
-					return err
-				}
-			} else {
-				if err := tx.Table("admin_supervisor_assignments").Create(map[string]interface{}{
+		// supervisor assignment
+		if updates != nil && updates.SupervisorID != nil && *updates.SupervisorID > 0 {
+			assignedBy := updates.UpdatedBy
+			if assignedBy <= 0 {
+				return fmt.Errorf("updated_by is required for supervisor assignment audit")
+			}
+
+			// пробуем update; если rows=0 — create
+			res := tx.Table("admin_supervisor_assignments").
+				Where("team_id = ?", teamID).
+				Updates(map[string]any{
+					"supervisor_id": *updates.SupervisorID,
+					"assigned_by":   assignedBy,
+					"updated_at":    now,
+				})
+			if res.Error != nil {
+				return res.Error
+			}
+			if res.RowsAffected == 0 {
+				if err := tx.Table("admin_supervisor_assignments").Create(map[string]any{
 					"team_id":       teamID,
 					"supervisor_id": *updates.SupervisorID,
-					"assigned_by":   1, // TODO actor
-					"created_at":    time.Now(),
-					"updated_at":    time.Now(),
+					"assigned_by":   assignedBy,
+					"created_at":    now,
+					"updated_at":    now,
 				}).Error; err != nil {
 					return err
 				}
 			}
 		}
 
-		if len(updates.MemberIDs) > 0 {
-			var currentMemberIDs []int64
-			tx.Table("team_members").Where("team_id = ?", teamID).Pluck("user_id", &currentMemberIDs)
+		// members sync (только если передали непустой список — сохраняем текущее поведение контракта)
+		if updates != nil && len(updates.MemberIDs) > 0 {
+			// узнаём лидера (чтобы не удалить)
+			var leaderID int64
+			if err := tx.Table("team_members").
+				Select("user_id").
+				Where("team_id = ? AND role = ?", teamID, "leader").
+				Limit(1).
+				Scan(&leaderID).Error; err != nil {
+				return err
+			}
 
-			currentMap := make(map[int64]bool)
+			var currentMemberIDs []int64
+			if err := tx.Table("team_members").
+				Where("team_id = ?", teamID).
+				Pluck("user_id", &currentMemberIDs).Error; err != nil {
+				return err
+			}
+
+			currentMap := make(map[int64]bool, len(currentMemberIDs))
 			for _, id := range currentMemberIDs {
 				currentMap[id] = true
 			}
-			newMap := make(map[int64]bool)
+
+			newMap := make(map[int64]bool, len(updates.MemberIDs)+1)
 			for _, id := range updates.MemberIDs {
-				newMap[id] = true
+				if id > 0 {
+					newMap[id] = true
+				}
+			}
+			// лидер всегда остаётся участником, даже если фронт “забыл” его прислать
+			if leaderID > 0 {
+				newMap[leaderID] = true
 			}
 
+			// delete removed (кроме лидера)
 			for _, id := range currentMemberIDs {
 				if !newMap[id] {
-					if err := tx.Table("team_members").
-						Where("team_id = ? AND user_id = ?", teamID, id).
-						Delete(nil).Error; err != nil {
+					if leaderID > 0 && id == leaderID {
+						continue
+					}
+					if err := tx.Exec(
+						`DELETE FROM team_members WHERE team_id = ? AND user_id = ?`,
+						teamID, id,
+					).Error; err != nil {
 						return err
 					}
 				}
 			}
 
+			// add new (всех новых — как member; лидера не трогаем)
 			for _, id := range updates.MemberIDs {
+				if id <= 0 {
+					continue
+				}
+				if leaderID > 0 && id == leaderID {
+					continue
+				}
 				if !currentMap[id] {
-					if err := tx.Table("team_members").Create(map[string]interface{}{
+					if err := tx.Table("team_members").Create(map[string]any{
 						"team_id":    teamID,
 						"user_id":    id,
 						"role":       "member",
-						"created_at": time.Now(),
+						"created_at": now,
 					}).Error; err != nil {
 						return err
 					}
 				}
 			}
+
+			// touch teams.updated_at
+			if err := tx.Table("teams").Where("id = ?", teamID).Update("updated_at", now).Error; err != nil {
+				return err
+			}
 		}
 
-		return tx.Table("teams").Where("id = ?", teamID).Update("updated_at", time.Now()).Error
+		// если апдейтили только supervisor/name без members — тоже обновим updated_at (кроме случая когда уже обновили выше)
+		return tx.Table("teams").Where("id = ?", teamID).Update("updated_at", now).Error
 	})
 }
-
 func (r *repository) DeleteTeamByAdmin(ctx context.Context, teamID int64, reason string, deletedBy int64) error {
 	return r.db.WithContext(ctx).Transaction(func(tx *gorm.DB) error {
+		now := time.Now().UTC()
+
 		if err := tx.Create(&AdminActivity{
 			ActivityType: ActivityTypeTeamDelete,
 			Description:  fmt.Sprintf("Team %d deleted. Reason: %s", teamID, reason),
 			ActorID:      deletedBy,
 			TargetID:     teamID,
 			TargetType:   "team",
-			CreatedAt:    time.Now(),
+			CreatedAt:    now,
 		}).Error; err != nil {
 			return err
 		}
 
-		tx.Table("admin_supervisor_assignments").Where("team_id = ?", teamID).Delete(nil)
-		tx.Table("team_invites").Where("team_id = ?", teamID).Delete(nil)
-		tx.Table("team_members").Where("team_id = ?", teamID).Delete(nil)
+		// FIX: никаких Delete(nil)
+		if err := tx.Exec(`DELETE FROM admin_supervisor_assignments WHERE team_id = ?`, teamID).Error; err != nil {
+			return err
+		}
+		if err := tx.Exec(`DELETE FROM team_invites WHERE team_id = ?`, teamID).Error; err != nil {
+			return err
+		}
+		if err := tx.Exec(`DELETE FROM team_members WHERE team_id = ?`, teamID).Error; err != nil {
+			return err
+		}
 
-		return tx.Table("teams").Where("id = ?", teamID).Update("deleted_at", time.Now()).Error
+		return tx.Table("teams").Where("id = ?", teamID).Update("deleted_at", now).Error
 	})
 }
 
@@ -973,9 +1064,10 @@ func (r *repository) AddTeamMember(ctx context.Context, teamID, userID int64, ro
 }
 
 func (r *repository) RemoveTeamMember(ctx context.Context, teamID, userID int64) error {
-	return r.db.WithContext(ctx).Table("team_members").
-		Where("team_id = ? AND user_id = ?", teamID, userID).
-		Delete(nil).Error
+	return r.db.WithContext(ctx).Exec(
+		`DELETE FROM team_members WHERE team_id = ? AND user_id = ?`,
+		teamID, userID,
+	).Error
 }
 
 // ==================== Grading History Full ====================
@@ -1342,4 +1434,64 @@ func (r *repository) CountSupervisorTeams(ctx context.Context, supervisorID int6
 		Where("supervisor_id = ?", supervisorID).
 		Count(&count).Error
 	return int32(count), err
+}
+
+func (r *repository) ListProjectsAdmin(ctx context.Context, f ProjectsAdminFilter) ([]*ProjectAdminRow, int64, error) {
+	if f.Limit <= 0 {
+		f.Limit = 20
+	}
+	if f.Offset < 0 {
+		f.Offset = 0
+	}
+
+	q := r.db.WithContext(ctx).Table("projects p").
+		Select(`
+			p.id as project_id,
+			p.title,
+			COALESCE(p.description,'') as description,
+			p.student_id,
+			COALESCE(p.team_id,0) as team_id,
+			p.university_id,
+			COALESCE(p.department_id,0) as department_id,
+			COALESCE(p.workflow_name,'') as workflow_name,
+			COALESCE(p.current_state_name,'') as current_state_name,
+			p.status,
+			p.deadline_at,
+			p.topic_registered_at,
+			p.created_at,
+			p.updated_at
+		`)
+
+	if f.DepartmentID > 0 {
+		q = q.Where("p.department_id = ?", f.DepartmentID)
+	}
+	if f.TeamID > 0 {
+		q = q.Where("p.team_id = ?", f.TeamID)
+	}
+	if f.StudentID > 0 {
+		q = q.Where("p.student_id = ?", f.StudentID)
+	}
+	if strings.TrimSpace(f.Status) != "" {
+		q = q.Where("p.status = ?", strings.TrimSpace(f.Status))
+	}
+	if s := strings.TrimSpace(f.Q); s != "" {
+		like := "%" + s + "%"
+		q = q.Where("(p.title ILIKE ? OR p.description ILIKE ?)", like, like)
+	}
+
+	var total int64
+	if err := q.Count(&total).Error; err != nil {
+		return nil, 0, err
+	}
+
+	var rows []*ProjectAdminRow
+	err := q.Order("p.created_at DESC").
+		Limit(f.Limit).
+		Offset(f.Offset).
+		Find(&rows).Error
+
+	if err != nil {
+		return nil, 0, err
+	}
+	return rows, total, nil
 }

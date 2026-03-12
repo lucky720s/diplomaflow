@@ -78,6 +78,24 @@ service AdminService {
   rpc GetSupervisorSettings(GetSupervisorSettingsRequest) returns (GetSupervisorSettingsResponse);
   rpc UpdateSupervisorMaxTeams(UpdateSupervisorMaxTeamsRequest) returns (UpdateSupervisorMaxTeamsResponse);
 
+
+  // ==================== Admin Tech (CRUD) ====================
+
+  // Teams
+  rpc CreateTeamAdmin(CreateTeamAdminRequest) returns (CreateTeamAdminResponse);
+
+  // Projects
+  rpc ListProjectsAdmin(ListProjectsAdminRequest) returns (ListProjectsAdminResponse);
+  rpc GetProjectAdmin(GetProjectAdminRequest) returns (GetProjectAdminResponse);
+
+  rpc CreateProjectAdmin(CreateProjectAdminRequest) returns (CreateProjectAdminResponse);
+  rpc UpdateProjectAdmin(UpdateProjectAdminRequest) returns (UpdateProjectAdminResponse);
+
+  rpc ArchiveProjectAdmin(ArchiveProjectAdminRequest) returns (ArchiveProjectAdminResponse);
+
+  // Delete allowed only if project is archived
+  rpc DeleteArchivedProjectAdmin(DeleteArchivedProjectAdminRequest) returns (DeleteArchivedProjectAdminResponse);
+
 }
 
 // ==================== Topic Registration Messages ====================
@@ -1033,4 +1051,142 @@ message UpdateSupervisorMaxTeamsResponse {
   bool success = 1;
   string message = 2;
   int32 new_max_teams = 3;
+}
+
+
+// ==================== Admin Tech Messages ====================
+
+// ---- Teams ----
+message CreateTeamAdminRequest {
+  string name = 1;
+  int64 university_id = 2;
+  int64 department_id = 3;
+  int64 leader_id = 4;
+  repeated int64 member_ids = 5;
+}
+
+message CreateTeamAdminResponse {
+  int64 team_id = 1;
+}
+
+// ---- Projects ----
+message ListProjectsAdminRequest {
+  // if 0 - take from metadata x-department-id
+  int64 department_id = 1;
+
+  int64 team_id = 2;
+  int64 student_id = 3;
+
+  // active|completed|cancelled|archived (optional)
+  string status = 4;
+
+  // search in title/description (optional)
+  string q = 5;
+
+  int32 page = 6;
+  int32 page_size = 7;
+}
+
+message ProjectAdminListItem {
+  int64 project_id = 1;
+  string title = 2;
+  string description = 3;
+
+  int64 student_id = 4;
+  int64 team_id = 5;
+
+  int64 university_id = 6;
+  int64 department_id = 7;
+
+  string workflow_name = 8;
+  string current_state_name = 9;
+  string status = 10;
+
+  google.protobuf.Timestamp deadline_at = 11;
+  google.protobuf.Timestamp topic_registered_at = 12;
+
+  google.protobuf.Timestamp created_at = 13;
+  google.protobuf.Timestamp updated_at = 14;
+}
+
+message ListProjectsAdminResponse {
+  repeated ProjectAdminListItem projects = 1;
+  int64 total_count = 2;
+}
+
+message GetProjectAdminRequest {
+  int64 project_id = 1;
+}
+
+message ProjectAdminDetails {
+  int64 project_id = 1;
+  string title = 2;
+  string description = 3;
+
+  int64 student_id = 4;
+  int64 team_id = 5;
+  int64 university_id = 6;
+  int64 department_id = 7;
+
+  string workflow_name = 8;
+  string current_state = 9;
+  string current_state_name = 10;
+  string status = 11;
+
+  google.protobuf.Struct data = 12;
+
+  google.protobuf.Timestamp deadline_at = 13;
+  google.protobuf.Timestamp topic_registered_at = 14;
+}
+
+message GetProjectAdminResponse {
+  ProjectAdminDetails project = 1;
+}
+
+// create/update/archive/delete
+message CreateProjectAdminRequest {
+  string title = 1;
+  string description = 2;
+  int64 student_id = 3;
+  string workflow_name = 4;
+  int64 university_id = 5;
+  int64 department_id = 6;
+  int64 team_id = 7;
+}
+
+message CreateProjectAdminResponse {
+  int64 project_id = 1;
+  string status = 2;
+}
+
+message UpdateProjectAdminRequest {
+  int64 project_id = 1;
+  string title = 2;
+  string description = 3;
+  int64 student_id = 4;
+  int64 team_id = 5;
+  google.protobuf.Struct data_patch = 6;
+}
+
+message UpdateProjectAdminResponse {
+  bool success = 1;
+}
+
+message ArchiveProjectAdminRequest {
+  int64 project_id = 1;
+  string reason = 2;
+}
+
+message ArchiveProjectAdminResponse {
+  bool success = 1;
+  string status = 2;
+}
+
+message DeleteArchivedProjectAdminRequest {
+  int64 project_id = 1;
+  string reason = 2;
+}
+
+message DeleteArchivedProjectAdminResponse {
+  bool success = 1;
 }

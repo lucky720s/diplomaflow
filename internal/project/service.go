@@ -10,7 +10,9 @@ import (
 	projectv1 "github.com/lucky720s/diplomaflow/pkg/protobuf/project/v1"
 	workflowv1 "github.com/lucky720s/diplomaflow/pkg/protobuf/workflow/v1"
 	"go.uber.org/zap"
+	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/metadata"
+	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/types/known/structpb"
 	"google.golang.org/protobuf/types/known/timestamppb"
 	"gorm.io/datatypes"
@@ -327,4 +329,176 @@ func deepMerge(dst, src map[string]interface{}) {
 			dst[k] = v
 		}
 	}
+}
+func (s *Service) UpdateProject(ctx context.Context, req *projectv1.UpdateProjectRequest) (*projectv1.UpdateProjectResponse, error) {
+	if req == nil {
+		return nil, status.Error(codes.InvalidArgument, "request is nil")
+	}
+	if req.ProjectId <= 0 {
+		return nil, status.Error(codes.InvalidArgument, "project_id is required")
+	}
+
+	now := time.Now().UTC()
+
+	err := s.repo.Transaction(ctx, func(tx *gorm.DB) error {
+		var p Project
+		if err := tx.WithContext(ctx).
+			Clauses(clause.Locking{Strength: "UPDATE"}).
+			First(&p, "id = ?", req.ProjectId).Error; err != nil {
+			if errors.Is(err, gorm.ErrRecordNotFound) {
+				return status.Error(codes.NotFound, "project not found")
+			}
+			return status.Errorf(codes.Internal, "load project failed: %v", err)
+		}
+
+		updates := map[string]any{
+			"updated_at": now,
+		}
+
+		// Семантика без field_mask: пустые строки/нули считаем "не менять"
+		if req.Title != "" {
+			updates["title"] = req.Title
+		}
+		if req.Description != "" {
+			updates["description"] = req.Description
+		}
+		if req.StudentId > 0 {
+			updates["student_id"] = req.StudentId
+		}
+		if req.TeamId > 0 {
+			updates["team_id"] = req.TeamId
+		}
+
+		if req.DataPatch != nil {
+			merged := mergeJSON(p.Data, req.DataPatch.AsMap())
+			updates["data"] = merged
+		}
+
+		// Если кроме updated_at нечего менять — всё равно ок
+		if len(updates) > 1 {
+			if err := tx.WithContext(ctx).Model(&Project{}).
+				Where("id = ?", p.ID).
+				Updates(updates).Error; err != nil {
+				return status.Errorf(codes.Internal, "update project failed: %v", err)
+			}
+		} else {
+			// просто touch updated_at
+			if err := tx.WithContext(ctx).Model(&Project{}).
+				Where("id = ?", p.ID).
+				Update("updated_at", now).Error; err != nil {
+				return status.Errorf(codes.Internal, "touch project failed: %v", err)
+			}
+		}
+
+		// best-effort: синхронизируем task_boards.name/description с проектом
+		boardUpdates := map[string]any{"updated_at": now}
+		if req.Title != "" {
+			boardUpdates["name"] = req.Title
+		}
+		if req.Description != "" {
+			boardUpdates["description"] = req.Description
+		}
+		if len(boardUpdates) > 1 {
+			_ = tx.WithContext(ctx).Table("task_boards").
+				Where("project_id = ?", p.ID).
+				Updates(boardUpdates).Error
+		}
+
+		return nil
+	})
+
+	if err != nil {
+		if _, ok := status.FromError(err); ok {
+			return nil, err
+		}
+		return nil, status.Errorf(codes.Internal, "update failed: %v", err)
+	}
+
+	return &projectv1.UpdateProjectResponse{Success: true}, nil
+}
+func (s *Service) ArchiveProject(ctx context.Context, req *projectv1.ArchiveProjectRequest) (*projectv1.ArchiveProjectResponse, error) {
+	if req == nil {
+		return nil, status.Error(codes.InvalidArgument, "request is nil")
+	}
+	if req.ProjectId <= 0 {
+		return nil, status.Error(codes.InvalidArgument, "project_id is required")
+	}
+
+	now := time.Now().UTC()
+
+	err := s.repo.Transaction(ctx, func(tx *gorm.DB) error {
+		var p Project
+		if err := tx.WithContext(ctx).
+			Clauses(clause.Locking{Strength: "UPDATE"}).
+			First(&p, "id = ?", req.ProjectId).Error; err != nil {
+			if errors.Is(err, gorm.ErrRecordNotFound) {
+				return status.Error(codes.NotFound, "project not found")
+			}
+			return status.Errorf(codes.Internal, "load project failed: %v", err)
+		}
+
+		// idempotent
+		if p.Status == "archived" {
+			return nil
+		}
+
+		if err := tx.WithContext(ctx).Model(&Project{}).
+			Where("id = ?", p.ID).
+			Updates(map[string]any{
+				"status":     "archived",
+				"updated_at": now,
+			}).Error; err != nil {
+			return status.Errorf(codes.Internal, "archive failed: %v", err)
+		}
+
+		return nil
+	})
+
+	if err != nil {
+		if _, ok := status.FromError(err); ok {
+			return nil, err
+		}
+		return nil, status.Errorf(codes.Internal, "archive failed: %v", err)
+	}
+
+	return &projectv1.ArchiveProjectResponse{Success: true, Status: "archived"}, nil
+}
+func (s *Service) DeleteProject(ctx context.Context, req *projectv1.DeleteProjectRequest) (*projectv1.DeleteProjectResponse, error) {
+	if req == nil {
+		return nil, status.Error(codes.InvalidArgument, "request is nil")
+	}
+	if req.ProjectId <= 0 {
+		return nil, status.Error(codes.InvalidArgument, "project_id is required")
+	}
+
+	err := s.repo.Transaction(ctx, func(tx *gorm.DB) error {
+		var p Project
+		if err := tx.WithContext(ctx).
+			Clauses(clause.Locking{Strength: "UPDATE"}).
+			First(&p, "id = ?", req.ProjectId).Error; err != nil {
+			if errors.Is(err, gorm.ErrRecordNotFound) {
+				return status.Error(codes.NotFound, "project not found")
+			}
+			return status.Errorf(codes.Internal, "load project failed: %v", err)
+		}
+
+		if p.Status != "archived" {
+			return status.Error(codes.FailedPrecondition, "project must be archived before delete")
+		}
+
+		if err := tx.WithContext(ctx).Delete(&Project{}, p.ID).Error; err != nil {
+			return status.Errorf(codes.Internal, "delete failed: %v", err)
+		}
+
+		return nil
+	})
+
+	if err != nil {
+		if _, ok := status.FromError(err); ok {
+			return nil, err
+		}
+		return nil, status.Errorf(codes.Internal, "delete failed: %v", err)
+	}
+
+	return &projectv1.DeleteProjectResponse{Success: true}, nil
 }

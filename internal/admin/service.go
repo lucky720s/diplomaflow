@@ -1531,7 +1531,10 @@ func (s *Service) UpdateTeamByAdmin(ctx context.Context, req *UpdateTeamByAdminR
 		return nil, fmt.Errorf("team not found: %w", err)
 	}
 
-	updates := &TeamAdminUpdateData{}
+	updates := &TeamAdminUpdateData{UpdatedBy: req.UpdatedBy}
+	if updates.UpdatedBy <= 0 {
+		return nil, status.Error(codes.Unauthenticated, "actor_id is required for audit trail")
+	}
 	if req.Name != "" {
 		updates.Name = &req.Name
 	}
@@ -1824,4 +1827,120 @@ func (s *Service) getEffectiveMaxTeams(ctx context.Context, supervisorID, depart
 		return settings.MaxTeams, true, nil
 	}
 	return s.getDefaultMaxTeams(ctx, departmentID), false, nil
+}
+
+func (s *Service) CreateTeamAdmin(ctx context.Context, name string, universityID, departmentID, leaderID int64, memberIDs []int64) (int64, error) {
+	if name == "" {
+		return 0, errors.New("name is required")
+	}
+	if universityID <= 0 || departmentID <= 0 {
+		return 0, errors.New("university_id and department_id are required")
+	}
+	if leaderID <= 0 {
+		return 0, errors.New("leader_id is required")
+	}
+
+	resp, err := s.teamClient.CreateTeamAdmin(s.internalCtx(ctx), &teamv1.CreateTeamAdminRequest{
+		Name:         name,
+		UniversityId: universityID,
+		DepartmentId: departmentID,
+		LeaderId:     leaderID,
+		MemberIds:    memberIDs,
+	})
+	if err != nil {
+		return 0, err
+	}
+	if resp == nil || resp.TeamId <= 0 {
+		return 0, fmt.Errorf("CreateTeamAdmin returned empty response")
+	}
+	return resp.TeamId, nil
+}
+
+func (s *Service) ListProjectsAdmin(ctx context.Context, f ProjectsAdminFilter) ([]*ProjectAdminRow, int64, error) {
+	return s.repo.ListProjectsAdmin(ctx, f)
+}
+
+func (s *Service) GetProjectAdmin(ctx context.Context, projectID int64) (*projectv1.GetProjectResponse, *projectv1.GetProjectRuntimeResponse, error) {
+	if projectID <= 0 {
+		return nil, nil, status.Error(codes.InvalidArgument, "project_id is required")
+	}
+
+	p, err := s.projectClient.GetProject(s.internalCtx(ctx), &projectv1.GetProjectRequest{ProjectId: projectID})
+	if err != nil {
+		return nil, nil, err
+	}
+
+	rt, err := s.projectClient.GetProjectRuntime(s.internalCtx(ctx), &projectv1.GetProjectRuntimeRequest{ProjectId: projectID})
+	if err != nil {
+		return p, nil, nil // runtime best-effort
+	}
+	return p, rt, nil
+}
+
+func (s *Service) CreateProjectAdmin(ctx context.Context, req *projectv1.CreateProjectRequest) (*projectv1.CreateProjectResponse, error) {
+	if req == nil {
+		return nil, status.Error(codes.InvalidArgument, "request is nil")
+	}
+	if req.TeamId <= 0 {
+		return nil, status.Error(codes.InvalidArgument, "team_id is required")
+	}
+
+	tc, err := s.repo.GetTeamContext(ctx, req.TeamId)
+	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return nil, status.Error(codes.NotFound, "team not found")
+		}
+		return nil, status.Errorf(codes.Internal, "GetTeamContext failed: %v", err)
+	}
+	if req.UniversityId == 0 {
+		req.UniversityId = tc.UniversityID
+	} else if req.UniversityId != tc.UniversityID {
+		return nil, status.Error(codes.InvalidArgument, "university_id mismatch with team")
+	}
+
+	if req.DepartmentId == 0 {
+		req.DepartmentId = tc.DepartmentID
+	} else if req.DepartmentId != tc.DepartmentID {
+		return nil, status.Error(codes.InvalidArgument, "department_id mismatch with team")
+	}
+
+	return s.projectClient.CreateProject(s.internalCtx(ctx), req)
+}
+
+func (s *Service) UpdateProjectAdmin(ctx context.Context, req *projectv1.UpdateProjectRequest) (*projectv1.UpdateProjectResponse, error) {
+	if req == nil || req.ProjectId <= 0 {
+		return nil, status.Error(codes.InvalidArgument, "project_id is required")
+	}
+	return s.projectClient.UpdateProject(s.internalCtx(ctx), req)
+}
+
+func (s *Service) ArchiveProjectAdmin(ctx context.Context, projectID int64, reason string) (*projectv1.ArchiveProjectResponse, error) {
+	if projectID <= 0 {
+		return nil, status.Error(codes.InvalidArgument, "project_id is required")
+	}
+	return s.projectClient.ArchiveProject(s.internalCtx(ctx), &projectv1.ArchiveProjectRequest{
+		ProjectId: projectID,
+		Reason:    reason,
+	})
+}
+
+func (s *Service) DeleteArchivedProjectAdmin(ctx context.Context, projectID int64, reason string) (*projectv1.DeleteProjectResponse, error) {
+	if projectID <= 0 {
+		return nil, status.Error(codes.InvalidArgument, "project_id is required")
+	}
+	rt, err := s.projectClient.GetProjectRuntime(s.internalCtx(ctx), &projectv1.GetProjectRuntimeRequest{ProjectId: projectID})
+	if err != nil {
+		return nil, err
+	}
+	if rt == nil {
+		return nil, status.Error(codes.NotFound, "project not found")
+	}
+	if rt.Status != "archived" {
+		return nil, status.Error(codes.FailedPrecondition, "project must be archived before deletion")
+	}
+
+	return s.projectClient.DeleteProject(s.internalCtx(ctx), &projectv1.DeleteProjectRequest{
+		ProjectId: projectID,
+		Reason:    reason,
+	})
 }

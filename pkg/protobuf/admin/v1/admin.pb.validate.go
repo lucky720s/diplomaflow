@@ -16539,3 +16539,2051 @@ var _ interface {
 	Cause() error
 	ErrorName() string
 } = UpdateSupervisorMaxTeamsResponseValidationError{}
+
+// Validate checks the field values on CreateTeamAdminRequest with the rules
+// defined in the proto definition for this message. If any rules are
+// violated, the first error encountered is returned, or nil if there are no violations.
+func (m *CreateTeamAdminRequest) Validate() error {
+	return m.validate(false)
+}
+
+// ValidateAll checks the field values on CreateTeamAdminRequest with the rules
+// defined in the proto definition for this message. If any rules are
+// violated, the result is a list of violation errors wrapped in
+// CreateTeamAdminRequestMultiError, or nil if none found.
+func (m *CreateTeamAdminRequest) ValidateAll() error {
+	return m.validate(true)
+}
+
+func (m *CreateTeamAdminRequest) validate(all bool) error {
+	if m == nil {
+		return nil
+	}
+
+	var errors []error
+
+	// no validation rules for Name
+
+	// no validation rules for UniversityId
+
+	// no validation rules for DepartmentId
+
+	// no validation rules for LeaderId
+
+	if len(errors) > 0 {
+		return CreateTeamAdminRequestMultiError(errors)
+	}
+
+	return nil
+}
+
+// CreateTeamAdminRequestMultiError is an error wrapping multiple validation
+// errors returned by CreateTeamAdminRequest.ValidateAll() if the designated
+// constraints aren't met.
+type CreateTeamAdminRequestMultiError []error
+
+// Error returns a concatenation of all the error messages it wraps.
+func (m CreateTeamAdminRequestMultiError) Error() string {
+	msgs := make([]string, 0, len(m))
+	for _, err := range m {
+		msgs = append(msgs, err.Error())
+	}
+	return strings.Join(msgs, "; ")
+}
+
+// AllErrors returns a list of validation violation errors.
+func (m CreateTeamAdminRequestMultiError) AllErrors() []error { return m }
+
+// CreateTeamAdminRequestValidationError is the validation error returned by
+// CreateTeamAdminRequest.Validate if the designated constraints aren't met.
+type CreateTeamAdminRequestValidationError struct {
+	field  string
+	reason string
+	cause  error
+	key    bool
+}
+
+// Field function returns field value.
+func (e CreateTeamAdminRequestValidationError) Field() string { return e.field }
+
+// Reason function returns reason value.
+func (e CreateTeamAdminRequestValidationError) Reason() string { return e.reason }
+
+// Cause function returns cause value.
+func (e CreateTeamAdminRequestValidationError) Cause() error { return e.cause }
+
+// Key function returns key value.
+func (e CreateTeamAdminRequestValidationError) Key() bool { return e.key }
+
+// ErrorName returns error name.
+func (e CreateTeamAdminRequestValidationError) ErrorName() string {
+	return "CreateTeamAdminRequestValidationError"
+}
+
+// Error satisfies the builtin error interface
+func (e CreateTeamAdminRequestValidationError) Error() string {
+	cause := ""
+	if e.cause != nil {
+		cause = fmt.Sprintf(" | caused by: %v", e.cause)
+	}
+
+	key := ""
+	if e.key {
+		key = "key for "
+	}
+
+	return fmt.Sprintf(
+		"invalid %sCreateTeamAdminRequest.%s: %s%s",
+		key,
+		e.field,
+		e.reason,
+		cause)
+}
+
+var _ error = CreateTeamAdminRequestValidationError{}
+
+var _ interface {
+	Field() string
+	Reason() string
+	Key() bool
+	Cause() error
+	ErrorName() string
+} = CreateTeamAdminRequestValidationError{}
+
+// Validate checks the field values on CreateTeamAdminResponse with the rules
+// defined in the proto definition for this message. If any rules are
+// violated, the first error encountered is returned, or nil if there are no violations.
+func (m *CreateTeamAdminResponse) Validate() error {
+	return m.validate(false)
+}
+
+// ValidateAll checks the field values on CreateTeamAdminResponse with the
+// rules defined in the proto definition for this message. If any rules are
+// violated, the result is a list of violation errors wrapped in
+// CreateTeamAdminResponseMultiError, or nil if none found.
+func (m *CreateTeamAdminResponse) ValidateAll() error {
+	return m.validate(true)
+}
+
+func (m *CreateTeamAdminResponse) validate(all bool) error {
+	if m == nil {
+		return nil
+	}
+
+	var errors []error
+
+	// no validation rules for TeamId
+
+	if len(errors) > 0 {
+		return CreateTeamAdminResponseMultiError(errors)
+	}
+
+	return nil
+}
+
+// CreateTeamAdminResponseMultiError is an error wrapping multiple validation
+// errors returned by CreateTeamAdminResponse.ValidateAll() if the designated
+// constraints aren't met.
+type CreateTeamAdminResponseMultiError []error
+
+// Error returns a concatenation of all the error messages it wraps.
+func (m CreateTeamAdminResponseMultiError) Error() string {
+	msgs := make([]string, 0, len(m))
+	for _, err := range m {
+		msgs = append(msgs, err.Error())
+	}
+	return strings.Join(msgs, "; ")
+}
+
+// AllErrors returns a list of validation violation errors.
+func (m CreateTeamAdminResponseMultiError) AllErrors() []error { return m }
+
+// CreateTeamAdminResponseValidationError is the validation error returned by
+// CreateTeamAdminResponse.Validate if the designated constraints aren't met.
+type CreateTeamAdminResponseValidationError struct {
+	field  string
+	reason string
+	cause  error
+	key    bool
+}
+
+// Field function returns field value.
+func (e CreateTeamAdminResponseValidationError) Field() string { return e.field }
+
+// Reason function returns reason value.
+func (e CreateTeamAdminResponseValidationError) Reason() string { return e.reason }
+
+// Cause function returns cause value.
+func (e CreateTeamAdminResponseValidationError) Cause() error { return e.cause }
+
+// Key function returns key value.
+func (e CreateTeamAdminResponseValidationError) Key() bool { return e.key }
+
+// ErrorName returns error name.
+func (e CreateTeamAdminResponseValidationError) ErrorName() string {
+	return "CreateTeamAdminResponseValidationError"
+}
+
+// Error satisfies the builtin error interface
+func (e CreateTeamAdminResponseValidationError) Error() string {
+	cause := ""
+	if e.cause != nil {
+		cause = fmt.Sprintf(" | caused by: %v", e.cause)
+	}
+
+	key := ""
+	if e.key {
+		key = "key for "
+	}
+
+	return fmt.Sprintf(
+		"invalid %sCreateTeamAdminResponse.%s: %s%s",
+		key,
+		e.field,
+		e.reason,
+		cause)
+}
+
+var _ error = CreateTeamAdminResponseValidationError{}
+
+var _ interface {
+	Field() string
+	Reason() string
+	Key() bool
+	Cause() error
+	ErrorName() string
+} = CreateTeamAdminResponseValidationError{}
+
+// Validate checks the field values on ListProjectsAdminRequest with the rules
+// defined in the proto definition for this message. If any rules are
+// violated, the first error encountered is returned, or nil if there are no violations.
+func (m *ListProjectsAdminRequest) Validate() error {
+	return m.validate(false)
+}
+
+// ValidateAll checks the field values on ListProjectsAdminRequest with the
+// rules defined in the proto definition for this message. If any rules are
+// violated, the result is a list of violation errors wrapped in
+// ListProjectsAdminRequestMultiError, or nil if none found.
+func (m *ListProjectsAdminRequest) ValidateAll() error {
+	return m.validate(true)
+}
+
+func (m *ListProjectsAdminRequest) validate(all bool) error {
+	if m == nil {
+		return nil
+	}
+
+	var errors []error
+
+	// no validation rules for DepartmentId
+
+	// no validation rules for TeamId
+
+	// no validation rules for StudentId
+
+	// no validation rules for Status
+
+	// no validation rules for Q
+
+	// no validation rules for Page
+
+	// no validation rules for PageSize
+
+	if len(errors) > 0 {
+		return ListProjectsAdminRequestMultiError(errors)
+	}
+
+	return nil
+}
+
+// ListProjectsAdminRequestMultiError is an error wrapping multiple validation
+// errors returned by ListProjectsAdminRequest.ValidateAll() if the designated
+// constraints aren't met.
+type ListProjectsAdminRequestMultiError []error
+
+// Error returns a concatenation of all the error messages it wraps.
+func (m ListProjectsAdminRequestMultiError) Error() string {
+	msgs := make([]string, 0, len(m))
+	for _, err := range m {
+		msgs = append(msgs, err.Error())
+	}
+	return strings.Join(msgs, "; ")
+}
+
+// AllErrors returns a list of validation violation errors.
+func (m ListProjectsAdminRequestMultiError) AllErrors() []error { return m }
+
+// ListProjectsAdminRequestValidationError is the validation error returned by
+// ListProjectsAdminRequest.Validate if the designated constraints aren't met.
+type ListProjectsAdminRequestValidationError struct {
+	field  string
+	reason string
+	cause  error
+	key    bool
+}
+
+// Field function returns field value.
+func (e ListProjectsAdminRequestValidationError) Field() string { return e.field }
+
+// Reason function returns reason value.
+func (e ListProjectsAdminRequestValidationError) Reason() string { return e.reason }
+
+// Cause function returns cause value.
+func (e ListProjectsAdminRequestValidationError) Cause() error { return e.cause }
+
+// Key function returns key value.
+func (e ListProjectsAdminRequestValidationError) Key() bool { return e.key }
+
+// ErrorName returns error name.
+func (e ListProjectsAdminRequestValidationError) ErrorName() string {
+	return "ListProjectsAdminRequestValidationError"
+}
+
+// Error satisfies the builtin error interface
+func (e ListProjectsAdminRequestValidationError) Error() string {
+	cause := ""
+	if e.cause != nil {
+		cause = fmt.Sprintf(" | caused by: %v", e.cause)
+	}
+
+	key := ""
+	if e.key {
+		key = "key for "
+	}
+
+	return fmt.Sprintf(
+		"invalid %sListProjectsAdminRequest.%s: %s%s",
+		key,
+		e.field,
+		e.reason,
+		cause)
+}
+
+var _ error = ListProjectsAdminRequestValidationError{}
+
+var _ interface {
+	Field() string
+	Reason() string
+	Key() bool
+	Cause() error
+	ErrorName() string
+} = ListProjectsAdminRequestValidationError{}
+
+// Validate checks the field values on ProjectAdminListItem with the rules
+// defined in the proto definition for this message. If any rules are
+// violated, the first error encountered is returned, or nil if there are no violations.
+func (m *ProjectAdminListItem) Validate() error {
+	return m.validate(false)
+}
+
+// ValidateAll checks the field values on ProjectAdminListItem with the rules
+// defined in the proto definition for this message. If any rules are
+// violated, the result is a list of violation errors wrapped in
+// ProjectAdminListItemMultiError, or nil if none found.
+func (m *ProjectAdminListItem) ValidateAll() error {
+	return m.validate(true)
+}
+
+func (m *ProjectAdminListItem) validate(all bool) error {
+	if m == nil {
+		return nil
+	}
+
+	var errors []error
+
+	// no validation rules for ProjectId
+
+	// no validation rules for Title
+
+	// no validation rules for Description
+
+	// no validation rules for StudentId
+
+	// no validation rules for TeamId
+
+	// no validation rules for UniversityId
+
+	// no validation rules for DepartmentId
+
+	// no validation rules for WorkflowName
+
+	// no validation rules for CurrentStateName
+
+	// no validation rules for Status
+
+	if all {
+		switch v := interface{}(m.GetDeadlineAt()).(type) {
+		case interface{ ValidateAll() error }:
+			if err := v.ValidateAll(); err != nil {
+				errors = append(errors, ProjectAdminListItemValidationError{
+					field:  "DeadlineAt",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		case interface{ Validate() error }:
+			if err := v.Validate(); err != nil {
+				errors = append(errors, ProjectAdminListItemValidationError{
+					field:  "DeadlineAt",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		}
+	} else if v, ok := interface{}(m.GetDeadlineAt()).(interface{ Validate() error }); ok {
+		if err := v.Validate(); err != nil {
+			return ProjectAdminListItemValidationError{
+				field:  "DeadlineAt",
+				reason: "embedded message failed validation",
+				cause:  err,
+			}
+		}
+	}
+
+	if all {
+		switch v := interface{}(m.GetTopicRegisteredAt()).(type) {
+		case interface{ ValidateAll() error }:
+			if err := v.ValidateAll(); err != nil {
+				errors = append(errors, ProjectAdminListItemValidationError{
+					field:  "TopicRegisteredAt",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		case interface{ Validate() error }:
+			if err := v.Validate(); err != nil {
+				errors = append(errors, ProjectAdminListItemValidationError{
+					field:  "TopicRegisteredAt",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		}
+	} else if v, ok := interface{}(m.GetTopicRegisteredAt()).(interface{ Validate() error }); ok {
+		if err := v.Validate(); err != nil {
+			return ProjectAdminListItemValidationError{
+				field:  "TopicRegisteredAt",
+				reason: "embedded message failed validation",
+				cause:  err,
+			}
+		}
+	}
+
+	if all {
+		switch v := interface{}(m.GetCreatedAt()).(type) {
+		case interface{ ValidateAll() error }:
+			if err := v.ValidateAll(); err != nil {
+				errors = append(errors, ProjectAdminListItemValidationError{
+					field:  "CreatedAt",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		case interface{ Validate() error }:
+			if err := v.Validate(); err != nil {
+				errors = append(errors, ProjectAdminListItemValidationError{
+					field:  "CreatedAt",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		}
+	} else if v, ok := interface{}(m.GetCreatedAt()).(interface{ Validate() error }); ok {
+		if err := v.Validate(); err != nil {
+			return ProjectAdminListItemValidationError{
+				field:  "CreatedAt",
+				reason: "embedded message failed validation",
+				cause:  err,
+			}
+		}
+	}
+
+	if all {
+		switch v := interface{}(m.GetUpdatedAt()).(type) {
+		case interface{ ValidateAll() error }:
+			if err := v.ValidateAll(); err != nil {
+				errors = append(errors, ProjectAdminListItemValidationError{
+					field:  "UpdatedAt",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		case interface{ Validate() error }:
+			if err := v.Validate(); err != nil {
+				errors = append(errors, ProjectAdminListItemValidationError{
+					field:  "UpdatedAt",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		}
+	} else if v, ok := interface{}(m.GetUpdatedAt()).(interface{ Validate() error }); ok {
+		if err := v.Validate(); err != nil {
+			return ProjectAdminListItemValidationError{
+				field:  "UpdatedAt",
+				reason: "embedded message failed validation",
+				cause:  err,
+			}
+		}
+	}
+
+	if len(errors) > 0 {
+		return ProjectAdminListItemMultiError(errors)
+	}
+
+	return nil
+}
+
+// ProjectAdminListItemMultiError is an error wrapping multiple validation
+// errors returned by ProjectAdminListItem.ValidateAll() if the designated
+// constraints aren't met.
+type ProjectAdminListItemMultiError []error
+
+// Error returns a concatenation of all the error messages it wraps.
+func (m ProjectAdminListItemMultiError) Error() string {
+	msgs := make([]string, 0, len(m))
+	for _, err := range m {
+		msgs = append(msgs, err.Error())
+	}
+	return strings.Join(msgs, "; ")
+}
+
+// AllErrors returns a list of validation violation errors.
+func (m ProjectAdminListItemMultiError) AllErrors() []error { return m }
+
+// ProjectAdminListItemValidationError is the validation error returned by
+// ProjectAdminListItem.Validate if the designated constraints aren't met.
+type ProjectAdminListItemValidationError struct {
+	field  string
+	reason string
+	cause  error
+	key    bool
+}
+
+// Field function returns field value.
+func (e ProjectAdminListItemValidationError) Field() string { return e.field }
+
+// Reason function returns reason value.
+func (e ProjectAdminListItemValidationError) Reason() string { return e.reason }
+
+// Cause function returns cause value.
+func (e ProjectAdminListItemValidationError) Cause() error { return e.cause }
+
+// Key function returns key value.
+func (e ProjectAdminListItemValidationError) Key() bool { return e.key }
+
+// ErrorName returns error name.
+func (e ProjectAdminListItemValidationError) ErrorName() string {
+	return "ProjectAdminListItemValidationError"
+}
+
+// Error satisfies the builtin error interface
+func (e ProjectAdminListItemValidationError) Error() string {
+	cause := ""
+	if e.cause != nil {
+		cause = fmt.Sprintf(" | caused by: %v", e.cause)
+	}
+
+	key := ""
+	if e.key {
+		key = "key for "
+	}
+
+	return fmt.Sprintf(
+		"invalid %sProjectAdminListItem.%s: %s%s",
+		key,
+		e.field,
+		e.reason,
+		cause)
+}
+
+var _ error = ProjectAdminListItemValidationError{}
+
+var _ interface {
+	Field() string
+	Reason() string
+	Key() bool
+	Cause() error
+	ErrorName() string
+} = ProjectAdminListItemValidationError{}
+
+// Validate checks the field values on ListProjectsAdminResponse with the rules
+// defined in the proto definition for this message. If any rules are
+// violated, the first error encountered is returned, or nil if there are no violations.
+func (m *ListProjectsAdminResponse) Validate() error {
+	return m.validate(false)
+}
+
+// ValidateAll checks the field values on ListProjectsAdminResponse with the
+// rules defined in the proto definition for this message. If any rules are
+// violated, the result is a list of violation errors wrapped in
+// ListProjectsAdminResponseMultiError, or nil if none found.
+func (m *ListProjectsAdminResponse) ValidateAll() error {
+	return m.validate(true)
+}
+
+func (m *ListProjectsAdminResponse) validate(all bool) error {
+	if m == nil {
+		return nil
+	}
+
+	var errors []error
+
+	for idx, item := range m.GetProjects() {
+		_, _ = idx, item
+
+		if all {
+			switch v := interface{}(item).(type) {
+			case interface{ ValidateAll() error }:
+				if err := v.ValidateAll(); err != nil {
+					errors = append(errors, ListProjectsAdminResponseValidationError{
+						field:  fmt.Sprintf("Projects[%v]", idx),
+						reason: "embedded message failed validation",
+						cause:  err,
+					})
+				}
+			case interface{ Validate() error }:
+				if err := v.Validate(); err != nil {
+					errors = append(errors, ListProjectsAdminResponseValidationError{
+						field:  fmt.Sprintf("Projects[%v]", idx),
+						reason: "embedded message failed validation",
+						cause:  err,
+					})
+				}
+			}
+		} else if v, ok := interface{}(item).(interface{ Validate() error }); ok {
+			if err := v.Validate(); err != nil {
+				return ListProjectsAdminResponseValidationError{
+					field:  fmt.Sprintf("Projects[%v]", idx),
+					reason: "embedded message failed validation",
+					cause:  err,
+				}
+			}
+		}
+
+	}
+
+	// no validation rules for TotalCount
+
+	if len(errors) > 0 {
+		return ListProjectsAdminResponseMultiError(errors)
+	}
+
+	return nil
+}
+
+// ListProjectsAdminResponseMultiError is an error wrapping multiple validation
+// errors returned by ListProjectsAdminResponse.ValidateAll() if the
+// designated constraints aren't met.
+type ListProjectsAdminResponseMultiError []error
+
+// Error returns a concatenation of all the error messages it wraps.
+func (m ListProjectsAdminResponseMultiError) Error() string {
+	msgs := make([]string, 0, len(m))
+	for _, err := range m {
+		msgs = append(msgs, err.Error())
+	}
+	return strings.Join(msgs, "; ")
+}
+
+// AllErrors returns a list of validation violation errors.
+func (m ListProjectsAdminResponseMultiError) AllErrors() []error { return m }
+
+// ListProjectsAdminResponseValidationError is the validation error returned by
+// ListProjectsAdminResponse.Validate if the designated constraints aren't met.
+type ListProjectsAdminResponseValidationError struct {
+	field  string
+	reason string
+	cause  error
+	key    bool
+}
+
+// Field function returns field value.
+func (e ListProjectsAdminResponseValidationError) Field() string { return e.field }
+
+// Reason function returns reason value.
+func (e ListProjectsAdminResponseValidationError) Reason() string { return e.reason }
+
+// Cause function returns cause value.
+func (e ListProjectsAdminResponseValidationError) Cause() error { return e.cause }
+
+// Key function returns key value.
+func (e ListProjectsAdminResponseValidationError) Key() bool { return e.key }
+
+// ErrorName returns error name.
+func (e ListProjectsAdminResponseValidationError) ErrorName() string {
+	return "ListProjectsAdminResponseValidationError"
+}
+
+// Error satisfies the builtin error interface
+func (e ListProjectsAdminResponseValidationError) Error() string {
+	cause := ""
+	if e.cause != nil {
+		cause = fmt.Sprintf(" | caused by: %v", e.cause)
+	}
+
+	key := ""
+	if e.key {
+		key = "key for "
+	}
+
+	return fmt.Sprintf(
+		"invalid %sListProjectsAdminResponse.%s: %s%s",
+		key,
+		e.field,
+		e.reason,
+		cause)
+}
+
+var _ error = ListProjectsAdminResponseValidationError{}
+
+var _ interface {
+	Field() string
+	Reason() string
+	Key() bool
+	Cause() error
+	ErrorName() string
+} = ListProjectsAdminResponseValidationError{}
+
+// Validate checks the field values on GetProjectAdminRequest with the rules
+// defined in the proto definition for this message. If any rules are
+// violated, the first error encountered is returned, or nil if there are no violations.
+func (m *GetProjectAdminRequest) Validate() error {
+	return m.validate(false)
+}
+
+// ValidateAll checks the field values on GetProjectAdminRequest with the rules
+// defined in the proto definition for this message. If any rules are
+// violated, the result is a list of violation errors wrapped in
+// GetProjectAdminRequestMultiError, or nil if none found.
+func (m *GetProjectAdminRequest) ValidateAll() error {
+	return m.validate(true)
+}
+
+func (m *GetProjectAdminRequest) validate(all bool) error {
+	if m == nil {
+		return nil
+	}
+
+	var errors []error
+
+	// no validation rules for ProjectId
+
+	if len(errors) > 0 {
+		return GetProjectAdminRequestMultiError(errors)
+	}
+
+	return nil
+}
+
+// GetProjectAdminRequestMultiError is an error wrapping multiple validation
+// errors returned by GetProjectAdminRequest.ValidateAll() if the designated
+// constraints aren't met.
+type GetProjectAdminRequestMultiError []error
+
+// Error returns a concatenation of all the error messages it wraps.
+func (m GetProjectAdminRequestMultiError) Error() string {
+	msgs := make([]string, 0, len(m))
+	for _, err := range m {
+		msgs = append(msgs, err.Error())
+	}
+	return strings.Join(msgs, "; ")
+}
+
+// AllErrors returns a list of validation violation errors.
+func (m GetProjectAdminRequestMultiError) AllErrors() []error { return m }
+
+// GetProjectAdminRequestValidationError is the validation error returned by
+// GetProjectAdminRequest.Validate if the designated constraints aren't met.
+type GetProjectAdminRequestValidationError struct {
+	field  string
+	reason string
+	cause  error
+	key    bool
+}
+
+// Field function returns field value.
+func (e GetProjectAdminRequestValidationError) Field() string { return e.field }
+
+// Reason function returns reason value.
+func (e GetProjectAdminRequestValidationError) Reason() string { return e.reason }
+
+// Cause function returns cause value.
+func (e GetProjectAdminRequestValidationError) Cause() error { return e.cause }
+
+// Key function returns key value.
+func (e GetProjectAdminRequestValidationError) Key() bool { return e.key }
+
+// ErrorName returns error name.
+func (e GetProjectAdminRequestValidationError) ErrorName() string {
+	return "GetProjectAdminRequestValidationError"
+}
+
+// Error satisfies the builtin error interface
+func (e GetProjectAdminRequestValidationError) Error() string {
+	cause := ""
+	if e.cause != nil {
+		cause = fmt.Sprintf(" | caused by: %v", e.cause)
+	}
+
+	key := ""
+	if e.key {
+		key = "key for "
+	}
+
+	return fmt.Sprintf(
+		"invalid %sGetProjectAdminRequest.%s: %s%s",
+		key,
+		e.field,
+		e.reason,
+		cause)
+}
+
+var _ error = GetProjectAdminRequestValidationError{}
+
+var _ interface {
+	Field() string
+	Reason() string
+	Key() bool
+	Cause() error
+	ErrorName() string
+} = GetProjectAdminRequestValidationError{}
+
+// Validate checks the field values on ProjectAdminDetails with the rules
+// defined in the proto definition for this message. If any rules are
+// violated, the first error encountered is returned, or nil if there are no violations.
+func (m *ProjectAdminDetails) Validate() error {
+	return m.validate(false)
+}
+
+// ValidateAll checks the field values on ProjectAdminDetails with the rules
+// defined in the proto definition for this message. If any rules are
+// violated, the result is a list of violation errors wrapped in
+// ProjectAdminDetailsMultiError, or nil if none found.
+func (m *ProjectAdminDetails) ValidateAll() error {
+	return m.validate(true)
+}
+
+func (m *ProjectAdminDetails) validate(all bool) error {
+	if m == nil {
+		return nil
+	}
+
+	var errors []error
+
+	// no validation rules for ProjectId
+
+	// no validation rules for Title
+
+	// no validation rules for Description
+
+	// no validation rules for StudentId
+
+	// no validation rules for TeamId
+
+	// no validation rules for UniversityId
+
+	// no validation rules for DepartmentId
+
+	// no validation rules for WorkflowName
+
+	// no validation rules for CurrentState
+
+	// no validation rules for CurrentStateName
+
+	// no validation rules for Status
+
+	if all {
+		switch v := interface{}(m.GetData()).(type) {
+		case interface{ ValidateAll() error }:
+			if err := v.ValidateAll(); err != nil {
+				errors = append(errors, ProjectAdminDetailsValidationError{
+					field:  "Data",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		case interface{ Validate() error }:
+			if err := v.Validate(); err != nil {
+				errors = append(errors, ProjectAdminDetailsValidationError{
+					field:  "Data",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		}
+	} else if v, ok := interface{}(m.GetData()).(interface{ Validate() error }); ok {
+		if err := v.Validate(); err != nil {
+			return ProjectAdminDetailsValidationError{
+				field:  "Data",
+				reason: "embedded message failed validation",
+				cause:  err,
+			}
+		}
+	}
+
+	if all {
+		switch v := interface{}(m.GetDeadlineAt()).(type) {
+		case interface{ ValidateAll() error }:
+			if err := v.ValidateAll(); err != nil {
+				errors = append(errors, ProjectAdminDetailsValidationError{
+					field:  "DeadlineAt",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		case interface{ Validate() error }:
+			if err := v.Validate(); err != nil {
+				errors = append(errors, ProjectAdminDetailsValidationError{
+					field:  "DeadlineAt",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		}
+	} else if v, ok := interface{}(m.GetDeadlineAt()).(interface{ Validate() error }); ok {
+		if err := v.Validate(); err != nil {
+			return ProjectAdminDetailsValidationError{
+				field:  "DeadlineAt",
+				reason: "embedded message failed validation",
+				cause:  err,
+			}
+		}
+	}
+
+	if all {
+		switch v := interface{}(m.GetTopicRegisteredAt()).(type) {
+		case interface{ ValidateAll() error }:
+			if err := v.ValidateAll(); err != nil {
+				errors = append(errors, ProjectAdminDetailsValidationError{
+					field:  "TopicRegisteredAt",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		case interface{ Validate() error }:
+			if err := v.Validate(); err != nil {
+				errors = append(errors, ProjectAdminDetailsValidationError{
+					field:  "TopicRegisteredAt",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		}
+	} else if v, ok := interface{}(m.GetTopicRegisteredAt()).(interface{ Validate() error }); ok {
+		if err := v.Validate(); err != nil {
+			return ProjectAdminDetailsValidationError{
+				field:  "TopicRegisteredAt",
+				reason: "embedded message failed validation",
+				cause:  err,
+			}
+		}
+	}
+
+	if len(errors) > 0 {
+		return ProjectAdminDetailsMultiError(errors)
+	}
+
+	return nil
+}
+
+// ProjectAdminDetailsMultiError is an error wrapping multiple validation
+// errors returned by ProjectAdminDetails.ValidateAll() if the designated
+// constraints aren't met.
+type ProjectAdminDetailsMultiError []error
+
+// Error returns a concatenation of all the error messages it wraps.
+func (m ProjectAdminDetailsMultiError) Error() string {
+	msgs := make([]string, 0, len(m))
+	for _, err := range m {
+		msgs = append(msgs, err.Error())
+	}
+	return strings.Join(msgs, "; ")
+}
+
+// AllErrors returns a list of validation violation errors.
+func (m ProjectAdminDetailsMultiError) AllErrors() []error { return m }
+
+// ProjectAdminDetailsValidationError is the validation error returned by
+// ProjectAdminDetails.Validate if the designated constraints aren't met.
+type ProjectAdminDetailsValidationError struct {
+	field  string
+	reason string
+	cause  error
+	key    bool
+}
+
+// Field function returns field value.
+func (e ProjectAdminDetailsValidationError) Field() string { return e.field }
+
+// Reason function returns reason value.
+func (e ProjectAdminDetailsValidationError) Reason() string { return e.reason }
+
+// Cause function returns cause value.
+func (e ProjectAdminDetailsValidationError) Cause() error { return e.cause }
+
+// Key function returns key value.
+func (e ProjectAdminDetailsValidationError) Key() bool { return e.key }
+
+// ErrorName returns error name.
+func (e ProjectAdminDetailsValidationError) ErrorName() string {
+	return "ProjectAdminDetailsValidationError"
+}
+
+// Error satisfies the builtin error interface
+func (e ProjectAdminDetailsValidationError) Error() string {
+	cause := ""
+	if e.cause != nil {
+		cause = fmt.Sprintf(" | caused by: %v", e.cause)
+	}
+
+	key := ""
+	if e.key {
+		key = "key for "
+	}
+
+	return fmt.Sprintf(
+		"invalid %sProjectAdminDetails.%s: %s%s",
+		key,
+		e.field,
+		e.reason,
+		cause)
+}
+
+var _ error = ProjectAdminDetailsValidationError{}
+
+var _ interface {
+	Field() string
+	Reason() string
+	Key() bool
+	Cause() error
+	ErrorName() string
+} = ProjectAdminDetailsValidationError{}
+
+// Validate checks the field values on GetProjectAdminResponse with the rules
+// defined in the proto definition for this message. If any rules are
+// violated, the first error encountered is returned, or nil if there are no violations.
+func (m *GetProjectAdminResponse) Validate() error {
+	return m.validate(false)
+}
+
+// ValidateAll checks the field values on GetProjectAdminResponse with the
+// rules defined in the proto definition for this message. If any rules are
+// violated, the result is a list of violation errors wrapped in
+// GetProjectAdminResponseMultiError, or nil if none found.
+func (m *GetProjectAdminResponse) ValidateAll() error {
+	return m.validate(true)
+}
+
+func (m *GetProjectAdminResponse) validate(all bool) error {
+	if m == nil {
+		return nil
+	}
+
+	var errors []error
+
+	if all {
+		switch v := interface{}(m.GetProject()).(type) {
+		case interface{ ValidateAll() error }:
+			if err := v.ValidateAll(); err != nil {
+				errors = append(errors, GetProjectAdminResponseValidationError{
+					field:  "Project",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		case interface{ Validate() error }:
+			if err := v.Validate(); err != nil {
+				errors = append(errors, GetProjectAdminResponseValidationError{
+					field:  "Project",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		}
+	} else if v, ok := interface{}(m.GetProject()).(interface{ Validate() error }); ok {
+		if err := v.Validate(); err != nil {
+			return GetProjectAdminResponseValidationError{
+				field:  "Project",
+				reason: "embedded message failed validation",
+				cause:  err,
+			}
+		}
+	}
+
+	if len(errors) > 0 {
+		return GetProjectAdminResponseMultiError(errors)
+	}
+
+	return nil
+}
+
+// GetProjectAdminResponseMultiError is an error wrapping multiple validation
+// errors returned by GetProjectAdminResponse.ValidateAll() if the designated
+// constraints aren't met.
+type GetProjectAdminResponseMultiError []error
+
+// Error returns a concatenation of all the error messages it wraps.
+func (m GetProjectAdminResponseMultiError) Error() string {
+	msgs := make([]string, 0, len(m))
+	for _, err := range m {
+		msgs = append(msgs, err.Error())
+	}
+	return strings.Join(msgs, "; ")
+}
+
+// AllErrors returns a list of validation violation errors.
+func (m GetProjectAdminResponseMultiError) AllErrors() []error { return m }
+
+// GetProjectAdminResponseValidationError is the validation error returned by
+// GetProjectAdminResponse.Validate if the designated constraints aren't met.
+type GetProjectAdminResponseValidationError struct {
+	field  string
+	reason string
+	cause  error
+	key    bool
+}
+
+// Field function returns field value.
+func (e GetProjectAdminResponseValidationError) Field() string { return e.field }
+
+// Reason function returns reason value.
+func (e GetProjectAdminResponseValidationError) Reason() string { return e.reason }
+
+// Cause function returns cause value.
+func (e GetProjectAdminResponseValidationError) Cause() error { return e.cause }
+
+// Key function returns key value.
+func (e GetProjectAdminResponseValidationError) Key() bool { return e.key }
+
+// ErrorName returns error name.
+func (e GetProjectAdminResponseValidationError) ErrorName() string {
+	return "GetProjectAdminResponseValidationError"
+}
+
+// Error satisfies the builtin error interface
+func (e GetProjectAdminResponseValidationError) Error() string {
+	cause := ""
+	if e.cause != nil {
+		cause = fmt.Sprintf(" | caused by: %v", e.cause)
+	}
+
+	key := ""
+	if e.key {
+		key = "key for "
+	}
+
+	return fmt.Sprintf(
+		"invalid %sGetProjectAdminResponse.%s: %s%s",
+		key,
+		e.field,
+		e.reason,
+		cause)
+}
+
+var _ error = GetProjectAdminResponseValidationError{}
+
+var _ interface {
+	Field() string
+	Reason() string
+	Key() bool
+	Cause() error
+	ErrorName() string
+} = GetProjectAdminResponseValidationError{}
+
+// Validate checks the field values on CreateProjectAdminRequest with the rules
+// defined in the proto definition for this message. If any rules are
+// violated, the first error encountered is returned, or nil if there are no violations.
+func (m *CreateProjectAdminRequest) Validate() error {
+	return m.validate(false)
+}
+
+// ValidateAll checks the field values on CreateProjectAdminRequest with the
+// rules defined in the proto definition for this message. If any rules are
+// violated, the result is a list of violation errors wrapped in
+// CreateProjectAdminRequestMultiError, or nil if none found.
+func (m *CreateProjectAdminRequest) ValidateAll() error {
+	return m.validate(true)
+}
+
+func (m *CreateProjectAdminRequest) validate(all bool) error {
+	if m == nil {
+		return nil
+	}
+
+	var errors []error
+
+	// no validation rules for Title
+
+	// no validation rules for Description
+
+	// no validation rules for StudentId
+
+	// no validation rules for WorkflowName
+
+	// no validation rules for UniversityId
+
+	// no validation rules for DepartmentId
+
+	// no validation rules for TeamId
+
+	if len(errors) > 0 {
+		return CreateProjectAdminRequestMultiError(errors)
+	}
+
+	return nil
+}
+
+// CreateProjectAdminRequestMultiError is an error wrapping multiple validation
+// errors returned by CreateProjectAdminRequest.ValidateAll() if the
+// designated constraints aren't met.
+type CreateProjectAdminRequestMultiError []error
+
+// Error returns a concatenation of all the error messages it wraps.
+func (m CreateProjectAdminRequestMultiError) Error() string {
+	msgs := make([]string, 0, len(m))
+	for _, err := range m {
+		msgs = append(msgs, err.Error())
+	}
+	return strings.Join(msgs, "; ")
+}
+
+// AllErrors returns a list of validation violation errors.
+func (m CreateProjectAdminRequestMultiError) AllErrors() []error { return m }
+
+// CreateProjectAdminRequestValidationError is the validation error returned by
+// CreateProjectAdminRequest.Validate if the designated constraints aren't met.
+type CreateProjectAdminRequestValidationError struct {
+	field  string
+	reason string
+	cause  error
+	key    bool
+}
+
+// Field function returns field value.
+func (e CreateProjectAdminRequestValidationError) Field() string { return e.field }
+
+// Reason function returns reason value.
+func (e CreateProjectAdminRequestValidationError) Reason() string { return e.reason }
+
+// Cause function returns cause value.
+func (e CreateProjectAdminRequestValidationError) Cause() error { return e.cause }
+
+// Key function returns key value.
+func (e CreateProjectAdminRequestValidationError) Key() bool { return e.key }
+
+// ErrorName returns error name.
+func (e CreateProjectAdminRequestValidationError) ErrorName() string {
+	return "CreateProjectAdminRequestValidationError"
+}
+
+// Error satisfies the builtin error interface
+func (e CreateProjectAdminRequestValidationError) Error() string {
+	cause := ""
+	if e.cause != nil {
+		cause = fmt.Sprintf(" | caused by: %v", e.cause)
+	}
+
+	key := ""
+	if e.key {
+		key = "key for "
+	}
+
+	return fmt.Sprintf(
+		"invalid %sCreateProjectAdminRequest.%s: %s%s",
+		key,
+		e.field,
+		e.reason,
+		cause)
+}
+
+var _ error = CreateProjectAdminRequestValidationError{}
+
+var _ interface {
+	Field() string
+	Reason() string
+	Key() bool
+	Cause() error
+	ErrorName() string
+} = CreateProjectAdminRequestValidationError{}
+
+// Validate checks the field values on CreateProjectAdminResponse with the
+// rules defined in the proto definition for this message. If any rules are
+// violated, the first error encountered is returned, or nil if there are no violations.
+func (m *CreateProjectAdminResponse) Validate() error {
+	return m.validate(false)
+}
+
+// ValidateAll checks the field values on CreateProjectAdminResponse with the
+// rules defined in the proto definition for this message. If any rules are
+// violated, the result is a list of violation errors wrapped in
+// CreateProjectAdminResponseMultiError, or nil if none found.
+func (m *CreateProjectAdminResponse) ValidateAll() error {
+	return m.validate(true)
+}
+
+func (m *CreateProjectAdminResponse) validate(all bool) error {
+	if m == nil {
+		return nil
+	}
+
+	var errors []error
+
+	// no validation rules for ProjectId
+
+	// no validation rules for Status
+
+	if len(errors) > 0 {
+		return CreateProjectAdminResponseMultiError(errors)
+	}
+
+	return nil
+}
+
+// CreateProjectAdminResponseMultiError is an error wrapping multiple
+// validation errors returned by CreateProjectAdminResponse.ValidateAll() if
+// the designated constraints aren't met.
+type CreateProjectAdminResponseMultiError []error
+
+// Error returns a concatenation of all the error messages it wraps.
+func (m CreateProjectAdminResponseMultiError) Error() string {
+	msgs := make([]string, 0, len(m))
+	for _, err := range m {
+		msgs = append(msgs, err.Error())
+	}
+	return strings.Join(msgs, "; ")
+}
+
+// AllErrors returns a list of validation violation errors.
+func (m CreateProjectAdminResponseMultiError) AllErrors() []error { return m }
+
+// CreateProjectAdminResponseValidationError is the validation error returned
+// by CreateProjectAdminResponse.Validate if the designated constraints aren't met.
+type CreateProjectAdminResponseValidationError struct {
+	field  string
+	reason string
+	cause  error
+	key    bool
+}
+
+// Field function returns field value.
+func (e CreateProjectAdminResponseValidationError) Field() string { return e.field }
+
+// Reason function returns reason value.
+func (e CreateProjectAdminResponseValidationError) Reason() string { return e.reason }
+
+// Cause function returns cause value.
+func (e CreateProjectAdminResponseValidationError) Cause() error { return e.cause }
+
+// Key function returns key value.
+func (e CreateProjectAdminResponseValidationError) Key() bool { return e.key }
+
+// ErrorName returns error name.
+func (e CreateProjectAdminResponseValidationError) ErrorName() string {
+	return "CreateProjectAdminResponseValidationError"
+}
+
+// Error satisfies the builtin error interface
+func (e CreateProjectAdminResponseValidationError) Error() string {
+	cause := ""
+	if e.cause != nil {
+		cause = fmt.Sprintf(" | caused by: %v", e.cause)
+	}
+
+	key := ""
+	if e.key {
+		key = "key for "
+	}
+
+	return fmt.Sprintf(
+		"invalid %sCreateProjectAdminResponse.%s: %s%s",
+		key,
+		e.field,
+		e.reason,
+		cause)
+}
+
+var _ error = CreateProjectAdminResponseValidationError{}
+
+var _ interface {
+	Field() string
+	Reason() string
+	Key() bool
+	Cause() error
+	ErrorName() string
+} = CreateProjectAdminResponseValidationError{}
+
+// Validate checks the field values on UpdateProjectAdminRequest with the rules
+// defined in the proto definition for this message. If any rules are
+// violated, the first error encountered is returned, or nil if there are no violations.
+func (m *UpdateProjectAdminRequest) Validate() error {
+	return m.validate(false)
+}
+
+// ValidateAll checks the field values on UpdateProjectAdminRequest with the
+// rules defined in the proto definition for this message. If any rules are
+// violated, the result is a list of violation errors wrapped in
+// UpdateProjectAdminRequestMultiError, or nil if none found.
+func (m *UpdateProjectAdminRequest) ValidateAll() error {
+	return m.validate(true)
+}
+
+func (m *UpdateProjectAdminRequest) validate(all bool) error {
+	if m == nil {
+		return nil
+	}
+
+	var errors []error
+
+	// no validation rules for ProjectId
+
+	// no validation rules for Title
+
+	// no validation rules for Description
+
+	// no validation rules for StudentId
+
+	// no validation rules for TeamId
+
+	if all {
+		switch v := interface{}(m.GetDataPatch()).(type) {
+		case interface{ ValidateAll() error }:
+			if err := v.ValidateAll(); err != nil {
+				errors = append(errors, UpdateProjectAdminRequestValidationError{
+					field:  "DataPatch",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		case interface{ Validate() error }:
+			if err := v.Validate(); err != nil {
+				errors = append(errors, UpdateProjectAdminRequestValidationError{
+					field:  "DataPatch",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		}
+	} else if v, ok := interface{}(m.GetDataPatch()).(interface{ Validate() error }); ok {
+		if err := v.Validate(); err != nil {
+			return UpdateProjectAdminRequestValidationError{
+				field:  "DataPatch",
+				reason: "embedded message failed validation",
+				cause:  err,
+			}
+		}
+	}
+
+	if len(errors) > 0 {
+		return UpdateProjectAdminRequestMultiError(errors)
+	}
+
+	return nil
+}
+
+// UpdateProjectAdminRequestMultiError is an error wrapping multiple validation
+// errors returned by UpdateProjectAdminRequest.ValidateAll() if the
+// designated constraints aren't met.
+type UpdateProjectAdminRequestMultiError []error
+
+// Error returns a concatenation of all the error messages it wraps.
+func (m UpdateProjectAdminRequestMultiError) Error() string {
+	msgs := make([]string, 0, len(m))
+	for _, err := range m {
+		msgs = append(msgs, err.Error())
+	}
+	return strings.Join(msgs, "; ")
+}
+
+// AllErrors returns a list of validation violation errors.
+func (m UpdateProjectAdminRequestMultiError) AllErrors() []error { return m }
+
+// UpdateProjectAdminRequestValidationError is the validation error returned by
+// UpdateProjectAdminRequest.Validate if the designated constraints aren't met.
+type UpdateProjectAdminRequestValidationError struct {
+	field  string
+	reason string
+	cause  error
+	key    bool
+}
+
+// Field function returns field value.
+func (e UpdateProjectAdminRequestValidationError) Field() string { return e.field }
+
+// Reason function returns reason value.
+func (e UpdateProjectAdminRequestValidationError) Reason() string { return e.reason }
+
+// Cause function returns cause value.
+func (e UpdateProjectAdminRequestValidationError) Cause() error { return e.cause }
+
+// Key function returns key value.
+func (e UpdateProjectAdminRequestValidationError) Key() bool { return e.key }
+
+// ErrorName returns error name.
+func (e UpdateProjectAdminRequestValidationError) ErrorName() string {
+	return "UpdateProjectAdminRequestValidationError"
+}
+
+// Error satisfies the builtin error interface
+func (e UpdateProjectAdminRequestValidationError) Error() string {
+	cause := ""
+	if e.cause != nil {
+		cause = fmt.Sprintf(" | caused by: %v", e.cause)
+	}
+
+	key := ""
+	if e.key {
+		key = "key for "
+	}
+
+	return fmt.Sprintf(
+		"invalid %sUpdateProjectAdminRequest.%s: %s%s",
+		key,
+		e.field,
+		e.reason,
+		cause)
+}
+
+var _ error = UpdateProjectAdminRequestValidationError{}
+
+var _ interface {
+	Field() string
+	Reason() string
+	Key() bool
+	Cause() error
+	ErrorName() string
+} = UpdateProjectAdminRequestValidationError{}
+
+// Validate checks the field values on UpdateProjectAdminResponse with the
+// rules defined in the proto definition for this message. If any rules are
+// violated, the first error encountered is returned, or nil if there are no violations.
+func (m *UpdateProjectAdminResponse) Validate() error {
+	return m.validate(false)
+}
+
+// ValidateAll checks the field values on UpdateProjectAdminResponse with the
+// rules defined in the proto definition for this message. If any rules are
+// violated, the result is a list of violation errors wrapped in
+// UpdateProjectAdminResponseMultiError, or nil if none found.
+func (m *UpdateProjectAdminResponse) ValidateAll() error {
+	return m.validate(true)
+}
+
+func (m *UpdateProjectAdminResponse) validate(all bool) error {
+	if m == nil {
+		return nil
+	}
+
+	var errors []error
+
+	// no validation rules for Success
+
+	if len(errors) > 0 {
+		return UpdateProjectAdminResponseMultiError(errors)
+	}
+
+	return nil
+}
+
+// UpdateProjectAdminResponseMultiError is an error wrapping multiple
+// validation errors returned by UpdateProjectAdminResponse.ValidateAll() if
+// the designated constraints aren't met.
+type UpdateProjectAdminResponseMultiError []error
+
+// Error returns a concatenation of all the error messages it wraps.
+func (m UpdateProjectAdminResponseMultiError) Error() string {
+	msgs := make([]string, 0, len(m))
+	for _, err := range m {
+		msgs = append(msgs, err.Error())
+	}
+	return strings.Join(msgs, "; ")
+}
+
+// AllErrors returns a list of validation violation errors.
+func (m UpdateProjectAdminResponseMultiError) AllErrors() []error { return m }
+
+// UpdateProjectAdminResponseValidationError is the validation error returned
+// by UpdateProjectAdminResponse.Validate if the designated constraints aren't met.
+type UpdateProjectAdminResponseValidationError struct {
+	field  string
+	reason string
+	cause  error
+	key    bool
+}
+
+// Field function returns field value.
+func (e UpdateProjectAdminResponseValidationError) Field() string { return e.field }
+
+// Reason function returns reason value.
+func (e UpdateProjectAdminResponseValidationError) Reason() string { return e.reason }
+
+// Cause function returns cause value.
+func (e UpdateProjectAdminResponseValidationError) Cause() error { return e.cause }
+
+// Key function returns key value.
+func (e UpdateProjectAdminResponseValidationError) Key() bool { return e.key }
+
+// ErrorName returns error name.
+func (e UpdateProjectAdminResponseValidationError) ErrorName() string {
+	return "UpdateProjectAdminResponseValidationError"
+}
+
+// Error satisfies the builtin error interface
+func (e UpdateProjectAdminResponseValidationError) Error() string {
+	cause := ""
+	if e.cause != nil {
+		cause = fmt.Sprintf(" | caused by: %v", e.cause)
+	}
+
+	key := ""
+	if e.key {
+		key = "key for "
+	}
+
+	return fmt.Sprintf(
+		"invalid %sUpdateProjectAdminResponse.%s: %s%s",
+		key,
+		e.field,
+		e.reason,
+		cause)
+}
+
+var _ error = UpdateProjectAdminResponseValidationError{}
+
+var _ interface {
+	Field() string
+	Reason() string
+	Key() bool
+	Cause() error
+	ErrorName() string
+} = UpdateProjectAdminResponseValidationError{}
+
+// Validate checks the field values on ArchiveProjectAdminRequest with the
+// rules defined in the proto definition for this message. If any rules are
+// violated, the first error encountered is returned, or nil if there are no violations.
+func (m *ArchiveProjectAdminRequest) Validate() error {
+	return m.validate(false)
+}
+
+// ValidateAll checks the field values on ArchiveProjectAdminRequest with the
+// rules defined in the proto definition for this message. If any rules are
+// violated, the result is a list of violation errors wrapped in
+// ArchiveProjectAdminRequestMultiError, or nil if none found.
+func (m *ArchiveProjectAdminRequest) ValidateAll() error {
+	return m.validate(true)
+}
+
+func (m *ArchiveProjectAdminRequest) validate(all bool) error {
+	if m == nil {
+		return nil
+	}
+
+	var errors []error
+
+	// no validation rules for ProjectId
+
+	// no validation rules for Reason
+
+	if len(errors) > 0 {
+		return ArchiveProjectAdminRequestMultiError(errors)
+	}
+
+	return nil
+}
+
+// ArchiveProjectAdminRequestMultiError is an error wrapping multiple
+// validation errors returned by ArchiveProjectAdminRequest.ValidateAll() if
+// the designated constraints aren't met.
+type ArchiveProjectAdminRequestMultiError []error
+
+// Error returns a concatenation of all the error messages it wraps.
+func (m ArchiveProjectAdminRequestMultiError) Error() string {
+	msgs := make([]string, 0, len(m))
+	for _, err := range m {
+		msgs = append(msgs, err.Error())
+	}
+	return strings.Join(msgs, "; ")
+}
+
+// AllErrors returns a list of validation violation errors.
+func (m ArchiveProjectAdminRequestMultiError) AllErrors() []error { return m }
+
+// ArchiveProjectAdminRequestValidationError is the validation error returned
+// by ArchiveProjectAdminRequest.Validate if the designated constraints aren't met.
+type ArchiveProjectAdminRequestValidationError struct {
+	field  string
+	reason string
+	cause  error
+	key    bool
+}
+
+// Field function returns field value.
+func (e ArchiveProjectAdminRequestValidationError) Field() string { return e.field }
+
+// Reason function returns reason value.
+func (e ArchiveProjectAdminRequestValidationError) Reason() string { return e.reason }
+
+// Cause function returns cause value.
+func (e ArchiveProjectAdminRequestValidationError) Cause() error { return e.cause }
+
+// Key function returns key value.
+func (e ArchiveProjectAdminRequestValidationError) Key() bool { return e.key }
+
+// ErrorName returns error name.
+func (e ArchiveProjectAdminRequestValidationError) ErrorName() string {
+	return "ArchiveProjectAdminRequestValidationError"
+}
+
+// Error satisfies the builtin error interface
+func (e ArchiveProjectAdminRequestValidationError) Error() string {
+	cause := ""
+	if e.cause != nil {
+		cause = fmt.Sprintf(" | caused by: %v", e.cause)
+	}
+
+	key := ""
+	if e.key {
+		key = "key for "
+	}
+
+	return fmt.Sprintf(
+		"invalid %sArchiveProjectAdminRequest.%s: %s%s",
+		key,
+		e.field,
+		e.reason,
+		cause)
+}
+
+var _ error = ArchiveProjectAdminRequestValidationError{}
+
+var _ interface {
+	Field() string
+	Reason() string
+	Key() bool
+	Cause() error
+	ErrorName() string
+} = ArchiveProjectAdminRequestValidationError{}
+
+// Validate checks the field values on ArchiveProjectAdminResponse with the
+// rules defined in the proto definition for this message. If any rules are
+// violated, the first error encountered is returned, or nil if there are no violations.
+func (m *ArchiveProjectAdminResponse) Validate() error {
+	return m.validate(false)
+}
+
+// ValidateAll checks the field values on ArchiveProjectAdminResponse with the
+// rules defined in the proto definition for this message. If any rules are
+// violated, the result is a list of violation errors wrapped in
+// ArchiveProjectAdminResponseMultiError, or nil if none found.
+func (m *ArchiveProjectAdminResponse) ValidateAll() error {
+	return m.validate(true)
+}
+
+func (m *ArchiveProjectAdminResponse) validate(all bool) error {
+	if m == nil {
+		return nil
+	}
+
+	var errors []error
+
+	// no validation rules for Success
+
+	// no validation rules for Status
+
+	if len(errors) > 0 {
+		return ArchiveProjectAdminResponseMultiError(errors)
+	}
+
+	return nil
+}
+
+// ArchiveProjectAdminResponseMultiError is an error wrapping multiple
+// validation errors returned by ArchiveProjectAdminResponse.ValidateAll() if
+// the designated constraints aren't met.
+type ArchiveProjectAdminResponseMultiError []error
+
+// Error returns a concatenation of all the error messages it wraps.
+func (m ArchiveProjectAdminResponseMultiError) Error() string {
+	msgs := make([]string, 0, len(m))
+	for _, err := range m {
+		msgs = append(msgs, err.Error())
+	}
+	return strings.Join(msgs, "; ")
+}
+
+// AllErrors returns a list of validation violation errors.
+func (m ArchiveProjectAdminResponseMultiError) AllErrors() []error { return m }
+
+// ArchiveProjectAdminResponseValidationError is the validation error returned
+// by ArchiveProjectAdminResponse.Validate if the designated constraints
+// aren't met.
+type ArchiveProjectAdminResponseValidationError struct {
+	field  string
+	reason string
+	cause  error
+	key    bool
+}
+
+// Field function returns field value.
+func (e ArchiveProjectAdminResponseValidationError) Field() string { return e.field }
+
+// Reason function returns reason value.
+func (e ArchiveProjectAdminResponseValidationError) Reason() string { return e.reason }
+
+// Cause function returns cause value.
+func (e ArchiveProjectAdminResponseValidationError) Cause() error { return e.cause }
+
+// Key function returns key value.
+func (e ArchiveProjectAdminResponseValidationError) Key() bool { return e.key }
+
+// ErrorName returns error name.
+func (e ArchiveProjectAdminResponseValidationError) ErrorName() string {
+	return "ArchiveProjectAdminResponseValidationError"
+}
+
+// Error satisfies the builtin error interface
+func (e ArchiveProjectAdminResponseValidationError) Error() string {
+	cause := ""
+	if e.cause != nil {
+		cause = fmt.Sprintf(" | caused by: %v", e.cause)
+	}
+
+	key := ""
+	if e.key {
+		key = "key for "
+	}
+
+	return fmt.Sprintf(
+		"invalid %sArchiveProjectAdminResponse.%s: %s%s",
+		key,
+		e.field,
+		e.reason,
+		cause)
+}
+
+var _ error = ArchiveProjectAdminResponseValidationError{}
+
+var _ interface {
+	Field() string
+	Reason() string
+	Key() bool
+	Cause() error
+	ErrorName() string
+} = ArchiveProjectAdminResponseValidationError{}
+
+// Validate checks the field values on DeleteArchivedProjectAdminRequest with
+// the rules defined in the proto definition for this message. If any rules
+// are violated, the first error encountered is returned, or nil if there are
+// no violations.
+func (m *DeleteArchivedProjectAdminRequest) Validate() error {
+	return m.validate(false)
+}
+
+// ValidateAll checks the field values on DeleteArchivedProjectAdminRequest
+// with the rules defined in the proto definition for this message. If any
+// rules are violated, the result is a list of violation errors wrapped in
+// DeleteArchivedProjectAdminRequestMultiError, or nil if none found.
+func (m *DeleteArchivedProjectAdminRequest) ValidateAll() error {
+	return m.validate(true)
+}
+
+func (m *DeleteArchivedProjectAdminRequest) validate(all bool) error {
+	if m == nil {
+		return nil
+	}
+
+	var errors []error
+
+	// no validation rules for ProjectId
+
+	// no validation rules for Reason
+
+	if len(errors) > 0 {
+		return DeleteArchivedProjectAdminRequestMultiError(errors)
+	}
+
+	return nil
+}
+
+// DeleteArchivedProjectAdminRequestMultiError is an error wrapping multiple
+// validation errors returned by
+// DeleteArchivedProjectAdminRequest.ValidateAll() if the designated
+// constraints aren't met.
+type DeleteArchivedProjectAdminRequestMultiError []error
+
+// Error returns a concatenation of all the error messages it wraps.
+func (m DeleteArchivedProjectAdminRequestMultiError) Error() string {
+	msgs := make([]string, 0, len(m))
+	for _, err := range m {
+		msgs = append(msgs, err.Error())
+	}
+	return strings.Join(msgs, "; ")
+}
+
+// AllErrors returns a list of validation violation errors.
+func (m DeleteArchivedProjectAdminRequestMultiError) AllErrors() []error { return m }
+
+// DeleteArchivedProjectAdminRequestValidationError is the validation error
+// returned by DeleteArchivedProjectAdminRequest.Validate if the designated
+// constraints aren't met.
+type DeleteArchivedProjectAdminRequestValidationError struct {
+	field  string
+	reason string
+	cause  error
+	key    bool
+}
+
+// Field function returns field value.
+func (e DeleteArchivedProjectAdminRequestValidationError) Field() string { return e.field }
+
+// Reason function returns reason value.
+func (e DeleteArchivedProjectAdminRequestValidationError) Reason() string { return e.reason }
+
+// Cause function returns cause value.
+func (e DeleteArchivedProjectAdminRequestValidationError) Cause() error { return e.cause }
+
+// Key function returns key value.
+func (e DeleteArchivedProjectAdminRequestValidationError) Key() bool { return e.key }
+
+// ErrorName returns error name.
+func (e DeleteArchivedProjectAdminRequestValidationError) ErrorName() string {
+	return "DeleteArchivedProjectAdminRequestValidationError"
+}
+
+// Error satisfies the builtin error interface
+func (e DeleteArchivedProjectAdminRequestValidationError) Error() string {
+	cause := ""
+	if e.cause != nil {
+		cause = fmt.Sprintf(" | caused by: %v", e.cause)
+	}
+
+	key := ""
+	if e.key {
+		key = "key for "
+	}
+
+	return fmt.Sprintf(
+		"invalid %sDeleteArchivedProjectAdminRequest.%s: %s%s",
+		key,
+		e.field,
+		e.reason,
+		cause)
+}
+
+var _ error = DeleteArchivedProjectAdminRequestValidationError{}
+
+var _ interface {
+	Field() string
+	Reason() string
+	Key() bool
+	Cause() error
+	ErrorName() string
+} = DeleteArchivedProjectAdminRequestValidationError{}
+
+// Validate checks the field values on DeleteArchivedProjectAdminResponse with
+// the rules defined in the proto definition for this message. If any rules
+// are violated, the first error encountered is returned, or nil if there are
+// no violations.
+func (m *DeleteArchivedProjectAdminResponse) Validate() error {
+	return m.validate(false)
+}
+
+// ValidateAll checks the field values on DeleteArchivedProjectAdminResponse
+// with the rules defined in the proto definition for this message. If any
+// rules are violated, the result is a list of violation errors wrapped in
+// DeleteArchivedProjectAdminResponseMultiError, or nil if none found.
+func (m *DeleteArchivedProjectAdminResponse) ValidateAll() error {
+	return m.validate(true)
+}
+
+func (m *DeleteArchivedProjectAdminResponse) validate(all bool) error {
+	if m == nil {
+		return nil
+	}
+
+	var errors []error
+
+	// no validation rules for Success
+
+	if len(errors) > 0 {
+		return DeleteArchivedProjectAdminResponseMultiError(errors)
+	}
+
+	return nil
+}
+
+// DeleteArchivedProjectAdminResponseMultiError is an error wrapping multiple
+// validation errors returned by
+// DeleteArchivedProjectAdminResponse.ValidateAll() if the designated
+// constraints aren't met.
+type DeleteArchivedProjectAdminResponseMultiError []error
+
+// Error returns a concatenation of all the error messages it wraps.
+func (m DeleteArchivedProjectAdminResponseMultiError) Error() string {
+	msgs := make([]string, 0, len(m))
+	for _, err := range m {
+		msgs = append(msgs, err.Error())
+	}
+	return strings.Join(msgs, "; ")
+}
+
+// AllErrors returns a list of validation violation errors.
+func (m DeleteArchivedProjectAdminResponseMultiError) AllErrors() []error { return m }
+
+// DeleteArchivedProjectAdminResponseValidationError is the validation error
+// returned by DeleteArchivedProjectAdminResponse.Validate if the designated
+// constraints aren't met.
+type DeleteArchivedProjectAdminResponseValidationError struct {
+	field  string
+	reason string
+	cause  error
+	key    bool
+}
+
+// Field function returns field value.
+func (e DeleteArchivedProjectAdminResponseValidationError) Field() string { return e.field }
+
+// Reason function returns reason value.
+func (e DeleteArchivedProjectAdminResponseValidationError) Reason() string { return e.reason }
+
+// Cause function returns cause value.
+func (e DeleteArchivedProjectAdminResponseValidationError) Cause() error { return e.cause }
+
+// Key function returns key value.
+func (e DeleteArchivedProjectAdminResponseValidationError) Key() bool { return e.key }
+
+// ErrorName returns error name.
+func (e DeleteArchivedProjectAdminResponseValidationError) ErrorName() string {
+	return "DeleteArchivedProjectAdminResponseValidationError"
+}
+
+// Error satisfies the builtin error interface
+func (e DeleteArchivedProjectAdminResponseValidationError) Error() string {
+	cause := ""
+	if e.cause != nil {
+		cause = fmt.Sprintf(" | caused by: %v", e.cause)
+	}
+
+	key := ""
+	if e.key {
+		key = "key for "
+	}
+
+	return fmt.Sprintf(
+		"invalid %sDeleteArchivedProjectAdminResponse.%s: %s%s",
+		key,
+		e.field,
+		e.reason,
+		cause)
+}
+
+var _ error = DeleteArchivedProjectAdminResponseValidationError{}
+
+var _ interface {
+	Field() string
+	Reason() string
+	Key() bool
+	Cause() error
+	ErrorName() string
+} = DeleteArchivedProjectAdminResponseValidationError{}

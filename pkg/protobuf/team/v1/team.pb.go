@@ -2072,6 +2072,82 @@ func (x *LockTeamCompositionResponse) GetSuccess() bool {
 	return false
 }
 
+type CreateTeamAdminRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Name          string                 `protobuf:"bytes,1,opt,name=name,proto3" json:"name,omitempty"`
+	UniversityId  int64                  `protobuf:"varint,2,opt,name=university_id,json=universityId,proto3" json:"university_id,omitempty"`
+	DepartmentId  int64                  `protobuf:"varint,3,opt,name=department_id,json=departmentId,proto3" json:"department_id,omitempty"`
+	LeaderId      int64                  `protobuf:"varint,4,opt,name=leader_id,json=leaderId,proto3" json:"leader_id,omitempty"`
+	MemberIds     []int64                `protobuf:"varint,5,rep,packed,name=member_ids,json=memberIds,proto3" json:"member_ids,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *CreateTeamAdminRequest) Reset() {
+	*x = CreateTeamAdminRequest{}
+	mi := &file_team_v1_team_proto_msgTypes[36]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *CreateTeamAdminRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*CreateTeamAdminRequest) ProtoMessage() {}
+
+func (x *CreateTeamAdminRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_team_v1_team_proto_msgTypes[36]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use CreateTeamAdminRequest.ProtoReflect.Descriptor instead.
+func (*CreateTeamAdminRequest) Descriptor() ([]byte, []int) {
+	return file_team_v1_team_proto_rawDescGZIP(), []int{36}
+}
+
+func (x *CreateTeamAdminRequest) GetName() string {
+	if x != nil {
+		return x.Name
+	}
+	return ""
+}
+
+func (x *CreateTeamAdminRequest) GetUniversityId() int64 {
+	if x != nil {
+		return x.UniversityId
+	}
+	return 0
+}
+
+func (x *CreateTeamAdminRequest) GetDepartmentId() int64 {
+	if x != nil {
+		return x.DepartmentId
+	}
+	return 0
+}
+
+func (x *CreateTeamAdminRequest) GetLeaderId() int64 {
+	if x != nil {
+		return x.LeaderId
+	}
+	return 0
+}
+
+func (x *CreateTeamAdminRequest) GetMemberIds() []int64 {
+	if x != nil {
+		return x.MemberIds
+	}
+	return nil
+}
+
 var File_team_v1_team_proto protoreflect.FileDescriptor
 
 const file_team_v1_team_proto_rawDesc = "" +
@@ -2219,7 +2295,15 @@ const file_team_v1_team_proto_rawDesc = "" +
 	"\ateam_id\x18\x01 \x01(\x03B\a\xfaB\x04\"\x02 \x00R\x06teamId\x12\x16\n" +
 	"\x06reason\x18\x02 \x01(\tR\x06reason\"7\n" +
 	"\x1bLockTeamCompositionResponse\x12\x18\n" +
-	"\asuccess\x18\x01 \x01(\bR\asuccess2\xf2\t\n" +
+	"\asuccess\x18\x01 \x01(\bR\asuccess\"\xb2\x01\n" +
+	"\x16CreateTeamAdminRequest\x12\x12\n" +
+	"\x04name\x18\x01 \x01(\tR\x04name\x12#\n" +
+	"\runiversity_id\x18\x02 \x01(\x03R\funiversityId\x12#\n" +
+	"\rdepartment_id\x18\x03 \x01(\x03R\fdepartmentId\x12\x1b\n" +
+	"\tleader_id\x18\x04 \x01(\x03R\bleaderId\x12\x1d\n" +
+	"\n" +
+	"member_ids\x18\x05 \x03(\x03R\tmemberIds2\xc3\n" +
+	"\n" +
 	"\vTeamService\x12E\n" +
 	"\n" +
 	"CreateTeam\x12\x1a.team.v1.CreateTeamRequest\x1a\x1b.team.v1.CreateTeamResponse\x12<\n" +
@@ -2239,7 +2323,8 @@ const file_team_v1_team_proto_rawDesc = "" +
 	"\x12TransferLeadership\x12\".team.v1.TransferLeadershipRequest\x1a#.team.v1.TransferLeadershipResponse\x12Q\n" +
 	"\x0eJoinTeamByCode\x12\x1e.team.v1.JoinTeamByCodeRequest\x1a\x1f.team.v1.JoinTeamByCodeResponse\x12c\n" +
 	"\x14RegenerateInviteCode\x12$.team.v1.RegenerateInviteCodeRequest\x1a%.team.v1.RegenerateInviteCodeResponse\x12`\n" +
-	"\x13LockTeamComposition\x12#.team.v1.LockTeamCompositionRequest\x1a$.team.v1.LockTeamCompositionResponseB7Z5github.com/lucky720s/diplomaflow/pkg/protobuf/team/v1b\x06proto3"
+	"\x13LockTeamComposition\x12#.team.v1.LockTeamCompositionRequest\x1a$.team.v1.LockTeamCompositionResponse\x12O\n" +
+	"\x0fCreateTeamAdmin\x12\x1f.team.v1.CreateTeamAdminRequest\x1a\x1b.team.v1.CreateTeamResponseB7Z5github.com/lucky720s/diplomaflow/pkg/protobuf/team/v1b\x06proto3"
 
 var (
 	file_team_v1_team_proto_rawDescOnce sync.Once
@@ -2253,7 +2338,7 @@ func file_team_v1_team_proto_rawDescGZIP() []byte {
 	return file_team_v1_team_proto_rawDescData
 }
 
-var file_team_v1_team_proto_msgTypes = make([]protoimpl.MessageInfo, 36)
+var file_team_v1_team_proto_msgTypes = make([]protoimpl.MessageInfo, 37)
 var file_team_v1_team_proto_goTypes = []any{
 	(*CreateTeamRequest)(nil),            // 0: team.v1.CreateTeamRequest
 	(*CreateTeamResponse)(nil),           // 1: team.v1.CreateTeamResponse
@@ -2291,8 +2376,9 @@ var file_team_v1_team_proto_goTypes = []any{
 	(*RegenerateInviteCodeResponse)(nil), // 33: team.v1.RegenerateInviteCodeResponse
 	(*LockTeamCompositionRequest)(nil),   // 34: team.v1.LockTeamCompositionRequest
 	(*LockTeamCompositionResponse)(nil),  // 35: team.v1.LockTeamCompositionResponse
-	(*fieldmaskpb.FieldMask)(nil),        // 36: google.protobuf.FieldMask
-	(*emptypb.Empty)(nil),                // 37: google.protobuf.Empty
+	(*CreateTeamAdminRequest)(nil),       // 36: team.v1.CreateTeamAdminRequest
+	(*fieldmaskpb.FieldMask)(nil),        // 37: google.protobuf.FieldMask
+	(*emptypb.Empty)(nil),                // 38: google.protobuf.Empty
 }
 var file_team_v1_team_proto_depIdxs = []int32{
 	3,  // 0: team.v1.GetTeamResponse.members:type_name -> team.v1.TeamMember
@@ -2302,7 +2388,7 @@ var file_team_v1_team_proto_depIdxs = []int32{
 	3,  // 4: team.v1.TeamInfo.members:type_name -> team.v1.TeamMember
 	16, // 5: team.v1.TeamInfo.supervisor:type_name -> team.v1.SupervisorPreview
 	23, // 6: team.v1.UpdateTeamRequest.team:type_name -> team.v1.Team
-	36, // 7: team.v1.UpdateTeamRequest.update_mask:type_name -> google.protobuf.FieldMask
+	37, // 7: team.v1.UpdateTeamRequest.update_mask:type_name -> google.protobuf.FieldMask
 	23, // 8: team.v1.UpdateTeamResponse.team:type_name -> team.v1.Team
 	3,  // 9: team.v1.Team.members:type_name -> team.v1.TeamMember
 	23, // 10: team.v1.ListTeamsResponse.teams:type_name -> team.v1.Team
@@ -2323,24 +2409,26 @@ var file_team_v1_team_proto_depIdxs = []int32{
 	30, // 25: team.v1.TeamService.JoinTeamByCode:input_type -> team.v1.JoinTeamByCodeRequest
 	32, // 26: team.v1.TeamService.RegenerateInviteCode:input_type -> team.v1.RegenerateInviteCodeRequest
 	34, // 27: team.v1.TeamService.LockTeamComposition:input_type -> team.v1.LockTeamCompositionRequest
-	1,  // 28: team.v1.TeamService.CreateTeam:output_type -> team.v1.CreateTeamResponse
-	4,  // 29: team.v1.TeamService.GetTeam:output_type -> team.v1.GetTeamResponse
-	7,  // 30: team.v1.TeamService.GetAvailableStudents:output_type -> team.v1.GetAvailableStudentsResponse
-	10, // 31: team.v1.TeamService.GetMyInvites:output_type -> team.v1.GetMyInvitesResponse
-	12, // 32: team.v1.TeamService.RespondToInvite:output_type -> team.v1.RespondToInviteResponse
-	14, // 33: team.v1.TeamService.GetMyTeam:output_type -> team.v1.GetMyTeamResponse
-	25, // 34: team.v1.TeamService.ListTeams:output_type -> team.v1.ListTeamsResponse
-	18, // 35: team.v1.TeamService.UpdateTeam:output_type -> team.v1.UpdateTeamResponse
-	37, // 36: team.v1.TeamService.DeleteTeam:output_type -> google.protobuf.Empty
-	21, // 37: team.v1.TeamService.AddMember:output_type -> team.v1.AddMemberResponse
-	37, // 38: team.v1.TeamService.RemoveMember:output_type -> google.protobuf.Empty
-	27, // 39: team.v1.TeamService.LeaveTeam:output_type -> team.v1.LeaveTeamResponse
-	29, // 40: team.v1.TeamService.TransferLeadership:output_type -> team.v1.TransferLeadershipResponse
-	31, // 41: team.v1.TeamService.JoinTeamByCode:output_type -> team.v1.JoinTeamByCodeResponse
-	33, // 42: team.v1.TeamService.RegenerateInviteCode:output_type -> team.v1.RegenerateInviteCodeResponse
-	35, // 43: team.v1.TeamService.LockTeamComposition:output_type -> team.v1.LockTeamCompositionResponse
-	28, // [28:44] is the sub-list for method output_type
-	12, // [12:28] is the sub-list for method input_type
+	36, // 28: team.v1.TeamService.CreateTeamAdmin:input_type -> team.v1.CreateTeamAdminRequest
+	1,  // 29: team.v1.TeamService.CreateTeam:output_type -> team.v1.CreateTeamResponse
+	4,  // 30: team.v1.TeamService.GetTeam:output_type -> team.v1.GetTeamResponse
+	7,  // 31: team.v1.TeamService.GetAvailableStudents:output_type -> team.v1.GetAvailableStudentsResponse
+	10, // 32: team.v1.TeamService.GetMyInvites:output_type -> team.v1.GetMyInvitesResponse
+	12, // 33: team.v1.TeamService.RespondToInvite:output_type -> team.v1.RespondToInviteResponse
+	14, // 34: team.v1.TeamService.GetMyTeam:output_type -> team.v1.GetMyTeamResponse
+	25, // 35: team.v1.TeamService.ListTeams:output_type -> team.v1.ListTeamsResponse
+	18, // 36: team.v1.TeamService.UpdateTeam:output_type -> team.v1.UpdateTeamResponse
+	38, // 37: team.v1.TeamService.DeleteTeam:output_type -> google.protobuf.Empty
+	21, // 38: team.v1.TeamService.AddMember:output_type -> team.v1.AddMemberResponse
+	38, // 39: team.v1.TeamService.RemoveMember:output_type -> google.protobuf.Empty
+	27, // 40: team.v1.TeamService.LeaveTeam:output_type -> team.v1.LeaveTeamResponse
+	29, // 41: team.v1.TeamService.TransferLeadership:output_type -> team.v1.TransferLeadershipResponse
+	31, // 42: team.v1.TeamService.JoinTeamByCode:output_type -> team.v1.JoinTeamByCodeResponse
+	33, // 43: team.v1.TeamService.RegenerateInviteCode:output_type -> team.v1.RegenerateInviteCodeResponse
+	35, // 44: team.v1.TeamService.LockTeamComposition:output_type -> team.v1.LockTeamCompositionResponse
+	1,  // 45: team.v1.TeamService.CreateTeamAdmin:output_type -> team.v1.CreateTeamResponse
+	29, // [29:46] is the sub-list for method output_type
+	12, // [12:29] is the sub-list for method input_type
 	12, // [12:12] is the sub-list for extension type_name
 	12, // [12:12] is the sub-list for extension extendee
 	0,  // [0:12] is the sub-list for field type_name
@@ -2357,7 +2445,7 @@ func file_team_v1_team_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_team_v1_team_proto_rawDesc), len(file_team_v1_team_proto_rawDesc)),
 			NumEnums:      0,
-			NumMessages:   36,
+			NumMessages:   37,
 			NumExtensions: 0,
 			NumServices:   1,
 		},
