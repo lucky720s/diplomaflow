@@ -148,8 +148,10 @@ func (m *MockService) ListUserDepartmentRoleSlugs(ctx context.Context, userID, d
 	return slugs, args.Error(1)
 }
 func (m *MockService) DeleteUser(ctx context.Context, userID, requesterID int64) error {
-	return nil
+	args := m.Called(ctx, userID, requesterID)
+	return args.Error(0)
 }
+
 func (m *MockService) GetUser(ctx context.Context, userID int64) (*auth.User, error) {
 	args := m.Called(ctx, userID)
 	if args.Get(0) == nil {
@@ -162,8 +164,15 @@ func (m *MockService) GetUser(ctx context.Context, userID int64) (*auth.User, er
 	return res, args.Error(1)
 }
 
-func (m *MockService) UpdateUser(ctx context.Context, userID int64, email, firstName, lastName, role string, universityID, departmentID int64, password string) (*auth.User, error) {
-	args := m.Called(ctx, userID, email, firstName, lastName, role, universityID, departmentID, password)
+func (m *MockService) UpdateUser(
+	ctx context.Context,
+	userID int64,
+	email, firstName, lastName, role string,
+	universityID, departmentID int64,
+	requesterRole string,
+) (*auth.User, error) {
+	args := m.Called(ctx, userID, email, firstName, lastName, role, universityID, departmentID, requesterRole)
+
 	if args.Get(0) == nil {
 		return nil, args.Error(1)
 	}
@@ -172,4 +181,29 @@ func (m *MockService) UpdateUser(ctx context.Context, userID int64, email, first
 		panic("args.Get(0) is not *auth.User")
 	}
 	return res, args.Error(1)
+}
+
+func (m *MockService) RefreshToken(ctx context.Context, clientToken, userAgent, ip string) (string, string, error) {
+	args := m.Called(ctx, clientToken, userAgent, ip)
+	return args.String(0), args.String(1), args.Error(2)
+}
+
+func (m *MockService) ListSessions(ctx context.Context, userID int64) ([]*auth.RefreshToken, error) {
+	args := m.Called(ctx, userID)
+
+	var sessions []*auth.RefreshToken
+	if v := args.Get(0); v != nil {
+		var ok bool
+		sessions, ok = v.([]*auth.RefreshToken)
+		if !ok {
+			panic("args.Get(0) is not []*auth.RefreshToken")
+		}
+	}
+
+	return sessions, args.Error(1)
+}
+
+func (m *MockService) RevokeSession(ctx context.Context, userID int64, sessionID uint64) error {
+	args := m.Called(ctx, userID, sessionID)
+	return args.Error(0)
 }

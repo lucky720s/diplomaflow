@@ -4,6 +4,8 @@ import (
 	"context"
 	"net/http"
 	"strconv"
+	"strings"
+	"time"
 
 	authv1 "github.com/lucky720s/diplomaflow/pkg/protobuf/auth/v1"
 	"google.golang.org/grpc/codes"
@@ -30,6 +32,9 @@ type AuthService interface {
 	GetUser(ctx context.Context, userID int64) (*User, error)
 	UpdateUser(ctx context.Context, userID int64, email, firstName, lastName, role string, universityID, departmentID int64, requesterRole string) (*User, error)
 	DeleteUser(ctx context.Context, userID, requesterID int64) error
+	RefreshToken(ctx context.Context, clientToken, userAgent, ip string) (string, string, error)
+	ListSessions(ctx context.Context, userID int64) ([]*RefreshToken, error)
+	RevokeSession(ctx context.Context, userID int64, sessionID uint64) error
 }
 
 type Handler struct {
@@ -51,6 +56,23 @@ func getClientInfo(ctx context.Context) (string, string) {
 		}
 	}
 	return ip, userAgent
+}
+func pickClientInfo(ctx context.Context, reqIP, reqUA string) (ip string, ua string) {
+	ip = strings.TrimSpace(reqIP)
+	ua = strings.TrimSpace(reqUA)
+
+	if ip != "" && ua != "" {
+		return ip, ua
+	}
+
+	fallbackIP, fallbackUA := getClientInfo(ctx)
+	if ip == "" {
+		ip = fallbackIP
+	}
+	if ua == "" {
+		ua = fallbackUA
+	}
+	return ip, ua
 }
 
 func requireInternal(ctx context.Context, expected string) error {
@@ -133,7 +155,10 @@ func (h *Handler) Register(ctx context.Context, req *authv1.RegisterRequest) (*a
 }
 
 func (h *Handler) Login(ctx context.Context, req *authv1.LoginRequest) (*authv1.LoginResponse, error) {
-	ip, userAgent := getClientInfo(ctx)
+	if req == nil || strings.TrimSpace(req.Email) == "" || strings.TrimSpace(req.Password) == "" {
+		return nil, status.Error(codes.InvalidArgument, "email and password are required")
+	}
+	ip, userAgent := pickClientInfo(ctx, req.IpAddress, req.UserAgent)
 
 	accessToken, refreshToken, err := h.service.Login(ctx, req.Email, req.Password, userAgent, ip)
 	if err != nil {
@@ -553,4 +578,79 @@ func (h *Handler) DeleteUser(ctx context.Context, req *authv1.DeleteUserRequest)
 	}
 
 	return &authv1.DeleteUserResponse{Success: true}, nil
+}
+func (h *Handler) RefreshToken(ctx context.Context, req *authv1.RefreshTokenRequest) (*authv1.RefreshTokenResponse, error) {
+	if err := requireInternal(ctx, "api_gateway"); err != nil {
+		return nil, err
+	}
+
+	if req == nil || strings.TrimSpace(req.RefreshToken) == "" {
+		return nil, status.Error(codes.InvalidArgument, "refresh_token is required")
+	}
+
+	ip, userAgent := pickClientInfo(ctx, req.IpAddress, req.UserAgent)
+
+	accessToken, refreshToken, err := h.service.RefreshToken(ctx, req.RefreshToken, userAgent, ip)
+	if err != nil {
+		return nil, status.Error(codes.Unauthenticated, "invalid refresh token")
+	}
+
+	return &authv1.RefreshTokenResponse{
+		AccessToken:  accessToken,
+		RefreshToken: refreshToken,
+	}, nil
+}
+func (h *Handler) ListSessions(ctx context.Context, req *authv1.ListSessionsRequest) (*authv1.ListSessionsResponse, error) {
+	if err := requireInternal(ctx, "api_gateway"); err != nil {
+		return nil, err
+	}
+
+	if req == nil || req.UserId <= 0 {
+		return nil, status.Error(codes.InvalidArgument, "user_id is required")
+	}
+
+	sessions, err := h.service.ListSessions(ctx, req.UserId)
+	if err != nil {
+		return nil, status.Errorf(codes.Internal, "failed to list sessions: %v", err)
+	}
+
+	out := make([]*authv1.Session, 0, len(sessions))
+	for _, s := range sessions {
+		if s == nil {
+			continue
+		}
+		out = append(out, &authv1.Session{
+			Id:        s.ID,
+			UserAgent: s.UserAgent,
+			IpAddress: s.ClientIP,
+			CreatedAt: s.CreatedAt.UTC().Format(time.RFC3339),
+			ExpiresAt: s.ExpiresAt.UTC().Format(time.RFC3339),
+			IsCurrent: false, // current session id мы сейчас не знаем
+		})
+	}
+
+	return &authv1.ListSessionsResponse{Sessions: out}, nil
+}
+func (h *Handler) RevokeSession(ctx context.Context, req *authv1.RevokeSessionRequest) (*authv1.RevokeSessionResponse, error) {
+	if err := requireInternal(ctx, "api_gateway"); err != nil {
+		return nil, err
+	}
+
+	if req == nil || req.UserId <= 0 || req.SessionId == 0 {
+		return nil, status.Error(codes.InvalidArgument, "user_id and session_id are required")
+	}
+
+	err := h.service.RevokeSession(ctx, req.UserId, req.SessionId)
+	if err != nil {
+		if err == gorm.ErrRecordNotFound {
+			return nil, status.Error(codes.NotFound, "session not found")
+		}
+		// в service у тебя unauthorized = errors.New("unauthorized")
+		if strings.Contains(strings.ToLower(err.Error()), "unauthorized") {
+			return nil, status.Error(codes.PermissionDenied, "forbidden")
+		}
+		return nil, status.Errorf(codes.Internal, "failed to revoke session: %v", err)
+	}
+
+	return &authv1.RevokeSessionResponse{Success: true}, nil
 }

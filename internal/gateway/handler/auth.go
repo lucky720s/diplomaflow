@@ -14,11 +14,13 @@ import (
 const (
 	RefreshTokenCookieName = "refresh_token"
 	RefreshTokenPath       = "/api/v1/auth/refresh"
+	AccessTokenCookieName  = "access_token"
+	AccessTokenPath        = "/"
 )
 
 func (h *Handler) RefreshToken(c *gin.Context) {
 	cookieToken, err := c.Cookie(RefreshTokenCookieName)
-	if err != nil || cookieToken == "" {
+	if err != nil || strings.TrimSpace(cookieToken) == "" {
 		c.JSON(http.StatusUnauthorized, gin.H{"error": "refresh token cookie missing"})
 		return
 	}
@@ -30,16 +32,20 @@ func (h *Handler) RefreshToken(c *gin.Context) {
 		IpAddress:    c.ClientIP(),
 	})
 	if err != nil {
-		clearRefreshCookie(c)
+		sec := secureCookie(c)
+		clearRefreshCookie(c, sec)
+		clearAccessCookie(c, sec)
 		MapGRPCError(c, err)
 		return
 	}
 
-	setRefreshCookie(c, resp.RefreshToken, 3600*24*30)
-
+	sec := secureCookie(c)
+	setRefreshCookie(c, resp.RefreshToken, 3600*24*30, sec)
+	setAccessCookie(c, resp.AccessToken, 3600*24, sec)
 	c.JSON(http.StatusOK, gin.H{
-		"access_token": resp.AccessToken,
+		"ok": true,
 	})
+
 }
 
 func (h *Handler) Logout(c *gin.Context) {
@@ -61,7 +67,10 @@ func (h *Handler) Logout(c *gin.Context) {
 			}
 		}
 	}
-	clearRefreshCookie(c)
+
+	sec := secureCookie(c)
+	clearRefreshCookie(c, sec)
+	clearAccessCookie(c, sec)
 
 	c.JSON(http.StatusOK, gin.H{"message": "logged out"})
 }
@@ -80,6 +89,7 @@ func (h *Handler) Register(c *gin.Context) {
 	}
 	c.JSON(http.StatusCreated, resp)
 }
+
 func (h *Handler) Login(c *gin.Context) {
 	var req authv1.LoginRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
@@ -96,21 +106,15 @@ func (h *Handler) Login(c *gin.Context) {
 		return
 	}
 
-	c.SetCookie(
-		RefreshTokenCookieName,
-		resp.RefreshToken,
-		3600*24*30,
-		RefreshTokenPath,
-		"",
-		true,
-		true,
-	)
+	sec := secureCookie(c)
+
+	setRefreshCookie(c, resp.RefreshToken, 3600*24*30, sec)
+	setAccessCookie(c, resp.AccessToken, 3600*24, sec)
 
 	c.JSON(http.StatusOK, gin.H{
-		"access_token": resp.AccessToken,
+		"ok": true,
 	})
 }
-
 func (h *Handler) ListSessions(c *gin.Context) {
 	userID := c.GetInt64("userId")
 	if userID == 0 {
@@ -118,7 +122,7 @@ func (h *Handler) ListSessions(c *gin.Context) {
 		return
 	}
 
-	resp, err := h.authClient.ListSessions(c.Request.Context(), &authv1.ListSessionsRequest{UserId: userID})
+	resp, err := h.authClient.ListSessions(authGatewayCtx(c), &authv1.ListSessionsRequest{UserId: userID})
 	if err != nil {
 		MapGRPCError(c, err)
 		return
@@ -134,7 +138,8 @@ func (h *Handler) RevokeSession(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid session id"})
 		return
 	}
-	_, err = h.authClient.RevokeSession(c.Request.Context(), &authv1.RevokeSessionRequest{
+
+	_, err = h.authClient.RevokeSession(authGatewayCtx(c), &authv1.RevokeSessionRequest{
 		UserId:    userID,
 		SessionId: sessionID,
 	})
@@ -145,6 +150,7 @@ func (h *Handler) RevokeSession(c *gin.Context) {
 
 	c.JSON(http.StatusOK, gin.H{"message": "session revoked"})
 }
+
 func (h *Handler) AssignRole(c *gin.Context) {
 	var req struct {
 		UserID int64  `json:"user_id" binding:"required"`
@@ -205,26 +211,66 @@ func authGatewayCtx(c *gin.Context) context.Context {
 	)
 }
 
-func setRefreshCookie(c *gin.Context, token string, maxAge int) {
+func setRefreshCookie(c *gin.Context, token string, maxAge int, secure bool) {
 	http.SetCookie(c.Writer, &http.Cookie{
 		Name:     RefreshTokenCookieName,
 		Value:    token,
 		Path:     RefreshTokenPath,
 		MaxAge:   maxAge,
-		Secure:   true,
+		Secure:   secure,
 		HttpOnly: true,
-		SameSite: http.SameSiteLaxMode, // важно
+		SameSite: http.SameSiteLaxMode,
 	})
 }
 
-func clearRefreshCookie(c *gin.Context) {
+func clearRefreshCookie(c *gin.Context, secure bool) {
 	http.SetCookie(c.Writer, &http.Cookie{
 		Name:     RefreshTokenCookieName,
 		Value:    "",
 		Path:     RefreshTokenPath,
 		MaxAge:   -1,
-		Secure:   true,
+		Secure:   secure,
 		HttpOnly: true,
 		SameSite: http.SameSiteLaxMode,
 	})
+}
+
+func secureCookie(c *gin.Context) bool {
+	// Если запрос пришёл по TLS напрямую
+	if c.Request.TLS != nil {
+		return true
+	}
+	// Если стоит reverse proxy/ingress, обычно прокидывает X-Forwarded-Proto
+	xfp := strings.TrimSpace(strings.ToLower(c.GetHeader("X-Forwarded-Proto")))
+	return xfp == "https"
+}
+
+func setAccessCookie(c *gin.Context, token string, maxAge int, secure bool) {
+	http.SetCookie(c.Writer, &http.Cookie{
+		Name:     AccessTokenCookieName,
+		Value:    token,
+		Path:     AccessTokenPath,
+		MaxAge:   maxAge,
+		Secure:   secure,
+		HttpOnly: true,
+		SameSite: http.SameSiteLaxMode,
+	})
+}
+
+func clearAccessCookie(c *gin.Context, secure bool) {
+	http.SetCookie(c.Writer, &http.Cookie{
+		Name:     AccessTokenCookieName,
+		Value:    "",
+		Path:     AccessTokenPath,
+		MaxAge:   -1,
+		Secure:   secure,
+		HttpOnly: true,
+		SameSite: http.SameSiteLaxMode,
+	})
+}
+func (h *Handler) LogoutCleanup(c *gin.Context) {
+	sec := secureCookie(c)
+	clearRefreshCookie(c, sec)
+	clearAccessCookie(c, sec)
+	c.JSON(http.StatusOK, gin.H{"message": "cookies cleared"})
 }

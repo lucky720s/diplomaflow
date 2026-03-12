@@ -326,13 +326,15 @@ func getActorIDFromContext(ctx context.Context) int64 {
 	}
 	return 0
 }
-
 func (h *Handler) UpdateTeamAdmin(ctx context.Context, req *adminv1.UpdateTeamAdminRequest) (*adminv1.UpdateTeamAdminResponse, error) {
 	if req.TeamId == 0 {
 		return nil, status.Error(codes.InvalidArgument, "team_id is required")
 	}
 
 	actorID := getActorIDFromContext(ctx)
+	if actorID <= 0 {
+		return nil, status.Error(codes.Unauthenticated, "actor_id is required in metadata (x-user-id)")
+	}
 
 	team, err := h.service.UpdateTeamByAdmin(ctx, &UpdateTeamByAdminRequest{
 		TeamID:       req.TeamId,
@@ -343,6 +345,10 @@ func (h *Handler) UpdateTeamAdmin(ctx context.Context, req *adminv1.UpdateTeamAd
 	})
 	if err != nil {
 		h.logger.Error("UpdateTeamAdmin failed", zap.Error(err))
+		// FIX: если уже status-ошибка — возвращаем как есть
+		if st, ok := status.FromError(err); ok {
+			return nil, st.Err()
+		}
 		return nil, status.Errorf(codes.Internal, "failed to update team: %v", err)
 	}
 
@@ -370,13 +376,16 @@ func (h *Handler) UpdateTeamAdmin(ctx context.Context, req *adminv1.UpdateTeamAd
 		},
 	}, nil
 }
-
 func (h *Handler) DeleteTeamAdmin(ctx context.Context, req *adminv1.DeleteTeamAdminRequest) (*emptypb.Empty, error) {
 	if req.TeamId == 0 {
 		return nil, status.Error(codes.InvalidArgument, "team_id is required")
 	}
 
 	actorID := getActorIDFromContext(ctx)
+	if actorID <= 0 {
+		return nil, status.Error(codes.Unauthenticated, "actor_id is required in metadata (x-user-id)")
+	}
+
 	reason := req.Reason
 	if reason == "" {
 		reason = "Deleted by admin"
@@ -385,6 +394,9 @@ func (h *Handler) DeleteTeamAdmin(ctx context.Context, req *adminv1.DeleteTeamAd
 	err := h.service.DeleteTeamByAdmin(ctx, req.TeamId, reason, actorID)
 	if err != nil {
 		h.logger.Error("DeleteTeamAdmin failed", zap.Error(err))
+		if st, ok := status.FromError(err); ok {
+			return nil, st.Err()
+		}
 		return nil, status.Errorf(codes.Internal, "failed to delete team: %v", err)
 	}
 

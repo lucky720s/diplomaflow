@@ -63,6 +63,7 @@ func main() {
 			auth.POST("/register", handler.Register)
 			auth.POST("/login", handler.Login)
 			auth.POST("/refresh", handler.RefreshToken)
+			auth.POST("/logout-cleanup", handler.LogoutCleanup) // <-- сюда
 		}
 
 		authProtected := v1.Group("/auth")
