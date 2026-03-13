@@ -211,6 +211,29 @@ func authGatewayCtx(c *gin.Context) context.Context {
 	)
 }
 
+func secureCookie(c *gin.Context) bool {
+	// Если запрос пришёл по TLS напрямую
+	if c.Request.TLS != nil {
+		return true
+	}
+	// Если стоит reverse proxy/ingress, обычно прокидывает X-Forwarded-Proto
+	xfp := strings.TrimSpace(strings.ToLower(c.GetHeader("X-Forwarded-Proto")))
+	return xfp == "https"
+}
+
+func (h *Handler) LogoutCleanup(c *gin.Context) {
+	sec := secureCookie(c)
+	clearRefreshCookie(c, sec)
+	clearAccessCookie(c, sec)
+	c.JSON(http.StatusOK, gin.H{"message": "cookies cleared"})
+}
+func cookieSameSite(secure bool) http.SameSite {
+	if secure {
+		return http.SameSiteNoneMode
+	}
+	return http.SameSiteLaxMode
+}
+
 func setRefreshCookie(c *gin.Context, token string, maxAge int, secure bool) {
 	http.SetCookie(c.Writer, &http.Cookie{
 		Name:     RefreshTokenCookieName,
@@ -219,7 +242,7 @@ func setRefreshCookie(c *gin.Context, token string, maxAge int, secure bool) {
 		MaxAge:   maxAge,
 		Secure:   secure,
 		HttpOnly: true,
-		SameSite: http.SameSiteLaxMode,
+		SameSite: cookieSameSite(secure),
 	})
 }
 
@@ -231,18 +254,8 @@ func clearRefreshCookie(c *gin.Context, secure bool) {
 		MaxAge:   -1,
 		Secure:   secure,
 		HttpOnly: true,
-		SameSite: http.SameSiteLaxMode,
+		SameSite: cookieSameSite(secure),
 	})
-}
-
-func secureCookie(c *gin.Context) bool {
-	// Если запрос пришёл по TLS напрямую
-	if c.Request.TLS != nil {
-		return true
-	}
-	// Если стоит reverse proxy/ingress, обычно прокидывает X-Forwarded-Proto
-	xfp := strings.TrimSpace(strings.ToLower(c.GetHeader("X-Forwarded-Proto")))
-	return xfp == "https"
 }
 
 func setAccessCookie(c *gin.Context, token string, maxAge int, secure bool) {
@@ -253,7 +266,7 @@ func setAccessCookie(c *gin.Context, token string, maxAge int, secure bool) {
 		MaxAge:   maxAge,
 		Secure:   secure,
 		HttpOnly: true,
-		SameSite: http.SameSiteLaxMode,
+		SameSite: cookieSameSite(secure),
 	})
 }
 
@@ -265,12 +278,6 @@ func clearAccessCookie(c *gin.Context, secure bool) {
 		MaxAge:   -1,
 		Secure:   secure,
 		HttpOnly: true,
-		SameSite: http.SameSiteLaxMode,
+		SameSite: cookieSameSite(secure),
 	})
-}
-func (h *Handler) LogoutCleanup(c *gin.Context) {
-	sec := secureCookie(c)
-	clearRefreshCookie(c, sec)
-	clearAccessCookie(c, sec)
-	c.JSON(http.StatusOK, gin.H{"message": "cookies cleared"})
 }
