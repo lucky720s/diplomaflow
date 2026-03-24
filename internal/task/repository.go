@@ -22,7 +22,7 @@ type Repository interface {
 	CreateBoard(ctx context.Context, board *Board) error
 	GetBoard(ctx context.Context, id int64) (*Board, error)
 	GetBoardByProject(ctx context.Context, projectID int64) (*Board, error)
-	ListMyBoards(ctx context.Context, userID int64, role string) ([]*Board, error)
+	ListMyBoards(ctx context.Context, userID int64, role string, universityID, departmentID int64, includeColumns, includeStats bool) ([]*Board, error)
 	UpdateBoard(ctx context.Context, board *Board) error
 	DeleteBoard(ctx context.Context, id int64) error
 

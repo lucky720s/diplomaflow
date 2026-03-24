@@ -1,7 +1,10 @@
 package task
 
 import (
+	"database/sql/driver"
 	"time"
+
+	"encoding/json"
 
 	"gorm.io/datatypes"
 	"gorm.io/gorm"
@@ -21,9 +24,8 @@ type Board struct {
 	CreatedAt   time.Time
 	UpdatedAt   time.Time
 	DeletedAt   gorm.DeletedAt `gorm:"index"`
-
-	// Relations (not stored, loaded separately)
-	Columns []Column `gorm:"-"`
+	Columns     []Column       `gorm:"-"`
+	Stats       *BoardStats    `gorm:"-"`
 }
 
 func (Board) TableName() string {
@@ -89,7 +91,7 @@ type Task struct {
 	ActualMinutes    int32          `gorm:"default:0"`
 	Position         int32          `gorm:"not null;default:0"`
 	WorkflowStepID   *int64         `gorm:"index"`
-	Labels           datatypes.JSON `gorm:"type:jsonb;default:'[]'"`
+	Labels           JSONArray      `gorm:"type:jsonb"`
 	CustomFields     datatypes.JSON `gorm:"type:jsonb;default:'{}'"`
 
 	CreatedAt time.Time
@@ -264,3 +266,24 @@ type DeadlineNotificationRun struct {
 }
 
 func (DeadlineNotificationRun) TableName() string { return "task_deadline_notification_runs" }
+
+type JSONArray []string
+
+func (j *JSONArray) Scan(value interface{}) error {
+	if value == nil {
+		*j = nil
+		return nil
+	}
+	bytes, ok := value.([]byte)
+	if !ok {
+		return nil
+	}
+	return json.Unmarshal(bytes, j)
+}
+
+func (j JSONArray) Value() (driver.Value, error) {
+	if j == nil {
+		return nil, nil
+	}
+	return json.Marshal(j)
+}

@@ -8,11 +8,18 @@ import (
 
 // ==================== BOARD ====================
 
+type CreateBoardInput struct {
+	TeamID      int64
+	ProjectID   int64
+	Name        string
+	Description string
+	CreatedBy   int64
+}
+
 type UpdateBoardInput struct {
 	BoardID     int64
 	Name        string
 	Description string
-	Settings    *BoardSettings
 	UpdateMask  *fieldmaskpb.FieldMask
 }
 
@@ -106,29 +113,6 @@ type AddAttachmentInput struct {
 	UploadedBy int64
 }
 
-// ==================== FILTERS ====================
-
-type TaskFilter struct {
-	BoardID        int64
-	ColumnID       int64
-	AssigneeID     int64
-	Status         string
-	Priority       string
-	Search         string
-	Labels         []string
-	OnlyOverdue    bool
-	OnlyUnassigned bool
-	SortBy         string
-	SortOrder      string
-	Limit          int
-	Offset         int
-}
-
-type MyTasksFilter struct {
-	OnlyAssigned     bool
-	OnlyCreated      bool
-	OnlyWatching     bool
-	IncludeCompleted bool
-	Limit            int
-	Offset           int
-}
+// ==================== FILTERS & COUNTS ====================
+// TaskFilter, MyTasksFilter, TaskCounts определены в repository.go
+// НЕ дублируем их здесь!

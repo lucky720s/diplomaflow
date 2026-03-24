@@ -59,6 +59,8 @@ type Repository interface {
 	GetPendingInvitesWithTeams(ctx context.Context, userID int64) ([]*TeamInviteWithTeam, error)
 	GetMembersByTeamIDs(ctx context.Context, teamIDs []int64) (map[int64][]*TeamMember, error)
 	GetUsersInTeams(ctx context.Context, userIDs []int64) (map[int64]bool, error)
+
+	GetSupervisorAssignment(ctx context.Context, teamID int64) (*SupervisorAssignment, error)
 }
 
 type repository struct {
@@ -78,7 +80,6 @@ func (SupervisorAssignment) TableName() string {
 	return "admin_supervisor_assignments"
 }
 
-// GetSupervisorAssignment возвращает supervisor для команды
 func (r *repository) GetSupervisorAssignment(ctx context.Context, teamID int64) (*SupervisorAssignment, error) {
 	var assignment SupervisorAssignment
 
