@@ -155,26 +155,25 @@ func (r *repository) GetBoardByProject(ctx context.Context, projectID int64) (*B
 	return &board, nil
 }
 
-// ListMyBoards:
-// - student: доски проектов, где user либо владелец (projects.student_id), либо участник команды (team_members)
-// - teacher: доски проектов, где user научрук команды (admin_supervisor_assignments.team_id)
-// - admin: все доски
-func (r *repository) ListMyBoards(ctx context.Context, userID int64, role string) ([]*Board, error) {
+func (r *repository) ListMyBoards(ctx context.Context, userID int64, role string, universityID, departmentID int64, includeColumns, includeStats bool) ([]*Board, error) {
 	var boards []*Board
 
 	q := r.db.WithContext(ctx).Model(&Board{}).
-		Where("task_boards.deleted_at IS NULL")
+		Joins("JOIN teams t ON t.id = task_boards.team_id").
+		Where("task_boards.deleted_at IS NULL").
+		Where("t.deleted_at IS NULL")
 
 	switch role {
+	case "admin":
+		q = q.Where("t.university_id = ?", universityID)
+
 	case "teacher":
 		q = q.
-			Joins("JOIN admin_supervisor_assignments a ON a.team_id = task_boards.team_id").
-			Where("a.supervisor_id = ?", userID)
+			Joins("LEFT JOIN admin_supervisor_assignments a ON a.team_id = task_boards.team_id").
+			Where("t.university_id = ?", universityID).
+			Where("(a.supervisor_id = ? OR t.department_id = ?)", userID, departmentID)
 
-	case "admin":
-		// all boards
-
-	default: // student (и любые прочие роли — как student)
+	default:
 		q = q.
 			Joins("JOIN projects p ON p.id = task_boards.project_id").
 			Joins("LEFT JOIN team_members tm ON tm.team_id = task_boards.team_id AND tm.user_id = ?", userID).
@@ -182,9 +181,25 @@ func (r *repository) ListMyBoards(ctx context.Context, userID int64, role string
 			Select("DISTINCT task_boards.*")
 	}
 
+	if includeColumns {
+		q = q.Preload("Columns", func(db *gorm.DB) *gorm.DB {
+			return db.Order("position ASC")
+		}).Preload("Columns.Tasks", func(db *gorm.DB) *gorm.DB {
+			return db.Where("deleted_at IS NULL").Order("position ASC")
+		})
+	}
+
 	if err := q.Order("task_boards.created_at DESC").Find(&boards).Error; err != nil {
 		return nil, err
 	}
+
+	if includeStats {
+		for _, b := range boards {
+			stats, _ := r.GetBoardStats(ctx, b.ID)
+			b.Stats = stats
+		}
+	}
+
 	return boards, nil
 }
 

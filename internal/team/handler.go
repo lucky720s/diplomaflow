@@ -605,3 +605,76 @@ func mapError(err error) error {
 		return status.Errorf(codes.Internal, "internal error: %v", err)
 	}
 }
+
+func (h *Handler) IsMember(ctx context.Context, req *teamv1.IsMemberRequest) (*teamv1.IsMemberResponse, error) {
+	svc := getInternalService(ctx)
+	if svc == "" {
+		return nil, status.Error(codes.PermissionDenied, "internal only")
+	}
+
+	switch svc {
+	case "task_service", "project_service", "workflow_service", "admin_service", "api_gateway":
+	default:
+		return nil, status.Errorf(codes.PermissionDenied, "service %q not allowed", svc)
+	}
+
+	if req.TeamId <= 0 || req.UserId <= 0 {
+		return nil, status.Error(codes.InvalidArgument, "team_id and user_id required")
+	}
+
+	isMember, err := h.service.IsUserInSpecificTeam(ctx, req.UserId, req.TeamId)
+	if err != nil {
+		return nil, status.Errorf(codes.Internal, "check membership: %v", err)
+	}
+
+	var role string
+	if isMember {
+		member, err := h.service.GetTeamMember(ctx, req.TeamId, req.UserId)
+		if err == nil && member != nil {
+			role = member.Role
+		}
+	}
+
+	return &teamv1.IsMemberResponse{
+		IsMember: isMember,
+		Role:     role,
+	}, nil
+}
+
+func (h *Handler) GetTeamInternal(ctx context.Context, req *teamv1.GetTeamInternalRequest) (*teamv1.GetTeamInternalResponse, error) {
+	svc := getInternalService(ctx)
+	if svc == "" {
+		return nil, status.Error(codes.PermissionDenied, "internal only")
+	}
+
+	switch svc {
+	case "task_service", "project_service", "workflow_service", "admin_service", "api_gateway":
+		// OK
+	default:
+		return nil, status.Errorf(codes.PermissionDenied, "service %q not allowed", svc)
+	}
+
+	if req.TeamId <= 0 {
+		return nil, status.Error(codes.InvalidArgument, "team_id required")
+	}
+
+	team, err := h.service.GetTeamByID(ctx, req.TeamId)
+	if err != nil {
+		return nil, status.Error(codes.NotFound, "team not found")
+	}
+
+	var supervisorID *int64
+	assignment, err := h.service.GetSupervisorAssignment(ctx, req.TeamId)
+	if err == nil && assignment != nil {
+		supervisorID = &assignment.SupervisorID
+	}
+
+	return &teamv1.GetTeamInternalResponse{
+		TeamId:            team.ID,
+		Name:              team.Name,
+		UniversityId:      team.UniversityID,
+		DepartmentId:      team.DepartmentID,
+		SupervisorId:      supervisorID,
+		CompositionLocked: team.CompositionLocked,
+	}, nil
+}

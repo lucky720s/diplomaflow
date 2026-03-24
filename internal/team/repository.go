@@ -65,6 +65,37 @@ type repository struct {
 	db *gorm.DB
 }
 
+type SupervisorAssignment struct {
+	ID           int64     `gorm:"primaryKey"`
+	TeamID       int64     `gorm:"column:team_id"`
+	SupervisorID int64     `gorm:"column:supervisor_id"`
+	AssignedBy   int64     `gorm:"column:assigned_by"`
+	CreatedAt    time.Time `gorm:"column:created_at"`
+	UpdatedAt    time.Time `gorm:"column:updated_at"`
+}
+
+func (SupervisorAssignment) TableName() string {
+	return "admin_supervisor_assignments"
+}
+
+// GetSupervisorAssignment возвращает supervisor для команды
+func (r *repository) GetSupervisorAssignment(ctx context.Context, teamID int64) (*SupervisorAssignment, error) {
+	var assignment SupervisorAssignment
+
+	err := r.db.WithContext(ctx).
+		Where("team_id = ?", teamID).
+		First(&assignment).Error
+
+	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return nil, nil // Supervisor не назначен
+		}
+		return nil, err
+	}
+
+	return &assignment, nil
+}
+
 func NewRepository(db *gorm.DB) Repository {
 	return &repository{db: db}
 }

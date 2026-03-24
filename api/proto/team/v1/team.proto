@@ -1,4 +1,4 @@
-syntax = "proto3";
+  syntax = "proto3";
 
 package team.v1;
 
@@ -26,6 +26,8 @@ service TeamService {
   rpc RegenerateInviteCode (RegenerateInviteCodeRequest) returns (RegenerateInviteCodeResponse);
   rpc LockTeamComposition (LockTeamCompositionRequest) returns (LockTeamCompositionResponse);
   rpc CreateTeamAdmin (CreateTeamAdminRequest) returns (CreateTeamResponse);
+  rpc IsMember(IsMemberRequest) returns (IsMemberResponse);
+  rpc GetTeamInternal(GetTeamInternalRequest) returns (GetTeamInternalResponse);
 }
 message CreateTeamRequest {
   string name = 1;
@@ -74,9 +76,27 @@ message GetAvailableStudentsResponse {
   repeated StudentPreview students = 1;
 }
 
+  message IsMemberRequest {
+    int64 team_id = 1;
+    int64 user_id = 2;
+  }
 
+  message IsMemberResponse {
+    bool is_member = 1;
+    string role = 2;
+  }
 
-
+  message GetTeamInternalRequest {
+    int64 team_id = 1;
+  }
+  message GetTeamInternalResponse {
+    int64 team_id = 1;
+    string name = 2;
+    int64 university_id = 3;
+    int64 department_id = 4;
+    optional int64 supervisor_id = 5;
+    bool composition_locked = 6;
+  }
 
 message Invite {
   int64 id = 1;

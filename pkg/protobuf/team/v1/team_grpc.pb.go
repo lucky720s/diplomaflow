@@ -37,6 +37,8 @@ const (
 	TeamService_RegenerateInviteCode_FullMethodName = "/team.v1.TeamService/RegenerateInviteCode"
 	TeamService_LockTeamComposition_FullMethodName  = "/team.v1.TeamService/LockTeamComposition"
 	TeamService_CreateTeamAdmin_FullMethodName      = "/team.v1.TeamService/CreateTeamAdmin"
+	TeamService_IsMember_FullMethodName             = "/team.v1.TeamService/IsMember"
+	TeamService_GetTeamInternal_FullMethodName      = "/team.v1.TeamService/GetTeamInternal"
 )
 
 // TeamServiceClient is the client API for TeamService service.
@@ -60,6 +62,8 @@ type TeamServiceClient interface {
 	RegenerateInviteCode(ctx context.Context, in *RegenerateInviteCodeRequest, opts ...grpc.CallOption) (*RegenerateInviteCodeResponse, error)
 	LockTeamComposition(ctx context.Context, in *LockTeamCompositionRequest, opts ...grpc.CallOption) (*LockTeamCompositionResponse, error)
 	CreateTeamAdmin(ctx context.Context, in *CreateTeamAdminRequest, opts ...grpc.CallOption) (*CreateTeamResponse, error)
+	IsMember(ctx context.Context, in *IsMemberRequest, opts ...grpc.CallOption) (*IsMemberResponse, error)
+	GetTeamInternal(ctx context.Context, in *GetTeamInternalRequest, opts ...grpc.CallOption) (*GetTeamInternalResponse, error)
 }
 
 type teamServiceClient struct {
@@ -240,6 +244,26 @@ func (c *teamServiceClient) CreateTeamAdmin(ctx context.Context, in *CreateTeamA
 	return out, nil
 }
 
+func (c *teamServiceClient) IsMember(ctx context.Context, in *IsMemberRequest, opts ...grpc.CallOption) (*IsMemberResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(IsMemberResponse)
+	err := c.cc.Invoke(ctx, TeamService_IsMember_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *teamServiceClient) GetTeamInternal(ctx context.Context, in *GetTeamInternalRequest, opts ...grpc.CallOption) (*GetTeamInternalResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(GetTeamInternalResponse)
+	err := c.cc.Invoke(ctx, TeamService_GetTeamInternal_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // TeamServiceServer is the server API for TeamService service.
 // All implementations must embed UnimplementedTeamServiceServer
 // for forward compatibility.
@@ -261,6 +285,8 @@ type TeamServiceServer interface {
 	RegenerateInviteCode(context.Context, *RegenerateInviteCodeRequest) (*RegenerateInviteCodeResponse, error)
 	LockTeamComposition(context.Context, *LockTeamCompositionRequest) (*LockTeamCompositionResponse, error)
 	CreateTeamAdmin(context.Context, *CreateTeamAdminRequest) (*CreateTeamResponse, error)
+	IsMember(context.Context, *IsMemberRequest) (*IsMemberResponse, error)
+	GetTeamInternal(context.Context, *GetTeamInternalRequest) (*GetTeamInternalResponse, error)
 	mustEmbedUnimplementedTeamServiceServer()
 }
 
@@ -321,6 +347,12 @@ func (UnimplementedTeamServiceServer) LockTeamComposition(context.Context, *Lock
 }
 func (UnimplementedTeamServiceServer) CreateTeamAdmin(context.Context, *CreateTeamAdminRequest) (*CreateTeamResponse, error) {
 	return nil, status.Error(codes.Unimplemented, "method CreateTeamAdmin not implemented")
+}
+func (UnimplementedTeamServiceServer) IsMember(context.Context, *IsMemberRequest) (*IsMemberResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method IsMember not implemented")
+}
+func (UnimplementedTeamServiceServer) GetTeamInternal(context.Context, *GetTeamInternalRequest) (*GetTeamInternalResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method GetTeamInternal not implemented")
 }
 func (UnimplementedTeamServiceServer) mustEmbedUnimplementedTeamServiceServer() {}
 func (UnimplementedTeamServiceServer) testEmbeddedByValue()                     {}
@@ -649,6 +681,42 @@ func _TeamService_CreateTeamAdmin_Handler(srv interface{}, ctx context.Context, 
 	return interceptor(ctx, in, info, handler)
 }
 
+func _TeamService_IsMember_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(IsMemberRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(TeamServiceServer).IsMember(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: TeamService_IsMember_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(TeamServiceServer).IsMember(ctx, req.(*IsMemberRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _TeamService_GetTeamInternal_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetTeamInternalRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(TeamServiceServer).GetTeamInternal(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: TeamService_GetTeamInternal_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(TeamServiceServer).GetTeamInternal(ctx, req.(*GetTeamInternalRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // TeamService_ServiceDesc is the grpc.ServiceDesc for TeamService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -723,6 +791,14 @@ var TeamService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "CreateTeamAdmin",
 			Handler:    _TeamService_CreateTeamAdmin_Handler,
+		},
+		{
+			MethodName: "IsMember",
+			Handler:    _TeamService_IsMember_Handler,
+		},
+		{
+			MethodName: "GetTeamInternal",
+			Handler:    _TeamService_GetTeamInternal_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

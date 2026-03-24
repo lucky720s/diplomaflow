@@ -783,3 +783,15 @@ func (s *Service) IsUserInSpecificTeam(ctx context.Context, userID, teamID int64
 func (s *Service) GetMembersByTeamIDs(ctx context.Context, teamIDs []int64) (map[int64][]*TeamMember, error) {
 	return s.repo.GetMembersByTeamIDs(ctx, teamIDs)
 }
+
+func (s *Service) GetTeamByID(ctx context.Context, teamID int64) (*Team, error) {
+	return s.repo.GetByID(ctx, teamID)
+}
+
+func (s *Service) GetTeamMember(ctx context.Context, teamID, userID int64) (*TeamMember, error) {
+	return s.repo.GetMember(ctx, teamID, userID)
+}
+
+func (s *Service) GetSupervisorAssignment(ctx context.Context, teamID int64) (*SupervisorAssignment, error) {
+	return s.repo.GetSupervisorAssignment(ctx, teamID)
+}
