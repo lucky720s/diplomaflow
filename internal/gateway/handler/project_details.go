@@ -20,13 +20,9 @@ func (h *Handler) GetProjectDetails(c *gin.Context) {
 	}
 
 	userID := c.GetInt64("userId")
-
 	userRole := c.GetString("role")
 	if userRole == "" {
-		userRole = c.GetHeader("x-user-role")
-	}
-	if userRole == "" {
-		userRole = "student" // ✅ fallback
+		userRole = "user"
 	}
 
 	var projectResp *projectv1.GetProjectResponse
@@ -45,7 +41,6 @@ func (h *Handler) GetProjectDetails(c *gin.Context) {
 		projectResp, err = h.projectClient.GetProject(ctxInternal, &projectv1.GetProjectRequest{
 			ProjectId: projectID,
 		})
-
 		if err != nil {
 			MapGRPCError(c, err)
 			return
@@ -54,7 +49,6 @@ func (h *Handler) GetProjectDetails(c *gin.Context) {
 		runtimeResp, err = h.projectClient.GetProjectRuntime(ctxInternal, &projectv1.GetProjectRuntimeRequest{
 			ProjectId: projectID,
 		})
-
 		if err != nil {
 			MapGRPCError(c, err)
 			return
@@ -68,18 +62,6 @@ func (h *Handler) GetProjectDetails(c *gin.Context) {
 			MapGRPCError(c, err)
 			return
 		}
-
-		runtimeResp, err = h.projectClient.GetProjectRuntime(outgoingCtx(c), &projectv1.GetProjectRuntimeRequest{
-			ProjectId: projectID,
-		})
-		if err != nil {
-			MapGRPCError(c, err)
-			return
-		}
-	}
-
-	ctx := outgoingCtx(c)
-	if userRole != "teacher" && userRole != "admin" {
 		history := h.buildHistory(projectResp)
 
 		c.JSON(http.StatusOK, gin.H{
@@ -100,6 +82,20 @@ func (h *Handler) GetProjectDetails(c *gin.Context) {
 		})
 		return
 	}
+
+	if runtimeResp == nil || runtimeResp.CurrentStateId == 0 {
+		history := h.buildHistory(projectResp)
+
+		c.JSON(http.StatusOK, gin.H{
+			"project":           projectResp,
+			"stages":            []interface{}{},
+			"available_actions": []interface{}{},
+			"history":           history,
+		})
+		return
+	}
+
+	ctx := outgoingCtx(c)
 
 	var workflowFull *workflowv1.WorkflowFull
 	var transitions *workflowv1.GetAvailableTransitionsResponse
