@@ -20,29 +20,19 @@ func (h *Handler) GetProjectDetails(c *gin.Context) {
 	}
 
 	userID := c.GetInt64("userId")
+
 	userRole := c.GetString("role")
+	if userRole == "" {
+		userRole = c.GetHeader("x-user-role")
+	}
+	if userRole == "" {
+		userRole = "student" // ✅ fallback
+	}
 
 	var projectResp *projectv1.GetProjectResponse
 	var runtimeResp *projectv1.GetProjectRuntimeResponse
 
-	if userRole == "student" {
-		projectResp, err = h.projectClient.GetProject(outgoingCtx(c), &projectv1.GetProjectRequest{
-			ProjectId: projectID,
-		})
-		if err != nil {
-			MapGRPCError(c, err)
-			return
-		}
-
-		runtimeResp, err = h.projectClient.GetProjectRuntime(outgoingCtx(c), &projectv1.GetProjectRuntimeRequest{
-			ProjectId: projectID,
-		})
-		if err != nil {
-			MapGRPCError(c, err)
-			return
-		}
-
-	} else {
+	if userRole == "teacher" || userRole == "admin" {
 		ctxInternal := metadata.AppendToOutgoingContext(
 			outgoingCtx(c),
 			"x-internal-service", "admin_service",
@@ -57,6 +47,23 @@ func (h *Handler) GetProjectDetails(c *gin.Context) {
 		}
 
 		runtimeResp, err = h.projectClient.GetProjectRuntime(ctxInternal, &projectv1.GetProjectRuntimeRequest{
+			ProjectId: projectID,
+		})
+		if err != nil {
+			MapGRPCError(c, err)
+			return
+		}
+
+	} else {
+		projectResp, err = h.projectClient.GetProject(outgoingCtx(c), &projectv1.GetProjectRequest{
+			ProjectId: projectID,
+		})
+		if err != nil {
+			MapGRPCError(c, err)
+			return
+		}
+
+		runtimeResp, err = h.projectClient.GetProjectRuntime(outgoingCtx(c), &projectv1.GetProjectRuntimeRequest{
 			ProjectId: projectID,
 		})
 		if err != nil {
