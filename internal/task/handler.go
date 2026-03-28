@@ -319,7 +319,8 @@ func (h *Handler) UpdateTask(ctx context.Context, req *taskv1.UpdateTaskRequest)
 		return nil, status.Error(codes.NotFound, "task not found")
 	}
 
-	if err := h.accessChecker.CanModifyTask(ctx, existingTask, auth); err != nil {
+	err = h.accessChecker.CanModifyTask(ctx, existingTask, auth)
+	if err != nil {
 		return nil, toGRPCError(err)
 	}
 
@@ -430,7 +431,8 @@ func (h *Handler) MoveTask(ctx context.Context, req *taskv1.MoveTaskRequest) (*t
 		return nil, status.Error(codes.NotFound, "task not found")
 	}
 
-	if err := h.accessChecker.CanModifyTask(ctx, existingTask, auth); err != nil {
+	err = h.accessChecker.CanModifyTask(ctx, existingTask, auth)
+	if err != nil {
 		return nil, toGRPCError(err)
 	}
 
@@ -534,7 +536,8 @@ func (h *Handler) AssignTask(ctx context.Context, req *taskv1.AssignTaskRequest)
 		return nil, status.Error(codes.NotFound, "task not found")
 	}
 
-	if err := h.accessChecker.CanModifyTask(ctx, existingTask, auth); err != nil {
+	err = h.accessChecker.CanModifyTask(ctx, existingTask, auth)
+	if err != nil {
 		return nil, toGRPCError(err)
 	}
 
@@ -557,7 +560,8 @@ func (h *Handler) UnassignTask(ctx context.Context, req *taskv1.UnassignTaskRequ
 		return nil, status.Error(codes.NotFound, "task not found")
 	}
 
-	if err := h.accessChecker.CanModifyTask(ctx, existingTask, auth); err != nil {
+	err = h.accessChecker.CanModifyTask(ctx, existingTask, auth)
+	if err != nil {
 		return nil, toGRPCError(err)
 	}
 
@@ -603,7 +607,8 @@ func (h *Handler) UpdateComment(ctx context.Context, req *taskv1.UpdateCommentRe
 		return nil, status.Error(codes.NotFound, "comment not found")
 	}
 
-	if err := h.accessChecker.CheckTaskAccess(ctx, comment.TaskID, auth); err != nil {
+	err = h.accessChecker.CheckTaskAccess(ctx, comment.TaskID, auth)
+	if err != nil {
 		return nil, toGRPCError(err)
 	}
 

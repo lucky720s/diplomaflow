@@ -22,12 +22,11 @@ func ProvideTeamClient(cfg *Config) (teamv1.TeamServiceClient, func(), error) {
 	if err != nil {
 		return nil, nil, err
 	}
-
 	client := teamv1.NewTeamServiceClient(conn)
 	cleanup := func() { conn.Close() }
-
 	return client, cleanup, nil
 }
+
 func ProvideNotificationClient(cfg *Config) (notificationv1.NotificationServiceClient, func(), error) {
 	conn, err := grpc.NewClient(
 		cfg.Services.NotificationAddr,
@@ -43,11 +42,12 @@ func ProvideNotificationClient(cfg *Config) (notificationv1.NotificationServiceC
 // InitializeApp инициализирует приложение task_service
 func InitializeApp(cfg *Config, db *gorm.DB, logger *zap.Logger) (*Handler, func(), error) {
 	wire.Build(
-		NewRepository,
-		ProvideTeamClient,
-		ProvideNotificationClient,
-		NewService,
-		NewHandler,
+		NewRepository,             // db → Repository
+		ProvideTeamClient,         // cfg → TeamServiceClient
+		ProvideNotificationClient, // cfg → NotificationServiceClient
+		NewService,                // Repository + TeamServiceClient + NotificationServiceClient + logger → *Service
+		NewAccessChecker,          // ✅ Repository + TeamServiceClient + logger → *AccessChecker
+		NewHandler,                // *Service + *AccessChecker + logger → *Handler
 	)
 	return nil, nil, nil
 }

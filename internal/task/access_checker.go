@@ -20,13 +20,13 @@ var (
 )
 
 type AccessChecker struct {
-	repo       *repository
+	repo       Repository // ✅ интерфейс — Wire знает провайдера NewRepository
 	teamClient teamv1.TeamServiceClient
 	logger     *zap.Logger
 }
 
 func NewAccessChecker(
-	repo *repository,
+	repo Repository, // ✅ интерфейс вместо *repository
 	teamClient teamv1.TeamServiceClient,
 	logger *zap.Logger,
 ) *AccessChecker {
@@ -56,12 +56,10 @@ func (ac *AccessChecker) CheckBoardAccessByProject(ctx context.Context, projectI
 	if IsInternalCall(auth) {
 		return nil
 	}
-
 	board, err := ac.repo.GetBoardByProject(ctx, projectID)
 	if err != nil {
 		return ErrBoardNotFound
 	}
-
 	return ac.checkTeamAccess(ctx, board.TeamID, auth)
 }
 
@@ -76,12 +74,10 @@ func (ac *AccessChecker) CheckTaskAccess(ctx context.Context, taskID int64, auth
 	if IsInternalCall(auth) {
 		return nil
 	}
-
 	task, err := ac.repo.GetTask(ctx, taskID)
 	if err != nil {
 		return ErrTaskNotFound
 	}
-
 	return ac.CheckBoardAccess(ctx, task.BoardID, auth)
 }
 
@@ -89,12 +85,10 @@ func (ac *AccessChecker) CheckColumnAccess(ctx context.Context, columnID int64, 
 	if IsInternalCall(auth) {
 		return nil
 	}
-
 	column, err := ac.repo.GetColumn(ctx, columnID)
 	if err != nil {
 		return ErrColumnNotFound
 	}
-
 	return ac.CheckBoardAccess(ctx, column.BoardID, auth)
 }
 
@@ -111,13 +105,10 @@ func (ac *AccessChecker) checkTeamAccess(ctx context.Context, teamID int64, auth
 	switch auth.Role {
 	case "student":
 		return ac.checkStudentAccess(ctx, teamID, auth.UserID)
-
 	case "teacher":
 		return ac.checkTeacherAccess(ctx, teamID, teamInfo, auth)
-
 	case "admin":
 		return ac.checkAdminAccess(teamInfo, auth)
-
 	default:
 		ac.logger.Warn("unknown role",
 			zap.String("role", auth.Role),
@@ -147,19 +138,16 @@ func (ac *AccessChecker) checkTeacherAccess(
 	if teamInfo.SupervisorId != nil && *teamInfo.SupervisorId == auth.UserID {
 		return nil
 	}
-
 	isMember, _ := ac.checkMembership(ctx, teamID, auth.UserID)
 	if isMember {
 		return nil
 	}
-
 	if teamInfo.UniversityId != auth.UniversityID {
 		return ErrCrossUniversity
 	}
 	if teamInfo.DepartmentId != auth.DepartmentID {
 		return ErrCrossDepartment
 	}
-
 	return nil
 }
 
@@ -181,7 +169,6 @@ func (ac *AccessChecker) getTeamInfo(ctx context.Context, teamID int64) (*teamv1
 	if err != nil {
 		return nil, err
 	}
-
 	return resp, nil
 }
 
@@ -199,7 +186,6 @@ func (ac *AccessChecker) checkMembership(ctx context.Context, teamID, userID int
 		)
 		return false, err
 	}
-
 	return resp.IsMember, nil
 }
 
@@ -219,7 +205,6 @@ func (ac *AccessChecker) CanModifyTask(ctx context.Context, task *Task, auth Aut
 	if auth.Role == "teacher" || auth.Role == "admin" {
 		return nil
 	}
-
 	return ErrAccessDenied
 }
 
@@ -236,7 +221,6 @@ func (ac *AccessChecker) CanDeleteTask(ctx context.Context, task *Task, auth Aut
 	if auth.Role == "teacher" || auth.Role == "admin" {
 		return nil
 	}
-
 	return ErrAccessDenied
 }
 

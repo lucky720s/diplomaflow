@@ -22,6 +22,7 @@ type Repository interface {
 	CreateBoard(ctx context.Context, board *Board) error
 	GetBoard(ctx context.Context, id int64) (*Board, error)
 	GetBoardByProject(ctx context.Context, projectID int64) (*Board, error)
+	GetBoardByTeam(ctx context.Context, teamID int64) (*Board, error)
 	ListMyBoards(ctx context.Context, userID int64, role string, universityID, departmentID int64, includeColumns, includeStats bool) ([]*Board, error)
 	UpdateBoard(ctx context.Context, board *Board) error
 	DeleteBoard(ctx context.Context, id int64) error
@@ -150,6 +151,17 @@ func (r *repository) GetBoardByProject(ctx context.Context, projectID int64) (*B
 	if err := r.db.WithContext(ctx).
 		Where("project_id = ? AND deleted_at IS NULL", projectID).
 		First(&board).Error; err != nil {
+		return nil, err
+	}
+	return &board, nil
+}
+
+func (r *repository) GetBoardByTeam(ctx context.Context, teamID int64) (*Board, error) {
+	var board Board
+	err := r.db.WithContext(ctx).
+		Where("team_id = ?", teamID).
+		First(&board).Error
+	if err != nil {
 		return nil, err
 	}
 	return &board, nil
