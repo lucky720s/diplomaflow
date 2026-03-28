@@ -79,6 +79,27 @@ func (h *Handler) GetProjectDetails(c *gin.Context) {
 	}
 
 	ctx := outgoingCtx(c)
+	if userRole != "teacher" && userRole != "admin" {
+		history := h.buildHistory(projectResp)
+
+		c.JSON(http.StatusOK, gin.H{
+			"project": gin.H{
+				"id":          projectResp.ProjectId,
+				"title":       projectResp.Title,
+				"description": projectResp.Description,
+				"student_id":  projectResp.StudentId,
+				"status":      projectResp.Status,
+			},
+			"stages":            []interface{}{},
+			"available_actions": []interface{}{},
+			"history":           history,
+			"viewer": gin.H{
+				"id":   userID,
+				"role": userRole,
+			},
+		})
+		return
+	}
 
 	var workflowFull *workflowv1.WorkflowFull
 	var transitions *workflowv1.GetAvailableTransitionsResponse
