@@ -33,14 +33,19 @@ func (h *Handler) GetProjectDetails(c *gin.Context) {
 	var runtimeResp *projectv1.GetProjectRuntimeResponse
 
 	if userRole == "teacher" || userRole == "admin" {
-		ctxInternal := metadata.AppendToOutgoingContext(
-			outgoingCtx(c),
-			"x-internal-service", "admin_service",
+		ctxInternal := metadata.NewOutgoingContext(
+			c.Request.Context(),
+			metadata.Pairs(
+				"x-internal-service", "admin_service",
+				"x-user-id", strconv.FormatInt(userID, 10),
+				"x-user-role", userRole,
+			),
 		)
 
 		projectResp, err = h.projectClient.GetProject(ctxInternal, &projectv1.GetProjectRequest{
 			ProjectId: projectID,
 		})
+
 		if err != nil {
 			MapGRPCError(c, err)
 			return
@@ -49,6 +54,7 @@ func (h *Handler) GetProjectDetails(c *gin.Context) {
 		runtimeResp, err = h.projectClient.GetProjectRuntime(ctxInternal, &projectv1.GetProjectRuntimeRequest{
 			ProjectId: projectID,
 		})
+
 		if err != nil {
 			MapGRPCError(c, err)
 			return
