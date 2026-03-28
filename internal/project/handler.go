@@ -101,7 +101,6 @@ func (h *Handler) GetProject(ctx context.Context, req *projectv1.GetProjectReque
 	var err error
 
 	if internalSvc != "" {
-		// SECURITY: internal доступ только для реальных внутренних сервисов, НЕ для api_gateway
 		if permErr := requireInternal(ctx, "admin_service", "workflow_service"); permErr != nil {
 			return nil, permErr
 		}
