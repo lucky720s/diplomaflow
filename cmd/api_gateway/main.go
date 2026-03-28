@@ -398,7 +398,8 @@ func main() {
 			// convenience: projects by team
 			adminTech.GET("/teams/:id/projects", handler.AdminTechListTeamProjects)
 		}
-		departments := v1.Group("/api/v1/departments")
+		departments := v1.Group("/departments")
+		departments.Use(middleware.AuthMiddleware(cfg.JWTSecret))
 		{
 			departments.GET("/:id/dashboard", handler.GetDepartmentDashboard)
 			departments.GET("/:id/submissions", handler.GetDepartmentSubmissions)
