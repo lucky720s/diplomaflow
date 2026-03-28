@@ -10,6 +10,7 @@ import (
 	projectv1 "github.com/lucky720s/diplomaflow/pkg/protobuf/project/v1"
 	taskv1 "github.com/lucky720s/diplomaflow/pkg/protobuf/task/v1"
 	teamv1 "github.com/lucky720s/diplomaflow/pkg/protobuf/team/v1"
+	"google.golang.org/grpc/metadata"
 	"google.golang.org/protobuf/types/known/fieldmaskpb"
 	"google.golang.org/protobuf/types/known/timestamppb"
 )
@@ -786,27 +787,34 @@ func (h *Handler) GetBoardStats(c *gin.Context) {
 func (h *Handler) GetMyTasks(c *gin.Context) {
 	userID := c.GetInt64("userId")
 
-	page := int32(1)
-	pageSize := int32(20)
-	if p := c.Query("page"); p != "" {
-		if v, _ := strconv.ParseInt(p, 10, 32); v > 0 {
-			page = int32(v)
-		}
+	role := c.GetString("role")
+	if role == "" {
+		role = "user"
+	}
+	if role == "user" {
+		role = "student"
 	}
 
-	resp, err := h.taskClient.GetMyTasks(c.Request.Context(), &taskv1.GetMyTasksRequest{
-		UserId:           userID,
-		OnlyAssigned:     c.Query("only_assigned") == "true",
-		OnlyCreated:      c.Query("only_created") == "true",
-		OnlyWatching:     c.Query("only_watching") == "true",
-		IncludeCompleted: c.Query("include_completed") == "true",
-		Page:             page,
-		PageSize:         pageSize,
+	ctx := metadata.NewOutgoingContext(
+		c.Request.Context(),
+		metadata.Pairs(
+			"x-user-id", strconv.FormatInt(userID, 10),
+			"x-user-role", role,
+			"x-university-id", strconv.FormatInt(c.GetInt64("universityId"), 10),
+			"x-department-id", strconv.FormatInt(c.GetInt64("departmentId"), 10),
+		),
+	)
+
+	resp, err := h.taskClient.GetMyTasks(ctx, &taskv1.GetMyTasksRequest{
+		OnlyAssigned: c.Query("only_assigned") == "true",
+		Page:         1,
+		PageSize:     20,
 	})
 	if err != nil {
 		MapGRPCError(c, err)
 		return
 	}
+
 	c.JSON(http.StatusOK, resp)
 }
 

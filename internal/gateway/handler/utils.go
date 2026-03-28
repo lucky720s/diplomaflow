@@ -1,12 +1,14 @@
 package handler
 
 import (
+	"context"
 	"net/http"
 	"strconv"
 	"strings"
 
 	"github.com/gin-gonic/gin"
 	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/metadata"
 	"google.golang.org/grpc/status"
 )
 
@@ -53,4 +55,25 @@ func MapGRPCError(c *gin.Context, err error) {
 		"error": st.Message(),
 		"code":  st.Code().String(),
 	})
+}
+func taskCtx(c *gin.Context) context.Context {
+	userID := c.GetInt64("userId")
+
+	role := c.GetString("role")
+	if role == "" {
+		role = "user"
+	}
+	if role == "user" {
+		role = "student"
+	}
+
+	return metadata.NewOutgoingContext(
+		c.Request.Context(),
+		metadata.Pairs(
+			"x-user-id", strconv.FormatInt(userID, 10),
+			"x-user-role", role,
+			"x-university-id", c.GetHeader("x-university-id"),
+			"x-department-id", c.GetHeader("x-department-id"),
+		),
+	)
 }
