@@ -398,6 +398,12 @@ func main() {
 			// convenience: projects by team
 			adminTech.GET("/teams/:id/projects", handler.AdminTechListTeamProjects)
 		}
+		departments := v1.Group("/api/v1/departments")
+		{
+			departments.GET("/:id/dashboard", handler.GetDepartmentDashboard)
+			departments.GET("/:id/submissions", handler.GetDepartmentSubmissions)
+			departments.GET("/:id/topic-registrations", handler.GetDepartmentTopicRegistrations)
+		}
 
 	}
 
