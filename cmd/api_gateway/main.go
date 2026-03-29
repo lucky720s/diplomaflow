@@ -354,6 +354,13 @@ func main() {
 			supervisorsPanel.GET("/submissions", handler.ListSupervisorSubmissions)
 			supervisorsPanel.POST("/topic-registrations/:id/review", handler.ReviewTopicRegistration)
 		}
+
+		students := v1.Group("/students")
+		students.Use(middleware.AuthMiddleware(cfg.JWTSecret))
+		{
+			students.GET("/supervisor-requests", handler.ListSupervisorRequestsForStudent)
+		}
+
 		norm := v1.Group("/norm-control")
 		norm.Use(middleware.AuthMiddleware(cfg.JWTSecret))
 		norm.Use(middleware.RBACMiddleware("admin", "norm_control"))

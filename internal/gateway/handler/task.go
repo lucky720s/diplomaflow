@@ -10,7 +10,6 @@ import (
 	projectv1 "github.com/lucky720s/diplomaflow/pkg/protobuf/project/v1"
 	taskv1 "github.com/lucky720s/diplomaflow/pkg/protobuf/task/v1"
 	teamv1 "github.com/lucky720s/diplomaflow/pkg/protobuf/team/v1"
-	"google.golang.org/grpc/metadata"
 	"google.golang.org/protobuf/types/known/fieldmaskpb"
 	"google.golang.org/protobuf/types/known/timestamppb"
 )
@@ -72,7 +71,7 @@ func (h *Handler) resolveBoardID(c *gin.Context) (int64, error) {
 		if err != nil || projectID <= 0 {
 			return 0, errors.New("invalid project_id")
 		}
-		br, err := h.taskClient.GetBoardByProject(c.Request.Context(), &taskv1.GetBoardByProjectRequest{
+		br, err := h.taskClient.GetBoardByProject(taskCtx(c), &taskv1.GetBoardByProjectRequest{
 			ProjectId: projectID,
 		})
 		if err != nil {
@@ -98,7 +97,7 @@ func (h *Handler) resolveBoardID(c *gin.Context) (int64, error) {
 		if err != nil {
 			return 0, err
 		}
-		br, err := h.taskClient.GetBoardByProject(c.Request.Context(), &taskv1.GetBoardByProjectRequest{
+		br, err := h.taskClient.GetBoardByProject(taskCtx(c), &taskv1.GetBoardByProjectRequest{
 			ProjectId: projectID,
 		})
 		if err != nil {
@@ -110,7 +109,7 @@ func (h *Handler) resolveBoardID(c *gin.Context) (int64, error) {
 		return br.Board.Id, nil
 
 	default: // teacher/admin/others
-		lr, err := h.taskClient.ListMyBoards(c.Request.Context(), &taskv1.ListMyBoardsRequest{
+		lr, err := h.taskClient.ListMyBoards(taskCtx(c), &taskv1.ListMyBoardsRequest{
 			UserId: userID,
 			Role:   role,
 		})
@@ -140,7 +139,7 @@ func (h *Handler) GetBoard(c *gin.Context) {
 	includeStats := c.Query("include_stats") == "true"
 	includeTasks := c.Query("include_tasks") == "true"
 
-	resp, err := h.taskClient.GetBoard(c.Request.Context(), &taskv1.GetBoardRequest{
+	resp, err := h.taskClient.GetBoard(taskCtx(c), &taskv1.GetBoardRequest{
 		BoardId:        boardID,
 		IncludeColumns: includeColumns,
 		IncludeStats:   includeStats,
@@ -165,7 +164,7 @@ func (h *Handler) GetBoardByProject(c *gin.Context) {
 	includeStats := c.Query("include_stats") == "true"
 	includeTasks := c.Query("include_tasks") == "true"
 
-	resp, err := h.taskClient.GetBoardByProject(c.Request.Context(), &taskv1.GetBoardByProjectRequest{
+	resp, err := h.taskClient.GetBoardByProject(taskCtx(c), &taskv1.GetBoardByProjectRequest{
 		ProjectId:      projectID,
 		IncludeColumns: includeColumns,
 		IncludeStats:   includeStats,
@@ -226,7 +225,7 @@ func (h *Handler) UpdateBoard(c *gin.Context) {
 		paths = append(paths, "description")
 	}
 
-	resp, err := h.taskClient.UpdateBoard(c.Request.Context(), &taskv1.UpdateBoardRequest{
+	resp, err := h.taskClient.UpdateBoard(taskCtx(c), &taskv1.UpdateBoardRequest{
 		BoardId:     boardID,
 		Name:        req.Name,
 		Description: req.Description,
@@ -250,7 +249,7 @@ func (h *Handler) ListColumns(c *gin.Context) {
 
 	includeTaskCount := c.Query("include_task_count") == "true"
 
-	resp, err := h.taskClient.ListColumns(c.Request.Context(), &taskv1.ListColumnsRequest{
+	resp, err := h.taskClient.ListColumns(taskCtx(c), &taskv1.ListColumnsRequest{
 		BoardId:          boardID,
 		IncludeTaskCount: includeTaskCount,
 	})
@@ -282,7 +281,7 @@ func (h *Handler) CreateColumn(c *gin.Context) {
 		return
 	}
 
-	resp, err := h.taskClient.CreateColumn(c.Request.Context(), &taskv1.CreateColumnRequest{
+	resp, err := h.taskClient.CreateColumn(taskCtx(c), &taskv1.CreateColumnRequest{
 		BoardId:      boardID,
 		Name:         req.Name,
 		Slug:         req.Slug,
@@ -318,7 +317,7 @@ func (h *Handler) UpdateColumn(c *gin.Context) {
 		return
 	}
 
-	resp, err := h.taskClient.UpdateColumn(c.Request.Context(), &taskv1.UpdateColumnRequest{
+	resp, err := h.taskClient.UpdateColumn(taskCtx(c), &taskv1.UpdateColumnRequest{
 		ColumnId:    columnID,
 		Name:        req.Name,
 		Description: req.Description,
@@ -345,7 +344,7 @@ func (h *Handler) DeleteColumn(c *gin.Context) {
 		moveToColumnID, _ = strconv.ParseInt(m, 10, 64)
 	}
 
-	_, err = h.taskClient.DeleteColumn(c.Request.Context(), &taskv1.DeleteColumnRequest{
+	_, err = h.taskClient.DeleteColumn(taskCtx(c), &taskv1.DeleteColumnRequest{
 		ColumnId:            columnID,
 		MoveTasksToColumnId: moveToColumnID,
 	})
@@ -371,7 +370,7 @@ func (h *Handler) ReorderColumns(c *gin.Context) {
 		return
 	}
 
-	resp, err := h.taskClient.ReorderColumns(c.Request.Context(), &taskv1.ReorderColumnsRequest{
+	resp, err := h.taskClient.ReorderColumns(taskCtx(c), &taskv1.ReorderColumnsRequest{
 		BoardId:   boardID,
 		ColumnIds: req.ColumnIDs,
 	})
@@ -435,7 +434,7 @@ func (h *Handler) CreateTask(c *gin.Context) {
 		}
 	}
 
-	resp, err := h.taskClient.CreateTask(c.Request.Context(), grpcReq)
+	resp, err := h.taskClient.CreateTask(taskCtx(c), grpcReq)
 	if err != nil {
 		MapGRPCError(c, err)
 		return
@@ -450,7 +449,7 @@ func (h *Handler) GetTask(c *gin.Context) {
 		return
 	}
 
-	resp, err := h.taskClient.GetTask(c.Request.Context(), &taskv1.GetTaskRequest{
+	resp, err := h.taskClient.GetTask(taskCtx(c), &taskv1.GetTaskRequest{
 		TaskId: taskID,
 	})
 	if err != nil {
@@ -494,7 +493,7 @@ func (h *Handler) UpdateTask(c *gin.Context) {
 		priority = taskv1.TaskPriority_TASK_PRIORITY_URGENT
 	}
 
-	resp, err := h.taskClient.UpdateTask(c.Request.Context(), &taskv1.UpdateTaskRequest{
+	resp, err := h.taskClient.UpdateTask(taskCtx(c), &taskv1.UpdateTaskRequest{
 		TaskId:           taskID,
 		Title:            req.Title,
 		Description:      req.Description,
@@ -520,7 +519,7 @@ func (h *Handler) DeleteTask(c *gin.Context) {
 	}
 	userID := c.GetInt64("userId")
 
-	_, err = h.taskClient.DeleteTask(c.Request.Context(), &taskv1.DeleteTaskRequest{
+	_, err = h.taskClient.DeleteTask(taskCtx(c), &taskv1.DeleteTaskRequest{
 		TaskId:    taskID,
 		DeletedBy: userID,
 	})
@@ -556,7 +555,7 @@ func (h *Handler) ListTasks(c *gin.Context) {
 		}
 	}
 
-	resp, err := h.taskClient.ListTasks(c.Request.Context(), &taskv1.ListTasksRequest{
+	resp, err := h.taskClient.ListTasks(taskCtx(c), &taskv1.ListTasksRequest{
 		BoardId:     boardID,
 		ColumnId:    columnID,
 		AssigneeId:  assigneeID,
@@ -593,7 +592,7 @@ func (h *Handler) MoveTask(c *gin.Context) {
 		return
 	}
 
-	resp, err := h.taskClient.MoveTask(c.Request.Context(), &taskv1.MoveTaskRequest{
+	resp, err := h.taskClient.MoveTask(taskCtx(c), &taskv1.MoveTaskRequest{
 		TaskId:     taskID,
 		ToColumnId: req.ToColumnID,
 		Position:   req.Position,
@@ -621,7 +620,7 @@ func (h *Handler) ReorderTasks(c *gin.Context) {
 		return
 	}
 
-	_, err = h.taskClient.ReorderTasks(c.Request.Context(), &taskv1.ReorderTasksRequest{
+	_, err = h.taskClient.ReorderTasks(taskCtx(c), &taskv1.ReorderTasksRequest{
 		ColumnId: columnID,
 		TaskIds:  req.TaskIDs,
 	})
@@ -650,7 +649,7 @@ func (h *Handler) AssignTask(c *gin.Context) {
 		return
 	}
 
-	resp, err := h.taskClient.AssignTask(c.Request.Context(), &taskv1.AssignTaskRequest{
+	resp, err := h.taskClient.AssignTask(taskCtx(c), &taskv1.AssignTaskRequest{
 		TaskId:     taskID,
 		AssigneeId: req.AssigneeID,
 		AssignedBy: userID,
@@ -670,7 +669,7 @@ func (h *Handler) UnassignTask(c *gin.Context) {
 	}
 	userID := c.GetInt64("userId")
 
-	resp, err := h.taskClient.UnassignTask(c.Request.Context(), &taskv1.UnassignTaskRequest{
+	resp, err := h.taskClient.UnassignTask(taskCtx(c), &taskv1.UnassignTaskRequest{
 		TaskId:       taskID,
 		UnassignedBy: userID,
 	})
@@ -700,7 +699,7 @@ func (h *Handler) CreateTaskComment(c *gin.Context) {
 		return
 	}
 
-	resp, err := h.taskClient.CreateComment(c.Request.Context(), &taskv1.CreateCommentRequest{
+	resp, err := h.taskClient.CreateComment(taskCtx(c), &taskv1.CreateCommentRequest{
 		TaskId:         taskID,
 		AuthorId:       userID,
 		Content:        req.Content,
@@ -728,7 +727,7 @@ func (h *Handler) ListTaskComments(c *gin.Context) {
 		}
 	}
 
-	resp, err := h.taskClient.ListComments(c.Request.Context(), &taskv1.ListCommentsRequest{
+	resp, err := h.taskClient.ListComments(taskCtx(c), &taskv1.ListCommentsRequest{
 		TaskId:   taskID,
 		Page:     page,
 		PageSize: pageSize,
@@ -748,7 +747,7 @@ func (h *Handler) DeleteTaskComment(c *gin.Context) {
 	}
 	userID := c.GetInt64("userId")
 
-	_, err = h.taskClient.DeleteComment(c.Request.Context(), &taskv1.DeleteCommentRequest{
+	_, err = h.taskClient.DeleteComment(taskCtx(c), &taskv1.DeleteCommentRequest{
 		CommentId: commentID,
 		DeletedBy: userID,
 	})
@@ -771,7 +770,7 @@ func (h *Handler) GetBoardStats(c *gin.Context) {
 	includeMemberStats := c.Query("include_member_stats") == "true"
 	includeDailyStats := c.Query("include_daily_stats") == "true"
 
-	resp, err := h.taskClient.GetBoardStats(c.Request.Context(), &taskv1.GetBoardStatsRequest{
+	resp, err := h.taskClient.GetBoardStats(taskCtx(c), &taskv1.GetBoardStatsRequest{
 		BoardId:            boardID,
 		IncludeMemberStats: includeMemberStats,
 		IncludeDailyStats:  includeDailyStats,
@@ -784,27 +783,7 @@ func (h *Handler) GetBoardStats(c *gin.Context) {
 }
 
 func (h *Handler) GetMyTasks(c *gin.Context) {
-	userID := c.GetInt64("userId")
-
-	role := c.GetString("role")
-	if role == "" {
-		role = "user"
-	}
-	if role == "user" {
-		role = "student"
-	}
-
-	ctx := metadata.NewOutgoingContext(
-		c.Request.Context(),
-		metadata.Pairs(
-			"x-user-id", strconv.FormatInt(userID, 10),
-			"x-user-role", role,
-			"x-university-id", strconv.FormatInt(c.GetInt64("universityId"), 10),
-			"x-department-id", strconv.FormatInt(c.GetInt64("departmentId"), 10),
-		),
-	)
-
-	resp, err := h.taskClient.GetMyTasks(ctx, &taskv1.GetMyTasksRequest{
+	resp, err := h.taskClient.GetMyTasks(taskCtx(c), &taskv1.GetMyTasksRequest{
 		OnlyAssigned: c.Query("only_assigned") == "true",
 		Page:         1,
 		PageSize:     20,
@@ -829,7 +808,7 @@ func (h *Handler) GetOverdueTasks(c *gin.Context) {
 	page := int32(1)
 	pageSize := int32(20)
 
-	resp, err := h.taskClient.GetOverdueTasks(c.Request.Context(), &taskv1.GetOverdueTasksRequest{
+	resp, err := h.taskClient.GetOverdueTasks(taskCtx(c), &taskv1.GetOverdueTasksRequest{
 		BoardId:    boardID,
 		AssigneeId: assigneeID,
 		Page:       page,
@@ -873,7 +852,7 @@ func (h *Handler) GetUpcomingDeadlines(c *gin.Context) {
 		boardID = bid
 	}
 
-	resp, err := h.taskClient.GetUpcomingDeadlines(c.Request.Context(), &taskv1.GetUpcomingDeadlinesRequest{
+	resp, err := h.taskClient.GetUpcomingDeadlines(taskCtx(c), &taskv1.GetUpcomingDeadlinesRequest{
 		BoardId:   boardID,
 		UserId:    userID,
 		DaysAhead: daysAhead,
@@ -899,7 +878,7 @@ func (h *Handler) GetTaskActivity(c *gin.Context) {
 	page := int32(1)
 	pageSize := int32(20)
 
-	resp, err := h.taskClient.GetTaskActivity(c.Request.Context(), &taskv1.GetTaskActivityRequest{
+	resp, err := h.taskClient.GetTaskActivity(taskCtx(c), &taskv1.GetTaskActivityRequest{
 		TaskId:   taskID,
 		Page:     page,
 		PageSize: pageSize,
@@ -928,7 +907,7 @@ func (h *Handler) AddTaskWatcher(c *gin.Context) {
 		return
 	}
 
-	_, err = h.taskClient.AddWatcher(c.Request.Context(), &taskv1.AddWatcherRequest{
+	_, err = h.taskClient.AddWatcher(taskCtx(c), &taskv1.AddWatcherRequest{
 		TaskId: taskID,
 		UserId: req.UserID,
 	})
@@ -954,7 +933,7 @@ func (h *Handler) RemoveTaskWatcher(c *gin.Context) {
 		return
 	}
 
-	_, err = h.taskClient.RemoveWatcher(c.Request.Context(), &taskv1.RemoveWatcherRequest{
+	_, err = h.taskClient.RemoveWatcher(taskCtx(c), &taskv1.RemoveWatcherRequest{
 		TaskId: taskID,
 		UserId: req.UserID,
 	})
@@ -972,7 +951,7 @@ func (h *Handler) ListTaskWatchers(c *gin.Context) {
 		return
 	}
 
-	resp, err := h.taskClient.ListWatchers(c.Request.Context(), &taskv1.ListWatchersRequest{
+	resp, err := h.taskClient.ListWatchers(taskCtx(c), &taskv1.ListWatchersRequest{
 		TaskId: taskID,
 	})
 	if err != nil {
