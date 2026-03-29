@@ -670,10 +670,29 @@ func (h *Handler) ListSubmissions(ctx context.Context, req *adminv1.ListSubmissi
 	}
 
 	var pbSubmissions []*adminv1.SubmissionInfo
+
 	for _, sub := range submissions {
 		var dataMap map[string]interface{}
 		_ = json.Unmarshal(sub.Data, &dataMap)
 		pbData, _ := structpb.NewStruct(dataMap)
+
+		// ✅ files
+		var files []struct {
+			FileName    string `json:"file_name"`
+			DownloadURL string `json:"download_url"`
+		}
+
+		if len(sub.Files) > 0 {
+			_ = json.Unmarshal(sub.Files, &files)
+		}
+
+		var pbFiles []*adminv1.FileAttachment
+		for _, f := range files {
+			pbFiles = append(pbFiles, &adminv1.FileAttachment{
+				FileName:    f.FileName,
+				DownloadUrl: f.DownloadURL,
+			})
+		}
 
 		pbSub := &adminv1.SubmissionInfo{
 			Id:          sub.ID,
@@ -684,8 +703,12 @@ func (h *Handler) ListSubmissions(ctx context.Context, req *adminv1.ListSubmissi
 			Status:      sub.Status,
 			Data:        pbData,
 			SubmittedAt: timestamppb.New(sub.CreatedAt),
-			TeamName:    sub.TeamName,
-			StepName:    sub.StepName,
+
+			// ✅ КЛЮЧЕВОЕ
+			TeamName: sub.TeamName,
+			StepName: sub.StepName,
+
+			Files: pbFiles,
 		}
 
 		if sub.ReviewerID != nil {

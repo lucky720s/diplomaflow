@@ -382,11 +382,11 @@ func (r *repository) ListSubmissions(ctx context.Context, filter SubmissionFilte
 	var total int64
 
 	query := r.db.WithContext(ctx).
-		Table("admin_submissions s").
+		Table("admin_submissions AS s").
 		Select(`
 			s.*,
-			t.name as team_name,
-			st.name as step_name
+			t.name AS team_name,
+			st.name AS step_name
 		`).
 		Joins("LEFT JOIN teams t ON t.id = s.team_id").
 		Joins("LEFT JOIN projects p ON p.id = s.project_id").
@@ -401,12 +401,21 @@ func (r *repository) ListSubmissions(ctx context.Context, filter SubmissionFilte
 		`).
 		Joins("LEFT JOIN states st ON st.id = latest_state.to_state_id")
 
+	// ✅ фильтры
+	if filter.DepartmentID > 0 {
+		query = query.Where("p.department_id = ?", filter.DepartmentID)
+	}
+
 	if filter.ProjectID > 0 {
 		query = query.Where("s.project_id = ?", filter.ProjectID)
 	}
 
 	if filter.TeamID > 0 {
 		query = query.Where("s.team_id = ?", filter.TeamID)
+	}
+
+	if filter.StepID > 0 {
+		query = query.Where("s.step_id = ?", filter.StepID)
 	}
 
 	if filter.Status != "" {
@@ -416,7 +425,6 @@ func (r *repository) ListSubmissions(ctx context.Context, filter SubmissionFilte
 	if err := query.Count(&total).Error; err != nil {
 		return nil, 0, err
 	}
-
 	if filter.Limit > 0 {
 		query = query.Limit(filter.Limit)
 	}
