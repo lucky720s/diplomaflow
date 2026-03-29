@@ -189,8 +189,7 @@ func (h *Handler) ListMyBoards(c *gin.Context) {
 
 	includeColumns := c.Query("include_columns") == "true"
 	includeStats := c.Query("include_stats") == "true"
-
-	resp, err := h.taskClient.ListMyBoards(c.Request.Context(), &taskv1.ListMyBoardsRequest{
+	resp, err := h.taskClient.ListMyBoards(taskCtx(c), &taskv1.ListMyBoardsRequest{
 		UserId:         userID,
 		Role:           role,
 		IncludeColumns: includeColumns,
