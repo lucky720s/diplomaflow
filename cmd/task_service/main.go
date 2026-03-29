@@ -58,7 +58,9 @@ func main() {
 	}
 
 	// gRPC server
-	grpcServer := grpc.NewServer()
+	grpcServer := grpc.NewServer(
+		grpc.UnaryInterceptor(task.AuthorizationInterceptor()),
+	)
 	taskv1.RegisterTaskServiceServer(grpcServer, h)
 
 	// Health check
