@@ -100,6 +100,8 @@ type Submission struct {
 	CreatedAt time.Time
 	UpdatedAt time.Time
 	DeletedAt gorm.DeletedAt `gorm:"index"`
+	TeamName  string         `gorm:"-"`
+	StepName  string         `gorm:"-"`
 }
 
 type SubmissionReview struct {

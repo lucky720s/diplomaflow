@@ -661,6 +661,7 @@ func (h *Handler) ListSubmissions(ctx context.Context, req *adminv1.ListSubmissi
 		Status:       req.Status,
 		Limit:        pageSize,
 		Offset:       (page - 1) * pageSize,
+		ProjectID:    req.ProjectId,
 	}
 
 	submissions, total, err := h.service.ListSubmissions(ctx, filter)
@@ -683,6 +684,8 @@ func (h *Handler) ListSubmissions(ctx context.Context, req *adminv1.ListSubmissi
 			Status:      sub.Status,
 			Data:        pbData,
 			SubmittedAt: timestamppb.New(sub.CreatedAt),
+			TeamName:    sub.TeamName,
+			StepName:    sub.StepName,
 		}
 
 		if sub.ReviewerID != nil {
