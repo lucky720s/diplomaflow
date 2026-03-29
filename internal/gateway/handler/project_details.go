@@ -1,6 +1,7 @@
 package handler
 
 import (
+	"context"
 	"net/http"
 	"strconv"
 
@@ -25,11 +26,11 @@ func (h *Handler) GetProjectDetails(c *gin.Context) {
 		userRole = "user"
 	}
 
-	var projectResp *projectv1.GetProjectResponse
-	var runtimeResp *projectv1.GetProjectRuntimeResponse
+	var ctx context.Context
 
+	// ✅ teacher/admin → internal
 	if userRole == "teacher" || userRole == "admin" {
-		ctxInternal := metadata.NewOutgoingContext(
+		ctx = metadata.NewOutgoingContext(
 			c.Request.Context(),
 			metadata.Pairs(
 				"x-internal-service", "admin_service",
@@ -37,41 +38,35 @@ func (h *Handler) GetProjectDetails(c *gin.Context) {
 				"x-user-role", userRole,
 			),
 		)
-
-		projectResp, err = h.projectClient.GetProject(ctxInternal, &projectv1.GetProjectRequest{
-			ProjectId: projectID,
-		})
-		if err != nil {
-			MapGRPCError(c, err)
-			return
-		}
-
-		runtimeResp, err = h.projectClient.GetProjectRuntime(ctxInternal, &projectv1.GetProjectRuntimeRequest{
-			ProjectId: projectID,
-		})
-		if err != nil {
-			MapGRPCError(c, err)
-			return
-		}
-
 	} else {
-		projectResp, err = h.projectClient.GetProject(outgoingCtx(c), &projectv1.GetProjectRequest{
-			ProjectId: projectID,
-		})
-		if err != nil {
-			MapGRPCError(c, err)
-			return
-		}
+		// ✅ student → обычный ctx
+		ctx = outgoingCtx(c)
+	}
+
+	// ✅ ВСЕГДА получаем проект
+	projectResp, err := h.projectClient.GetProject(ctx, &projectv1.GetProjectRequest{
+		ProjectId: projectID,
+	})
+	if err != nil {
+		MapGRPCError(c, err)
+		return
+	}
+
+	// ✅ ВСЕГДА пытаемся получить runtime
+	runtimeResp, err := h.projectClient.GetProjectRuntime(ctx, &projectv1.GetProjectRuntimeRequest{
+		ProjectId: projectID,
+	})
+	if err != nil {
+		// ❗ важно: не падаем, а продолжаем
+		runtimeResp = nil
+	}
+
+	// ✅ если runtime нет
+	if runtimeResp == nil || runtimeResp.CurrentStateId == 0 {
 		history := h.buildHistory(projectResp)
 
 		c.JSON(http.StatusOK, gin.H{
-			"project": gin.H{
-				"id":          projectResp.ProjectId,
-				"title":       projectResp.Title,
-				"description": projectResp.Description,
-				"student_id":  projectResp.StudentId,
-				"status":      projectResp.Status,
-			},
+			"project":           projectResp,
 			"stages":            []interface{}{},
 			"available_actions": []interface{}{},
 			"history":           history,
@@ -83,20 +78,7 @@ func (h *Handler) GetProjectDetails(c *gin.Context) {
 		return
 	}
 
-	if runtimeResp == nil || runtimeResp.CurrentStateId == 0 {
-		history := h.buildHistory(projectResp)
-
-		c.JSON(http.StatusOK, gin.H{
-			"project":           projectResp,
-			"stages":            []interface{}{},
-			"available_actions": []interface{}{},
-			"history":           history,
-		})
-		return
-	}
-
-	ctx := outgoingCtx(c)
-
+	// ✅ workflow
 	var workflowFull *workflowv1.WorkflowFull
 	var transitions *workflowv1.GetAvailableTransitionsResponse
 
