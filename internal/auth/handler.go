@@ -30,7 +30,7 @@ type AuthService interface {
 	RevokeDepartmentRole(ctx context.Context, userID, departmentID, roleID int64, revokedBy int64, comment string) error
 	ListUserDepartmentRoleSlugs(ctx context.Context, userID, departmentID int64) ([]string, error)
 	GetUser(ctx context.Context, userID int64) (*User, error)
-	UpdateUser(ctx context.Context, userID int64, email, firstName, lastName, role string, universityID, departmentID int64, requesterRole string) (*User, error)
+	UpdateUser(ctx context.Context, userID int64, email, firstName, lastName, role string, universityID, departmentID int64, isActive *bool, requesterRole string) (*User, error)
 	DeleteUser(ctx context.Context, userID, requesterID int64) error
 	RefreshToken(ctx context.Context, clientToken, userAgent, ip string) (string, string, error)
 	ListSessions(ctx context.Context, userID int64) ([]*RefreshToken, error)
@@ -158,6 +158,7 @@ func (h *Handler) Login(ctx context.Context, req *authv1.LoginRequest) (*authv1.
 	if req == nil || strings.TrimSpace(req.Email) == "" || strings.TrimSpace(req.Password) == "" {
 		return nil, status.Error(codes.InvalidArgument, "email and password are required")
 	}
+
 	ip, userAgent := pickClientInfo(ctx, req.IpAddress, req.UserAgent)
 
 	accessToken, refreshToken, err := h.service.Login(ctx, req.Email, req.Password, userAgent, ip)
@@ -245,6 +246,7 @@ func (h *Handler) ListUsers(ctx context.Context, req *authv1.ListUsersRequest) (
 			Role:         u.Role,
 			UniversityId: u.UniversityID,
 			DepartmentId: u.DepartmentID,
+			IsActive:     &u.IsActive,
 		})
 	}
 
@@ -306,6 +308,7 @@ func (h *Handler) BatchGetUserPreviews(ctx context.Context, req *authv1.BatchGet
 			Role:         u.Role,
 			UniversityId: u.UniversityID,
 			DepartmentId: u.DepartmentID,
+			IsActive:     &u.IsActive,
 		})
 	}
 
@@ -493,6 +496,7 @@ func (h *Handler) GetUser(ctx context.Context, req *authv1.GetUserRequest) (*aut
 			Role:         user.Role,
 			UniversityId: user.UniversityID,
 			DepartmentId: user.DepartmentID,
+			IsActive:     &user.IsActive,
 		},
 	}, nil
 }
@@ -513,6 +517,9 @@ func (h *Handler) UpdateUser(ctx context.Context, req *authv1.UpdateUserRequest)
 			requesterRole = v[0]
 		}
 	}
+	if req.IsActive != nil && requesterRole != "admin" {
+		return nil, status.Error(codes.PermissionDenied, "only admin can change is_active")
+	}
 
 	user, err := h.service.UpdateUser(
 		ctx,
@@ -523,6 +530,7 @@ func (h *Handler) UpdateUser(ctx context.Context, req *authv1.UpdateUserRequest)
 		req.Role,
 		req.UniversityId,
 		req.DepartmentId,
+		req.IsActive,
 		requesterRole,
 	)
 	if err != nil {
@@ -545,6 +553,7 @@ func (h *Handler) UpdateUser(ctx context.Context, req *authv1.UpdateUserRequest)
 			Role:         user.Role,
 			UniversityId: user.UniversityID,
 			DepartmentId: user.DepartmentID,
+			IsActive:     &user.IsActive,
 		},
 	}, nil
 }

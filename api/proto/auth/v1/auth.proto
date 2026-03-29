@@ -100,7 +100,9 @@ message UserPreview {
   string role = 5;
   int64 university_id = 6;
   int64 department_id = 7;
+  optional bool is_active = 8;
 }
+
 
 message ListUsersResponse {
   repeated UserPreview users = 1;
@@ -177,6 +179,8 @@ message UpdateUserRequest {
   string role = 5;           // student|teacher|admin
   int64 university_id = 6;
   int64 department_id = 7;
+  optional bool is_active = 8;
+
 }
 
 message UpdateUserResponse {

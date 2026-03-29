@@ -499,6 +499,7 @@ type UserPreview struct {
 	Role          string                 `protobuf:"bytes,5,opt,name=role,proto3" json:"role,omitempty"`
 	UniversityId  int64                  `protobuf:"varint,6,opt,name=university_id,json=universityId,proto3" json:"university_id,omitempty"`
 	DepartmentId  int64                  `protobuf:"varint,7,opt,name=department_id,json=departmentId,proto3" json:"department_id,omitempty"`
+	IsActive      *bool                  `protobuf:"varint,8,opt,name=is_active,json=isActive,proto3,oneof" json:"is_active,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -580,6 +581,13 @@ func (x *UserPreview) GetDepartmentId() int64 {
 		return x.DepartmentId
 	}
 	return 0
+}
+
+func (x *UserPreview) GetIsActive() bool {
+	if x != nil && x.IsActive != nil {
+		return *x.IsActive
+	}
+	return false
 }
 
 type ListUsersResponse struct {
@@ -1305,6 +1313,7 @@ type UpdateUserRequest struct {
 	Role          string `protobuf:"bytes,5,opt,name=role,proto3" json:"role,omitempty"` // student|teacher|admin
 	UniversityId  int64  `protobuf:"varint,6,opt,name=university_id,json=universityId,proto3" json:"university_id,omitempty"`
 	DepartmentId  int64  `protobuf:"varint,7,opt,name=department_id,json=departmentId,proto3" json:"department_id,omitempty"`
+	IsActive      *bool  `protobuf:"varint,8,opt,name=is_active,json=isActive,proto3,oneof" json:"is_active,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -1386,6 +1395,13 @@ func (x *UpdateUserRequest) GetDepartmentId() int64 {
 		return x.DepartmentId
 	}
 	return 0
+}
+
+func (x *UpdateUserRequest) GetIsActive() bool {
+	if x != nil && x.IsActive != nil {
+		return *x.IsActive
+	}
+	return false
 }
 
 type UpdateUserResponse struct {
@@ -2309,7 +2325,7 @@ const file_auth_v1_auth_proto_rawDesc = "" +
 	"\x04role\x18\x03 \x01(\tR\x04role\x12\x12\n" +
 	"\x04page\x18\x04 \x01(\x05R\x04page\x12\x1b\n" +
 	"\tpage_size\x18\x05 \x01(\x05R\bpageSize\x12&\n" +
-	"\x0fexclude_user_id\x18\x06 \x01(\x03R\rexcludeUserId\"\xcd\x01\n" +
+	"\x0fexclude_user_id\x18\x06 \x01(\x03R\rexcludeUserId\"\xfd\x01\n" +
 	"\vUserPreview\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\x03R\x02id\x12\x14\n" +
 	"\x05email\x18\x02 \x01(\tR\x05email\x12\x1d\n" +
@@ -2318,7 +2334,10 @@ const file_auth_v1_auth_proto_rawDesc = "" +
 	"\tlast_name\x18\x04 \x01(\tR\blastName\x12\x12\n" +
 	"\x04role\x18\x05 \x01(\tR\x04role\x12#\n" +
 	"\runiversity_id\x18\x06 \x01(\x03R\funiversityId\x12#\n" +
-	"\rdepartment_id\x18\a \x01(\x03R\fdepartmentId\"`\n" +
+	"\rdepartment_id\x18\a \x01(\x03R\fdepartmentId\x12 \n" +
+	"\tis_active\x18\b \x01(\bH\x00R\bisActive\x88\x01\x01B\f\n" +
+	"\n" +
+	"_is_active\"`\n" +
 	"\x11ListUsersResponse\x12*\n" +
 	"\x05users\x18\x01 \x03(\v2\x14.auth.v1.UserPreviewR\x05users\x12\x1f\n" +
 	"\vtotal_count\x18\x02 \x01(\x03R\n" +
@@ -2367,7 +2386,7 @@ const file_auth_v1_auth_proto_rawDesc = "" +
 	"\x0eGetUserRequest\x12 \n" +
 	"\auser_id\x18\x01 \x01(\x03B\a\xfaB\x04\"\x02 \x00R\x06userId\";\n" +
 	"\x0fGetUserResponse\x12(\n" +
-	"\x04user\x18\x01 \x01(\v2\x14.auth.v1.UserPreviewR\x04user\"\xe5\x01\n" +
+	"\x04user\x18\x01 \x01(\v2\x14.auth.v1.UserPreviewR\x04user\"\x95\x02\n" +
 	"\x11UpdateUserRequest\x12 \n" +
 	"\auser_id\x18\x01 \x01(\x03B\a\xfaB\x04\"\x02 \x00R\x06userId\x12\x14\n" +
 	"\x05email\x18\x02 \x01(\tR\x05email\x12\x1d\n" +
@@ -2376,7 +2395,10 @@ const file_auth_v1_auth_proto_rawDesc = "" +
 	"\tlast_name\x18\x04 \x01(\tR\blastName\x12\x12\n" +
 	"\x04role\x18\x05 \x01(\tR\x04role\x12#\n" +
 	"\runiversity_id\x18\x06 \x01(\x03R\funiversityId\x12#\n" +
-	"\rdepartment_id\x18\a \x01(\x03R\fdepartmentId\">\n" +
+	"\rdepartment_id\x18\a \x01(\x03R\fdepartmentId\x12 \n" +
+	"\tis_active\x18\b \x01(\bH\x00R\bisActive\x88\x01\x01B\f\n" +
+	"\n" +
+	"_is_active\">\n" +
 	"\x12UpdateUserResponse\x12(\n" +
 	"\x04user\x18\x01 \x01(\v2\x14.auth.v1.UserPreviewR\x04user\"a\n" +
 	"\x11DeleteUserRequest\x12 \n" +
@@ -2563,6 +2585,8 @@ func file_auth_v1_auth_proto_init() {
 	if File_auth_v1_auth_proto != nil {
 		return
 	}
+	file_auth_v1_auth_proto_msgTypes[7].OneofWrappers = []any{}
+	file_auth_v1_auth_proto_msgTypes[22].OneofWrappers = []any{}
 	type x struct{}
 	out := protoimpl.TypeBuilder{
 		File: protoimpl.DescBuilder{

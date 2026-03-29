@@ -897,6 +897,10 @@ func (m *UserPreview) validate(all bool) error {
 
 	// no validation rules for DepartmentId
 
+	if m.IsActive != nil {
+		// no validation rules for IsActive
+	}
+
 	if len(errors) > 0 {
 		return UserPreviewMultiError(errors)
 	}
@@ -2622,6 +2626,10 @@ func (m *UpdateUserRequest) validate(all bool) error {
 	// no validation rules for UniversityId
 
 	// no validation rules for DepartmentId
+
+	if m.IsActive != nil {
+		// no validation rules for IsActive
+	}
 
 	if len(errors) > 0 {
 		return UpdateUserRequestMultiError(errors)

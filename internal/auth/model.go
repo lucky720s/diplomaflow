@@ -2,8 +2,6 @@ package auth
 
 import (
 	"time"
-
-	"gorm.io/gorm"
 )
 
 type User struct {
@@ -17,7 +15,7 @@ type User struct {
 	DepartmentID int64
 	CreatedAt    time.Time
 	UpdatedAt    time.Time
-	DeletedAt    gorm.DeletedAt `gorm:"index"`
+	IsActive     bool `gorm:"default:true;index"`
 }
 type RefreshToken struct {
 	ID        uint64    `gorm:"primaryKey"`
