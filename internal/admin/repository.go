@@ -148,6 +148,7 @@ type SubmissionFilter struct {
 	StepID       int64
 	TeamID       int64
 	ReviewerID   int64
+	ProjectID    int64
 	Status       string
 	Limit        int
 	Offset       int
@@ -376,41 +377,67 @@ func (r *repository) GetSubmission(ctx context.Context, id string) (*Submission,
 	}
 	return &sub, nil
 }
-
 func (r *repository) ListSubmissions(ctx context.Context, filter SubmissionFilter) ([]*Submission, int64, error) {
-	var submissions []*Submission
+	var subs []*Submission
 	var total int64
 
-	query := r.db.WithContext(ctx).Model(&Submission{})
+	query := r.db.WithContext(ctx).
+		Table("admin_submissions AS s").
+		Select(`
+			s.*,
+			t.name AS team_name,
+			st.name AS step_name
+		`).
+		Joins("LEFT JOIN teams t ON t.id = s.team_id").
+		Joins("LEFT JOIN projects p ON p.id = s.project_id").
+		Joins(`
+			LEFT JOIN LATERAL (
+				SELECT sh.to_state_id
+				FROM state_histories sh
+				WHERE sh.project_id = p.id
+				ORDER BY sh.created_at DESC
+				LIMIT 1
+			) latest_state ON true
+		`).
+		Joins("LEFT JOIN states st ON st.id = latest_state.to_state_id")
+
+	// ✅ фильтры
+	if filter.DepartmentID > 0 {
+		query = query.Where("p.department_id = ?", filter.DepartmentID)
+	}
+
+	if filter.ProjectID > 0 {
+		query = query.Where("s.project_id = ?", filter.ProjectID)
+	}
+
+	if filter.TeamID > 0 {
+		query = query.Where("s.team_id = ?", filter.TeamID)
+	}
 
 	if filter.StepID > 0 {
-		query = query.Where("admin_submissions.state_id = ?", filter.StepID)
+		query = query.Where("s.step_id = ?", filter.StepID)
 	}
-	if filter.TeamID > 0 {
-		query = query.Where("admin_submissions.team_id = ?", filter.TeamID)
-	}
-	if filter.Status != "" && filter.Status != "all" {
-		query = query.Where("admin_submissions.status = ?", filter.Status) // ✅ FIX
-	}
-	if filter.DepartmentID > 0 {
-		query = query.Joins("JOIN projects p ON p.id = admin_submissions.project_id").
-			Where("p.department_id = ?", filter.DepartmentID)
-	}
-	if filter.ReviewerID > 0 {
-		query = query.Where("admin_submissions.reviewer_id = ?", filter.ReviewerID)
+
+	if filter.Status != "" {
+		query = query.Where("s.status = ?", filter.Status)
 	}
 
 	if err := query.Count(&total).Error; err != nil {
 		return nil, 0, err
 	}
+	if filter.Limit > 0 {
+		query = query.Limit(filter.Limit)
+	}
+	if filter.Offset > 0 {
+		query = query.Offset(filter.Offset)
+	}
 
-	err := query.
-		Order("admin_submissions.created_at DESC").
-		Limit(filter.Limit).
-		Offset(filter.Offset).
-		Find(&submissions).Error
+	query = query.Order("s.created_at DESC")
+	if err := query.Find(&subs).Error; err != nil {
+		return nil, 0, err
+	}
 
-	return submissions, total, err
+	return subs, total, nil
 }
 
 func (r *repository) UpdateSubmission(ctx context.Context, sub *Submission) error {

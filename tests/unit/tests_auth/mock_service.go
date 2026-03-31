@@ -163,23 +163,26 @@ func (m *MockService) GetUser(ctx context.Context, userID int64) (*auth.User, er
 	}
 	return res, args.Error(1)
 }
-
 func (m *MockService) UpdateUser(
 	ctx context.Context,
 	userID int64,
 	email, firstName, lastName, role string,
 	universityID, departmentID int64,
+	isActive *bool,
 	requesterRole string,
 ) (*auth.User, error) {
-	args := m.Called(ctx, userID, email, firstName, lastName, role, universityID, departmentID, requesterRole)
+
+	args := m.Called(ctx, userID, email, firstName, lastName, role, universityID, departmentID, isActive, requesterRole)
 
 	if args.Get(0) == nil {
 		return nil, args.Error(1)
 	}
+
 	res, ok := args.Get(0).(*auth.User)
 	if !ok {
 		panic("args.Get(0) is not *auth.User")
 	}
+
 	return res, args.Error(1)
 }
 

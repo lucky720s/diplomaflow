@@ -6351,11 +6351,12 @@ type ListSubmissionsRequest struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	DepartmentId  int64                  `protobuf:"varint,1,opt,name=department_id,json=departmentId,proto3" json:"department_id,omitempty"`
 	StepId        int64                  `protobuf:"varint,2,opt,name=step_id,json=stepId,proto3" json:"step_id,omitempty"`
-	Status        string                 `protobuf:"bytes,3,opt,name=status,proto3" json:"status,omitempty"` // pending, approved, rejected, all
+	Status        string                 `protobuf:"bytes,3,opt,name=status,proto3" json:"status,omitempty"`
 	TeamId        int64                  `protobuf:"varint,4,opt,name=team_id,json=teamId,proto3" json:"team_id,omitempty"`
 	Page          int32                  `protobuf:"varint,5,opt,name=page,proto3" json:"page,omitempty"`
 	PageSize      int32                  `protobuf:"varint,6,opt,name=page_size,json=pageSize,proto3" json:"page_size,omitempty"`
-	ReviewerId    int64                  `protobuf:"varint,7,opt,name=reviewer_id,json=reviewerId,proto3" json:"reviewer_id,omitempty"` // ← ДОБАВИТЬ
+	ReviewerId    int64                  `protobuf:"varint,7,opt,name=reviewer_id,json=reviewerId,proto3" json:"reviewer_id,omitempty"`
+	ProjectId     int64                  `protobuf:"varint,8,opt,name=project_id,json=projectId,proto3" json:"project_id,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -6435,6 +6436,13 @@ func (x *ListSubmissionsRequest) GetPageSize() int32 {
 func (x *ListSubmissionsRequest) GetReviewerId() int64 {
 	if x != nil {
 		return x.ReviewerId
+	}
+	return 0
+}
+
+func (x *ListSubmissionsRequest) GetProjectId() int64 {
+	if x != nil {
+		return x.ProjectId
 	}
 	return 0
 }
@@ -10456,7 +10464,7 @@ const file_admin_v1_admin_proto_rawDesc = "" +
 	"\x06reason\x18\x04 \x01(\tR\x06reason\"^\n" +
 	"(RemovePreDefenseCommissionMemberResponse\x12\x18\n" +
 	"\asuccess\x18\x01 \x01(\bR\asuccess\x12\x18\n" +
-	"\amessage\x18\x02 \x01(\tR\amessage\"\xd9\x01\n" +
+	"\amessage\x18\x02 \x01(\tR\amessage\"\xf8\x01\n" +
 	"\x16ListSubmissionsRequest\x12#\n" +
 	"\rdepartment_id\x18\x01 \x01(\x03R\fdepartmentId\x12\x17\n" +
 	"\astep_id\x18\x02 \x01(\x03R\x06stepId\x12\x16\n" +
@@ -10465,7 +10473,9 @@ const file_admin_v1_admin_proto_rawDesc = "" +
 	"\x04page\x18\x05 \x01(\x05R\x04page\x12\x1b\n" +
 	"\tpage_size\x18\x06 \x01(\x05R\bpageSize\x12\x1f\n" +
 	"\vreviewer_id\x18\a \x01(\x03R\n" +
-	"reviewerId\"v\n" +
+	"reviewerId\x12\x1d\n" +
+	"\n" +
+	"project_id\x18\b \x01(\x03R\tprojectId\"v\n" +
 	"\x17ListSubmissionsResponse\x12:\n" +
 	"\vsubmissions\x18\x01 \x03(\v2\x18.admin.v1.SubmissionInfoR\vsubmissions\x12\x1f\n" +
 	"\vtotal_count\x18\x02 \x01(\x03R\n" +

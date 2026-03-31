@@ -12047,6 +12047,8 @@ func (m *ListSubmissionsRequest) validate(all bool) error {
 
 	// no validation rules for ReviewerId
 
+	// no validation rules for ProjectId
+
 	if len(errors) > 0 {
 		return ListSubmissionsRequestMultiError(errors)
 	}

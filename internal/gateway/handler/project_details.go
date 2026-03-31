@@ -20,11 +20,31 @@ func (h *Handler) GetProjectDetails(c *gin.Context) {
 		return
 	}
 
-	ctx := outgoingCtx(c)
 	userID := c.GetInt64("userId")
 	userRole := c.GetString("role")
+	if userRole == "" {
+		userRole = "user"
+	}
 
-	projectResp, err := h.projectClient.GetProject(outgoingCtx(c), &projectv1.GetProjectRequest{
+	var ctx context.Context
+
+	// ✅ teacher/admin → internal
+	if userRole == "teacher" || userRole == "admin" {
+		ctx = metadata.NewOutgoingContext(
+			c.Request.Context(),
+			metadata.Pairs(
+				"x-internal-service", "admin_service",
+				"x-user-id", strconv.FormatInt(userID, 10),
+				"x-user-role", userRole,
+			),
+		)
+	} else {
+		// ✅ student → обычный ctx
+		ctx = outgoingCtx(c)
+	}
+
+	// ✅ ВСЕГДА получаем проект
+	projectResp, err := h.projectClient.GetProject(ctx, &projectv1.GetProjectRequest{
 		ProjectId: projectID,
 	})
 	if err != nil {
@@ -32,14 +52,33 @@ func (h *Handler) GetProjectDetails(c *gin.Context) {
 		return
 	}
 
-	runtimeResp, err := h.projectClient.GetProjectRuntime(internalCtx(c), &projectv1.GetProjectRuntimeRequest{
+	// ✅ ВСЕГДА пытаемся получить runtime
+	runtimeResp, err := h.projectClient.GetProjectRuntime(ctx, &projectv1.GetProjectRuntimeRequest{
 		ProjectId: projectID,
 	})
 	if err != nil {
-		MapGRPCError(c, err)
+		// ❗ важно: не падаем, а продолжаем
+		runtimeResp = nil
+	}
+
+	// ✅ если runtime нет
+	if runtimeResp == nil || runtimeResp.CurrentStateId == 0 {
+		history := h.buildHistory(projectResp)
+
+		c.JSON(http.StatusOK, gin.H{
+			"project":           projectResp,
+			"stages":            []interface{}{},
+			"available_actions": []interface{}{},
+			"history":           history,
+			"viewer": gin.H{
+				"id":   userID,
+				"role": userRole,
+			},
+		})
 		return
 	}
 
+	// ✅ workflow
 	var workflowFull *workflowv1.WorkflowFull
 	var transitions *workflowv1.GetAvailableTransitionsResponse
 
@@ -72,6 +111,7 @@ func (h *Handler) GetProjectDetails(c *gin.Context) {
 	stages := h.buildStages(workflowFull, runtimeResp, projectResp)
 	availableActions := h.buildAvailableActions(transitions)
 	history := h.buildHistory(projectResp)
+
 	c.JSON(http.StatusOK, gin.H{
 		"project": gin.H{
 			"id":                  projectResp.ProjectId,
@@ -259,8 +299,4 @@ func formatTimestamp(ts *timestamppb.Timestamp) interface{} {
 		return nil
 	}
 	return ts.AsTime().Format("2006-01-02T15:04:05Z")
-}
-func internalCtx(c *gin.Context) context.Context {
-	ctx := outgoingCtx(c)
-	return metadata.AppendToOutgoingContext(ctx, "x-internal-service", "api_gateway")
 }

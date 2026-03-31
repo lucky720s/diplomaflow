@@ -80,26 +80,21 @@ type TopicRegistrationReview struct {
 }
 
 type Submission struct {
-	ID string `gorm:"primaryKey;size:36"`
-
-	ProjectID int64 `gorm:"index;not null"`
-	TeamID    int64 `gorm:"index"`
-
-	StepID int64 `gorm:"column:state_id;index"` // maps to admin_submissions.state_id
-
-	SubmittedBy int64  `gorm:"not null"`
-	Status      string `gorm:"size:20;default:'pending'"`
-
-	Data  datatypes.JSON `gorm:"type:jsonb"`
-	Files datatypes.JSON `gorm:"type:jsonb"`
-
+	ID            string `gorm:"primaryKey"`
+	ProjectID     int64
+	TeamID        int64
+	StepID        int64
+	SubmittedBy   int64
+	Status        string
+	Data          datatypes.JSON
+	Files         datatypes.JSON
+	CreatedAt     time.Time
+	UpdatedAt     time.Time
 	ReviewerID    *int64
-	ReviewComment string `gorm:"type:text"`
+	ReviewComment string
 	ReviewedAt    *time.Time
-
-	CreatedAt time.Time
-	UpdatedAt time.Time
-	DeletedAt gorm.DeletedAt `gorm:"index"`
+	TeamName      string `gorm:"column:team_name"`
+	StepName      string `gorm:"column:step_name"`
 }
 
 type SubmissionReview struct {

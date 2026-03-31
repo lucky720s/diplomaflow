@@ -101,7 +101,6 @@ func (h *Handler) GetProject(ctx context.Context, req *projectv1.GetProjectReque
 	var err error
 
 	if internalSvc != "" {
-		// SECURITY: internal доступ только для реальных внутренних сервисов, НЕ для api_gateway
 		if permErr := requireInternal(ctx, "admin_service", "workflow_service"); permErr != nil {
 			return nil, permErr
 		}
@@ -252,48 +251,40 @@ func (h *Handler) PerformAction(ctx context.Context, req *projectv1.PerformActio
 	}
 	return &projectv1.PerformActionResponse{ProjectId: p.ID, NewState: p.CurrentStateName}, nil
 }
-
 func (h *Handler) GetProjectRuntime(ctx context.Context, req *projectv1.GetProjectRuntimeRequest) (*projectv1.GetProjectRuntimeResponse, error) {
 	if req.ProjectId <= 0 {
 		return nil, status.Error(codes.InvalidArgument, "project_id is required")
 	}
 
 	internalSvc := getInternalService(ctx)
-	if internalSvc == "" {
-		return nil, status.Error(codes.PermissionDenied, "forbidden")
+
+	if internalSvc == "workflow_service" || internalSvc == "admin_service" {
+		return h.service.GetProjectRuntime(ctx, req.ProjectId)
 	}
 
-	switch internalSvc {
-	case "workflow_service", "admin_service":
-		// ok, no user-check
-		return h.service.GetProjectRuntime(ctx, req.ProjectId)
-
-	case "api_gateway":
-		uid := getRequesterID(ctx)
-		if uid <= 0 {
-			return nil, status.Error(codes.Unauthenticated, "missing x-user-id")
-		}
-
-		visible, err := h.service.GetStudentProjects(ctx, uid)
-		if err != nil {
-			return nil, status.Errorf(codes.Internal, "failed: %v", err)
-		}
-		allowed := false
-		for _, p := range visible {
-			if p != nil && p.ID == req.ProjectId {
-				allowed = true
-				break
-			}
-		}
-		if !allowed {
-			return nil, status.Error(codes.NotFound, "project not found")
-		}
-
-		return h.service.GetProjectRuntime(ctx, req.ProjectId)
-
-	default:
-		return nil, status.Error(codes.PermissionDenied, "forbidden")
+	userID := getRequesterID(ctx)
+	if userID <= 0 {
+		return nil, status.Error(codes.Unauthenticated, "unauthorized")
 	}
+
+	visible, err := h.service.GetStudentProjects(ctx, userID)
+	if err != nil {
+		return nil, status.Errorf(codes.Internal, "failed: %v", err)
+	}
+
+	var allowed bool
+	for _, p := range visible {
+		if p != nil && p.ID == req.ProjectId {
+			allowed = true
+			break
+		}
+	}
+
+	if !allowed {
+		return nil, status.Error(codes.NotFound, "project not found")
+	}
+
+	return h.service.GetProjectRuntime(ctx, req.ProjectId)
 }
 
 func (h *Handler) CommitTransition(ctx context.Context, req *projectv1.CommitTransitionRequest) (*projectv1.CommitTransitionResponse, error) {

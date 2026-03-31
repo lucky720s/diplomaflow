@@ -87,6 +87,9 @@ func (s *Service) Login(ctx context.Context, email, password, userAgent, ip stri
 	if !CheckPasswordHash(password, user.Password) {
 		return "", "", errors.New("invalid credentials")
 	}
+	if !user.IsActive {
+		return "", "", errors.New("account is deactivated")
+	}
 
 	deptRoles, err := s.iamRepo.ListUserDepartmentRoleSlugs(ctx, user.ID, user.DepartmentID)
 	if err != nil {
@@ -150,12 +153,16 @@ func (s *Service) RefreshToken(ctx context.Context, clientToken, userAgent, ip s
 	}
 
 	user, err := s.repo.GetByID(ctx, storedToken.UserID)
+
 	if err != nil {
 		return "", "", err
 	}
 
 	if err = s.repo.RevokeRefreshToken(ctx, storedToken.ID); err != nil {
 		return "", "", err
+	}
+	if !user.IsActive {
+		return "", "", errors.New("account is deactivated")
 	}
 
 	deptRoles, err := s.iamRepo.ListUserDepartmentRoleSlugs(ctx, user.ID, user.DepartmentID)
@@ -189,7 +196,6 @@ func (s *Service) RefreshToken(ctx context.Context, clientToken, userAgent, ip s
 func (s *Service) Validate(ctx context.Context, token string) (*JwtClaims, error) {
 	return s.jwtWrapper.ValidateToken(token)
 }
-
 func (s *Service) ListUsers(ctx context.Context, universityID int64, departmentID int64, role string, page, pageSize int32, excludeUserID int64) ([]*User, int64, error) {
 	if pageSize <= 0 {
 		pageSize = 10
@@ -197,6 +203,7 @@ func (s *Service) ListUsers(ctx context.Context, universityID int64, departmentI
 	if page <= 0 {
 		page = 1
 	}
+
 	offset := (page - 1) * pageSize
 
 	filter := UserFilter{
@@ -208,7 +215,19 @@ func (s *Service) ListUsers(ctx context.Context, universityID int64, departmentI
 		Offset:        int(offset),
 	}
 
-	return s.repo.ListUsers(ctx, filter)
+	users, total, err := s.repo.ListUsers(ctx, filter)
+	if err != nil {
+		return nil, 0, err
+	}
+
+	filtered := make([]*User, 0, len(users))
+	for _, u := range users {
+		if u.IsActive {
+			filtered = append(filtered, u)
+		}
+	}
+
+	return filtered, total, nil
 }
 
 func (s *Service) ListSessions(ctx context.Context, userID int64) ([]*RefreshToken, error) {
@@ -245,7 +264,6 @@ func (s *Service) AssignRole(ctx context.Context, userID int64, role string) err
 	user.Role = role
 	return s.repo.Update(ctx, user)
 }
-
 func (s *Service) BatchGetUserPreviews(ctx context.Context, ids []int64) ([]*User, error) {
 	uniq := make([]int64, 0, len(ids))
 	seen := make(map[int64]struct{}, len(ids))
@@ -259,14 +277,28 @@ func (s *Service) BatchGetUserPreviews(ctx context.Context, ids []int64) ([]*Use
 		seen[id] = struct{}{}
 		uniq = append(uniq, id)
 	}
+
 	if len(uniq) == 0 {
 		return []*User{}, nil
 	}
+
 	if len(uniq) > 200 {
 		return nil, fmt.Errorf("too many ids (max 200)")
 	}
 
-	return s.repo.GetByIDs(ctx, uniq)
+	users, err := s.repo.GetByIDs(ctx, uniq)
+	if err != nil {
+		return nil, err
+	}
+
+	filtered := make([]*User, 0, len(users))
+	for _, u := range users {
+		if u.IsActive {
+			filtered = append(filtered, u)
+		}
+	}
+
+	return filtered, nil
 }
 
 func (s *Service) GetUser(ctx context.Context, userID int64) (*User, error) {
@@ -286,7 +318,7 @@ func (s *Service) GetUser(ctx context.Context, userID int64) (*User, error) {
 	return user, nil
 }
 
-func (s *Service) UpdateUser(ctx context.Context, userID int64, email, firstName, lastName, role string, universityID, departmentID int64, requesterRole string) (*User, error) {
+func (s *Service) UpdateUser(ctx context.Context, userID int64, email, firstName, lastName, role string, universityID, departmentID int64, isActive *bool, requesterRole string) (*User, error) {
 	if userID <= 0 {
 		return nil, ErrUserNotFound
 	}
@@ -313,6 +345,9 @@ func (s *Service) UpdateUser(ctx context.Context, userID int64, email, firstName
 	}
 	if lastName != "" {
 		user.LastName = lastName
+	}
+	if requesterRole == "admin" && isActive != nil {
+		user.IsActive = *isActive
 	}
 
 	if requesterRole == "admin" {
@@ -368,7 +403,7 @@ func (s *Service) DeleteUser(ctx context.Context, userID, requesterID int64) err
 		return ErrSelfDelete
 	}
 
-	_, err := s.repo.GetByID(ctx, userID)
+	user, err := s.repo.GetByID(ctx, userID)
 	if err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			return ErrUserNotFound
@@ -378,20 +413,21 @@ func (s *Service) DeleteUser(ctx context.Context, userID, requesterID int64) err
 	}
 
 	if err := s.repo.RevokeAllUserTokens(ctx, userID); err != nil {
-		s.logger.Warn("Failed to revoke user tokens before delete",
+		s.logger.Warn("Failed to revoke user tokens before deactivate",
 			zap.Int64("user_id", userID),
 			zap.Error(err),
 		)
 	}
 
-	if err := s.repo.Delete(ctx, userID); err != nil {
-		s.logger.Error("DeleteUser failed", zap.Int64("user_id", userID), zap.Error(err))
+	user.IsActive = false
+
+	if err := s.repo.Update(ctx, user); err != nil {
 		return err
 	}
 
-	s.logger.Info("User deleted",
+	s.logger.Info("User deactivated",
 		zap.Int64("user_id", userID),
-		zap.Int64("deleted_by", requesterID),
+		zap.Int64("deactivated_by", requesterID),
 	)
 
 	return nil
