@@ -52,7 +52,7 @@ type Column struct {
 	Color        string `gorm:"size:20;default:'#6B7280'"`
 	Icon         string `gorm:"size:50"`
 	OrderIndex   int32  `gorm:"not null;default:0"`
-	WIPLimit     int32  `gorm:"default:0"`
+	WIPLimit     int32  `gorm:"column:wip_limit"`
 	IsDefault    bool   `gorm:"default:false"`
 	IsDoneColumn bool   `gorm:"default:false"`
 	CreatedAt    time.Time
