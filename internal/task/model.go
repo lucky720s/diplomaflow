@@ -2,6 +2,7 @@ package task
 
 import (
 	"database/sql/driver"
+	"fmt"
 	"time"
 
 	"encoding/json"
@@ -91,7 +92,7 @@ type Task struct {
 	ActualMinutes    int32          `gorm:"default:0"`
 	Position         int32          `gorm:"not null;default:0"`
 	WorkflowStepID   *int64         `gorm:"index"`
-	Labels           JSONArray      `gorm:"type:jsonb"`
+	Labels           JSONArray      `gorm:"type:jsonb;not null;default:'[]'"`
 	CustomFields     datatypes.JSON `gorm:"type:jsonb;default:'{}'"`
 
 	CreatedAt time.Time
@@ -271,19 +272,35 @@ type JSONArray []string
 
 func (j *JSONArray) Scan(value interface{}) error {
 	if value == nil {
-		*j = nil
+		*j = JSONArray{}
 		return nil
 	}
-	bytes, ok := value.([]byte)
-	if !ok {
+
+	var bytes []byte
+	switch v := value.(type) {
+	case string:
+		bytes = []byte(v)
+	case []byte:
+		bytes = v
+	default:
+		return fmt.Errorf("unsupported type: %T", value)
+	}
+
+	if len(bytes) == 0 {
+		*j = JSONArray{}
 		return nil
 	}
+
 	return json.Unmarshal(bytes, j)
 }
 
 func (j JSONArray) Value() (driver.Value, error) {
 	if j == nil {
-		return nil, nil
+		return "[]", nil
 	}
-	return json.Marshal(j)
+	b, err := json.Marshal(j)
+	if err != nil {
+		return nil, err
+	}
+	return string(b), nil
 }

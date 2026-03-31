@@ -326,16 +326,15 @@ func (s *Service) CreateTask(ctx context.Context, input *CreateTaskInput) (*Task
 		EstimatedMinutes: input.EstimatedMinutes,
 		Position:         maxPos + 1,
 		Status:           TaskStatusTodo,
+		Labels:           JSONArray{},
 	}
 
 	if input.AssigneeID > 0 {
 		task.AssigneeID = &input.AssigneeID
 	}
-
 	if input.WorkflowStepID > 0 {
 		task.WorkflowStepID = &input.WorkflowStepID
 	}
-
 	if len(input.Labels) > 0 {
 		task.Labels = JSONArray(input.Labels)
 	}
@@ -344,7 +343,6 @@ func (s *Service) CreateTask(ctx context.Context, input *CreateTaskInput) (*Task
 		return nil, err
 	}
 
-	// ✅ ИСПРАВЛЕНО errcheck
 	if err := s.repo.LogActivity(ctx, &ActivityLog{
 		TaskID:  task.ID,
 		ActorID: input.CreatedBy,
@@ -400,7 +398,11 @@ func (s *Service) UpdateTask(ctx context.Context, input *UpdateTaskInput) (*Task
 			case "actual_minutes":
 				task.ActualMinutes = input.ActualMinutes
 			case "labels":
-				task.Labels = JSONArray(input.Labels)
+				if len(input.Labels) > 0 {
+					task.Labels = JSONArray(input.Labels)
+				} else {
+					task.Labels = JSONArray{}
+				}
 			case "workflow_step_id":
 				if input.WorkflowStepID > 0 {
 					task.WorkflowStepID = &input.WorkflowStepID
@@ -428,6 +430,8 @@ func (s *Service) UpdateTask(ctx context.Context, input *UpdateTaskInput) (*Task
 		}
 		if len(input.Labels) > 0 {
 			task.Labels = JSONArray(input.Labels)
+		} else if input.Labels != nil {
+			task.Labels = JSONArray{}
 		}
 		if input.WorkflowStepID > 0 {
 			task.WorkflowStepID = &input.WorkflowStepID
