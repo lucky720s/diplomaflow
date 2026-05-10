@@ -5,6 +5,7 @@ import (
 	"crypto/rand"
 	"errors"
 	"fmt"
+	"strings"
 	"time"
 
 	adminv1 "github.com/lucky720s/diplomaflow/pkg/protobuf/admin/v1"
@@ -331,12 +332,15 @@ func (s *Service) LeaveTeam(ctx context.Context, teamID int64, userID int64) (*L
 			return nil, fmt.Errorf("transfer leadership: %w", err)
 		}
 
+		newLeaderName := s.userDisplayName(ctx, newLeaderID)
+		oldLeaderName := s.userDisplayName(ctx, userID)
+
 		result.NewLeaderID = newLeaderID
-		result.Message = fmt.Sprintf("Вы вышли из команды. Лидерство передано участнику с ID %d.", newLeaderID)
+		result.Message = fmt.Sprintf("Вы вышли из команды. Лидерство передано участнику %s.", newLeaderName)
 
 		s.notifyBestEffort(ctx, newLeaderID,
 			"Вы стали лидером команды",
-			"Лидер команды вышел. Вам передано лидерство.",
+			fmt.Sprintf("Лидер команды %s вышел. Вам передано лидерство.", oldLeaderName),
 			"/dashboard/team",
 			"leadership_changed",
 		)
@@ -350,9 +354,10 @@ func (s *Service) LeaveTeam(ctx context.Context, teamID int64, userID int64) (*L
 	if member.Role != RoleLeader {
 		leader, lerr := s.repo.GetTeamLeader(ctx, teamID)
 		if lerr == nil && leader != nil && leader.UserID != userID {
+			leaverName := s.userDisplayName(ctx, userID)
 			s.notifyBestEffort(ctx, leader.UserID,
 				"Участник вышел из команды",
-				fmt.Sprintf("Пользователь %d вышел из команды.", userID),
+				fmt.Sprintf("%s вышел из команды.", leaverName),
 				"/dashboard/team",
 				"team_member_left",
 			)
@@ -390,10 +395,17 @@ func (s *Service) TransferLeadership(ctx context.Context, teamID int64, currentL
 		return nil, nil, fmt.Errorf("promote new leader: %w", err)
 	}
 
-	s.notifyBestEffort(ctx, newLeaderID, "Вам передано лидерство", "Теперь вы лидер команды.", "/dashboard/team", "leadership_changed")
+	newLeaderName := s.userDisplayName(ctx, newLeaderID)
+
+	s.notifyBestEffort(ctx, newLeaderID,
+		"Вам передано лидерство",
+		"Теперь вы лидер команды.",
+		"/dashboard/team",
+		"leadership_changed",
+	)
 	s.notifyBestEffort(ctx, currentLeaderID,
 		"Лидерство передано",
-		fmt.Sprintf("Вы передали лидерство пользователю %d.", newLeaderID),
+		fmt.Sprintf("Вы передали лидерство пользователю %s.", newLeaderName),
 		"/dashboard/team",
 		"leadership_transferred",
 	)
@@ -428,10 +440,15 @@ func (s *Service) AddMember(ctx context.Context, teamID int64, userID int64, rol
 		return err
 	}
 
-	s.notifyBestEffort(ctx, userID, "Вы добавлены в команду", "Вас добавили в команду. Откройте страницу команды.", "/dashboard/team", "team_member_added")
+	memberName := s.userDisplayName(ctx, userID)
+
+	s.notifyBestEffort(ctx, userID, "Вы добавлены в команду",
+		"Вас добавили в команду. Откройте страницу команды.",
+		"/dashboard/team", "team_member_added")
+
 	s.notifyBestEffort(ctx, requesterID,
 		"Участник добавлен в команду",
-		fmt.Sprintf("Вы добавили пользователя %d в команду.", userID),
+		fmt.Sprintf("Вы добавили пользователя %s в команду.", memberName),
 		"/dashboard/team",
 		"team_member_added_leader",
 	)
@@ -460,16 +477,43 @@ func (s *Service) RemoveMember(ctx context.Context, teamID int64, userID int64, 
 	if err := s.repo.RemoveMember(ctx, teamID, userID); err != nil {
 		return err
 	}
+	memberName := s.userDisplayName(ctx, userID)
 
-	s.notifyBestEffort(ctx, userID, "Вы удалены из команды", "Вас удалили из команды.", "/dashboard", "team_member_removed")
+	s.notifyBestEffort(ctx, userID, "Вы удалены из команды",
+		"Вас удалили из команды.", "/dashboard", "team_member_removed")
+
 	s.notifyBestEffort(ctx, requesterID,
 		"Участник удалён из команды",
-		fmt.Sprintf("Вы удалили пользователя %d из команды.", userID),
+		fmt.Sprintf("Вы удалили пользователя %s из команды.", memberName),
 		"/dashboard/team",
 		"team_member_removed_leader",
 	)
-
 	return nil
+}
+func (s *Service) userDisplayName(ctx context.Context, userID int64) string {
+	if userID <= 0 {
+		return ""
+	}
+	resp, err := s.authClient.BatchGetUserPreviews(
+		s.authInternalCtx(ctx),
+		&authv1.BatchGetUserPreviewsRequest{Ids: []int64{userID}},
+	)
+	if err != nil || resp == nil || len(resp.Users) == 0 {
+		s.logger.Debug("resolve user display name failed",
+			zap.Int64("user_id", userID), zap.Error(err))
+		return fmt.Sprintf("ID %d", userID)
+	}
+	for _, u := range resp.Users {
+		if u.Id != userID {
+			continue
+		}
+		name := strings.TrimSpace(u.LastName + " " + u.FirstName)
+		if name == "" {
+			return fmt.Sprintf("ID %d", userID)
+		}
+		return name
+	}
+	return fmt.Sprintf("ID %d", userID)
 }
 
 func (s *Service) RespondToInvite(ctx context.Context, inviteID int64, userID int64, accept bool) error {
@@ -509,18 +553,20 @@ func (s *Service) RespondToInvite(ctx context.Context, inviteID int64, userID in
 		}
 		invite.Status = InviteStatusAccepted
 
+		accepterName := s.userDisplayName(ctx, userID)
 		s.notifyBestEffort(ctx, invite.InviterID,
 			"Приглашение принято",
-			fmt.Sprintf("Пользователь %d принял приглашение в команду.", userID),
+			fmt.Sprintf("%s принял(а) приглашение в команду.", accepterName),
 			"/dashboard/team",
 			"team_invite_accepted",
 		)
 
 	} else {
 		invite.Status = InviteStatusDeclined
+		declinerName := s.userDisplayName(ctx, userID)
 		s.notifyBestEffort(ctx, invite.InviterID,
 			"Приглашение отклонено",
-			fmt.Sprintf("Пользователь %d отклонил приглашение в команду.", userID),
+			fmt.Sprintf("%s отклонил(а) приглашение в команду.", declinerName),
 			"/dashboard/team",
 			"team_invite_declined",
 		)
@@ -667,13 +713,15 @@ func (s *Service) JoinTeamByCode(ctx context.Context, inviteCode string, userID,
 
 	leader, lerr := s.repo.GetTeamLeader(ctx, team.ID)
 	if lerr == nil && leader != nil {
+		joinerName := s.userDisplayName(ctx, userID)
 		s.notifyBestEffort(ctx, leader.UserID,
 			"Новый участник в команде",
-			fmt.Sprintf("Пользователь %d присоединился к команде по коду.", userID),
+			fmt.Sprintf("%s присоединился(ась) к команде по коду.", joinerName),
 			"/dashboard/team",
 			"team_member_joined",
 		)
 	}
+
 	s.notifyBestEffort(ctx, userID,
 		"Вы вступили в команду",
 		"Вы успешно присоединились к команде по коду.",
