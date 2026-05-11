@@ -64,3 +64,24 @@ scrape_configs:
     static_configs:
       - targets: ["task_service:9191"]
         labels: { service: "task_service" }
+
+  # ===== Инфраструктурные экспортёры =====
+  - job_name: postgres
+    static_configs:
+      - targets: ["postgres_exporter:9187"]
+        labels: { component: "postgres" }
+
+  - job_name: redis
+    static_configs:
+      - targets: ["redis_exporter:9121"]
+        labels: { component: "redis" }
+
+  - job_name: cadvisor
+    static_configs:
+      - targets: ["cadvisor:8080"]
+        labels: { component: "cadvisor" }
+
+  - job_name: node
+    static_configs:
+      - targets: ["node_exporter:9100"]
+        labels: { component: "host" }

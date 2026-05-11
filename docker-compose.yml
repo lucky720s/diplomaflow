@@ -390,6 +390,57 @@ services:
       start_period: 20s
     restart: unless-stopped
 
+  postgres_exporter:
+    image: prometheuscommunity/postgres-exporter:v0.15.0
+    logging: *default-logging
+    networks: [diplomaflow]
+    environment:
+      DATA_SOURCE_NAME: "postgresql://${POSTGRES_USER:-diplomaflow}:${POSTGRES_PASSWORD}@main_postgres:5432/${POSTGRES_DB:-diplomaflow}?sslmode=disable"
+    depends_on:
+      main_postgres:
+        condition: service_healthy
+    restart: unless-stopped
+
+  redis_exporter:
+    image: oliver006/redis_exporter:v1.62.0
+    logging: *default-logging
+    networks: [diplomaflow]
+    command: ["--redis.addr=redis://redis:6379"]
+    depends_on:
+      redis:
+        condition: service_healthy
+    restart: unless-stopped
+
+  cadvisor:
+    image: gcr.io/cadvisor/cadvisor:v0.49.1
+    logging: *default-logging
+    networks: [diplomaflow]
+    privileged: true
+    volumes:
+      - /:/rootfs:ro
+      - /var/run:/var/run:ro
+      - /sys:/sys:ro
+      - /var/lib/docker/:/var/lib/docker:ro
+      - /dev/disk/:/dev/disk:ro
+    devices:
+      - /dev/kmsg
+    restart: unless-stopped
+
+  node_exporter:
+    image: prom/node-exporter:v1.8.2
+    logging: *default-logging
+    networks: [diplomaflow]
+    command:
+      - "--path.procfs=/host/proc"
+      - "--path.rootfs=/rootfs"
+      - "--path.sysfs=/host/sys"
+      - "--collector.filesystem.mount-points-exclude=^/(sys|proc|dev|host|etc)($$|/)"
+    volumes:
+      - /proc:/host/proc:ro
+      - /sys:/host/sys:ro
+      - /:/rootfs:ro
+    restart: unless-stopped
+
   prometheus:
     image: prom/prometheus:v2.55.1
     logging: *default-logging
