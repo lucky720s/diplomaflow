@@ -20,6 +20,7 @@ import (
 	"github.com/lucky720s/diplomaflow/pkg/config"
 	grpcpkg "github.com/lucky720s/diplomaflow/pkg/grpc"
 	"github.com/lucky720s/diplomaflow/pkg/logger"
+	"github.com/lucky720s/diplomaflow/pkg/metrics"
 	notificationv1 "github.com/lucky720s/diplomaflow/pkg/protobuf/notification/v1"
 	projectv1 "github.com/lucky720s/diplomaflow/pkg/protobuf/project/v1"
 	teamv1 "github.com/lucky720s/diplomaflow/pkg/protobuf/team/v1"
@@ -226,9 +227,21 @@ func main() {
 		log.Fatal("failed to listen", zap.Error(err))
 	}
 
-	grpcServer := grpc.NewServer()
+	reg := metrics.NewRegistry("workflow_service")
+	reg.MustRegister(metrics.GRPCCollectors()...)
+
+	grpcServer := grpc.NewServer(
+		grpc.UnaryInterceptor(metrics.UnaryServerInterceptor("workflow_service")),
+	)
 	workflowv1.RegisterWorkflowServiceServer(grpcServer, h)
 	workflowv1.RegisterWorkflowActionsServiceServer(grpcServer, pcGRPC)
+
+	metricsPort := os.Getenv("METRICS_PORT")
+	if metricsPort == "" {
+		metricsPort = "9085"
+	}
+	metrics.MustServe(":"+metricsPort, reg)
+	log.Info("Workflow metrics endpoint", zap.String("port", metricsPort))
 
 	healthServer := health.NewServer()
 	grpc_health_v1.RegisterHealthServer(grpcServer, healthServer)

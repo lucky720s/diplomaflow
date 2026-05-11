@@ -1,10 +1,66 @@
 global:
-  scrape_interval: 5s
+  scrape_interval: 15s
+  evaluation_interval: 15s
+  external_labels:
+    cluster: diplomaflow
 
 scrape_configs:
-  - job_name: "api_gateway"
+  - job_name: prometheus
+    static_configs:
+      - targets: ["localhost:9090"]
+
+  - job_name: api_gateway
     metrics_path: /metrics
     static_configs:
-      - targets: ["127.0.0.1:9091"]
+      - targets: ["api_gateway:9080"]
+        labels: { service: "api_gateway" }
 
+  - job_name: university_service
+    static_configs:
+      - targets: ["university_service:9081"]
+        labels: { service: "university_service" }
 
+  - job_name: auth_service
+    static_configs:
+      - targets: ["auth_service:9082"]
+        labels: { service: "auth_service" }
+
+  - job_name: project_service
+    static_configs:
+      - targets: ["project_service:9083"]
+        labels: { service: "project_service" }
+
+  - job_name: team_service
+    static_configs:
+      - targets: ["team_service:9084"]
+        labels: { service: "team_service" }
+
+  - job_name: workflow_service
+    static_configs:
+      - targets: ["workflow_service:9085"]
+        labels: { service: "workflow_service" }
+
+  - job_name: notification_service
+    static_configs:
+      - targets: ["notification_service:9087"]
+        labels: { service: "notification_service" }
+
+  - job_name: file_service
+    static_configs:
+      - targets: ["file_service:9088"]
+        labels: { service: "file_service" }
+
+  - job_name: form_service
+    static_configs:
+      - targets: ["form_service:9089"]
+        labels: { service: "form_service" }
+
+  - job_name: admin_service
+    static_configs:
+      - targets: ["admin_service:9190"]
+        labels: { service: "admin_service" }
+
+  - job_name: task_service
+    static_configs:
+      - targets: ["task_service:9191"]
+        labels: { service: "task_service" }

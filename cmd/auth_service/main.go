@@ -12,6 +12,7 @@ import (
 	"github.com/lucky720s/diplomaflow/internal/auth"
 	"github.com/lucky720s/diplomaflow/pkg/config"
 	"github.com/lucky720s/diplomaflow/pkg/logger"
+	"github.com/lucky720s/diplomaflow/pkg/metrics"
 	authv1 "github.com/lucky720s/diplomaflow/pkg/protobuf/auth/v1"
 	"go.uber.org/zap"
 	"google.golang.org/grpc"
@@ -51,8 +52,20 @@ func main() {
 		log.Fatal("failed to listen", zap.Error(err))
 	}
 
-	grpcServer := grpc.NewServer()
+	reg := metrics.NewRegistry("auth_service")
+	reg.MustRegister(metrics.GRPCCollectors()...)
+
+	grpcServer := grpc.NewServer(
+		grpc.UnaryInterceptor(metrics.UnaryServerInterceptor("auth_service")),
+	)
 	authv1.RegisterAuthServiceServer(grpcServer, h)
+
+	metricsPort := os.Getenv("METRICS_PORT")
+	if metricsPort == "" {
+		metricsPort = "9082"
+	}
+	metrics.MustServe(":"+metricsPort, reg)
+	log.Info("Auth metrics endpoint", zap.String("port", metricsPort))
 
 	healthServer := health.NewServer()
 	grpc_health_v1.RegisterHealthServer(grpcServer, healthServer)

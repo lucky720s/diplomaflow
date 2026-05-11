@@ -40,6 +40,7 @@ volumes:
   file_uploads:
   prom_data:
   grafana_data:
+  loki_data:
 
 services:
   main_postgres:
@@ -105,7 +106,7 @@ services:
       # Внутри сети redis по имени сервиса
       REDIS_ADDR: redis:6379
       JWT_SECRET: ${JWT_SECRET:?JWT_SECRET is required}
-      METRICS_PORT: ${METRICS_PORT:-9091}
+      METRICS_PORT: "9080"
       <<: *svc_addrs_docker
     depends_on:
       redis:
@@ -132,6 +133,7 @@ services:
     environment:
       <<: *common_env
       GRPC_PORT: "8081"
+      METRICS_PORT: "9081"
     depends_on:
       migrate:
         condition: service_completed_successfully
@@ -152,6 +154,7 @@ services:
     environment:
       <<: *common_env
       GRPC_PORT: "8082"
+      METRICS_PORT: "9082"
       REDIS_ADDR: redis:6379
       JWT_SECRET: ${JWT_SECRET:?JWT_SECRET is required}
       ACCESS_TOKEN_TTL: ${ACCESS_TOKEN_TTL:-24h}
@@ -181,6 +184,7 @@ services:
     environment:
       <<: *common_env
       GRPC_PORT: "8087"
+      METRICS_PORT: "9087"
     depends_on:
       migrate:
         condition: service_completed_successfully
@@ -201,6 +205,7 @@ services:
     environment:
       <<: *common_env
       GRPC_PORT: "8085"
+      METRICS_PORT: "9085"
       SERVICES_NOTIFICATION_ADDR: notification_service:8087
       SERVICES_PROJECT_ADDR: project_service:8083
       SERVICES_TEAM_ADDR: team_service:8084
@@ -226,6 +231,7 @@ services:
     environment:
       <<: *common_env
       GRPC_PORT: "8083"
+      METRICS_PORT: "9083"
       SERVICES_WORKFLOW_ADDR: workflow_service:8085
       SERVICES_NOTIFICATION_ADDR: notification_service:8087
     depends_on:
@@ -252,6 +258,7 @@ services:
     environment:
       <<: *common_env
       GRPC_PORT: "8084"
+      METRICS_PORT: "9084"
       SERVICES_AUTH_ADDR: auth_service:8082
       SERVICES_WORKFLOW_ADDR: workflow_service:8085
       SERVICES_NOTIFICATION_ADDR: notification_service:8087
@@ -281,6 +288,7 @@ services:
     environment:
       <<: *common_env
       GRPC_PORT: "8088"
+      METRICS_PORT: "9088"
       STORAGE_PATH: "/uploads"
     volumes:
       - file_uploads:/uploads
@@ -304,6 +312,7 @@ services:
     environment:
       <<: *common_env
       GRPC_PORT: "8089"
+      METRICS_PORT: "9089"
     depends_on:
       migrate:
         condition: service_completed_successfully
@@ -324,6 +333,7 @@ services:
     environment:
       <<: *common_env
       GRPC_PORT: "8090"
+      METRICS_PORT: "9190"
       SERVICES_AUTH_ADDR: auth_service:8082
       SERVICES_PROJECT_ADDR: project_service:8083
       SERVICES_TEAM_ADDR: team_service:8084
@@ -356,6 +366,7 @@ services:
     environment:
       <<: *common_env
       GRPC_PORT: "8091"
+      METRICS_PORT: "9191"
       SERVICES_AUTH_ADDR: auth_service:8082
       SERVICES_TEAM_ADDR: team_service:8084
       SERVICES_NOTIFICATION_ADDR: notification_service:8087
@@ -393,9 +404,40 @@ services:
       - "127.0.0.1:9090:9090"
     restart: unless-stopped
 
+  loki:
+    image: grafana/loki:3.2.0
+    logging: *default-logging
+    networks: [diplomaflow]
+    volumes:
+      - ./deploy/loki/loki-config.yml:/etc/loki/config.yml:ro
+      - loki_data:/loki
+    command: -config.file=/etc/loki/config.yml
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://127.0.0.1:3100/ready >/dev/null 2>&1 || exit 1"]
+      interval: 10s
+      timeout: 3s
+      retries: 15
+      start_period: 20s
+    restart: unless-stopped
+
+  promtail:
+    image: grafana/promtail:3.2.0
+    logging: *default-logging
+    networks: [diplomaflow]
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+      - /var/lib/docker/containers:/var/lib/docker/containers:ro
+      - ./deploy/promtail/promtail-config.yml:/etc/promtail/config.yml:ro
+    command: -config.file=/etc/promtail/config.yml
+    depends_on:
+      loki:
+        condition: service_healthy
+    restart: unless-stopped
+
   grafana:
     image: grafana/grafana:11.3.0
     logging: *default-logging
+    networks: [diplomaflow]
     environment:
       - GF_SECURITY_ADMIN_USER=admin
       - GF_SECURITY_ADMIN_PASSWORD=${GRAFANA_ADMIN_PASSWORD:?GRAFANA_ADMIN_PASSWORD is required}
@@ -408,5 +450,8 @@ services:
       - ./deploy/grafana/dashboards:/var/lib/grafana/dashboards:ro
     ports:
       - "127.0.0.1:3001:3000"
+    depends_on:
+      - prometheus
+      - loki
     restart: unless-stopped
 

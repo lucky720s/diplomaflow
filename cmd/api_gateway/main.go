@@ -1,7 +1,6 @@
 package main
 
 import (
-	"net/http"
 	"os"
 	"time"
 
@@ -11,9 +10,7 @@ import (
 	gatewayhealth "github.com/lucky720s/diplomaflow/internal/gateway/healthz"
 	"github.com/lucky720s/diplomaflow/internal/gateway/middleware"
 	"github.com/lucky720s/diplomaflow/pkg/logger"
-	"github.com/prometheus/client_golang/prometheus"
-	"github.com/prometheus/client_golang/prometheus/collectors"
-	"github.com/prometheus/client_golang/prometheus/promhttp"
+	"github.com/lucky720s/diplomaflow/pkg/metrics"
 	"github.com/redis/go-redis/v9"
 	"go.uber.org/zap"
 )
@@ -40,14 +37,8 @@ func main() {
 	rdb := redis.NewClient(&redis.Options{
 		Addr: cfg.RedisAddr,
 	})
-	registry := prometheus.NewRegistry()
+	registry := metrics.NewRegistry("api_gateway")
 	middleware.MustRegisterGatewayMetrics(registry)
-
-	// + полезные базовые метрики процесса/Go runtime
-	registry.MustRegister(
-		collectors.NewGoCollector(),
-		collectors.NewProcessCollector(collectors.ProcessCollectorOpts{}),
-	)
 	router := gin.New()
 	_ = router.SetTrustedProxies([]string{"127.0.0.1"})
 	router.Use(gin.Recovery())
@@ -444,18 +435,10 @@ func main() {
 
 	metricsPort := os.Getenv("METRICS_PORT")
 	if metricsPort == "" {
-		metricsPort = "9090"
+		metricsPort = "9080"
 	}
-
-	mux := http.NewServeMux()
-	mux.Handle("/metrics", promhttp.HandlerFor(registry, promhttp.HandlerOpts{}))
-	metricsSrv := &http.Server{
-		Addr:    "127.0.0.1:" + metricsPort,
-		Handler: mux,
-	}
-	go func() {
-		_ = metricsSrv.ListenAndServe()
-	}()
+	metrics.MustServe(":"+metricsPort, registry)
+	log.Info("Gateway metrics endpoint", zap.String("port", metricsPort))
 	log.Info("API Gateway starting", zap.String("port", cfg.Port))
 	for _, r := range router.Routes() {
 		middleware.SetRouteExists(r.Method, r.Path)

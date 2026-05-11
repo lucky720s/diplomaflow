@@ -12,6 +12,7 @@ import (
 	"github.com/lucky720s/diplomaflow/pkg/config"
 	grpcpkg "github.com/lucky720s/diplomaflow/pkg/grpc"
 	"github.com/lucky720s/diplomaflow/pkg/logger"
+	"github.com/lucky720s/diplomaflow/pkg/metrics"
 	projectv1 "github.com/lucky720s/diplomaflow/pkg/protobuf/project/v1"
 	workflowv1 "github.com/lucky720s/diplomaflow/pkg/protobuf/workflow/v1"
 	"go.uber.org/zap"
@@ -68,8 +69,20 @@ func main() {
 		log.Fatal("listen error", zap.Error(err))
 	}
 
-	grpcServer := grpc.NewServer()
+	reg := metrics.NewRegistry("project_service")
+	reg.MustRegister(metrics.GRPCCollectors()...)
+
+	grpcServer := grpc.NewServer(
+		grpc.UnaryInterceptor(metrics.UnaryServerInterceptor("project_service")),
+	)
 	projectv1.RegisterProjectServiceServer(grpcServer, app.Handler)
+
+	metricsPort := os.Getenv("METRICS_PORT")
+	if metricsPort == "" {
+		metricsPort = "9083"
+	}
+	metrics.MustServe(":"+metricsPort, reg)
+	log.Info("Project metrics endpoint", zap.String("port", metricsPort))
 
 	healthServer := health.NewServer()
 	grpc_health_v1.RegisterHealthServer(grpcServer, healthServer)

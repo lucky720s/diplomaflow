@@ -12,6 +12,7 @@ import (
 	"github.com/lucky720s/diplomaflow/internal/notification"
 	"github.com/lucky720s/diplomaflow/pkg/config"
 	"github.com/lucky720s/diplomaflow/pkg/logger"
+	"github.com/lucky720s/diplomaflow/pkg/metrics"
 	notificationv1 "github.com/lucky720s/diplomaflow/pkg/protobuf/notification/v1"
 	"go.uber.org/zap"
 	"google.golang.org/grpc"
@@ -40,8 +41,20 @@ func main() {
 		log.Fatal("failed to listen", zap.Error(err))
 	}
 
-	grpcServer := grpc.NewServer()
+	reg := metrics.NewRegistry("notification_service")
+	reg.MustRegister(metrics.GRPCCollectors()...)
+
+	grpcServer := grpc.NewServer(
+		grpc.UnaryInterceptor(metrics.UnaryServerInterceptor("notification_service")),
+	)
 	notificationv1.RegisterNotificationServiceServer(grpcServer, h)
+
+	metricsPort := os.Getenv("METRICS_PORT")
+	if metricsPort == "" {
+		metricsPort = "9087"
+	}
+	metrics.MustServe(":"+metricsPort, reg)
+	log.Info("Notification metrics endpoint", zap.String("port", metricsPort))
 
 	// gRPC health
 	healthServer := health.NewServer()

@@ -12,6 +12,7 @@ import (
 	"github.com/lucky720s/diplomaflow/internal/file"
 	"github.com/lucky720s/diplomaflow/pkg/config"
 	"github.com/lucky720s/diplomaflow/pkg/logger"
+	"github.com/lucky720s/diplomaflow/pkg/metrics"
 	filev1 "github.com/lucky720s/diplomaflow/pkg/protobuf/file/v1"
 	"go.uber.org/zap"
 	"google.golang.org/grpc"
@@ -40,8 +41,20 @@ func main() {
 		log.Fatal("failed to listen", zap.Error(err))
 	}
 
-	grpcServer := grpc.NewServer()
+	reg := metrics.NewRegistry("file_service")
+	reg.MustRegister(metrics.GRPCCollectors()...)
+
+	grpcServer := grpc.NewServer(
+		grpc.UnaryInterceptor(metrics.UnaryServerInterceptor("file_service")),
+	)
 	filev1.RegisterFileServiceServer(grpcServer, h)
+
+	metricsPort := os.Getenv("METRICS_PORT")
+	if metricsPort == "" {
+		metricsPort = "9088"
+	}
+	metrics.MustServe(":"+metricsPort, reg)
+	log.Info("File metrics endpoint", zap.String("port", metricsPort))
 
 	// gRPC health
 	healthServer := health.NewServer()
