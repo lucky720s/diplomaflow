@@ -83,7 +83,7 @@ type Submission struct {
 	ID            string `gorm:"primaryKey"`
 	ProjectID     int64
 	TeamID        int64
-	StepID        int64
+	StepID        int64 `gorm:"column:state_id"` // ← добавить маппинг
 	SubmittedBy   int64
 	Status        string
 	Data          datatypes.JSON
@@ -93,8 +93,8 @@ type Submission struct {
 	ReviewerID    *int64
 	ReviewComment string
 	ReviewedAt    *time.Time
-	TeamName      string `gorm:"column:team_name"`
-	StepName      string `gorm:"column:step_name"`
+	TeamName      string `gorm:"->;column:team_name"` // ← read-only (только SELECT)
+	StepName      string `gorm:"->;column:step_name"` // ← read-only (только SELECT)
 }
 
 type SubmissionReview struct {

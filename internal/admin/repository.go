@@ -415,7 +415,7 @@ func (r *repository) ListSubmissions(ctx context.Context, filter SubmissionFilte
 	}
 
 	if filter.StepID > 0 {
-		query = query.Where("s.step_id = ?", filter.StepID)
+		query = query.Where("s.state_id = ?", filter.StepID)
 	}
 
 	if filter.Status != "" {
