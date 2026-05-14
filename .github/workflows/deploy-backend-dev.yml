@@ -46,7 +46,8 @@ jobs:
           set -euo pipefail
           test -d /opt/diplomaflow
 
-          rsync -a --delete \
+          rsync -rlptD --delete \
+            --no-owner --no-group \
             --exclude ".git" \
             --exclude ".github" \
             ./ /opt/diplomaflow/
