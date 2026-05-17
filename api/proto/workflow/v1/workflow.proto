@@ -183,6 +183,10 @@ service WorkflowService {
   rpc GetTeamConfiguration(GetTeamConfigurationRequest) returns (TeamConfigurationResponse);
   rpc CanExecuteTransition(CanExecuteTransitionRequest) returns (CanExecuteTransitionResponse);
   rpc GetDepartmentWorkflowConfig(GetDepartmentWorkflowConfigRequest) returns (DepartmentWorkflowConfigResponse);
+
+  // === REVIEW (оценки/допуск преподов) ===
+  rpc SubmitReview(SubmitReviewRequest) returns (SubmitReviewResponse);
+  rpc GetStateReviews(GetStateReviewsRequest) returns (GetStateReviewsResponse);
 }
 
 // ==================== POST-COMMIT ACTIONS (NO KAFKA) ====================
@@ -483,6 +487,9 @@ message ReviewConfig {
   repeated string reviewer_roles = 1;
   int32 min_reviewers = 2;
   bool require_comment = 3;
+  string finalizer_role = 4;
+  string grade_type = 5;     // "score" | "admission"
+  int32 passing_score = 6;
 }
 
 message ListTemplatesRequest {
@@ -607,4 +614,60 @@ message DeadlineConfig {
   string state_name = 2;
   google.protobuf.Timestamp fixed_deadline = 3;
   int32 relative_days = 4;
+}
+
+// ==================== REVIEW MESSAGES ====================
+
+message SubmitReviewRequest {
+  int64  project_id  = 1;
+  int64  state_id    = 2;
+  int64  user_id     = 3;
+  string role_slug   = 4;
+  // Для admission-стэйтов
+  string decision    = 5; // "approved" | "rejected"
+  // Для score-стэйтов (0-100)
+  int32  score       = 6;
+  bool   has_score   = 7; // true если score передан (чтобы отличить 0 от "не передан")
+  string comment     = 8;
+}
+
+message SubmitReviewResponse {
+  bool   all_voted          = 1;
+  bool   ready_to_finalize  = 2;
+  ReviewSummaryProto summary = 3;
+}
+
+message GetStateReviewsRequest {
+  int64 project_id = 1;
+  int64 state_id   = 2;
+}
+
+message GetStateReviewsResponse {
+  repeated StateReviewProto reviews = 1;
+  ReviewSummaryProto         summary = 2;
+}
+
+message StateReviewProto {
+  int64  id          = 1;
+  int64  project_id  = 2;
+  int64  state_id    = 3;
+  int64  reviewer_id = 4;
+  string role_slug   = 5;
+  string decision    = 6;
+  int32  score       = 7;
+  bool   has_score   = 8;
+  string comment     = 9;
+  google.protobuf.Timestamp created_at = 10;
+  google.protobuf.Timestamp updated_at = 11;
+}
+
+message ReviewSummaryProto {
+  int32  total_reviews   = 1;
+  double average_score   = 2;
+  int32  approved_count  = 3;
+  int32  rejected_count  = 4;
+  bool   all_voted       = 5;
+  string result          = 6; // "approved"|"rejected"|"passed"|"failed"|"pending"
+  double final_score     = 7;
+  bool   has_final_score = 8;
 }

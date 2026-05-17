@@ -184,9 +184,39 @@ type FormConfig struct {
 // ReviewConfig — конфигурация проверки
 type ReviewConfig struct {
 	ReviewerRoles  []string `json:"reviewer_roles"`
-	MinReviewers   int32    `json:"min_reviewers"`
+	FinalizerRole  string   `json:"finalizer_role"`  // роль, которая нажимает финальную кнопку перехода
+	GradeType      string   `json:"grade_type"`      // "score" | "admission" | ""
+	PassingScore   int32    `json:"passing_score"`   // минимальный балл для перехода вперёд (при grade_type=score)
+	MinReviewers   int32    `json:"min_reviewers"`   // сколько reviewer_roles должны проголосовать (0 = все)
 	RequireComment bool     `json:"require_comment"`
 	AllowGrade     bool     `json:"allow_grade"`
+}
+
+// StateReview — голос/оценка одного препода за конкретный стэйт проекта
+type StateReview struct {
+	ID         int64   `gorm:"primaryKey"`
+	ProjectID  int64   `gorm:"index:idx_psr_project_state;not null"`
+	StateID    int64   `gorm:"index:idx_psr_project_state;not null"`
+	ReviewerID int64   `gorm:"index;not null"`
+	RoleSlug   string  `gorm:"not null"`
+	Decision   string  // "approved" | "rejected" (для admission)
+	Score      *int32  // 0-100 (для score)
+	Comment    string
+	CreatedAt  time.Time
+	UpdatedAt  time.Time
+}
+
+func (StateReview) TableName() string { return "project_state_reviews" }
+
+// ReviewSummary — агрегированный итог голосования по стэйту
+type ReviewSummary struct {
+	TotalReviews    int
+	AverageScore    float64
+	ApprovedCount   int
+	RejectedCount   int
+	AllVoted        bool   // все обязанные проголосовали
+	Result          string // "approved" | "rejected" | "passed" | "failed" | "pending"
+	FinalScore      *float64
 }
 
 // StateConfig — полная конфигурация состояния
@@ -216,7 +246,7 @@ type DeadlineOverride struct {
 }
 
 // TableName overrides
-func (Workflow) TableName() string                 { return "workflows" }
+func (Workflow) TableName() string { return "workflows" }
 func (State) TableName() string                    { return "states" }
 func (Transition) TableName() string               { return "transitions" }
 func (StateAction) TableName() string              { return "state_actions" }

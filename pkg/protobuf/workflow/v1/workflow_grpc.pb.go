@@ -54,6 +54,8 @@ const (
 	WorkflowService_GetTeamConfiguration_FullMethodName          = "/workflow.v1.WorkflowService/GetTeamConfiguration"
 	WorkflowService_CanExecuteTransition_FullMethodName          = "/workflow.v1.WorkflowService/CanExecuteTransition"
 	WorkflowService_GetDepartmentWorkflowConfig_FullMethodName   = "/workflow.v1.WorkflowService/GetDepartmentWorkflowConfig"
+	WorkflowService_SubmitReview_FullMethodName                  = "/workflow.v1.WorkflowService/SubmitReview"
+	WorkflowService_GetStateReviews_FullMethodName               = "/workflow.v1.WorkflowService/GetStateReviews"
 )
 
 // WorkflowServiceClient is the client API for WorkflowService service.
@@ -103,6 +105,9 @@ type WorkflowServiceClient interface {
 	GetTeamConfiguration(ctx context.Context, in *GetTeamConfigurationRequest, opts ...grpc.CallOption) (*TeamConfigurationResponse, error)
 	CanExecuteTransition(ctx context.Context, in *CanExecuteTransitionRequest, opts ...grpc.CallOption) (*CanExecuteTransitionResponse, error)
 	GetDepartmentWorkflowConfig(ctx context.Context, in *GetDepartmentWorkflowConfigRequest, opts ...grpc.CallOption) (*DepartmentWorkflowConfigResponse, error)
+	// === REVIEW (оценки/допуск преподов) ===
+	SubmitReview(ctx context.Context, in *SubmitReviewRequest, opts ...grpc.CallOption) (*SubmitReviewResponse, error)
+	GetStateReviews(ctx context.Context, in *GetStateReviewsRequest, opts ...grpc.CallOption) (*GetStateReviewsResponse, error)
 }
 
 type workflowServiceClient struct {
@@ -453,6 +458,26 @@ func (c *workflowServiceClient) GetDepartmentWorkflowConfig(ctx context.Context,
 	return out, nil
 }
 
+func (c *workflowServiceClient) SubmitReview(ctx context.Context, in *SubmitReviewRequest, opts ...grpc.CallOption) (*SubmitReviewResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(SubmitReviewResponse)
+	err := c.cc.Invoke(ctx, WorkflowService_SubmitReview_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *workflowServiceClient) GetStateReviews(ctx context.Context, in *GetStateReviewsRequest, opts ...grpc.CallOption) (*GetStateReviewsResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(GetStateReviewsResponse)
+	err := c.cc.Invoke(ctx, WorkflowService_GetStateReviews_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // WorkflowServiceServer is the server API for WorkflowService service.
 // All implementations must embed UnimplementedWorkflowServiceServer
 // for forward compatibility.
@@ -500,6 +525,9 @@ type WorkflowServiceServer interface {
 	GetTeamConfiguration(context.Context, *GetTeamConfigurationRequest) (*TeamConfigurationResponse, error)
 	CanExecuteTransition(context.Context, *CanExecuteTransitionRequest) (*CanExecuteTransitionResponse, error)
 	GetDepartmentWorkflowConfig(context.Context, *GetDepartmentWorkflowConfigRequest) (*DepartmentWorkflowConfigResponse, error)
+	// === REVIEW (оценки/допуск преподов) ===
+	SubmitReview(context.Context, *SubmitReviewRequest) (*SubmitReviewResponse, error)
+	GetStateReviews(context.Context, *GetStateReviewsRequest) (*GetStateReviewsResponse, error)
 	mustEmbedUnimplementedWorkflowServiceServer()
 }
 
@@ -611,6 +639,12 @@ func (UnimplementedWorkflowServiceServer) CanExecuteTransition(context.Context, 
 }
 func (UnimplementedWorkflowServiceServer) GetDepartmentWorkflowConfig(context.Context, *GetDepartmentWorkflowConfigRequest) (*DepartmentWorkflowConfigResponse, error) {
 	return nil, status.Error(codes.Unimplemented, "method GetDepartmentWorkflowConfig not implemented")
+}
+func (UnimplementedWorkflowServiceServer) SubmitReview(context.Context, *SubmitReviewRequest) (*SubmitReviewResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method SubmitReview not implemented")
+}
+func (UnimplementedWorkflowServiceServer) GetStateReviews(context.Context, *GetStateReviewsRequest) (*GetStateReviewsResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method GetStateReviews not implemented")
 }
 func (UnimplementedWorkflowServiceServer) mustEmbedUnimplementedWorkflowServiceServer() {}
 func (UnimplementedWorkflowServiceServer) testEmbeddedByValue()                         {}
@@ -1245,6 +1279,42 @@ func _WorkflowService_GetDepartmentWorkflowConfig_Handler(srv interface{}, ctx c
 	return interceptor(ctx, in, info, handler)
 }
 
+func _WorkflowService_SubmitReview_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(SubmitReviewRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(WorkflowServiceServer).SubmitReview(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: WorkflowService_SubmitReview_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(WorkflowServiceServer).SubmitReview(ctx, req.(*SubmitReviewRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _WorkflowService_GetStateReviews_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetStateReviewsRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(WorkflowServiceServer).GetStateReviews(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: WorkflowService_GetStateReviews_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(WorkflowServiceServer).GetStateReviews(ctx, req.(*GetStateReviewsRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // WorkflowService_ServiceDesc is the grpc.ServiceDesc for WorkflowService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -1387,6 +1457,14 @@ var WorkflowService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "GetDepartmentWorkflowConfig",
 			Handler:    _WorkflowService_GetDepartmentWorkflowConfig_Handler,
+		},
+		{
+			MethodName: "SubmitReview",
+			Handler:    _WorkflowService_SubmitReview_Handler,
+		},
+		{
+			MethodName: "GetStateReviews",
+			Handler:    _WorkflowService_GetStateReviews_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

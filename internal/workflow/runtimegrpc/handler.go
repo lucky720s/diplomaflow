@@ -23,12 +23,13 @@ type Handler struct {
 	*workflow.Handler
 
 	eng           *engine.WorkflowEngine
+	reviewSvc     *workflow.ReviewService
 	projectClient projectv1.ProjectServiceClient
 	logger        *zap.Logger
 }
 
-func New(base *workflow.Handler, eng *engine.WorkflowEngine, projectClient projectv1.ProjectServiceClient, logger *zap.Logger) *Handler {
-	return &Handler{Handler: base, eng: eng, projectClient: projectClient, logger: logger}
+func New(base *workflow.Handler, eng *engine.WorkflowEngine, reviewSvc *workflow.ReviewService, projectClient projectv1.ProjectServiceClient, logger *zap.Logger) *Handler {
+	return &Handler{Handler: base, eng: eng, reviewSvc: reviewSvc, projectClient: projectClient, logger: logger}
 }
 
 type callerInfo struct {
@@ -271,6 +272,113 @@ func (h *Handler) ExecuteTransition(ctx context.Context, req *workflowv1.Execute
 		ExecutedActions: res.ExecutedActionNames,
 	}, nil
 }
+func (h *Handler) SubmitReview(ctx context.Context, req *workflowv1.SubmitReviewRequest) (*workflowv1.SubmitReviewResponse, error) {
+	if req.ProjectId <= 0 || req.StateId <= 0 || req.UserId <= 0 {
+		return nil, status.Error(codes.InvalidArgument, "project_id, state_id, user_id are required")
+	}
+	if req.RoleSlug == "" {
+		return nil, status.Error(codes.InvalidArgument, "role_slug is required")
+	}
+
+	ci := getCaller(ctx)
+	if ci.InternalSvc == "" {
+		if ci.UserID == 0 || ci.UserRole == "" {
+			return nil, status.Error(codes.Unauthenticated, "missing auth metadata")
+		}
+		if ci.UserID != req.UserId {
+			return nil, status.Error(codes.PermissionDenied, "user_id mismatch")
+		}
+	}
+
+	sreq := &workflow.SubmitReviewRequest{
+		ProjectID:  req.ProjectId,
+		StateID:    req.StateId,
+		ReviewerID: req.UserId,
+		RoleSlug:   req.RoleSlug,
+		Decision:   req.Decision,
+		Comment:    req.Comment,
+	}
+	if req.HasScore {
+		s := req.Score
+		sreq.Score = &s
+	}
+
+	resp, err := h.reviewSvc.SubmitReview(ctx, sreq)
+	if err != nil {
+		switch {
+		case errors.Is(err, workflow.ErrReviewNotAllowed):
+			return nil, status.Error(codes.PermissionDenied, err.Error())
+		case errors.Is(err, workflow.ErrInvalidScore), errors.Is(err, workflow.ErrInvalidDecision):
+			return nil, status.Error(codes.InvalidArgument, err.Error())
+		default:
+			return nil, status.Error(codes.Internal, err.Error())
+		}
+	}
+
+	return &workflowv1.SubmitReviewResponse{
+		AllVoted:        resp.AllVoted,
+		ReadyToFinalize: resp.ReadyToFinalize,
+		Summary:         summaryToProto(resp.Summary),
+	}, nil
+}
+
+func (h *Handler) GetStateReviews(ctx context.Context, req *workflowv1.GetStateReviewsRequest) (*workflowv1.GetStateReviewsResponse, error) {
+	if req.ProjectId <= 0 || req.StateId <= 0 {
+		return nil, status.Error(codes.InvalidArgument, "project_id and state_id are required")
+	}
+
+	reviews, err := h.reviewSvc.GetReviews(ctx, req.ProjectId, req.StateId)
+	if err != nil {
+		return nil, status.Error(codes.Internal, err.Error())
+	}
+
+	summary, err := h.reviewSvc.GetSummary(ctx, req.ProjectId, req.StateId)
+	if err != nil {
+		return nil, status.Error(codes.Internal, err.Error())
+	}
+
+	var protoReviews []*workflowv1.StateReviewProto
+	for _, r := range reviews {
+		pr := &workflowv1.StateReviewProto{
+			Id:         r.ID,
+			ProjectId:  r.ProjectID,
+			StateId:    r.StateID,
+			ReviewerId: r.ReviewerID,
+			RoleSlug:   r.RoleSlug,
+			Decision:   r.Decision,
+			Comment:    r.Comment,
+			CreatedAt:  timestamppb.New(r.CreatedAt),
+			UpdatedAt:  timestamppb.New(r.UpdatedAt),
+		}
+		if r.Score != nil {
+			pr.Score = *r.Score
+			pr.HasScore = true
+		}
+		protoReviews = append(protoReviews, pr)
+	}
+
+	return &workflowv1.GetStateReviewsResponse{
+		Reviews: protoReviews,
+		Summary: summaryToProto(*summary),
+	}, nil
+}
+
+func summaryToProto(s workflow.ReviewSummary) *workflowv1.ReviewSummaryProto {
+	p := &workflowv1.ReviewSummaryProto{
+		TotalReviews:  int32(s.TotalReviews),
+		AverageScore:  s.AverageScore,
+		ApprovedCount: int32(s.ApprovedCount),
+		RejectedCount: int32(s.RejectedCount),
+		AllVoted:      s.AllVoted,
+		Result:        s.Result,
+	}
+	if s.FinalScore != nil {
+		p.FinalScore = *s.FinalScore
+		p.HasFinalScore = true
+	}
+	return p
+}
+
 func (h *Handler) CanExecuteTransition(ctx context.Context, req *workflowv1.CanExecuteTransitionRequest) (*workflowv1.CanExecuteTransitionResponse, error) {
 	if req.ProjectId <= 0 || req.TransitionId <= 0 {
 		return nil, status.Error(codes.InvalidArgument, "project_id and transition_id are required")

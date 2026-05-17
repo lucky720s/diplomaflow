@@ -6947,6 +6947,12 @@ func (m *ReviewConfig) validate(all bool) error {
 
 	// no validation rules for RequireComment
 
+	// no validation rules for FinalizerRole
+
+	// no validation rules for GradeType
+
+	// no validation rules for PassingScore
+
 	if len(errors) > 0 {
 		return ReviewConfigMultiError(errors)
 	}
@@ -9401,3 +9407,821 @@ var _ interface {
 	Cause() error
 	ErrorName() string
 } = DeadlineConfigValidationError{}
+
+// Validate checks the field values on SubmitReviewRequest with the rules
+// defined in the proto definition for this message. If any rules are
+// violated, the first error encountered is returned, or nil if there are no violations.
+func (m *SubmitReviewRequest) Validate() error {
+	return m.validate(false)
+}
+
+// ValidateAll checks the field values on SubmitReviewRequest with the rules
+// defined in the proto definition for this message. If any rules are
+// violated, the result is a list of violation errors wrapped in
+// SubmitReviewRequestMultiError, or nil if none found.
+func (m *SubmitReviewRequest) ValidateAll() error {
+	return m.validate(true)
+}
+
+func (m *SubmitReviewRequest) validate(all bool) error {
+	if m == nil {
+		return nil
+	}
+
+	var errors []error
+
+	// no validation rules for ProjectId
+
+	// no validation rules for StateId
+
+	// no validation rules for UserId
+
+	// no validation rules for RoleSlug
+
+	// no validation rules for Decision
+
+	// no validation rules for Score
+
+	// no validation rules for HasScore
+
+	// no validation rules for Comment
+
+	if len(errors) > 0 {
+		return SubmitReviewRequestMultiError(errors)
+	}
+
+	return nil
+}
+
+// SubmitReviewRequestMultiError is an error wrapping multiple validation
+// errors returned by SubmitReviewRequest.ValidateAll() if the designated
+// constraints aren't met.
+type SubmitReviewRequestMultiError []error
+
+// Error returns a concatenation of all the error messages it wraps.
+func (m SubmitReviewRequestMultiError) Error() string {
+	msgs := make([]string, 0, len(m))
+	for _, err := range m {
+		msgs = append(msgs, err.Error())
+	}
+	return strings.Join(msgs, "; ")
+}
+
+// AllErrors returns a list of validation violation errors.
+func (m SubmitReviewRequestMultiError) AllErrors() []error { return m }
+
+// SubmitReviewRequestValidationError is the validation error returned by
+// SubmitReviewRequest.Validate if the designated constraints aren't met.
+type SubmitReviewRequestValidationError struct {
+	field  string
+	reason string
+	cause  error
+	key    bool
+}
+
+// Field function returns field value.
+func (e SubmitReviewRequestValidationError) Field() string { return e.field }
+
+// Reason function returns reason value.
+func (e SubmitReviewRequestValidationError) Reason() string { return e.reason }
+
+// Cause function returns cause value.
+func (e SubmitReviewRequestValidationError) Cause() error { return e.cause }
+
+// Key function returns key value.
+func (e SubmitReviewRequestValidationError) Key() bool { return e.key }
+
+// ErrorName returns error name.
+func (e SubmitReviewRequestValidationError) ErrorName() string {
+	return "SubmitReviewRequestValidationError"
+}
+
+// Error satisfies the builtin error interface
+func (e SubmitReviewRequestValidationError) Error() string {
+	cause := ""
+	if e.cause != nil {
+		cause = fmt.Sprintf(" | caused by: %v", e.cause)
+	}
+
+	key := ""
+	if e.key {
+		key = "key for "
+	}
+
+	return fmt.Sprintf(
+		"invalid %sSubmitReviewRequest.%s: %s%s",
+		key,
+		e.field,
+		e.reason,
+		cause)
+}
+
+var _ error = SubmitReviewRequestValidationError{}
+
+var _ interface {
+	Field() string
+	Reason() string
+	Key() bool
+	Cause() error
+	ErrorName() string
+} = SubmitReviewRequestValidationError{}
+
+// Validate checks the field values on SubmitReviewResponse with the rules
+// defined in the proto definition for this message. If any rules are
+// violated, the first error encountered is returned, or nil if there are no violations.
+func (m *SubmitReviewResponse) Validate() error {
+	return m.validate(false)
+}
+
+// ValidateAll checks the field values on SubmitReviewResponse with the rules
+// defined in the proto definition for this message. If any rules are
+// violated, the result is a list of violation errors wrapped in
+// SubmitReviewResponseMultiError, or nil if none found.
+func (m *SubmitReviewResponse) ValidateAll() error {
+	return m.validate(true)
+}
+
+func (m *SubmitReviewResponse) validate(all bool) error {
+	if m == nil {
+		return nil
+	}
+
+	var errors []error
+
+	// no validation rules for AllVoted
+
+	// no validation rules for ReadyToFinalize
+
+	if all {
+		switch v := interface{}(m.GetSummary()).(type) {
+		case interface{ ValidateAll() error }:
+			if err := v.ValidateAll(); err != nil {
+				errors = append(errors, SubmitReviewResponseValidationError{
+					field:  "Summary",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		case interface{ Validate() error }:
+			if err := v.Validate(); err != nil {
+				errors = append(errors, SubmitReviewResponseValidationError{
+					field:  "Summary",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		}
+	} else if v, ok := interface{}(m.GetSummary()).(interface{ Validate() error }); ok {
+		if err := v.Validate(); err != nil {
+			return SubmitReviewResponseValidationError{
+				field:  "Summary",
+				reason: "embedded message failed validation",
+				cause:  err,
+			}
+		}
+	}
+
+	if len(errors) > 0 {
+		return SubmitReviewResponseMultiError(errors)
+	}
+
+	return nil
+}
+
+// SubmitReviewResponseMultiError is an error wrapping multiple validation
+// errors returned by SubmitReviewResponse.ValidateAll() if the designated
+// constraints aren't met.
+type SubmitReviewResponseMultiError []error
+
+// Error returns a concatenation of all the error messages it wraps.
+func (m SubmitReviewResponseMultiError) Error() string {
+	msgs := make([]string, 0, len(m))
+	for _, err := range m {
+		msgs = append(msgs, err.Error())
+	}
+	return strings.Join(msgs, "; ")
+}
+
+// AllErrors returns a list of validation violation errors.
+func (m SubmitReviewResponseMultiError) AllErrors() []error { return m }
+
+// SubmitReviewResponseValidationError is the validation error returned by
+// SubmitReviewResponse.Validate if the designated constraints aren't met.
+type SubmitReviewResponseValidationError struct {
+	field  string
+	reason string
+	cause  error
+	key    bool
+}
+
+// Field function returns field value.
+func (e SubmitReviewResponseValidationError) Field() string { return e.field }
+
+// Reason function returns reason value.
+func (e SubmitReviewResponseValidationError) Reason() string { return e.reason }
+
+// Cause function returns cause value.
+func (e SubmitReviewResponseValidationError) Cause() error { return e.cause }
+
+// Key function returns key value.
+func (e SubmitReviewResponseValidationError) Key() bool { return e.key }
+
+// ErrorName returns error name.
+func (e SubmitReviewResponseValidationError) ErrorName() string {
+	return "SubmitReviewResponseValidationError"
+}
+
+// Error satisfies the builtin error interface
+func (e SubmitReviewResponseValidationError) Error() string {
+	cause := ""
+	if e.cause != nil {
+		cause = fmt.Sprintf(" | caused by: %v", e.cause)
+	}
+
+	key := ""
+	if e.key {
+		key = "key for "
+	}
+
+	return fmt.Sprintf(
+		"invalid %sSubmitReviewResponse.%s: %s%s",
+		key,
+		e.field,
+		e.reason,
+		cause)
+}
+
+var _ error = SubmitReviewResponseValidationError{}
+
+var _ interface {
+	Field() string
+	Reason() string
+	Key() bool
+	Cause() error
+	ErrorName() string
+} = SubmitReviewResponseValidationError{}
+
+// Validate checks the field values on GetStateReviewsRequest with the rules
+// defined in the proto definition for this message. If any rules are
+// violated, the first error encountered is returned, or nil if there are no violations.
+func (m *GetStateReviewsRequest) Validate() error {
+	return m.validate(false)
+}
+
+// ValidateAll checks the field values on GetStateReviewsRequest with the rules
+// defined in the proto definition for this message. If any rules are
+// violated, the result is a list of violation errors wrapped in
+// GetStateReviewsRequestMultiError, or nil if none found.
+func (m *GetStateReviewsRequest) ValidateAll() error {
+	return m.validate(true)
+}
+
+func (m *GetStateReviewsRequest) validate(all bool) error {
+	if m == nil {
+		return nil
+	}
+
+	var errors []error
+
+	// no validation rules for ProjectId
+
+	// no validation rules for StateId
+
+	if len(errors) > 0 {
+		return GetStateReviewsRequestMultiError(errors)
+	}
+
+	return nil
+}
+
+// GetStateReviewsRequestMultiError is an error wrapping multiple validation
+// errors returned by GetStateReviewsRequest.ValidateAll() if the designated
+// constraints aren't met.
+type GetStateReviewsRequestMultiError []error
+
+// Error returns a concatenation of all the error messages it wraps.
+func (m GetStateReviewsRequestMultiError) Error() string {
+	msgs := make([]string, 0, len(m))
+	for _, err := range m {
+		msgs = append(msgs, err.Error())
+	}
+	return strings.Join(msgs, "; ")
+}
+
+// AllErrors returns a list of validation violation errors.
+func (m GetStateReviewsRequestMultiError) AllErrors() []error { return m }
+
+// GetStateReviewsRequestValidationError is the validation error returned by
+// GetStateReviewsRequest.Validate if the designated constraints aren't met.
+type GetStateReviewsRequestValidationError struct {
+	field  string
+	reason string
+	cause  error
+	key    bool
+}
+
+// Field function returns field value.
+func (e GetStateReviewsRequestValidationError) Field() string { return e.field }
+
+// Reason function returns reason value.
+func (e GetStateReviewsRequestValidationError) Reason() string { return e.reason }
+
+// Cause function returns cause value.
+func (e GetStateReviewsRequestValidationError) Cause() error { return e.cause }
+
+// Key function returns key value.
+func (e GetStateReviewsRequestValidationError) Key() bool { return e.key }
+
+// ErrorName returns error name.
+func (e GetStateReviewsRequestValidationError) ErrorName() string {
+	return "GetStateReviewsRequestValidationError"
+}
+
+// Error satisfies the builtin error interface
+func (e GetStateReviewsRequestValidationError) Error() string {
+	cause := ""
+	if e.cause != nil {
+		cause = fmt.Sprintf(" | caused by: %v", e.cause)
+	}
+
+	key := ""
+	if e.key {
+		key = "key for "
+	}
+
+	return fmt.Sprintf(
+		"invalid %sGetStateReviewsRequest.%s: %s%s",
+		key,
+		e.field,
+		e.reason,
+		cause)
+}
+
+var _ error = GetStateReviewsRequestValidationError{}
+
+var _ interface {
+	Field() string
+	Reason() string
+	Key() bool
+	Cause() error
+	ErrorName() string
+} = GetStateReviewsRequestValidationError{}
+
+// Validate checks the field values on GetStateReviewsResponse with the rules
+// defined in the proto definition for this message. If any rules are
+// violated, the first error encountered is returned, or nil if there are no violations.
+func (m *GetStateReviewsResponse) Validate() error {
+	return m.validate(false)
+}
+
+// ValidateAll checks the field values on GetStateReviewsResponse with the
+// rules defined in the proto definition for this message. If any rules are
+// violated, the result is a list of violation errors wrapped in
+// GetStateReviewsResponseMultiError, or nil if none found.
+func (m *GetStateReviewsResponse) ValidateAll() error {
+	return m.validate(true)
+}
+
+func (m *GetStateReviewsResponse) validate(all bool) error {
+	if m == nil {
+		return nil
+	}
+
+	var errors []error
+
+	for idx, item := range m.GetReviews() {
+		_, _ = idx, item
+
+		if all {
+			switch v := interface{}(item).(type) {
+			case interface{ ValidateAll() error }:
+				if err := v.ValidateAll(); err != nil {
+					errors = append(errors, GetStateReviewsResponseValidationError{
+						field:  fmt.Sprintf("Reviews[%v]", idx),
+						reason: "embedded message failed validation",
+						cause:  err,
+					})
+				}
+			case interface{ Validate() error }:
+				if err := v.Validate(); err != nil {
+					errors = append(errors, GetStateReviewsResponseValidationError{
+						field:  fmt.Sprintf("Reviews[%v]", idx),
+						reason: "embedded message failed validation",
+						cause:  err,
+					})
+				}
+			}
+		} else if v, ok := interface{}(item).(interface{ Validate() error }); ok {
+			if err := v.Validate(); err != nil {
+				return GetStateReviewsResponseValidationError{
+					field:  fmt.Sprintf("Reviews[%v]", idx),
+					reason: "embedded message failed validation",
+					cause:  err,
+				}
+			}
+		}
+
+	}
+
+	if all {
+		switch v := interface{}(m.GetSummary()).(type) {
+		case interface{ ValidateAll() error }:
+			if err := v.ValidateAll(); err != nil {
+				errors = append(errors, GetStateReviewsResponseValidationError{
+					field:  "Summary",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		case interface{ Validate() error }:
+			if err := v.Validate(); err != nil {
+				errors = append(errors, GetStateReviewsResponseValidationError{
+					field:  "Summary",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		}
+	} else if v, ok := interface{}(m.GetSummary()).(interface{ Validate() error }); ok {
+		if err := v.Validate(); err != nil {
+			return GetStateReviewsResponseValidationError{
+				field:  "Summary",
+				reason: "embedded message failed validation",
+				cause:  err,
+			}
+		}
+	}
+
+	if len(errors) > 0 {
+		return GetStateReviewsResponseMultiError(errors)
+	}
+
+	return nil
+}
+
+// GetStateReviewsResponseMultiError is an error wrapping multiple validation
+// errors returned by GetStateReviewsResponse.ValidateAll() if the designated
+// constraints aren't met.
+type GetStateReviewsResponseMultiError []error
+
+// Error returns a concatenation of all the error messages it wraps.
+func (m GetStateReviewsResponseMultiError) Error() string {
+	msgs := make([]string, 0, len(m))
+	for _, err := range m {
+		msgs = append(msgs, err.Error())
+	}
+	return strings.Join(msgs, "; ")
+}
+
+// AllErrors returns a list of validation violation errors.
+func (m GetStateReviewsResponseMultiError) AllErrors() []error { return m }
+
+// GetStateReviewsResponseValidationError is the validation error returned by
+// GetStateReviewsResponse.Validate if the designated constraints aren't met.
+type GetStateReviewsResponseValidationError struct {
+	field  string
+	reason string
+	cause  error
+	key    bool
+}
+
+// Field function returns field value.
+func (e GetStateReviewsResponseValidationError) Field() string { return e.field }
+
+// Reason function returns reason value.
+func (e GetStateReviewsResponseValidationError) Reason() string { return e.reason }
+
+// Cause function returns cause value.
+func (e GetStateReviewsResponseValidationError) Cause() error { return e.cause }
+
+// Key function returns key value.
+func (e GetStateReviewsResponseValidationError) Key() bool { return e.key }
+
+// ErrorName returns error name.
+func (e GetStateReviewsResponseValidationError) ErrorName() string {
+	return "GetStateReviewsResponseValidationError"
+}
+
+// Error satisfies the builtin error interface
+func (e GetStateReviewsResponseValidationError) Error() string {
+	cause := ""
+	if e.cause != nil {
+		cause = fmt.Sprintf(" | caused by: %v", e.cause)
+	}
+
+	key := ""
+	if e.key {
+		key = "key for "
+	}
+
+	return fmt.Sprintf(
+		"invalid %sGetStateReviewsResponse.%s: %s%s",
+		key,
+		e.field,
+		e.reason,
+		cause)
+}
+
+var _ error = GetStateReviewsResponseValidationError{}
+
+var _ interface {
+	Field() string
+	Reason() string
+	Key() bool
+	Cause() error
+	ErrorName() string
+} = GetStateReviewsResponseValidationError{}
+
+// Validate checks the field values on StateReviewProto with the rules defined
+// in the proto definition for this message. If any rules are violated, the
+// first error encountered is returned, or nil if there are no violations.
+func (m *StateReviewProto) Validate() error {
+	return m.validate(false)
+}
+
+// ValidateAll checks the field values on StateReviewProto with the rules
+// defined in the proto definition for this message. If any rules are
+// violated, the result is a list of violation errors wrapped in
+// StateReviewProtoMultiError, or nil if none found.
+func (m *StateReviewProto) ValidateAll() error {
+	return m.validate(true)
+}
+
+func (m *StateReviewProto) validate(all bool) error {
+	if m == nil {
+		return nil
+	}
+
+	var errors []error
+
+	// no validation rules for Id
+
+	// no validation rules for ProjectId
+
+	// no validation rules for StateId
+
+	// no validation rules for ReviewerId
+
+	// no validation rules for RoleSlug
+
+	// no validation rules for Decision
+
+	// no validation rules for Score
+
+	// no validation rules for HasScore
+
+	// no validation rules for Comment
+
+	if all {
+		switch v := interface{}(m.GetCreatedAt()).(type) {
+		case interface{ ValidateAll() error }:
+			if err := v.ValidateAll(); err != nil {
+				errors = append(errors, StateReviewProtoValidationError{
+					field:  "CreatedAt",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		case interface{ Validate() error }:
+			if err := v.Validate(); err != nil {
+				errors = append(errors, StateReviewProtoValidationError{
+					field:  "CreatedAt",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		}
+	} else if v, ok := interface{}(m.GetCreatedAt()).(interface{ Validate() error }); ok {
+		if err := v.Validate(); err != nil {
+			return StateReviewProtoValidationError{
+				field:  "CreatedAt",
+				reason: "embedded message failed validation",
+				cause:  err,
+			}
+		}
+	}
+
+	if all {
+		switch v := interface{}(m.GetUpdatedAt()).(type) {
+		case interface{ ValidateAll() error }:
+			if err := v.ValidateAll(); err != nil {
+				errors = append(errors, StateReviewProtoValidationError{
+					field:  "UpdatedAt",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		case interface{ Validate() error }:
+			if err := v.Validate(); err != nil {
+				errors = append(errors, StateReviewProtoValidationError{
+					field:  "UpdatedAt",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		}
+	} else if v, ok := interface{}(m.GetUpdatedAt()).(interface{ Validate() error }); ok {
+		if err := v.Validate(); err != nil {
+			return StateReviewProtoValidationError{
+				field:  "UpdatedAt",
+				reason: "embedded message failed validation",
+				cause:  err,
+			}
+		}
+	}
+
+	if len(errors) > 0 {
+		return StateReviewProtoMultiError(errors)
+	}
+
+	return nil
+}
+
+// StateReviewProtoMultiError is an error wrapping multiple validation errors
+// returned by StateReviewProto.ValidateAll() if the designated constraints
+// aren't met.
+type StateReviewProtoMultiError []error
+
+// Error returns a concatenation of all the error messages it wraps.
+func (m StateReviewProtoMultiError) Error() string {
+	msgs := make([]string, 0, len(m))
+	for _, err := range m {
+		msgs = append(msgs, err.Error())
+	}
+	return strings.Join(msgs, "; ")
+}
+
+// AllErrors returns a list of validation violation errors.
+func (m StateReviewProtoMultiError) AllErrors() []error { return m }
+
+// StateReviewProtoValidationError is the validation error returned by
+// StateReviewProto.Validate if the designated constraints aren't met.
+type StateReviewProtoValidationError struct {
+	field  string
+	reason string
+	cause  error
+	key    bool
+}
+
+// Field function returns field value.
+func (e StateReviewProtoValidationError) Field() string { return e.field }
+
+// Reason function returns reason value.
+func (e StateReviewProtoValidationError) Reason() string { return e.reason }
+
+// Cause function returns cause value.
+func (e StateReviewProtoValidationError) Cause() error { return e.cause }
+
+// Key function returns key value.
+func (e StateReviewProtoValidationError) Key() bool { return e.key }
+
+// ErrorName returns error name.
+func (e StateReviewProtoValidationError) ErrorName() string { return "StateReviewProtoValidationError" }
+
+// Error satisfies the builtin error interface
+func (e StateReviewProtoValidationError) Error() string {
+	cause := ""
+	if e.cause != nil {
+		cause = fmt.Sprintf(" | caused by: %v", e.cause)
+	}
+
+	key := ""
+	if e.key {
+		key = "key for "
+	}
+
+	return fmt.Sprintf(
+		"invalid %sStateReviewProto.%s: %s%s",
+		key,
+		e.field,
+		e.reason,
+		cause)
+}
+
+var _ error = StateReviewProtoValidationError{}
+
+var _ interface {
+	Field() string
+	Reason() string
+	Key() bool
+	Cause() error
+	ErrorName() string
+} = StateReviewProtoValidationError{}
+
+// Validate checks the field values on ReviewSummaryProto with the rules
+// defined in the proto definition for this message. If any rules are
+// violated, the first error encountered is returned, or nil if there are no violations.
+func (m *ReviewSummaryProto) Validate() error {
+	return m.validate(false)
+}
+
+// ValidateAll checks the field values on ReviewSummaryProto with the rules
+// defined in the proto definition for this message. If any rules are
+// violated, the result is a list of violation errors wrapped in
+// ReviewSummaryProtoMultiError, or nil if none found.
+func (m *ReviewSummaryProto) ValidateAll() error {
+	return m.validate(true)
+}
+
+func (m *ReviewSummaryProto) validate(all bool) error {
+	if m == nil {
+		return nil
+	}
+
+	var errors []error
+
+	// no validation rules for TotalReviews
+
+	// no validation rules for AverageScore
+
+	// no validation rules for ApprovedCount
+
+	// no validation rules for RejectedCount
+
+	// no validation rules for AllVoted
+
+	// no validation rules for Result
+
+	// no validation rules for FinalScore
+
+	// no validation rules for HasFinalScore
+
+	if len(errors) > 0 {
+		return ReviewSummaryProtoMultiError(errors)
+	}
+
+	return nil
+}
+
+// ReviewSummaryProtoMultiError is an error wrapping multiple validation errors
+// returned by ReviewSummaryProto.ValidateAll() if the designated constraints
+// aren't met.
+type ReviewSummaryProtoMultiError []error
+
+// Error returns a concatenation of all the error messages it wraps.
+func (m ReviewSummaryProtoMultiError) Error() string {
+	msgs := make([]string, 0, len(m))
+	for _, err := range m {
+		msgs = append(msgs, err.Error())
+	}
+	return strings.Join(msgs, "; ")
+}
+
+// AllErrors returns a list of validation violation errors.
+func (m ReviewSummaryProtoMultiError) AllErrors() []error { return m }
+
+// ReviewSummaryProtoValidationError is the validation error returned by
+// ReviewSummaryProto.Validate if the designated constraints aren't met.
+type ReviewSummaryProtoValidationError struct {
+	field  string
+	reason string
+	cause  error
+	key    bool
+}
+
+// Field function returns field value.
+func (e ReviewSummaryProtoValidationError) Field() string { return e.field }
+
+// Reason function returns reason value.
+func (e ReviewSummaryProtoValidationError) Reason() string { return e.reason }
+
+// Cause function returns cause value.
+func (e ReviewSummaryProtoValidationError) Cause() error { return e.cause }
+
+// Key function returns key value.
+func (e ReviewSummaryProtoValidationError) Key() bool { return e.key }
+
+// ErrorName returns error name.
+func (e ReviewSummaryProtoValidationError) ErrorName() string {
+	return "ReviewSummaryProtoValidationError"
+}
+
+// Error satisfies the builtin error interface
+func (e ReviewSummaryProtoValidationError) Error() string {
+	cause := ""
+	if e.cause != nil {
+		cause = fmt.Sprintf(" | caused by: %v", e.cause)
+	}
+
+	key := ""
+	if e.key {
+		key = "key for "
+	}
+
+	return fmt.Sprintf(
+		"invalid %sReviewSummaryProto.%s: %s%s",
+		key,
+		e.field,
+		e.reason,
+		cause)
+}
+
+var _ error = ReviewSummaryProtoValidationError{}
+
+var _ interface {
+	Field() string
+	Reason() string
+	Key() bool
+	Cause() error
+	ErrorName() string
+} = ReviewSummaryProtoValidationError{}

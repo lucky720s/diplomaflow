@@ -127,6 +127,17 @@ func (e *WorkflowEngine) ExecuteTransition(ctx context.Context, req *ExecuteTran
 		},
 	}
 
+	// Передаём review_config текущего стэйта в metadata для ReviewGatePlugin
+	metadata := map[string]interface{}{
+		"user_role": req.UserRole,
+	}
+	if fromState.Config != nil {
+		var sc workflow.StateConfig
+		if err := json.Unmarshal(fromState.Config, &sc); err == nil && sc.ReviewConfig != nil {
+			metadata["state_review_config"] = sc.ReviewConfig
+		}
+	}
+
 	actx := &plugins.ActionContext{
 		ProjectID:     req.ProjectID,
 		UserID:        req.UserID,
@@ -138,7 +149,7 @@ func (e *WorkflowEngine) ExecuteTransition(ctx context.Context, req *ExecuteTran
 		NewState:      toState.Name,
 		TransitionID:  transition.ID,
 		Payload:       req.Payload,
-		Metadata:      make(map[string]interface{}),
+		Metadata:      metadata,
 	}
 
 	// 1) ON_EXIT: PRE actions выполняем сейчас, POST actions планируем

@@ -185,16 +185,19 @@ func main() {
 	defer teamConn.Close()
 	teamClient := teamv1.NewTeamServiceClient(teamConn)
 
-	// Plugins
-	builtin.RegisterAll(notifClient, teamClient)
-	log.Info("Builtin plugins registered", zap.Strings("plugins", builtin.RegisteredPlugins()))
-
 	repo := workflow.NewRepository(db)
 	svc := workflow.NewService(repo, log.Logger)
 	base := workflow.NewHandler(svc, log.Logger)
 
+	reviewRepo := workflow.NewReviewRepository(db)
+	reviewSvc := workflow.NewReviewService(reviewRepo, repo, log.Logger)
+
+	// Plugins
+	builtin.RegisterAll(notifClient, teamClient, reviewSvc)
+	log.Info("Builtin plugins registered", zap.Strings("plugins", builtin.RegisteredPlugins()))
+
 	eng := engine.NewWorkflowEngine(repo, teamClient, log.Logger)
-	h := runtimegrpc.New(base, eng, projectClient, log.Logger)
+	h := runtimegrpc.New(base, eng, reviewSvc, projectClient, log.Logger)
 
 	pcWorker := postcommit.NewWorker(db, projectClient, teamClient, log.Logger)
 	pcGRPC := postcommit.NewGRPCServer(pcWorker, log.Logger)
