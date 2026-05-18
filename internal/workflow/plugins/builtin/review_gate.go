@@ -27,11 +27,13 @@ func NewReviewGatePlugin(reviewSvc *workflow.ReviewService) *ReviewGatePlugin {
 	return &ReviewGatePlugin{reviewSvc: reviewSvc}
 }
 
-func (p *ReviewGatePlugin) ID() string          { return ReviewGatePluginID }
-func (p *ReviewGatePlugin) Name() string        { return "Review Gate" }
-func (p *ReviewGatePlugin) Description() string { return "Validates all reviewers voted before allowing transition" }
-func (p *ReviewGatePlugin) Category() string    { return plugins.CategoryValidation }
-func (p *ReviewGatePlugin) IsReversible() bool  { return false }
+func (p *ReviewGatePlugin) ID() string   { return ReviewGatePluginID }
+func (p *ReviewGatePlugin) Name() string { return "Review Gate" }
+func (p *ReviewGatePlugin) Description() string {
+	return "Validates all reviewers voted before allowing transition"
+}
+func (p *ReviewGatePlugin) Category() string   { return plugins.CategoryValidation }
+func (p *ReviewGatePlugin) IsReversible() bool { return false }
 
 func (p *ReviewGatePlugin) ConfigSchema() json.RawMessage {
 	return json.RawMessage(`{
@@ -97,8 +99,8 @@ func (p *ReviewGatePlugin) Execute(ctx context.Context, actx *plugins.ActionCont
 	}
 
 	patch := map[string]interface{}{
-		"all_voted":    true,
-		"result":       summary.Result,
+		"all_voted":     true,
+		"result":        summary.Result,
 		"total_reviews": summary.TotalReviews,
 	}
 	if summary.FinalScore != nil {

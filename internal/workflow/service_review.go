@@ -32,9 +32,9 @@ type SubmitReviewRequest struct {
 
 // SubmitReviewResponse — результат после выставления оценки
 type SubmitReviewResponse struct {
-	AllVoted          bool
-	ReadyToFinalize   bool
-	Summary           ReviewSummary
+	AllVoted        bool
+	ReadyToFinalize bool
+	Summary         ReviewSummary
 }
 
 // ReviewService — сервис управления голосами преподов
@@ -102,7 +102,7 @@ func (s *ReviewService) SubmitReview(ctx context.Context, req *SubmitReviewReque
 		return nil, fmt.Errorf("unknown grade_type: %q", rc.GradeType)
 	}
 
-	if err := s.reviewRepo.UpsertReview(ctx, review); err != nil {
+	if err = s.reviewRepo.UpsertReview(ctx, review); err != nil {
 		return nil, fmt.Errorf("upsert review: %w", err)
 	}
 
