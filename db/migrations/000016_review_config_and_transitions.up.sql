@@ -25,28 +25,31 @@ BEGIN
     RAISE EXCEPTION 'Active workflow for PI not found';
   END IF;
 
-  -- Получаем ID стэйтов
-  SELECT id INTO st_topic_approval FROM states WHERE workflow_id = v_workflow_id AND name = 'TOPIC_APPROVAL'         LIMIT 1;
-  SELECT id INTO st_predef1_mat    FROM states WHERE workflow_id = v_workflow_id AND name = 'PRE_DEFENSE_1_MATERIALS' LIMIT 1;
-  SELECT id INTO st_predef2_mat    FROM states WHERE workflow_id = v_workflow_id AND name = 'PRE_DEFENSE_2_MATERIALS' LIMIT 1;
-  SELECT id INTO st_antiplag       FROM states WHERE workflow_id = v_workflow_id AND name = 'ANTIPLAGIAT_UPLOAD'      LIMIT 1;
-  SELECT id INTO st_defense        FROM states WHERE workflow_id = v_workflow_id AND name = 'DEFENSE'                 LIMIT 1;
-  SELECT id INTO st_completed      FROM states WHERE workflow_id = v_workflow_id AND name = 'COMPLETED'               LIMIT 1;
-  SELECT id INTO st_norm           FROM states WHERE workflow_id = v_workflow_id AND name = 'NORM_CONTROL_UPLOAD'     LIMIT 1;
-  SELECT id INTO st_econ           FROM states WHERE workflow_id = v_workflow_id AND name = 'ECONOMICS_UPLOAD'        LIMIT 1;
+  -- Имена state-ов используются в их виде ПОСЛЕ 000005_rename_pi_states_to_business_name
+  SELECT id INTO st_topic_approval FROM states WHERE workflow_id = v_workflow_id AND name = 'TOPIC_APPROVAL' LIMIT 1;
+  SELECT id INTO st_predef1_mat    FROM states WHERE workflow_id = v_workflow_id AND name = 'PRE_DEFENSE_1'  LIMIT 1;
+  SELECT id INTO st_predef2_mat    FROM states WHERE workflow_id = v_workflow_id AND name = 'PRE_DEFENSE_2'  LIMIT 1;
+  SELECT id INTO st_antiplag       FROM states WHERE workflow_id = v_workflow_id AND name = 'ANTIPLAGIAT'    LIMIT 1;
+  SELECT id INTO st_defense        FROM states WHERE workflow_id = v_workflow_id AND name = 'DEFENSE'        LIMIT 1;
+  SELECT id INTO st_completed      FROM states WHERE workflow_id = v_workflow_id AND name = 'COMPLETED'      LIMIT 1;
+  SELECT id INTO st_norm           FROM states WHERE workflow_id = v_workflow_id AND name = 'NORM_CONTROL'   LIMIT 1;
+  SELECT id INTO st_econ           FROM states WHERE workflow_id = v_workflow_id AND name = 'ECONOMICS'      LIMIT 1;
 
   -- ================================================================
   -- 1. Создаём стэйты-ревью для предзащит (отдельные стэйты оценки)
   -- ================================================================
 
-  -- PRE_DEFENSE_1_REVIEW
+  -- Сначала освобождаем позицию 6 под PRE_DEFENSE_1_REVIEW (PRE_DEFENSE_1=5 остаётся, дальше +1)
+  UPDATE states SET order_index = order_index + 1
+  WHERE workflow_id = v_workflow_id AND order_index >= 6;
+
   INSERT INTO states (workflow_id, name, display_name, description, order_index, type, duration_days, config, color, icon)
   VALUES (
     v_workflow_id,
     'PRE_DEFENSE_1_REVIEW',
     'Оценка предзащиты 1',
     'Комиссия выставляет оценки за предзащиту 1',
-    5,  -- между PRE_DEFENSE_1_MATERIALS (5) и PRE_DEFENSE_2_MATERIALS (6)
+    6,
     'REVIEW',
     14,
     '{
@@ -64,11 +67,10 @@ BEGIN
   ) ON CONFLICT DO NOTHING;
   SELECT id INTO st_predef1_review FROM states WHERE workflow_id = v_workflow_id AND name = 'PRE_DEFENSE_1_REVIEW' LIMIT 1;
 
-  -- Сдвигаем order_index стэйтов после 5 вверх
+  -- Освобождаем позицию 8 под PRE_DEFENSE_2_REVIEW (PRE_DEFENSE_2 теперь 7, NORM_CONTROL был 8 → станет 9)
   UPDATE states SET order_index = order_index + 1
-  WHERE workflow_id = v_workflow_id AND order_index >= 6 AND name != 'PRE_DEFENSE_1_REVIEW';
+  WHERE workflow_id = v_workflow_id AND order_index >= 8;
 
-  -- PRE_DEFENSE_2_REVIEW
   INSERT INTO states (workflow_id, name, display_name, description, order_index, type, duration_days, config, color, icon)
   VALUES (
     v_workflow_id,
@@ -92,10 +94,6 @@ BEGIN
     'star'
   ) ON CONFLICT DO NOTHING;
   SELECT id INTO st_predef2_review FROM states WHERE workflow_id = v_workflow_id AND name = 'PRE_DEFENSE_2_REVIEW' LIMIT 1;
-
-  -- Сдвигаем order_index стэйтов после 8 вверх
-  UPDATE states SET order_index = order_index + 1
-  WHERE workflow_id = v_workflow_id AND order_index >= 9 AND name NOT IN ('PRE_DEFENSE_1_REVIEW', 'PRE_DEFENSE_2_REVIEW');
 
   -- ================================================================
   -- 2. Обновляем review_config у существующих стэйтов

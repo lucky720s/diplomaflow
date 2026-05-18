@@ -16,11 +16,11 @@ BEGIN
   SELECT id INTO v_pi_id   FROM departments WHERE university_id = v_iitu_id AND name = 'Компьютерная инженерия' LIMIT 1;
   SELECT id INTO v_workflow_id FROM workflows WHERE department_id = v_pi_id AND is_active = TRUE LIMIT 1;
 
-  SELECT id INTO st_predef1_mat    FROM states WHERE workflow_id = v_workflow_id AND name = 'PRE_DEFENSE_1_MATERIALS' LIMIT 1;
-  SELECT id INTO st_predef2_mat    FROM states WHERE workflow_id = v_workflow_id AND name = 'PRE_DEFENSE_2_MATERIALS' LIMIT 1;
-  SELECT id INTO st_predef1_review FROM states WHERE workflow_id = v_workflow_id AND name = 'PRE_DEFENSE_1_REVIEW'    LIMIT 1;
-  SELECT id INTO st_predef2_review FROM states WHERE workflow_id = v_workflow_id AND name = 'PRE_DEFENSE_2_REVIEW'    LIMIT 1;
-  SELECT id INTO st_norm           FROM states WHERE workflow_id = v_workflow_id AND name = 'NORM_CONTROL_UPLOAD'     LIMIT 1;
+  SELECT id INTO st_predef1_mat    FROM states WHERE workflow_id = v_workflow_id AND name = 'PRE_DEFENSE_1'        LIMIT 1;
+  SELECT id INTO st_predef2_mat    FROM states WHERE workflow_id = v_workflow_id AND name = 'PRE_DEFENSE_2'        LIMIT 1;
+  SELECT id INTO st_predef1_review FROM states WHERE workflow_id = v_workflow_id AND name = 'PRE_DEFENSE_1_REVIEW' LIMIT 1;
+  SELECT id INTO st_predef2_review FROM states WHERE workflow_id = v_workflow_id AND name = 'PRE_DEFENSE_2_REVIEW' LIMIT 1;
+  SELECT id INTO st_norm           FROM states WHERE workflow_id = v_workflow_id AND name = 'NORM_CONTROL'         LIMIT 1;
 
   -- Восстанавливаем прямые переходы
   UPDATE transitions SET to_state_id = st_predef2_mat
@@ -38,6 +38,12 @@ BEGIN
   -- Удаляем review-стэйты (cascade удалит state_actions)
   DELETE FROM state_actions WHERE state_id IN (st_predef1_review, st_predef2_review);
   DELETE FROM states WHERE id IN (st_predef1_review, st_predef2_review);
+
+  -- Откатываем сдвиги order_index из up-миграции (сначала второй сдвиг, потом первый)
+  UPDATE states SET order_index = order_index - 1
+  WHERE workflow_id = v_workflow_id AND order_index >= 9;
+  UPDATE states SET order_index = order_index - 1
+  WHERE workflow_id = v_workflow_id AND order_index >= 7;
 
   -- Убираем REVIEW_GATE из остальных стэйтов
   DELETE FROM state_actions WHERE type = 'REVIEW_GATE' AND trigger = 'ON_EXIT';
