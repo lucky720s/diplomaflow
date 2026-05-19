@@ -147,18 +147,18 @@ coverage:
 
 # ==================== BUILD ====================
 build:
-	@if not exist "bin" mkdir bin
-	set CGO_ENABLED=0&& go build $(LDFLAGS) -o bin/api_gateway.exe ./cmd/api_gateway
-	set CGO_ENABLED=0&& go build $(LDFLAGS) -o bin/admin_service.exe ./cmd/admin_service
-	set CGO_ENABLED=0&& go build $(LDFLAGS) -o bin/auth_service.exe ./cmd/auth_service
-	set CGO_ENABLED=0&& go build $(LDFLAGS) -o bin/file_service.exe ./cmd/file_service
-	set CGO_ENABLED=0&& go build $(LDFLAGS) -o bin/form_service.exe ./cmd/form_service
-	set CGO_ENABLED=0&& go build $(LDFLAGS) -o bin/notification_service.exe ./cmd/notification_service
-	set CGO_ENABLED=0&& go build $(LDFLAGS) -o bin/project_service.exe ./cmd/project_service
-	set CGO_ENABLED=0&& go build $(LDFLAGS) -o bin/task_service.exe ./cmd/task_service
-	set CGO_ENABLED=0&& go build $(LDFLAGS) -o bin/team_service.exe ./cmd/team_service
-	set CGO_ENABLED=0&& go build $(LDFLAGS) -o bin/university_service.exe ./cmd/university_service
-	set CGO_ENABLED=0&& go build $(LDFLAGS) -o bin/workflow_service.exe ./cmd/workflow_service
+	mkdir -p bin
+	CGO_ENABLED=0 go build $(LDFLAGS) -o bin/api_gateway.exe ./cmd/api_gateway
+	CGO_ENABLED=0 go build $(LDFLAGS) -o bin/admin_service.exe ./cmd/admin_service
+	CGO_ENABLED=0 go build $(LDFLAGS) -o bin/auth_service.exe ./cmd/auth_service
+	CGO_ENABLED=0 go build $(LDFLAGS) -o bin/file_service.exe ./cmd/file_service
+	CGO_ENABLED=0 go build $(LDFLAGS) -o bin/form_service.exe ./cmd/form_service
+	CGO_ENABLED=0 go build $(LDFLAGS) -o bin/notification_service.exe ./cmd/notification_service
+	CGO_ENABLED=0 go build $(LDFLAGS) -o bin/project_service.exe ./cmd/project_service
+	CGO_ENABLED=0 go build $(LDFLAGS) -o bin/task_service.exe ./cmd/task_service
+	CGO_ENABLED=0 go build $(LDFLAGS) -o bin/team_service.exe ./cmd/team_service
+	CGO_ENABLED=0 go build $(LDFLAGS) -o bin/university_service.exe ./cmd/university_service
+	CGO_ENABLED=0 go build $(LDFLAGS) -o bin/workflow_service.exe ./cmd/workflow_service
 
 
 build-linux:
@@ -211,11 +211,12 @@ vet:
 	go vet ./...
 
 # ==================== PRE-PUSH / CI ====================
-pre-push: proto wire fmt vet lint test build
-	@echo.
-	@echo ========================================
-	@echo   All checks passed! Ready to push.
-	@echo ========================================
+# proto and wire are pre-generated and committed; skip them in pre-push to avoid
+# Windows/bash Makefile syntax issues. Run 'make proto wire' manually when .proto files change.
+pre-push: fmt vet lint test build
+	@echo "========================================"
+	@echo "  All checks passed! Ready to push."
+	@echo "========================================"
 
 ci: deps generate lint test build
 
