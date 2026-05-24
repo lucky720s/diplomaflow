@@ -1487,6 +1487,7 @@ type TeamDetailResponse struct {
 	Grades            []*Grade
 	Submissions       []*Submission
 	TopicRegistration *TopicRegistration
+	ProjectProgress   *TeamProgressResponse
 }
 
 func (s *Service) GetTeamFullDetails(ctx context.Context, teamID int64) (*TeamDetailResponse, error) {
@@ -1509,6 +1510,12 @@ func (s *Service) GetTeamFullDetails(ctx context.Context, teamID int64) (*TeamDe
 			StepID: 0,
 		})
 		response.Submissions = submissions
+
+		if progress, perr := s.GetTeamProgress(ctx, teamID, team.ProjectID); perr == nil {
+			response.ProjectProgress = progress
+		} else {
+			s.logger.Warn("GetTeamProgress failed", zap.Int64("team_id", teamID), zap.Error(perr))
+		}
 	}
 
 	topicReg, _ := s.repo.GetTopicRegistrationByTeam(ctx, teamID)
@@ -1943,4 +1950,142 @@ func (s *Service) DeleteArchivedProjectAdmin(ctx context.Context, projectID int6
 		ProjectId: projectID,
 		Reason:    reason,
 	})
+}
+
+// ==================== Team Progress ====================
+
+type StepStatusView struct {
+	StepID      int64
+	StepName    string
+	StepType    string
+	OrderIndex  int32
+	Status      string
+	CompletedAt *time.Time
+	Grade       *Grade
+}
+
+type TeamProgressResponse struct {
+	ProjectID        int64
+	ProjectTitle     string
+	CurrentStateID   int64
+	CurrentStateName string
+	Steps            []*StepStatusView
+	History          []*StateHistoryRow
+}
+
+const (
+	StepStatusNotStarted = "not_started"
+	StepStatusInProgress = "in_progress"
+	StepStatusSubmitted  = "submitted"
+	StepStatusApproved   = "approved"
+	StepStatusRejected   = "rejected"
+	StepStatusSkipped    = "skipped"
+)
+
+func (s *Service) GetTeamProgress(ctx context.Context, teamID, projectID int64) (*TeamProgressResponse, error) {
+	if projectID <= 0 && teamID <= 0 {
+		return nil, errors.New("team_id or project_id is required")
+	}
+
+	if projectID <= 0 {
+		pid, err := s.repo.GetProjectIDByTeam(ctx, teamID)
+		if err != nil {
+			if errors.Is(err, gorm.ErrRecordNotFound) {
+				return nil, status.Error(codes.NotFound, "project for team not found")
+			}
+			return nil, fmt.Errorf("failed to resolve project by team: %w", err)
+		}
+		projectID = pid
+	}
+
+	info, err := s.repo.GetProjectInfo(ctx, projectID)
+	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return nil, status.Error(codes.NotFound, "project not found")
+		}
+		return nil, fmt.Errorf("failed to load project info: %w", err)
+	}
+
+	rows, err := s.repo.GetTeamProgress(ctx, projectID)
+	if err != nil {
+		return nil, fmt.Errorf("failed to load team progress: %w", err)
+	}
+
+	steps := make([]*StepStatusView, 0, len(rows))
+	for _, row := range rows {
+		view := &StepStatusView{
+			StepID:     row.StepID,
+			StepName:   row.StepName,
+			StepType:   row.StepType,
+			OrderIndex: row.OrderIndex,
+			Status:     mapStepStatus(row, info.CurrentOrderIndex),
+		}
+		if row.ReviewedAt.Valid {
+			t := row.ReviewedAt.Time
+			view.CompletedAt = &t
+		}
+		if row.GradeID.Valid && row.GradeID.Int64 > 0 {
+			g := &Grade{
+				ID:        row.GradeID.Int64,
+				ProjectID: projectID,
+				StepID:    row.StepID,
+			}
+			if row.Grade.Valid {
+				g.Grade = row.Grade.Int32
+			}
+			if row.GradedBy.Valid {
+				g.GradedBy = row.GradedBy.Int64
+			}
+			if row.GradedAt.Valid {
+				g.CreatedAt = row.GradedAt.Time
+			}
+			if row.GradeComment.Valid {
+				g.Comment = row.GradeComment.String
+			}
+			view.Grade = g
+			if view.CompletedAt == nil && row.GradedAt.Valid {
+				t := row.GradedAt.Time
+				view.CompletedAt = &t
+			}
+		}
+		steps = append(steps, view)
+	}
+
+	history, herr := s.repo.GetStateHistory(ctx, projectID)
+	if herr != nil {
+		s.logger.Warn("GetStateHistory failed", zap.Int64("project_id", projectID), zap.Error(herr))
+		history = nil
+	}
+
+	return &TeamProgressResponse{
+		ProjectID:        info.ProjectID,
+		ProjectTitle:     info.Title,
+		CurrentStateID:   info.CurrentStateID,
+		CurrentStateName: info.CurrentStateName,
+		Steps:            steps,
+		History:          history,
+	}, nil
+}
+
+func mapStepStatus(row *TeamProgressRow, currentOrderIndex int32) string {
+	if row.SubStatus.Valid {
+		switch row.SubStatus.String {
+		case StatusApproved:
+			return StepStatusApproved
+		case StatusRejected:
+			return StepStatusRejected
+		case StatusPending:
+			return StepStatusSubmitted
+		}
+	}
+	if row.IsCurrent {
+		return StepStatusInProgress
+	}
+	if row.OrderIndex < currentOrderIndex {
+		if row.GradeID.Valid && row.GradeID.Int64 > 0 {
+			return StepStatusApproved
+		}
+		return StepStatusSkipped
+	}
+	return StepStatusNotStarted
 }

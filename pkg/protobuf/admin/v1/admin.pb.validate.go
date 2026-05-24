@@ -14868,6 +14868,422 @@ var _ interface {
 	ErrorName() string
 } = GetWorkflowProgressResponseValidationError{}
 
+// Validate checks the field values on GetTeamProgressRequest with the rules
+// defined in the proto definition for this message. If any rules are
+// violated, the first error encountered is returned, or nil if there are no violations.
+func (m *GetTeamProgressRequest) Validate() error {
+	return m.validate(false)
+}
+
+// ValidateAll checks the field values on GetTeamProgressRequest with the rules
+// defined in the proto definition for this message. If any rules are
+// violated, the result is a list of violation errors wrapped in
+// GetTeamProgressRequestMultiError, or nil if none found.
+func (m *GetTeamProgressRequest) ValidateAll() error {
+	return m.validate(true)
+}
+
+func (m *GetTeamProgressRequest) validate(all bool) error {
+	if m == nil {
+		return nil
+	}
+
+	var errors []error
+
+	// no validation rules for TeamId
+
+	// no validation rules for ProjectId
+
+	if len(errors) > 0 {
+		return GetTeamProgressRequestMultiError(errors)
+	}
+
+	return nil
+}
+
+// GetTeamProgressRequestMultiError is an error wrapping multiple validation
+// errors returned by GetTeamProgressRequest.ValidateAll() if the designated
+// constraints aren't met.
+type GetTeamProgressRequestMultiError []error
+
+// Error returns a concatenation of all the error messages it wraps.
+func (m GetTeamProgressRequestMultiError) Error() string {
+	msgs := make([]string, 0, len(m))
+	for _, err := range m {
+		msgs = append(msgs, err.Error())
+	}
+	return strings.Join(msgs, "; ")
+}
+
+// AllErrors returns a list of validation violation errors.
+func (m GetTeamProgressRequestMultiError) AllErrors() []error { return m }
+
+// GetTeamProgressRequestValidationError is the validation error returned by
+// GetTeamProgressRequest.Validate if the designated constraints aren't met.
+type GetTeamProgressRequestValidationError struct {
+	field  string
+	reason string
+	cause  error
+	key    bool
+}
+
+// Field function returns field value.
+func (e GetTeamProgressRequestValidationError) Field() string { return e.field }
+
+// Reason function returns reason value.
+func (e GetTeamProgressRequestValidationError) Reason() string { return e.reason }
+
+// Cause function returns cause value.
+func (e GetTeamProgressRequestValidationError) Cause() error { return e.cause }
+
+// Key function returns key value.
+func (e GetTeamProgressRequestValidationError) Key() bool { return e.key }
+
+// ErrorName returns error name.
+func (e GetTeamProgressRequestValidationError) ErrorName() string {
+	return "GetTeamProgressRequestValidationError"
+}
+
+// Error satisfies the builtin error interface
+func (e GetTeamProgressRequestValidationError) Error() string {
+	cause := ""
+	if e.cause != nil {
+		cause = fmt.Sprintf(" | caused by: %v", e.cause)
+	}
+
+	key := ""
+	if e.key {
+		key = "key for "
+	}
+
+	return fmt.Sprintf(
+		"invalid %sGetTeamProgressRequest.%s: %s%s",
+		key,
+		e.field,
+		e.reason,
+		cause)
+}
+
+var _ error = GetTeamProgressRequestValidationError{}
+
+var _ interface {
+	Field() string
+	Reason() string
+	Key() bool
+	Cause() error
+	ErrorName() string
+} = GetTeamProgressRequestValidationError{}
+
+// Validate checks the field values on GetTeamProgressResponse with the rules
+// defined in the proto definition for this message. If any rules are
+// violated, the first error encountered is returned, or nil if there are no violations.
+func (m *GetTeamProgressResponse) Validate() error {
+	return m.validate(false)
+}
+
+// ValidateAll checks the field values on GetTeamProgressResponse with the
+// rules defined in the proto definition for this message. If any rules are
+// violated, the result is a list of violation errors wrapped in
+// GetTeamProgressResponseMultiError, or nil if none found.
+func (m *GetTeamProgressResponse) ValidateAll() error {
+	return m.validate(true)
+}
+
+func (m *GetTeamProgressResponse) validate(all bool) error {
+	if m == nil {
+		return nil
+	}
+
+	var errors []error
+
+	if all {
+		switch v := interface{}(m.GetProgress()).(type) {
+		case interface{ ValidateAll() error }:
+			if err := v.ValidateAll(); err != nil {
+				errors = append(errors, GetTeamProgressResponseValidationError{
+					field:  "Progress",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		case interface{ Validate() error }:
+			if err := v.Validate(); err != nil {
+				errors = append(errors, GetTeamProgressResponseValidationError{
+					field:  "Progress",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		}
+	} else if v, ok := interface{}(m.GetProgress()).(interface{ Validate() error }); ok {
+		if err := v.Validate(); err != nil {
+			return GetTeamProgressResponseValidationError{
+				field:  "Progress",
+				reason: "embedded message failed validation",
+				cause:  err,
+			}
+		}
+	}
+
+	for idx, item := range m.GetHistory() {
+		_, _ = idx, item
+
+		if all {
+			switch v := interface{}(item).(type) {
+			case interface{ ValidateAll() error }:
+				if err := v.ValidateAll(); err != nil {
+					errors = append(errors, GetTeamProgressResponseValidationError{
+						field:  fmt.Sprintf("History[%v]", idx),
+						reason: "embedded message failed validation",
+						cause:  err,
+					})
+				}
+			case interface{ Validate() error }:
+				if err := v.Validate(); err != nil {
+					errors = append(errors, GetTeamProgressResponseValidationError{
+						field:  fmt.Sprintf("History[%v]", idx),
+						reason: "embedded message failed validation",
+						cause:  err,
+					})
+				}
+			}
+		} else if v, ok := interface{}(item).(interface{ Validate() error }); ok {
+			if err := v.Validate(); err != nil {
+				return GetTeamProgressResponseValidationError{
+					field:  fmt.Sprintf("History[%v]", idx),
+					reason: "embedded message failed validation",
+					cause:  err,
+				}
+			}
+		}
+
+	}
+
+	if len(errors) > 0 {
+		return GetTeamProgressResponseMultiError(errors)
+	}
+
+	return nil
+}
+
+// GetTeamProgressResponseMultiError is an error wrapping multiple validation
+// errors returned by GetTeamProgressResponse.ValidateAll() if the designated
+// constraints aren't met.
+type GetTeamProgressResponseMultiError []error
+
+// Error returns a concatenation of all the error messages it wraps.
+func (m GetTeamProgressResponseMultiError) Error() string {
+	msgs := make([]string, 0, len(m))
+	for _, err := range m {
+		msgs = append(msgs, err.Error())
+	}
+	return strings.Join(msgs, "; ")
+}
+
+// AllErrors returns a list of validation violation errors.
+func (m GetTeamProgressResponseMultiError) AllErrors() []error { return m }
+
+// GetTeamProgressResponseValidationError is the validation error returned by
+// GetTeamProgressResponse.Validate if the designated constraints aren't met.
+type GetTeamProgressResponseValidationError struct {
+	field  string
+	reason string
+	cause  error
+	key    bool
+}
+
+// Field function returns field value.
+func (e GetTeamProgressResponseValidationError) Field() string { return e.field }
+
+// Reason function returns reason value.
+func (e GetTeamProgressResponseValidationError) Reason() string { return e.reason }
+
+// Cause function returns cause value.
+func (e GetTeamProgressResponseValidationError) Cause() error { return e.cause }
+
+// Key function returns key value.
+func (e GetTeamProgressResponseValidationError) Key() bool { return e.key }
+
+// ErrorName returns error name.
+func (e GetTeamProgressResponseValidationError) ErrorName() string {
+	return "GetTeamProgressResponseValidationError"
+}
+
+// Error satisfies the builtin error interface
+func (e GetTeamProgressResponseValidationError) Error() string {
+	cause := ""
+	if e.cause != nil {
+		cause = fmt.Sprintf(" | caused by: %v", e.cause)
+	}
+
+	key := ""
+	if e.key {
+		key = "key for "
+	}
+
+	return fmt.Sprintf(
+		"invalid %sGetTeamProgressResponse.%s: %s%s",
+		key,
+		e.field,
+		e.reason,
+		cause)
+}
+
+var _ error = GetTeamProgressResponseValidationError{}
+
+var _ interface {
+	Field() string
+	Reason() string
+	Key() bool
+	Cause() error
+	ErrorName() string
+} = GetTeamProgressResponseValidationError{}
+
+// Validate checks the field values on StateHistoryItem with the rules defined
+// in the proto definition for this message. If any rules are violated, the
+// first error encountered is returned, or nil if there are no violations.
+func (m *StateHistoryItem) Validate() error {
+	return m.validate(false)
+}
+
+// ValidateAll checks the field values on StateHistoryItem with the rules
+// defined in the proto definition for this message. If any rules are
+// violated, the result is a list of violation errors wrapped in
+// StateHistoryItemMultiError, or nil if none found.
+func (m *StateHistoryItem) ValidateAll() error {
+	return m.validate(true)
+}
+
+func (m *StateHistoryItem) validate(all bool) error {
+	if m == nil {
+		return nil
+	}
+
+	var errors []error
+
+	// no validation rules for FromStepId
+
+	// no validation rules for FromStepName
+
+	// no validation rules for ToStepId
+
+	// no validation rules for ToStepName
+
+	// no validation rules for EventName
+
+	// no validation rules for ChangedBy
+
+	// no validation rules for ChangedByName
+
+	// no validation rules for Comment
+
+	if all {
+		switch v := interface{}(m.GetCreatedAt()).(type) {
+		case interface{ ValidateAll() error }:
+			if err := v.ValidateAll(); err != nil {
+				errors = append(errors, StateHistoryItemValidationError{
+					field:  "CreatedAt",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		case interface{ Validate() error }:
+			if err := v.Validate(); err != nil {
+				errors = append(errors, StateHistoryItemValidationError{
+					field:  "CreatedAt",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		}
+	} else if v, ok := interface{}(m.GetCreatedAt()).(interface{ Validate() error }); ok {
+		if err := v.Validate(); err != nil {
+			return StateHistoryItemValidationError{
+				field:  "CreatedAt",
+				reason: "embedded message failed validation",
+				cause:  err,
+			}
+		}
+	}
+
+	if len(errors) > 0 {
+		return StateHistoryItemMultiError(errors)
+	}
+
+	return nil
+}
+
+// StateHistoryItemMultiError is an error wrapping multiple validation errors
+// returned by StateHistoryItem.ValidateAll() if the designated constraints
+// aren't met.
+type StateHistoryItemMultiError []error
+
+// Error returns a concatenation of all the error messages it wraps.
+func (m StateHistoryItemMultiError) Error() string {
+	msgs := make([]string, 0, len(m))
+	for _, err := range m {
+		msgs = append(msgs, err.Error())
+	}
+	return strings.Join(msgs, "; ")
+}
+
+// AllErrors returns a list of validation violation errors.
+func (m StateHistoryItemMultiError) AllErrors() []error { return m }
+
+// StateHistoryItemValidationError is the validation error returned by
+// StateHistoryItem.Validate if the designated constraints aren't met.
+type StateHistoryItemValidationError struct {
+	field  string
+	reason string
+	cause  error
+	key    bool
+}
+
+// Field function returns field value.
+func (e StateHistoryItemValidationError) Field() string { return e.field }
+
+// Reason function returns reason value.
+func (e StateHistoryItemValidationError) Reason() string { return e.reason }
+
+// Cause function returns cause value.
+func (e StateHistoryItemValidationError) Cause() error { return e.cause }
+
+// Key function returns key value.
+func (e StateHistoryItemValidationError) Key() bool { return e.key }
+
+// ErrorName returns error name.
+func (e StateHistoryItemValidationError) ErrorName() string { return "StateHistoryItemValidationError" }
+
+// Error satisfies the builtin error interface
+func (e StateHistoryItemValidationError) Error() string {
+	cause := ""
+	if e.cause != nil {
+		cause = fmt.Sprintf(" | caused by: %v", e.cause)
+	}
+
+	key := ""
+	if e.key {
+		key = "key for "
+	}
+
+	return fmt.Sprintf(
+		"invalid %sStateHistoryItem.%s: %s%s",
+		key,
+		e.field,
+		e.reason,
+		cause)
+}
+
+var _ error = StateHistoryItemValidationError{}
+
+var _ interface {
+	Field() string
+	Reason() string
+	Key() bool
+	Cause() error
+	ErrorName() string
+} = StateHistoryItemValidationError{}
+
 // Validate checks the field values on ListPendingReviewsRequest with the rules
 // defined in the proto definition for this message. If any rules are
 // violated, the first error encountered is returned, or nil if there are no violations.

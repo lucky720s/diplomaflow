@@ -312,7 +312,48 @@ func (h *Handler) GetTeamDetails(ctx context.Context, req *adminv1.GetTeamDetail
 		})
 	}
 
+	if resp.ProjectProgress != nil {
+		pbResp.ProjectProgress = toPbProjectProgress(resp.ProjectProgress)
+	}
+
 	return pbResp, nil
+}
+
+func toPbProjectProgress(p *TeamProgressResponse) *adminv1.ProjectProgress {
+	if p == nil {
+		return nil
+	}
+	pbSteps := make([]*adminv1.StepStatus, 0, len(p.Steps))
+	for _, st := range p.Steps {
+		pbStep := &adminv1.StepStatus{
+			StepId:   st.StepID,
+			StepName: st.StepName,
+			Status:   st.Status,
+		}
+		if st.CompletedAt != nil {
+			pbStep.CompletedAt = timestamppb.New(*st.CompletedAt)
+		}
+		if st.Grade != nil {
+			pbStep.Grade = &adminv1.GradeInfo{
+				Id:        st.Grade.ID,
+				ProjectId: st.Grade.ProjectID,
+				StepId:    st.Grade.StepID,
+				StepName:  st.StepName,
+				Grade:     st.Grade.Grade,
+				GradedBy:  st.Grade.GradedBy,
+				Comment:   st.Grade.Comment,
+				GradedAt:  timestamppb.New(st.Grade.CreatedAt),
+			}
+		}
+		pbSteps = append(pbSteps, pbStep)
+	}
+	return &adminv1.ProjectProgress{
+		ProjectId:     p.ProjectID,
+		Title:         p.ProjectTitle,
+		CurrentState:  p.CurrentStateName,
+		CurrentStepId: p.CurrentStateID,
+		Steps:         pbSteps,
+	}
 }
 
 func getActorIDFromContext(ctx context.Context) int64 {
@@ -932,6 +973,42 @@ func (h *Handler) GetWorkflowProgress(ctx context.Context, req *adminv1.GetWorkf
 	return &adminv1.GetWorkflowProgressResponse{
 		WorkflowId: req.WorkflowId,
 		Steps:      pbSteps,
+	}, nil
+}
+
+func (h *Handler) GetTeamProgress(ctx context.Context, req *adminv1.GetTeamProgressRequest) (*adminv1.GetTeamProgressResponse, error) {
+	if req.GetTeamId() <= 0 && req.GetProjectId() <= 0 {
+		return nil, status.Error(codes.InvalidArgument, "team_id or project_id is required")
+	}
+
+	resp, err := h.service.GetTeamProgress(ctx, req.GetTeamId(), req.GetProjectId())
+	if err != nil {
+		if st, ok := status.FromError(err); ok {
+			return nil, st.Err()
+		}
+		h.logger.Error("GetTeamProgress failed", zap.Error(err))
+		return nil, status.Errorf(codes.Internal, "failed to get team progress: %v", err)
+	}
+
+	pbHistory := make([]*adminv1.StateHistoryItem, 0, len(resp.History))
+	for _, h := range resp.History {
+		item := &adminv1.StateHistoryItem{
+			FromStepId:    h.FromStateID.Int64,
+			FromStepName:  h.FromStateName.String,
+			ToStepId:      h.ToStateID.Int64,
+			ToStepName:    h.ToStateName.String,
+			EventName:     h.EventName.String,
+			ChangedBy:     h.ChangedBy.Int64,
+			ChangedByName: h.ChangedByName.String,
+			Comment:       h.Comment.String,
+			CreatedAt:     timestamppb.New(h.CreatedAt),
+		}
+		pbHistory = append(pbHistory, item)
+	}
+
+	return &adminv1.GetTeamProgressResponse{
+		Progress: toPbProjectProgress(resp),
+		History:  pbHistory,
 	}, nil
 }
 

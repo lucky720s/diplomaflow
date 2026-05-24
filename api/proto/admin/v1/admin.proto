@@ -70,6 +70,7 @@ service AdminService {
 
   // ==================== Workflow Progress ====================
   rpc GetWorkflowProgress(GetWorkflowProgressRequest) returns (GetWorkflowProgressResponse);
+  rpc GetTeamProgress(GetTeamProgressRequest) returns (GetTeamProgressResponse);
   rpc ListPendingReviews(ListPendingReviewsRequest) returns (ListPendingReviewsResponse);
   rpc ListAvailableTeams(ListAvailableTeamsRequest) returns (ListAvailableTeamsResponse);
   rpc SubmitDocument(SubmitDocumentRequest) returns (SubmitDocumentResponse);
@@ -957,6 +958,28 @@ message GetWorkflowProgressResponse {
   int64 workflow_id = 1;
   string workflow_name = 2;
   repeated StepProgress steps = 3;
+}
+
+message GetTeamProgressRequest {
+  int64 team_id = 1;
+  int64 project_id = 2;
+}
+
+message GetTeamProgressResponse {
+  ProjectProgress progress = 1;
+  repeated StateHistoryItem history = 2;
+}
+
+message StateHistoryItem {
+  int64 from_step_id = 1;
+  string from_step_name = 2;
+  int64 to_step_id = 3;
+  string to_step_name = 4;
+  string event_name = 5;
+  int64 changed_by = 6;
+  string changed_by_name = 7;
+  string comment = 8;
+  google.protobuf.Timestamp created_at = 9;
 }
 
 message ListPendingReviewsRequest {

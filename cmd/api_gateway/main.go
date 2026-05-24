@@ -119,6 +119,7 @@ func main() {
 			adminPanel.GET("/students/:id", handler.AdminGetStudent)
 			adminPanel.GET("/teams", handler.AdminListTeams)
 			adminPanel.GET("/teams/:id", handler.AdminGetTeamDetails)
+			adminPanel.GET("/teams/:id/progress", handler.AdminGetTeamProgress)
 			adminPanel.PATCH("/teams/:id", handler.AdminUpdateTeam)
 			adminPanel.DELETE("/teams/:id", handler.AdminDeleteTeam)
 

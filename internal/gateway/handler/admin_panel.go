@@ -494,6 +494,23 @@ func (h *Handler) SetStepGrade(c *gin.Context) {
 
 // ==================== Workflow Progress ====================
 
+func (h *Handler) AdminGetTeamProgress(c *gin.Context) {
+	teamID, err := strconv.ParseInt(c.Param("id"), 10, 64)
+	if err != nil || teamID <= 0 {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid team id"})
+		return
+	}
+
+	resp, err := h.adminClient.GetTeamProgress(adminPanelCtx(c), &adminv1.GetTeamProgressRequest{
+		TeamId: teamID,
+	})
+	if err != nil {
+		MapGRPCError(c, err)
+		return
+	}
+	c.JSON(http.StatusOK, resp)
+}
+
 func (h *Handler) GetWorkflowProgress(c *gin.Context) {
 	departmentID := c.GetInt64("departmentId")
 

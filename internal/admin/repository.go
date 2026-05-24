@@ -2,6 +2,7 @@ package admin
 
 import (
 	"context"
+	"database/sql"
 	"errors"
 	"fmt"
 	"strings"
@@ -132,6 +133,12 @@ type Repository interface {
 	CountSupervisorTeams(ctx context.Context, supervisorID int64) (int32, error)
 	// ==================== Admin-tech Projects ====================
 	ListProjectsAdmin(ctx context.Context, filter ProjectsAdminFilter) ([]*ProjectAdminRow, int64, error)
+
+	// ==================== Team Progress ====================
+	GetProjectIDByTeam(ctx context.Context, teamID int64) (int64, error)
+	GetProjectInfo(ctx context.Context, projectID int64) (*ProjectInfo, error)
+	GetTeamProgress(ctx context.Context, projectID int64) ([]*TeamProgressRow, error)
+	GetStateHistory(ctx context.Context, projectID int64) ([]*StateHistoryRow, error)
 }
 
 type TopicRegistrationFilter struct {
@@ -220,6 +227,44 @@ type ProjectAdminRow struct {
 	TopicRegisteredAt *time.Time `gorm:"column:topic_registered_at"`
 	CreatedAt         time.Time  `gorm:"column:created_at"`
 	UpdatedAt         time.Time  `gorm:"column:updated_at"`
+}
+
+// ==================== Team Progress Rows ====================
+
+type ProjectInfo struct {
+	ProjectID         int64  `gorm:"column:project_id"`
+	Title             string `gorm:"column:title"`
+	WorkflowID        int64  `gorm:"column:workflow_id"`
+	CurrentStateID    int64  `gorm:"column:current_state_id"`
+	CurrentStateName  string `gorm:"column:current_state_name"`
+	CurrentOrderIndex int32  `gorm:"column:current_order_index"`
+}
+
+type TeamProgressRow struct {
+	StepID       int64          `gorm:"column:step_id"`
+	StepName     string         `gorm:"column:step_name"`
+	StepType     string         `gorm:"column:step_type"`
+	OrderIndex   int32          `gorm:"column:order_index"`
+	IsCurrent    bool           `gorm:"column:is_current"`
+	SubStatus    sql.NullString `gorm:"column:sub_status"`
+	ReviewedAt   sql.NullTime   `gorm:"column:reviewed_at"`
+	GradeID      sql.NullInt64  `gorm:"column:grade_id"`
+	Grade        sql.NullInt32  `gorm:"column:grade"`
+	GradedBy     sql.NullInt64  `gorm:"column:graded_by"`
+	GradedAt     sql.NullTime   `gorm:"column:graded_at"`
+	GradeComment sql.NullString `gorm:"column:grade_comment"`
+}
+
+type StateHistoryRow struct {
+	FromStateID   sql.NullInt64  `gorm:"column:from_state_id"`
+	FromStateName sql.NullString `gorm:"column:from_state_name"`
+	ToStateID     sql.NullInt64  `gorm:"column:to_state_id"`
+	ToStateName   sql.NullString `gorm:"column:to_state_name"`
+	EventName     sql.NullString `gorm:"column:event_name"`
+	ChangedBy     sql.NullInt64  `gorm:"column:changed_by"`
+	ChangedByName sql.NullString `gorm:"column:changed_by_name"`
+	Comment       sql.NullString `gorm:"column:comment"`
+	CreatedAt     time.Time      `gorm:"column:created_at"`
 }
 
 type repository struct{ db *gorm.DB }
@@ -1521,4 +1566,106 @@ func (r *repository) ListProjectsAdmin(ctx context.Context, f ProjectsAdminFilte
 		return nil, 0, err
 	}
 	return rows, total, nil
+}
+
+// ==================== Team Progress ====================
+
+func (r *repository) GetProjectIDByTeam(ctx context.Context, teamID int64) (int64, error) {
+	var projectID int64
+	err := r.db.WithContext(ctx).
+		Table("projects").
+		Select("id").
+		Where("team_id = ?", teamID).
+		Limit(1).
+		Scan(&projectID).Error
+	if err != nil {
+		return 0, err
+	}
+	if projectID == 0 {
+		return 0, gorm.ErrRecordNotFound
+	}
+	return projectID, nil
+}
+
+func (r *repository) GetProjectInfo(ctx context.Context, projectID int64) (*ProjectInfo, error) {
+	var info ProjectInfo
+	query := `
+		SELECT
+			p.id                 AS project_id,
+			p.title              AS title,
+			p.workflow_id        AS workflow_id,
+			COALESCE(p.current_state_id, 0)                     AS current_state_id,
+			COALESCE(p.current_state_name, '')                  AS current_state_name,
+			COALESCE(cs.order_index, 0)                          AS current_order_index
+		FROM projects p
+		LEFT JOIN states cs ON cs.id = p.current_state_id
+		WHERE p.id = ?
+	`
+	if err := r.db.WithContext(ctx).Raw(query, projectID).Scan(&info).Error; err != nil {
+		return nil, err
+	}
+	if info.ProjectID == 0 {
+		return nil, gorm.ErrRecordNotFound
+	}
+	return &info, nil
+}
+
+func (r *repository) GetTeamProgress(ctx context.Context, projectID int64) ([]*TeamProgressRow, error) {
+	var rows []*TeamProgressRow
+	query := `
+		SELECT
+			s.id                              AS step_id,
+			COALESCE(s.display_name, s.name)  AS step_name,
+			s.type                            AS step_type,
+			s.order_index                     AS order_index,
+			(p.current_state_id = s.id)       AS is_current,
+			sub.status                        AS sub_status,
+			sub.reviewed_at                   AS reviewed_at,
+			g.id                              AS grade_id,
+			g.grade                           AS grade,
+			g.graded_by                       AS graded_by,
+			g.created_at                      AS graded_at,
+			g.comment                         AS grade_comment
+		FROM states s
+		JOIN projects p ON p.id = ?
+		LEFT JOIN LATERAL (
+			SELECT status, reviewed_at
+			FROM admin_submissions
+			WHERE project_id = ? AND state_id = s.id AND deleted_at IS NULL
+			ORDER BY created_at DESC
+			LIMIT 1
+		) sub ON TRUE
+		LEFT JOIN admin_grades g
+			ON g.project_id = ? AND g.state_id = s.id AND g.deleted_at IS NULL
+		WHERE s.workflow_id = p.workflow_id AND s.deleted_at IS NULL
+		ORDER BY s.order_index
+	`
+	if err := r.db.WithContext(ctx).Raw(query, projectID, projectID, projectID).Scan(&rows).Error; err != nil {
+		return nil, err
+	}
+	return rows, nil
+}
+
+func (r *repository) GetStateHistory(ctx context.Context, projectID int64) ([]*StateHistoryRow, error) {
+	var rows []*StateHistoryRow
+	query := `
+		SELECT
+			sh.from_state_id,
+			sh.from_state_name,
+			sh.to_state_id,
+			sh.to_state_name,
+			sh.event_name,
+			sh.changed_by,
+			COALESCE(u.first_name || ' ' || u.last_name, '') AS changed_by_name,
+			sh.comment,
+			sh.created_at
+		FROM state_histories sh
+		LEFT JOIN users u ON u.id = sh.changed_by
+		WHERE sh.project_id = ?
+		ORDER BY sh.created_at ASC
+	`
+	if err := r.db.WithContext(ctx).Raw(query, projectID).Scan(&rows).Error; err != nil {
+		return nil, err
+	}
+	return rows, nil
 }
