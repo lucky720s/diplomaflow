@@ -159,6 +159,9 @@ func main() {
 			adminPanel.GET("/supervisors/:id/settings", handler.GetSupervisorSettings)
 			adminPanel.PUT("/supervisors/:id/max-teams", handler.UpdateSupervisorMaxTeams)
 
+			// Workflow review: выставление оценок/допуска преподом
+			adminPanel.POST("/projects/:id/states/:state_id/review", handler.SubmitReview)
+			adminPanel.GET("/projects/:id/states/:state_id/reviews", handler.GetStateReviews)
 		}
 
 		projects := v1.Group("/projects")
@@ -178,6 +181,9 @@ func main() {
 			projects.POST("/:id/documents", handler.UploadProjectDocument)
 			projects.POST("/:id/submit-document", handler.SubmitProjectDocument)
 
+			// Review (оценка/допуск) по стэйту
+			projects.POST("/:id/states/:state_id/review", handler.SubmitReview)
+			projects.GET("/:id/states/:state_id/reviews", handler.GetStateReviews)
 		}
 
 		teams := v1.Group("/teams")

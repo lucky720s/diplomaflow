@@ -274,6 +274,11 @@ func (e *WorkflowEngine) runPhase(
 		ar := e.executeAction(ctx, &action, actx)
 		if ar != nil && ar.Data != nil {
 			e.mergeActionData(result.DataPatch, action.Name, ar.Data)
+			// Поднимаем плоские флаги плагинов (напр. от REVIEW_GATE) на верхний уровень DataPatch
+			// чтобы evaluateCondition мог читать их в условиях перехода.
+			for k, v := range ar.Data {
+				result.DataPatch[k] = v
+			}
 		}
 
 		if ar == nil || ar.Success {
@@ -308,10 +313,13 @@ func (e *WorkflowEngine) runPhase(
 func (e *WorkflowEngine) isPostActionType(actionType string) bool {
 	t := strings.ToUpper(strings.TrimSpace(actionType))
 
-	if t == "CALCULATE_GRADE" || t == "VALIDATE_DATA" || strings.HasPrefix(t, "VALIDATE_") || t == "UPDATE_PROJECT" {
+	// PRE (sync, blocking): validation/gate/grade actions run before the state change commits.
+	// REVIEW_GATE must be sync — it blocks the transition until all reviewers have voted.
+	switch t {
+	case "CALCULATE_GRADE", "VALIDATE_DATA", "UPDATE_PROJECT", "REVIEW_GATE":
 		return false
 	}
-	return true
+	return !strings.HasPrefix(t, "VALIDATE_")
 }
 
 func (e *WorkflowEngine) mergeActionData(patch map[string]interface{}, actionName string, data map[string]interface{}) {

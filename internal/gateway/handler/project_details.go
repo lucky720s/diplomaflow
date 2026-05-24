@@ -28,7 +28,7 @@ func (h *Handler) GetProjectDetails(c *gin.Context) {
 
 	var ctx context.Context
 
-	// ✅ teacher/admin → internal
+	// teacher/admin → internal ctx
 	if userRole == "teacher" || userRole == "admin" {
 		ctx = metadata.NewOutgoingContext(
 			c.Request.Context(),
@@ -39,11 +39,9 @@ func (h *Handler) GetProjectDetails(c *gin.Context) {
 			),
 		)
 	} else {
-		// ✅ student → обычный ctx
 		ctx = outgoingCtx(c)
 	}
 
-	// ✅ ВСЕГДА получаем проект
 	projectResp, err := h.projectClient.GetProject(ctx, &projectv1.GetProjectRequest{
 		ProjectId: projectID,
 	})
@@ -52,33 +50,25 @@ func (h *Handler) GetProjectDetails(c *gin.Context) {
 		return
 	}
 
-	// ✅ ВСЕГДА пытаемся получить runtime
 	runtimeResp, err := h.projectClient.GetProjectRuntime(ctx, &projectv1.GetProjectRuntimeRequest{
 		ProjectId: projectID,
 	})
 	if err != nil {
-		// ❗ важно: не падаем, а продолжаем
 		runtimeResp = nil
 	}
 
-	// ✅ если runtime нет
 	if runtimeResp == nil || runtimeResp.CurrentStateId == 0 {
 		history := h.buildHistory(projectResp)
-
 		c.JSON(http.StatusOK, gin.H{
 			"project":           projectResp,
 			"stages":            []interface{}{},
 			"available_actions": []interface{}{},
 			"history":           history,
-			"viewer": gin.H{
-				"id":   userID,
-				"role": userRole,
-			},
+			"viewer":            gin.H{"id": userID, "role": userRole},
 		})
 		return
 	}
 
-	// ✅ workflow
 	var workflowFull *workflowv1.WorkflowFull
 	var transitions *workflowv1.GetAvailableTransitionsResponse
 
@@ -108,7 +98,10 @@ func (h *Handler) GetProjectDetails(c *gin.Context) {
 		return
 	}
 
-	stages := h.buildStages(workflowFull, runtimeResp, projectResp)
+	// Загружаем review-сводки для стэйтов с review_config (best-effort)
+	reviewSummaries := h.loadReviewSummaries(ctx, projectID, workflowFull)
+
+	stages := h.buildStages(workflowFull, runtimeResp, projectResp, reviewSummaries)
 	availableActions := h.buildAvailableActions(transitions)
 	history := h.buildHistory(projectResp)
 
@@ -131,17 +124,75 @@ func (h *Handler) GetProjectDetails(c *gin.Context) {
 		"stages":            stages,
 		"available_actions": availableActions,
 		"history":           history,
-		"viewer": gin.H{
-			"id":   userID,
-			"role": userRole,
-		},
+		"viewer":            gin.H{"id": userID, "role": userRole},
 	})
+}
+
+// loadReviewSummaries загружает review-сводки для всех стэйтов workflow у которых есть review_config.
+// Запросы параллельны; ошибки игнорируются — не ломаем весь ответ.
+func (h *Handler) loadReviewSummaries(
+	ctx context.Context,
+	projectID int64,
+	wf *workflowv1.WorkflowFull,
+) map[int64]*workflowv1.GetStateReviewsResponse {
+	if wf == nil {
+		return nil
+	}
+
+	// Определяем стэйты с review_config
+	var reviewStateIDs []int64
+	for _, state := range wf.States {
+		if state == nil || state.Config == nil {
+			continue
+		}
+		cfg := state.Config.AsMap()
+		if _, hasReview := cfg["review_config"]; hasReview {
+			reviewStateIDs = append(reviewStateIDs, state.Id)
+		}
+	}
+	if len(reviewStateIDs) == 0 {
+		return nil
+	}
+
+	result := make(map[int64]*workflowv1.GetStateReviewsResponse, len(reviewStateIDs))
+	var mu = struct{ sync interface{} }{}
+	_ = mu
+
+	// Параллельная загрузка через errgroup (игнорируем ошибки — best-effort)
+	type pair struct {
+		stateID int64
+		resp    *workflowv1.GetStateReviewsResponse
+	}
+	pairs := make([]pair, len(reviewStateIDs))
+	var eg errgroup.Group
+	for i, sid := range reviewStateIDs {
+		i, sid := i, sid
+		eg.Go(func() error {
+			resp, err := h.workflowClient.GetStateReviews(ctx, &workflowv1.GetStateReviewsRequest{
+				ProjectId: projectID,
+				StateId:   sid,
+			})
+			if err == nil {
+				pairs[i] = pair{stateID: sid, resp: resp}
+			}
+			return nil // best-effort
+		})
+	}
+	_ = eg.Wait()
+
+	for _, p := range pairs {
+		if p.resp != nil {
+			result[p.stateID] = p.resp
+		}
+	}
+	return result
 }
 
 func (h *Handler) buildStages(
 	wf *workflowv1.WorkflowFull,
 	runtime *projectv1.GetProjectRuntimeResponse,
 	project *projectv1.GetProjectResponse,
+	reviewSummaries map[int64]*workflowv1.GetStateReviewsResponse,
 ) []gin.H {
 	if wf == nil || wf.States == nil {
 		return []gin.H{}
@@ -168,13 +219,13 @@ func (h *Handler) buildStages(
 		if state == nil {
 			continue
 		}
-		status := "pending"
+		stageStatus := "pending"
 		if state.Id == runtime.CurrentStateId {
-			status = "current"
+			stageStatus = "current"
 		} else if currentOrderIndex >= 0 && state.OrderIndex < currentOrderIndex {
-			status = "completed"
+			stageStatus = "completed"
 		} else if completedStateNames[state.Name] {
-			status = "completed"
+			stageStatus = "completed"
 		}
 
 		stage := gin.H{
@@ -191,16 +242,23 @@ func (h *Handler) buildStages(
 			"duration_mode": state.DurationMode,
 			"color":         state.Color,
 			"icon":          state.Icon,
-			"status":        status,
+			"status":        stageStatus,
 		}
 
 		if state.Config != nil {
-			stage["config"] = state.Config.AsMap()
+			cfg := state.Config.AsMap()
+			stage["config"] = cfg
+			// Выносим review_config на верхний уровень для удобства фронта
+			if rc, ok := cfg["review_config"]; ok {
+				stage["review_config"] = rc
+			}
 		}
 
 		if state.FixedDeadline != nil {
 			stage["fixed_deadline"] = state.FixedDeadline.AsTime().Format("2006-01-02T15:04:05Z")
 		}
+
+		// Исходящие переходы
 		var outTransitions []gin.H
 		if wf.Transitions != nil {
 			for _, tr := range wf.Transitions {
@@ -220,6 +278,8 @@ func (h *Handler) buildStages(
 		if len(outTransitions) > 0 {
 			stage["transitions"] = outTransitions
 		}
+
+		// Действия стэйта
 		if state.Actions != nil {
 			var actions []gin.H
 			for _, a := range state.Actions {
@@ -235,6 +295,48 @@ func (h *Handler) buildStages(
 			}
 			if len(actions) > 0 {
 				stage["actions"] = actions
+			}
+		}
+
+		// Review-сводка (оценки/допуски) если есть
+		if reviewSummaries != nil {
+			if rv, ok := reviewSummaries[state.Id]; ok && rv != nil {
+				var reviews []gin.H
+				for _, r := range rv.Reviews {
+					if r == nil {
+						continue
+					}
+					item := gin.H{
+						"id":          r.Id,
+						"reviewer_id": r.ReviewerId,
+						"role_slug":   r.RoleSlug,
+						"decision":    r.Decision,
+						"comment":     r.Comment,
+						"created_at":  formatTimestamp(r.CreatedAt),
+					}
+					if r.HasScore {
+						item["score"] = r.Score
+					}
+					reviews = append(reviews, item)
+				}
+				if len(reviews) > 0 {
+					stage["reviews"] = reviews
+				}
+				if rv.Summary != nil {
+					s := rv.Summary
+					summary := gin.H{
+						"total_reviews":  s.TotalReviews,
+						"all_voted":      s.AllVoted,
+						"result":         s.Result,
+						"approved_count": s.ApprovedCount,
+						"rejected_count": s.RejectedCount,
+						"average_score":  s.AverageScore,
+					}
+					if s.HasFinalScore {
+						summary["final_score"] = s.FinalScore
+					}
+					stage["review_summary"] = summary
+				}
 			}
 		}
 
