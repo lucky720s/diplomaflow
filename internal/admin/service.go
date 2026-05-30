@@ -10,6 +10,7 @@ import (
 
 	"github.com/google/uuid"
 	authv1 "github.com/lucky720s/diplomaflow/pkg/protobuf/auth/v1"
+	filev1 "github.com/lucky720s/diplomaflow/pkg/protobuf/file/v1"
 	notificationv1 "github.com/lucky720s/diplomaflow/pkg/protobuf/notification/v1"
 	projectv1 "github.com/lucky720s/diplomaflow/pkg/protobuf/project/v1"
 	teamv1 "github.com/lucky720s/diplomaflow/pkg/protobuf/team/v1"
@@ -30,6 +31,7 @@ type Service struct {
 	teamClient         teamv1.TeamServiceClient
 	workflowClient     workflowv1.WorkflowServiceClient
 	notificationClient notificationv1.NotificationServiceClient
+	fileClient         filev1.FileServiceClient
 	logger             *zap.Logger
 }
 type SubmitDocumentRequest struct {
@@ -46,6 +48,7 @@ func NewService(
 	teamClient teamv1.TeamServiceClient,
 	workflowClient workflowv1.WorkflowServiceClient,
 	notificationClient notificationv1.NotificationServiceClient,
+	fileClient filev1.FileServiceClient,
 	logger *zap.Logger,
 ) *Service {
 	return &Service{
@@ -55,7 +58,34 @@ func NewService(
 		teamClient:         teamClient,
 		workflowClient:     workflowClient,
 		notificationClient: notificationClient,
+		fileClient:         fileClient,
 		logger:             logger,
+	}
+}
+
+// GetFileRef resolves a stable file id to the unified file contract by calling
+// the file service with an internal-service marker. Returns nil when the id is
+// empty, the file is missing, or the lookup fails — callers should treat a nil
+// ref as an empty file state, not an error, to keep document responses clean.
+func (s *Service) GetFileRef(ctx context.Context, fileID string) *filev1.FileRef {
+	if fileID == "" || s.fileClient == nil {
+		return nil
+	}
+	outCtx := metadata.AppendToOutgoingContext(ctx, "x-internal-service", "admin_service")
+	info, err := s.fileClient.GetFileInfo(outCtx, &filev1.GetFileInfoRequest{Id: fileID})
+	if err != nil || info == nil {
+		return nil
+	}
+	if info.File != nil {
+		return info.File
+	}
+	// Fallback when file_service hasn't populated the unified contract yet
+	// (older deployments). URLs are left empty so the gateway can decide.
+	return &filev1.FileRef{
+		FileId:   info.Id,
+		FileName: info.Name,
+		FileType: info.FileType,
+		Size:     info.Size,
 	}
 }
 

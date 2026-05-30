@@ -53,9 +53,10 @@ func TestService_UploadFlow_AndResolvePath(t *testing.T) {
 	require.NoError(t, err)
 	require.NoError(t, f.Close())
 
-	// size=4 bytes, fileType=".txt"
-	err = svc.CommitUpload(context.Background(), id, tempPath, finalPath, 1, 2, "test.txt", ".txt", 4)
+	// size=4 bytes, fileType=".txt", mimeType resolved by service
+	meta, err := svc.CommitUpload(context.Background(), id, tempPath, finalPath, 1, 2, "test.txt", ".txt", "", 4)
 	require.NoError(t, err)
+	require.NotNil(t, meta)
 
 	// файл должен существовать
 	_, err = os.Stat(finalPath)
@@ -75,4 +76,12 @@ func (r *memRepo) DeleteMetadata(ctx context.Context, id string) error {
 	}
 	delete(r.m, id)
 	return nil
+}
+
+func (r *memRepo) CanAccessViaProject(ctx context.Context, userID, projectID int64) (bool, error) {
+	return false, nil
+}
+
+func (r *memRepo) IsFileOnNormControl(ctx context.Context, fileID string) (bool, error) {
+	return false, nil
 }

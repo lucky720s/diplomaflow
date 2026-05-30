@@ -41,6 +41,9 @@ func main() {
 	middleware.MustRegisterGatewayMetrics(registry)
 	router := gin.New()
 	_ = router.SetTrustedProxies([]string{"127.0.0.1"})
+	// Single upload size limit (aligned with nginx + file service).
+	maxUpload := cfg.MaxUploadBytesOrDefault()
+	router.MaxMultipartMemory = maxUpload
 	router.Use(gin.Recovery())
 	router.Use(middleware.CorsMiddleware(cfg.AllowedOrigins))
 	router.Use(middleware.TraceIDMiddleware())
@@ -178,7 +181,7 @@ func main() {
 			projects.DELETE("/:id/supervisor-requests/:request_id", handler.CancelSupervisorRequest)
 			projects.GET("/:id/my-grades", handler.GetProjectGradesForStudent)
 			projects.GET("/:id/grades", handler.GetProjectGradesForStudent)
-			projects.POST("/:id/documents", handler.UploadProjectDocument)
+			projects.POST("/:id/documents", middleware.MaxBodySize(maxUpload), handler.UploadProjectDocument)
 			projects.POST("/:id/submit-document", handler.SubmitProjectDocument)
 
 			// Review (оценка/допуск) по стэйту
@@ -318,7 +321,7 @@ func main() {
 		files.Use(middleware.AuthMiddleware(cfg.JWTSecret))
 		files.Use(middleware.RateLimitMiddleware(rdb, 10, time.Minute))
 		{
-			files.POST("/upload", handler.UploadFile)
+			files.POST("/upload", middleware.MaxBodySize(maxUpload), handler.UploadFile)
 			files.GET("/:id", handler.DownloadFile)
 			files.DELETE("/:id", handler.DeleteFile)
 		}

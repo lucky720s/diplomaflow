@@ -2,8 +2,11 @@
 
 ifeq ($(OS),Windows_NT)
     EXE := .exe
+    # cmd.exe requires `set VAR=value&& cmd` instead of POSIX `VAR=value cmd`.
+    SET_NOCGO := set CGO_ENABLED=0&&
 else
     EXE :=
+    SET_NOCGO := CGO_ENABLED=0
 endif
 
 GOBIN     := $(shell go env GOPATH)/bin
@@ -147,18 +150,18 @@ coverage:
 
 # ==================== BUILD ====================
 build:
-	mkdir -p bin
-	CGO_ENABLED=0 go build $(LDFLAGS) -o bin/api_gateway.exe ./cmd/api_gateway
-	CGO_ENABLED=0 go build $(LDFLAGS) -o bin/admin_service.exe ./cmd/admin_service
-	CGO_ENABLED=0 go build $(LDFLAGS) -o bin/auth_service.exe ./cmd/auth_service
-	CGO_ENABLED=0 go build $(LDFLAGS) -o bin/file_service.exe ./cmd/file_service
-	CGO_ENABLED=0 go build $(LDFLAGS) -o bin/form_service.exe ./cmd/form_service
-	CGO_ENABLED=0 go build $(LDFLAGS) -o bin/notification_service.exe ./cmd/notification_service
-	CGO_ENABLED=0 go build $(LDFLAGS) -o bin/project_service.exe ./cmd/project_service
-	CGO_ENABLED=0 go build $(LDFLAGS) -o bin/task_service.exe ./cmd/task_service
-	CGO_ENABLED=0 go build $(LDFLAGS) -o bin/team_service.exe ./cmd/team_service
-	CGO_ENABLED=0 go build $(LDFLAGS) -o bin/university_service.exe ./cmd/university_service
-	CGO_ENABLED=0 go build $(LDFLAGS) -o bin/workflow_service.exe ./cmd/workflow_service
+	@if not exist "bin" mkdir bin
+	$(SET_NOCGO) go build $(LDFLAGS) -o bin/api_gateway$(EXE) ./cmd/api_gateway
+	$(SET_NOCGO) go build $(LDFLAGS) -o bin/admin_service$(EXE) ./cmd/admin_service
+	$(SET_NOCGO) go build $(LDFLAGS) -o bin/auth_service$(EXE) ./cmd/auth_service
+	$(SET_NOCGO) go build $(LDFLAGS) -o bin/file_service$(EXE) ./cmd/file_service
+	$(SET_NOCGO) go build $(LDFLAGS) -o bin/form_service$(EXE) ./cmd/form_service
+	$(SET_NOCGO) go build $(LDFLAGS) -o bin/notification_service$(EXE) ./cmd/notification_service
+	$(SET_NOCGO) go build $(LDFLAGS) -o bin/project_service$(EXE) ./cmd/project_service
+	$(SET_NOCGO) go build $(LDFLAGS) -o bin/task_service$(EXE) ./cmd/task_service
+	$(SET_NOCGO) go build $(LDFLAGS) -o bin/team_service$(EXE) ./cmd/team_service
+	$(SET_NOCGO) go build $(LDFLAGS) -o bin/university_service$(EXE) ./cmd/university_service
+	$(SET_NOCGO) go build $(LDFLAGS) -o bin/workflow_service$(EXE) ./cmd/workflow_service
 
 
 build-linux:

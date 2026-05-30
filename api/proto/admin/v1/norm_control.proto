@@ -4,6 +4,7 @@ package admin.v1;
 
 import "validate/validate.proto";
 import "google/protobuf/timestamp.proto";
+import "file/v1/file.proto";
 
 option go_package = "github.com/lucky720s/diplomaflow/pkg/protobuf/admin/v1";
 
@@ -37,6 +38,8 @@ string file_id = 5;
 int32 version = 6;
 int64 checker_id = 7;
 google.protobuf.Timestamp submitted_at = 8;
+// Unified file contract for the primary document. null when no file is attached.
+file.v1.FileRef file = 9;
 }
 
 message Issue {

@@ -33,7 +33,7 @@ func TestService_CommitUpload_MetadataError_RollsBackFile(t *testing.T) {
 	require.NoError(t, err)
 	require.NoError(t, f.Close())
 
-	err = svc.CommitUpload(context.Background(), id, tempPath, finalPath, 1, 2, "test.txt", ".txt", 4)
+	_, err = svc.CommitUpload(context.Background(), id, tempPath, finalPath, 1, 2, "test.txt", ".txt", "", 4)
 	require.Error(t, err)
 
 	// должен удалить финальный файл при провале метадаты

@@ -8,6 +8,7 @@ package v1
 
 import (
 	_ "github.com/envoyproxy/protoc-gen-validate/validate"
+	v1 "github.com/lucky720s/diplomaflow/pkg/protobuf/file/v1"
 	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
 	protoimpl "google.golang.org/protobuf/runtime/protoimpl"
 	timestamppb "google.golang.org/protobuf/types/known/timestamppb"
@@ -25,15 +26,17 @@ const (
 
 // ==================== Common models ====================
 type PendingDocument struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	Id            string                 `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"` // check_id или document_id (на твоё усмотрение)
-	ProjectId     int64                  `protobuf:"varint,2,opt,name=project_id,json=projectId,proto3" json:"project_id,omitempty"`
-	TeamId        int64                  `protobuf:"varint,3,opt,name=team_id,json=teamId,proto3" json:"team_id,omitempty"`
-	Status        string                 `protobuf:"bytes,4,opt,name=status,proto3" json:"status,omitempty"` // submitted|in_review|returned|approved
-	FileId        string                 `protobuf:"bytes,5,opt,name=file_id,json=fileId,proto3" json:"file_id,omitempty"`
-	Version       int32                  `protobuf:"varint,6,opt,name=version,proto3" json:"version,omitempty"`
-	CheckerId     int64                  `protobuf:"varint,7,opt,name=checker_id,json=checkerId,proto3" json:"checker_id,omitempty"`
-	SubmittedAt   *timestamppb.Timestamp `protobuf:"bytes,8,opt,name=submitted_at,json=submittedAt,proto3" json:"submitted_at,omitempty"`
+	state       protoimpl.MessageState `protogen:"open.v1"`
+	Id          string                 `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"` // check_id или document_id (на твоё усмотрение)
+	ProjectId   int64                  `protobuf:"varint,2,opt,name=project_id,json=projectId,proto3" json:"project_id,omitempty"`
+	TeamId      int64                  `protobuf:"varint,3,opt,name=team_id,json=teamId,proto3" json:"team_id,omitempty"`
+	Status      string                 `protobuf:"bytes,4,opt,name=status,proto3" json:"status,omitempty"` // submitted|in_review|returned|approved
+	FileId      string                 `protobuf:"bytes,5,opt,name=file_id,json=fileId,proto3" json:"file_id,omitempty"`
+	Version     int32                  `protobuf:"varint,6,opt,name=version,proto3" json:"version,omitempty"`
+	CheckerId   int64                  `protobuf:"varint,7,opt,name=checker_id,json=checkerId,proto3" json:"checker_id,omitempty"`
+	SubmittedAt *timestamppb.Timestamp `protobuf:"bytes,8,opt,name=submitted_at,json=submittedAt,proto3" json:"submitted_at,omitempty"`
+	// Unified file contract for the primary document. null when no file is attached.
+	File          *v1.FileRef `protobuf:"bytes,9,opt,name=file,proto3" json:"file,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -120,6 +123,13 @@ func (x *PendingDocument) GetCheckerId() int64 {
 func (x *PendingDocument) GetSubmittedAt() *timestamppb.Timestamp {
 	if x != nil {
 		return x.SubmittedAt
+	}
+	return nil
+}
+
+func (x *PendingDocument) GetFile() *v1.FileRef {
+	if x != nil {
+		return x.File
 	}
 	return nil
 }
@@ -1737,7 +1747,7 @@ var File_admin_v1_norm_control_proto protoreflect.FileDescriptor
 
 const file_admin_v1_norm_control_proto_rawDesc = "" +
 	"\n" +
-	"\x1badmin/v1/norm_control.proto\x12\badmin.v1\x1a\x17validate/validate.proto\x1a\x1fgoogle/protobuf/timestamp.proto\"\x82\x02\n" +
+	"\x1badmin/v1/norm_control.proto\x12\badmin.v1\x1a\x17validate/validate.proto\x1a\x1fgoogle/protobuf/timestamp.proto\x1a\x12file/v1/file.proto\"\xa8\x02\n" +
 	"\x0fPendingDocument\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\tR\x02id\x12\x1d\n" +
 	"\n" +
@@ -1748,7 +1758,8 @@ const file_admin_v1_norm_control_proto_rawDesc = "" +
 	"\aversion\x18\x06 \x01(\x05R\aversion\x12\x1d\n" +
 	"\n" +
 	"checker_id\x18\a \x01(\x03R\tcheckerId\x12=\n" +
-	"\fsubmitted_at\x18\b \x01(\v2\x1a.google.protobuf.TimestampR\vsubmittedAt\"\xe7\x02\n" +
+	"\fsubmitted_at\x18\b \x01(\v2\x1a.google.protobuf.TimestampR\vsubmittedAt\x12$\n" +
+	"\x04file\x18\t \x01(\v2\x10.file.v1.FileRefR\x04file\"\xe7\x02\n" +
 	"\x05Issue\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\tR\x02id\x12\x19\n" +
 	"\bcheck_id\x18\x02 \x01(\tR\acheckId\x12\x1a\n" +
@@ -1935,50 +1946,52 @@ var file_admin_v1_norm_control_proto_goTypes = []any{
 	(*CreateChecklistRequest)(nil),       // 27: admin.v1.CreateChecklistRequest
 	(*CreateChecklistResponse)(nil),      // 28: admin.v1.CreateChecklistResponse
 	(*timestamppb.Timestamp)(nil),        // 29: google.protobuf.Timestamp
+	(*v1.FileRef)(nil),                   // 30: file.v1.FileRef
 }
 var file_admin_v1_norm_control_proto_depIdxs = []int32{
 	29, // 0: admin.v1.PendingDocument.submitted_at:type_name -> google.protobuf.Timestamp
-	29, // 1: admin.v1.Issue.created_at:type_name -> google.protobuf.Timestamp
-	29, // 2: admin.v1.Issue.resolved_at:type_name -> google.protobuf.Timestamp
-	0,  // 3: admin.v1.ListPendingDocumentsResponse.documents:type_name -> admin.v1.PendingDocument
-	0,  // 4: admin.v1.DocumentReviewResponse.document:type_name -> admin.v1.PendingDocument
-	1,  // 5: admin.v1.DocumentReviewResponse.issues:type_name -> admin.v1.Issue
-	1,  // 6: admin.v1.AddIssueResponse.issue:type_name -> admin.v1.Issue
-	1,  // 7: admin.v1.UpdateIssueResponse.issue:type_name -> admin.v1.Issue
-	29, // 8: admin.v1.HistoryItem.created_at:type_name -> google.protobuf.Timestamp
-	20, // 9: admin.v1.GetCheckHistoryResponse.history:type_name -> admin.v1.HistoryItem
-	23, // 10: admin.v1.GetStatisticsResponse.stats:type_name -> admin.v1.CategoryStat
-	2,  // 11: admin.v1.ListChecklistsResponse.checklists:type_name -> admin.v1.Checklist
-	2,  // 12: admin.v1.CreateChecklistResponse.checklist:type_name -> admin.v1.Checklist
-	3,  // 13: admin.v1.NormControlService.ListPendingDocuments:input_type -> admin.v1.ListPendingDocumentsRequest
-	5,  // 14: admin.v1.NormControlService.GetDocumentForReview:input_type -> admin.v1.GetDocumentRequest
-	7,  // 15: admin.v1.NormControlService.StartReview:input_type -> admin.v1.StartReviewRequest
-	9,  // 16: admin.v1.NormControlService.AddIssue:input_type -> admin.v1.AddIssueRequest
-	11, // 17: admin.v1.NormControlService.UpdateIssue:input_type -> admin.v1.UpdateIssueRequest
-	13, // 18: admin.v1.NormControlService.DeleteIssue:input_type -> admin.v1.DeleteIssueRequest
-	15, // 19: admin.v1.NormControlService.ApproveDocument:input_type -> admin.v1.ApproveDocumentRequest
-	17, // 20: admin.v1.NormControlService.ReturnForRevision:input_type -> admin.v1.ReturnForRevisionRequest
-	19, // 21: admin.v1.NormControlService.GetCheckHistory:input_type -> admin.v1.GetCheckHistoryRequest
-	22, // 22: admin.v1.NormControlService.GetErrorStatistics:input_type -> admin.v1.GetStatisticsRequest
-	25, // 23: admin.v1.NormControlService.ListChecklists:input_type -> admin.v1.ListChecklistsRequest
-	27, // 24: admin.v1.NormControlService.CreateChecklist:input_type -> admin.v1.CreateChecklistRequest
-	4,  // 25: admin.v1.NormControlService.ListPendingDocuments:output_type -> admin.v1.ListPendingDocumentsResponse
-	6,  // 26: admin.v1.NormControlService.GetDocumentForReview:output_type -> admin.v1.DocumentReviewResponse
-	8,  // 27: admin.v1.NormControlService.StartReview:output_type -> admin.v1.StartReviewResponse
-	10, // 28: admin.v1.NormControlService.AddIssue:output_type -> admin.v1.AddIssueResponse
-	12, // 29: admin.v1.NormControlService.UpdateIssue:output_type -> admin.v1.UpdateIssueResponse
-	14, // 30: admin.v1.NormControlService.DeleteIssue:output_type -> admin.v1.DeleteIssueResponse
-	16, // 31: admin.v1.NormControlService.ApproveDocument:output_type -> admin.v1.ApproveDocumentResponse
-	18, // 32: admin.v1.NormControlService.ReturnForRevision:output_type -> admin.v1.ReturnForRevisionResponse
-	21, // 33: admin.v1.NormControlService.GetCheckHistory:output_type -> admin.v1.GetCheckHistoryResponse
-	24, // 34: admin.v1.NormControlService.GetErrorStatistics:output_type -> admin.v1.GetStatisticsResponse
-	26, // 35: admin.v1.NormControlService.ListChecklists:output_type -> admin.v1.ListChecklistsResponse
-	28, // 36: admin.v1.NormControlService.CreateChecklist:output_type -> admin.v1.CreateChecklistResponse
-	25, // [25:37] is the sub-list for method output_type
-	13, // [13:25] is the sub-list for method input_type
-	13, // [13:13] is the sub-list for extension type_name
-	13, // [13:13] is the sub-list for extension extendee
-	0,  // [0:13] is the sub-list for field type_name
+	30, // 1: admin.v1.PendingDocument.file:type_name -> file.v1.FileRef
+	29, // 2: admin.v1.Issue.created_at:type_name -> google.protobuf.Timestamp
+	29, // 3: admin.v1.Issue.resolved_at:type_name -> google.protobuf.Timestamp
+	0,  // 4: admin.v1.ListPendingDocumentsResponse.documents:type_name -> admin.v1.PendingDocument
+	0,  // 5: admin.v1.DocumentReviewResponse.document:type_name -> admin.v1.PendingDocument
+	1,  // 6: admin.v1.DocumentReviewResponse.issues:type_name -> admin.v1.Issue
+	1,  // 7: admin.v1.AddIssueResponse.issue:type_name -> admin.v1.Issue
+	1,  // 8: admin.v1.UpdateIssueResponse.issue:type_name -> admin.v1.Issue
+	29, // 9: admin.v1.HistoryItem.created_at:type_name -> google.protobuf.Timestamp
+	20, // 10: admin.v1.GetCheckHistoryResponse.history:type_name -> admin.v1.HistoryItem
+	23, // 11: admin.v1.GetStatisticsResponse.stats:type_name -> admin.v1.CategoryStat
+	2,  // 12: admin.v1.ListChecklistsResponse.checklists:type_name -> admin.v1.Checklist
+	2,  // 13: admin.v1.CreateChecklistResponse.checklist:type_name -> admin.v1.Checklist
+	3,  // 14: admin.v1.NormControlService.ListPendingDocuments:input_type -> admin.v1.ListPendingDocumentsRequest
+	5,  // 15: admin.v1.NormControlService.GetDocumentForReview:input_type -> admin.v1.GetDocumentRequest
+	7,  // 16: admin.v1.NormControlService.StartReview:input_type -> admin.v1.StartReviewRequest
+	9,  // 17: admin.v1.NormControlService.AddIssue:input_type -> admin.v1.AddIssueRequest
+	11, // 18: admin.v1.NormControlService.UpdateIssue:input_type -> admin.v1.UpdateIssueRequest
+	13, // 19: admin.v1.NormControlService.DeleteIssue:input_type -> admin.v1.DeleteIssueRequest
+	15, // 20: admin.v1.NormControlService.ApproveDocument:input_type -> admin.v1.ApproveDocumentRequest
+	17, // 21: admin.v1.NormControlService.ReturnForRevision:input_type -> admin.v1.ReturnForRevisionRequest
+	19, // 22: admin.v1.NormControlService.GetCheckHistory:input_type -> admin.v1.GetCheckHistoryRequest
+	22, // 23: admin.v1.NormControlService.GetErrorStatistics:input_type -> admin.v1.GetStatisticsRequest
+	25, // 24: admin.v1.NormControlService.ListChecklists:input_type -> admin.v1.ListChecklistsRequest
+	27, // 25: admin.v1.NormControlService.CreateChecklist:input_type -> admin.v1.CreateChecklistRequest
+	4,  // 26: admin.v1.NormControlService.ListPendingDocuments:output_type -> admin.v1.ListPendingDocumentsResponse
+	6,  // 27: admin.v1.NormControlService.GetDocumentForReview:output_type -> admin.v1.DocumentReviewResponse
+	8,  // 28: admin.v1.NormControlService.StartReview:output_type -> admin.v1.StartReviewResponse
+	10, // 29: admin.v1.NormControlService.AddIssue:output_type -> admin.v1.AddIssueResponse
+	12, // 30: admin.v1.NormControlService.UpdateIssue:output_type -> admin.v1.UpdateIssueResponse
+	14, // 31: admin.v1.NormControlService.DeleteIssue:output_type -> admin.v1.DeleteIssueResponse
+	16, // 32: admin.v1.NormControlService.ApproveDocument:output_type -> admin.v1.ApproveDocumentResponse
+	18, // 33: admin.v1.NormControlService.ReturnForRevision:output_type -> admin.v1.ReturnForRevisionResponse
+	21, // 34: admin.v1.NormControlService.GetCheckHistory:output_type -> admin.v1.GetCheckHistoryResponse
+	24, // 35: admin.v1.NormControlService.GetErrorStatistics:output_type -> admin.v1.GetStatisticsResponse
+	26, // 36: admin.v1.NormControlService.ListChecklists:output_type -> admin.v1.ListChecklistsResponse
+	28, // 37: admin.v1.NormControlService.CreateChecklist:output_type -> admin.v1.CreateChecklistResponse
+	26, // [26:38] is the sub-list for method output_type
+	14, // [14:26] is the sub-list for method input_type
+	14, // [14:14] is the sub-list for extension type_name
+	14, // [14:14] is the sub-list for extension extendee
+	0,  // [0:14] is the sub-list for field type_name
 }
 
 func init() { file_admin_v1_norm_control_proto_init() }

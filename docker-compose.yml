@@ -338,6 +338,8 @@ services:
       SERVICES_PROJECT_ADDR: project_service:8083
       SERVICES_TEAM_ADDR: team_service:8084
       SERVICES_WORKFLOW_ADDR: workflow_service:8085
+      SERVICES_NOTIFICATION_ADDR: notification_service:8087
+      SERVICES_FILE_ADDR: file_service:8088
     depends_on:
       migrate:
         condition: service_completed_successfully
@@ -348,6 +350,8 @@ services:
       team_service:
         condition: service_started
       workflow_service:
+        condition: service_started
+      file_service:
         condition: service_started
     healthcheck:
       test: ["CMD", "grpc_health_probe", "-addr=127.0.0.1:8090", "-service=admin.v1.AdminService"]

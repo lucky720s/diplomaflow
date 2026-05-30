@@ -23,6 +23,20 @@ type Config struct {
 	RedisAddr               string   `mapstructure:"redis_addr"`
 	TaskServiceAddr         string   `mapstructure:"services_task_addr"`
 	AllowedOrigins          []string `mapstructure:"allowed_origins"`
+	// MaxUploadBytes is the single upload size limit enforced at the gateway.
+	// Keep aligned with nginx client_max_body_size and the file service limit.
+	MaxUploadBytes int64 `mapstructure:"max_upload_bytes"`
+}
+
+// DefaultMaxUploadBytes is the product-wide upload size limit (50 MB).
+const DefaultMaxUploadBytes int64 = 50 << 20
+
+// MaxUploadBytesOrDefault returns the configured limit or the default if unset.
+func (c *Config) MaxUploadBytesOrDefault() int64 {
+	if c.MaxUploadBytes > 0 {
+		return c.MaxUploadBytes
+	}
+	return DefaultMaxUploadBytes
 }
 
 func Load(path string, cfg interface{}) error {
@@ -56,6 +70,7 @@ func Load(path string, cfg interface{}) error {
 	_ = v.BindEnv("services_admin_addr", "SERVICES_ADMIN_ADDR")
 
 	_ = v.BindEnv("redis_addr", "REDIS_ADDR")
+	_ = v.BindEnv("max_upload_bytes", "MAX_UPLOAD_BYTES")
 
 	if err := v.Unmarshal(cfg); err != nil {
 		return fmt.Errorf("unmarshal config: %w", err)

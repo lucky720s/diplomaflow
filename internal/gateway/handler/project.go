@@ -109,6 +109,9 @@ func (h *Handler) UploadProjectDocument(c *gin.Context) {
 
 	file, header, err := c.Request.FormFile("file")
 	if err != nil {
+		if abortIfBodyTooLarge(c, err) {
+			return
+		}
 		c.JSON(http.StatusBadRequest, gin.H{"error": "file is required"})
 		return
 	}
@@ -177,7 +180,8 @@ func (h *Handler) UploadProjectDocument(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusOK, gin.H{
-		"file_id":       fileResp.Id,
+		"file":          fileResp.File, // unified file contract
+		"file_id":       fileResp.Id,   // back-compat
 		"submission_id": resp.SubmissionId,
 		"message":       "Document uploaded and submitted successfully",
 	})

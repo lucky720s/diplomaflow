@@ -31,3 +31,13 @@ func (m *MockRepository) DeleteMetadata(ctx context.Context, id string) error {
 	args := m.Called(ctx, id)
 	return args.Error(0)
 }
+
+func (m *MockRepository) CanAccessViaProject(ctx context.Context, userID, projectID int64) (bool, error) {
+	args := m.Called(ctx, userID, projectID)
+	return args.Bool(0), args.Error(1)
+}
+
+func (m *MockRepository) IsFileOnNormControl(ctx context.Context, fileID string) (bool, error) {
+	args := m.Called(ctx, fileID)
+	return args.Bool(0), args.Error(1)
+}

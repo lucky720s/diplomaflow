@@ -28,8 +28,9 @@ func TestUploadFlow_StartCommitResolve(t *testing.T) {
 	require.NoError(t, err)
 	require.NoError(t, f.Close())
 
-	err = svc.CommitUpload(context.Background(), id, tempPath, finalPath, 123, 456, "test.pdf", ".pdf", 5)
+	meta, err := svc.CommitUpload(context.Background(), id, tempPath, finalPath, 123, 456, "test.pdf", ".pdf", "", 5)
 	require.NoError(t, err)
+	require.NotNil(t, meta)
 
 	_, err = os.Stat(finalPath)
 	require.NoError(t, err)

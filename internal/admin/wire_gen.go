@@ -9,6 +9,7 @@ package admin
 import (
 	"github.com/lucky720s/diplomaflow/pkg/database"
 	"github.com/lucky720s/diplomaflow/pkg/protobuf/auth/v1"
+	v1_6 "github.com/lucky720s/diplomaflow/pkg/protobuf/file/v1"
 	v1_5 "github.com/lucky720s/diplomaflow/pkg/protobuf/notification/v1"
 	v1_2 "github.com/lucky720s/diplomaflow/pkg/protobuf/project/v1"
 	v1_3 "github.com/lucky720s/diplomaflow/pkg/protobuf/team/v1"
@@ -62,9 +63,20 @@ func InitializeApp(cfg *Config, log *zap.Logger) (*Handler, func(), error) {
 		cleanup()
 		return nil, nil, err
 	}
-	service := NewService(adminRepository, authServiceClient, projectServiceClient, teamServiceClient, workflowServiceClient, notificationServiceClient, log)
+	fileServiceClient, cleanup7, err := ProvideFileClient(cfg)
+	if err != nil {
+		cleanup6()
+		cleanup5()
+		cleanup4()
+		cleanup3()
+		cleanup2()
+		cleanup()
+		return nil, nil, err
+	}
+	service := NewService(adminRepository, authServiceClient, projectServiceClient, teamServiceClient, workflowServiceClient, notificationServiceClient, fileServiceClient, log)
 	handler := NewHandler(service, log)
 	return handler, func() {
+		cleanup7()
 		cleanup6()
 		cleanup5()
 		cleanup4()
@@ -123,4 +135,13 @@ func ProvideNotificationClient(cfg *Config) (v1_5.NotificationServiceClient, fun
 	}
 	cleanup := func() { conn.Close() }
 	return v1_5.NewNotificationServiceClient(conn), cleanup, nil
+}
+
+func ProvideFileClient(cfg *Config) (v1_6.FileServiceClient, func(), error) {
+	conn, err := grpc.NewClient(cfg.Services.FileAddr, grpc.WithTransportCredentials(insecure.NewCredentials()))
+	if err != nil {
+		return nil, nil, err
+	}
+	cleanup := func() { conn.Close() }
+	return v1_6.NewFileServiceClient(conn), cleanup, nil
 }

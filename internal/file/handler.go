@@ -60,19 +60,19 @@ func (h *Handler) UploadFile(stream filev1.FileService_UploadFileServer) error {
 		}
 	}()
 
-	const maxBytes = int64(50 << 20) // 50MB (лучше вынести в config)
+	maxBytes := h.service.MaxUploadBytes()
 	var size int64
 
 	for {
-		req, err := stream.Recv()
-		if err == io.EOF {
+		chunkReq, recvErr := stream.Recv()
+		if recvErr == io.EOF {
 			break
 		}
-		if err != nil {
-			return status.Errorf(codes.Canceled, "upload cancelled: %v", err)
+		if recvErr != nil {
+			return status.Errorf(codes.Canceled, "upload cancelled: %v", recvErr)
 		}
 
-		chunk := req.GetChunk()
+		chunk := chunkReq.GetChunk()
 		if len(chunk) == 0 {
 			continue
 		}
@@ -87,12 +87,14 @@ func (h *Handler) UploadFile(stream filev1.FileService_UploadFileServer) error {
 		}
 	}
 
-	if err := h.service.CommitUpload(
+	// MIME is resolved inside CommitUpload from the committed file (passing "").
+	meta, err := h.service.CommitUpload(
 		stream.Context(),
 		id, tempPath, finalPath,
 		info.UserId, info.ProjectId,
-		info.FileName, info.FileType, size,
-	); err != nil {
+		info.FileName, info.FileType, "", size,
+	)
+	if err != nil {
 		return status.Errorf(codes.Internal, "commit upload failed: %v", err)
 	}
 
@@ -101,6 +103,7 @@ func (h *Handler) UploadFile(stream filev1.FileService_UploadFileServer) error {
 	return stream.SendAndClose(&filev1.UploadFileResponse{
 		Id:   id,
 		Size: uint32(size),
+		File: h.service.BuildFileRef(meta),
 	})
 }
 
@@ -109,8 +112,9 @@ func (h *Handler) GetFileInfo(ctx context.Context, req *filev1.GetFileInfoReques
 		return nil, status.Error(codes.InvalidArgument, "id is required")
 	}
 
+	internal := isInternalCaller(ctx)
 	uid := callerUserID(ctx)
-	if uid <= 0 {
+	if uid <= 0 && !internal {
 		return nil, status.Error(codes.Unauthenticated, "missing x-user-id")
 	}
 
@@ -119,31 +123,38 @@ func (h *Handler) GetFileInfo(ctx context.Context, req *filev1.GetFileInfoReques
 		return nil, status.Errorf(codes.NotFound, "file not found")
 	}
 
-	// SECURITY: если это legacy-имя (meta == nil) — запрещаем обычным пользователям
-	if meta == nil && !isInternalCaller(ctx) {
-		return nil, status.Error(codes.PermissionDenied, "legacy file ids are not accessible")
+	// Legacy stored filenames (meta == nil) are only for internal callers.
+	if meta == nil {
+		if !internal {
+			return nil, status.Error(codes.PermissionDenied, "legacy file ids are not accessible")
+		}
+		// Internal caller, legacy file: return the minimal info we have.
+		return &filev1.GetFileInfoResponse{
+			Id:          req.Id,
+			Name:        req.Id,
+			DownloadUrl: h.service.GetFileURL(req.Id),
+		}, nil
 	}
 
-	// SECURITY: owner-check для stable mode
-	if meta != nil && meta.UserID != uid {
-		return nil, status.Error(codes.PermissionDenied, "forbidden")
+	// Authorization via user↔domain relation (internal callers are trusted).
+	if !internal {
+		allowed, accessErr := h.service.CanAccessFile(ctx, uid, callerRole(ctx), req.Id)
+		if accessErr != nil {
+			return nil, status.Errorf(codes.Internal, "access check failed")
+		}
+		if !allowed {
+			return nil, status.Error(codes.PermissionDenied, "forbidden")
+		}
 	}
 
-	resp := &filev1.GetFileInfoResponse{
-		Id:          req.Id,
-		DownloadUrl: h.service.GetFileURL(req.Id),
-		Name:        req.Id,
-	}
-
-	if meta != nil {
-		resp.Id = meta.ID
-		resp.Name = meta.FileName
-		resp.Size = meta.Size
-		resp.FileType = meta.FileType
-		resp.DownloadUrl = h.service.GetFileURL(meta.ID)
-	}
-
-	return resp, nil
+	return &filev1.GetFileInfoResponse{
+		Id:          meta.ID,
+		Name:        meta.FileName,
+		Size:        meta.Size,
+		FileType:    metaMIME(meta),
+		DownloadUrl: h.service.GetFileURL(meta.ID),
+		File:        h.service.BuildFileRef(meta),
+	}, nil
 }
 
 func (h *Handler) DownloadFile(req *filev1.DownloadFileRequest, stream filev1.FileService_DownloadFileServer) error {
@@ -151,21 +162,31 @@ func (h *Handler) DownloadFile(req *filev1.DownloadFileRequest, stream filev1.Fi
 		return status.Error(codes.InvalidArgument, "id is required")
 	}
 
-	uid := callerUserID(stream.Context())
-	if uid <= 0 {
+	ctx := stream.Context()
+	internal := isInternalCaller(ctx)
+	uid := callerUserID(ctx)
+	if uid <= 0 && !internal {
 		return status.Error(codes.Unauthenticated, "missing x-user-id")
 	}
 
-	path, meta, err := h.service.ResolveFilePath(stream.Context(), req.Id)
+	path, meta, err := h.service.ResolveFilePath(ctx, req.Id)
 	if err != nil {
 		return status.Errorf(codes.NotFound, "file not found")
 	}
 
-	if meta == nil && !isInternalCaller(stream.Context()) {
-		return status.Error(codes.PermissionDenied, "legacy file ids are not accessible")
-	}
-	if meta != nil && meta.UserID != uid {
-		return status.Error(codes.PermissionDenied, "forbidden")
+	// Legacy stored filenames are only for internal callers.
+	if meta == nil {
+		if !internal {
+			return status.Error(codes.PermissionDenied, "legacy file ids are not accessible")
+		}
+	} else if !internal {
+		allowed, accessErr := h.service.CanAccessFile(ctx, uid, callerRole(ctx), req.Id)
+		if accessErr != nil {
+			return status.Errorf(codes.Internal, "access check failed")
+		}
+		if !allowed {
+			return status.Error(codes.PermissionDenied, "forbidden")
+		}
 	}
 
 	f, err := os.Open(path)
@@ -228,6 +249,17 @@ func callerUserID(ctx context.Context) int64 {
 	}
 	id, _ := strconv.ParseInt(vals[0], 10, 64)
 	return id
+}
+
+func callerRole(ctx context.Context) string {
+	md, ok := metadata.FromIncomingContext(ctx)
+	if !ok {
+		return ""
+	}
+	if vals := md.Get("x-user-role"); len(vals) > 0 {
+		return vals[0]
+	}
+	return ""
 }
 func isInternalCaller(ctx context.Context) bool {
 	md, ok := metadata.FromIncomingContext(ctx)

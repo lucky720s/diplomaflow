@@ -8,6 +8,7 @@ import (
 	"github.com/google/wire"
 	"github.com/lucky720s/diplomaflow/pkg/database"
 	authv1 "github.com/lucky720s/diplomaflow/pkg/protobuf/auth/v1"
+	filev1 "github.com/lucky720s/diplomaflow/pkg/protobuf/file/v1"
 	notificationv1 "github.com/lucky720s/diplomaflow/pkg/protobuf/notification/v1"
 	projectv1 "github.com/lucky720s/diplomaflow/pkg/protobuf/project/v1"
 	teamv1 "github.com/lucky720s/diplomaflow/pkg/protobuf/team/v1"
@@ -67,6 +68,15 @@ func ProvideNotificationClient(cfg *Config) (notificationv1.NotificationServiceC
 	return notificationv1.NewNotificationServiceClient(conn), cleanup, nil
 }
 
+func ProvideFileClient(cfg *Config) (filev1.FileServiceClient, func(), error) {
+	conn, err := grpc.NewClient(cfg.Services.FileAddr, grpc.WithTransportCredentials(insecure.NewCredentials()))
+	if err != nil {
+		return nil, nil, err
+	}
+	cleanup := func() { conn.Close() }
+	return filev1.NewFileServiceClient(conn), cleanup, nil
+}
+
 func InitializeApp(cfg *Config, log *zap.Logger) (*Handler, func(), error) {
 	wire.Build(
 		ProvideDB,
@@ -75,6 +85,7 @@ func InitializeApp(cfg *Config, log *zap.Logger) (*Handler, func(), error) {
 		ProvideTeamClient,
 		ProvideWorkflowClient,
 		ProvideNotificationClient,
+		ProvideFileClient,
 		NewRepository,
 		NewService,
 		NewHandler,

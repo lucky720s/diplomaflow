@@ -90,6 +90,7 @@ func (h *Handler) ListPendingDocuments(ctx context.Context, req *adminv1.ListPen
 			Version:     c.DocumentVersion,
 			CheckerId:   checkerID,
 			SubmittedAt: timestamppb.New(c.CreatedAt),
+			File:        h.service.GetFileRef(ctx, fileID),
 		})
 	}
 
@@ -127,6 +128,7 @@ func (h *Handler) GetDocumentForReview(ctx context.Context, req *adminv1.GetDocu
 		Version:     check.DocumentVersion,
 		CheckerId:   checkerID,
 		SubmittedAt: timestamppb.New(check.CreatedAt),
+		File:        h.service.GetFileRef(ctx, fileID),
 	}
 
 	resp := &adminv1.DocumentReviewResponse{
