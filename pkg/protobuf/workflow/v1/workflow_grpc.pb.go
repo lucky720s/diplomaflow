@@ -56,6 +56,13 @@ const (
 	WorkflowService_GetDepartmentWorkflowConfig_FullMethodName   = "/workflow.v1.WorkflowService/GetDepartmentWorkflowConfig"
 	WorkflowService_SubmitReview_FullMethodName                  = "/workflow.v1.WorkflowService/SubmitReview"
 	WorkflowService_GetStateReviews_FullMethodName               = "/workflow.v1.WorkflowService/GetStateReviews"
+	WorkflowService_GetProjectWorkflowState_FullMethodName       = "/workflow.v1.WorkflowService/GetProjectWorkflowState"
+	WorkflowService_AdvanceProjectWorkflow_FullMethodName        = "/workflow.v1.WorkflowService/AdvanceProjectWorkflow"
+	WorkflowService_RollbackProjectWorkflow_FullMethodName       = "/workflow.v1.WorkflowService/RollbackProjectWorkflow"
+	WorkflowService_SetProjectWorkflowState_FullMethodName       = "/workflow.v1.WorkflowService/SetProjectWorkflowState"
+	WorkflowService_ListProjectWorkflowHistory_FullMethodName    = "/workflow.v1.WorkflowService/ListProjectWorkflowHistory"
+	WorkflowService_ListWorkflowProjects_FullMethodName          = "/workflow.v1.WorkflowService/ListWorkflowProjects"
+	WorkflowService_GetWorkflowDashboardStats_FullMethodName     = "/workflow.v1.WorkflowService/GetWorkflowDashboardStats"
 )
 
 // WorkflowServiceClient is the client API for WorkflowService service.
@@ -108,6 +115,14 @@ type WorkflowServiceClient interface {
 	// === REVIEW (оценки/допуск преподов) ===
 	SubmitReview(ctx context.Context, in *SubmitReviewRequest, opts ...grpc.CallOption) (*SubmitReviewResponse, error)
 	GetStateReviews(ctx context.Context, in *GetStateReviewsRequest, opts ...grpc.CallOption) (*GetStateReviewsResponse, error)
+	// === ADMIN PROJECT WORKFLOW RUNTIME ===
+	GetProjectWorkflowState(ctx context.Context, in *GetProjectWorkflowStateRequest, opts ...grpc.CallOption) (*ProjectWorkflowStateResponse, error)
+	AdvanceProjectWorkflow(ctx context.Context, in *AdvanceProjectWorkflowRequest, opts ...grpc.CallOption) (*ProjectWorkflowStateResponse, error)
+	RollbackProjectWorkflow(ctx context.Context, in *RollbackProjectWorkflowRequest, opts ...grpc.CallOption) (*ProjectWorkflowStateResponse, error)
+	SetProjectWorkflowState(ctx context.Context, in *SetProjectWorkflowStateRequest, opts ...grpc.CallOption) (*ProjectWorkflowStateResponse, error)
+	ListProjectWorkflowHistory(ctx context.Context, in *ListProjectWorkflowHistoryRequest, opts ...grpc.CallOption) (*ListProjectWorkflowHistoryResponse, error)
+	ListWorkflowProjects(ctx context.Context, in *ListWorkflowProjectsRequest, opts ...grpc.CallOption) (*ListWorkflowProjectsResponse, error)
+	GetWorkflowDashboardStats(ctx context.Context, in *GetWorkflowDashboardStatsRequest, opts ...grpc.CallOption) (*GetWorkflowDashboardStatsResponse, error)
 }
 
 type workflowServiceClient struct {
@@ -478,6 +493,76 @@ func (c *workflowServiceClient) GetStateReviews(ctx context.Context, in *GetStat
 	return out, nil
 }
 
+func (c *workflowServiceClient) GetProjectWorkflowState(ctx context.Context, in *GetProjectWorkflowStateRequest, opts ...grpc.CallOption) (*ProjectWorkflowStateResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(ProjectWorkflowStateResponse)
+	err := c.cc.Invoke(ctx, WorkflowService_GetProjectWorkflowState_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *workflowServiceClient) AdvanceProjectWorkflow(ctx context.Context, in *AdvanceProjectWorkflowRequest, opts ...grpc.CallOption) (*ProjectWorkflowStateResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(ProjectWorkflowStateResponse)
+	err := c.cc.Invoke(ctx, WorkflowService_AdvanceProjectWorkflow_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *workflowServiceClient) RollbackProjectWorkflow(ctx context.Context, in *RollbackProjectWorkflowRequest, opts ...grpc.CallOption) (*ProjectWorkflowStateResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(ProjectWorkflowStateResponse)
+	err := c.cc.Invoke(ctx, WorkflowService_RollbackProjectWorkflow_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *workflowServiceClient) SetProjectWorkflowState(ctx context.Context, in *SetProjectWorkflowStateRequest, opts ...grpc.CallOption) (*ProjectWorkflowStateResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(ProjectWorkflowStateResponse)
+	err := c.cc.Invoke(ctx, WorkflowService_SetProjectWorkflowState_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *workflowServiceClient) ListProjectWorkflowHistory(ctx context.Context, in *ListProjectWorkflowHistoryRequest, opts ...grpc.CallOption) (*ListProjectWorkflowHistoryResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(ListProjectWorkflowHistoryResponse)
+	err := c.cc.Invoke(ctx, WorkflowService_ListProjectWorkflowHistory_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *workflowServiceClient) ListWorkflowProjects(ctx context.Context, in *ListWorkflowProjectsRequest, opts ...grpc.CallOption) (*ListWorkflowProjectsResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(ListWorkflowProjectsResponse)
+	err := c.cc.Invoke(ctx, WorkflowService_ListWorkflowProjects_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *workflowServiceClient) GetWorkflowDashboardStats(ctx context.Context, in *GetWorkflowDashboardStatsRequest, opts ...grpc.CallOption) (*GetWorkflowDashboardStatsResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(GetWorkflowDashboardStatsResponse)
+	err := c.cc.Invoke(ctx, WorkflowService_GetWorkflowDashboardStats_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // WorkflowServiceServer is the server API for WorkflowService service.
 // All implementations must embed UnimplementedWorkflowServiceServer
 // for forward compatibility.
@@ -528,6 +613,14 @@ type WorkflowServiceServer interface {
 	// === REVIEW (оценки/допуск преподов) ===
 	SubmitReview(context.Context, *SubmitReviewRequest) (*SubmitReviewResponse, error)
 	GetStateReviews(context.Context, *GetStateReviewsRequest) (*GetStateReviewsResponse, error)
+	// === ADMIN PROJECT WORKFLOW RUNTIME ===
+	GetProjectWorkflowState(context.Context, *GetProjectWorkflowStateRequest) (*ProjectWorkflowStateResponse, error)
+	AdvanceProjectWorkflow(context.Context, *AdvanceProjectWorkflowRequest) (*ProjectWorkflowStateResponse, error)
+	RollbackProjectWorkflow(context.Context, *RollbackProjectWorkflowRequest) (*ProjectWorkflowStateResponse, error)
+	SetProjectWorkflowState(context.Context, *SetProjectWorkflowStateRequest) (*ProjectWorkflowStateResponse, error)
+	ListProjectWorkflowHistory(context.Context, *ListProjectWorkflowHistoryRequest) (*ListProjectWorkflowHistoryResponse, error)
+	ListWorkflowProjects(context.Context, *ListWorkflowProjectsRequest) (*ListWorkflowProjectsResponse, error)
+	GetWorkflowDashboardStats(context.Context, *GetWorkflowDashboardStatsRequest) (*GetWorkflowDashboardStatsResponse, error)
 	mustEmbedUnimplementedWorkflowServiceServer()
 }
 
@@ -645,6 +738,27 @@ func (UnimplementedWorkflowServiceServer) SubmitReview(context.Context, *SubmitR
 }
 func (UnimplementedWorkflowServiceServer) GetStateReviews(context.Context, *GetStateReviewsRequest) (*GetStateReviewsResponse, error) {
 	return nil, status.Error(codes.Unimplemented, "method GetStateReviews not implemented")
+}
+func (UnimplementedWorkflowServiceServer) GetProjectWorkflowState(context.Context, *GetProjectWorkflowStateRequest) (*ProjectWorkflowStateResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method GetProjectWorkflowState not implemented")
+}
+func (UnimplementedWorkflowServiceServer) AdvanceProjectWorkflow(context.Context, *AdvanceProjectWorkflowRequest) (*ProjectWorkflowStateResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method AdvanceProjectWorkflow not implemented")
+}
+func (UnimplementedWorkflowServiceServer) RollbackProjectWorkflow(context.Context, *RollbackProjectWorkflowRequest) (*ProjectWorkflowStateResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method RollbackProjectWorkflow not implemented")
+}
+func (UnimplementedWorkflowServiceServer) SetProjectWorkflowState(context.Context, *SetProjectWorkflowStateRequest) (*ProjectWorkflowStateResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method SetProjectWorkflowState not implemented")
+}
+func (UnimplementedWorkflowServiceServer) ListProjectWorkflowHistory(context.Context, *ListProjectWorkflowHistoryRequest) (*ListProjectWorkflowHistoryResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method ListProjectWorkflowHistory not implemented")
+}
+func (UnimplementedWorkflowServiceServer) ListWorkflowProjects(context.Context, *ListWorkflowProjectsRequest) (*ListWorkflowProjectsResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method ListWorkflowProjects not implemented")
+}
+func (UnimplementedWorkflowServiceServer) GetWorkflowDashboardStats(context.Context, *GetWorkflowDashboardStatsRequest) (*GetWorkflowDashboardStatsResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method GetWorkflowDashboardStats not implemented")
 }
 func (UnimplementedWorkflowServiceServer) mustEmbedUnimplementedWorkflowServiceServer() {}
 func (UnimplementedWorkflowServiceServer) testEmbeddedByValue()                         {}
@@ -1315,6 +1429,132 @@ func _WorkflowService_GetStateReviews_Handler(srv interface{}, ctx context.Conte
 	return interceptor(ctx, in, info, handler)
 }
 
+func _WorkflowService_GetProjectWorkflowState_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetProjectWorkflowStateRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(WorkflowServiceServer).GetProjectWorkflowState(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: WorkflowService_GetProjectWorkflowState_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(WorkflowServiceServer).GetProjectWorkflowState(ctx, req.(*GetProjectWorkflowStateRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _WorkflowService_AdvanceProjectWorkflow_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(AdvanceProjectWorkflowRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(WorkflowServiceServer).AdvanceProjectWorkflow(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: WorkflowService_AdvanceProjectWorkflow_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(WorkflowServiceServer).AdvanceProjectWorkflow(ctx, req.(*AdvanceProjectWorkflowRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _WorkflowService_RollbackProjectWorkflow_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(RollbackProjectWorkflowRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(WorkflowServiceServer).RollbackProjectWorkflow(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: WorkflowService_RollbackProjectWorkflow_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(WorkflowServiceServer).RollbackProjectWorkflow(ctx, req.(*RollbackProjectWorkflowRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _WorkflowService_SetProjectWorkflowState_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(SetProjectWorkflowStateRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(WorkflowServiceServer).SetProjectWorkflowState(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: WorkflowService_SetProjectWorkflowState_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(WorkflowServiceServer).SetProjectWorkflowState(ctx, req.(*SetProjectWorkflowStateRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _WorkflowService_ListProjectWorkflowHistory_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(ListProjectWorkflowHistoryRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(WorkflowServiceServer).ListProjectWorkflowHistory(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: WorkflowService_ListProjectWorkflowHistory_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(WorkflowServiceServer).ListProjectWorkflowHistory(ctx, req.(*ListProjectWorkflowHistoryRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _WorkflowService_ListWorkflowProjects_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(ListWorkflowProjectsRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(WorkflowServiceServer).ListWorkflowProjects(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: WorkflowService_ListWorkflowProjects_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(WorkflowServiceServer).ListWorkflowProjects(ctx, req.(*ListWorkflowProjectsRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _WorkflowService_GetWorkflowDashboardStats_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetWorkflowDashboardStatsRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(WorkflowServiceServer).GetWorkflowDashboardStats(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: WorkflowService_GetWorkflowDashboardStats_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(WorkflowServiceServer).GetWorkflowDashboardStats(ctx, req.(*GetWorkflowDashboardStatsRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // WorkflowService_ServiceDesc is the grpc.ServiceDesc for WorkflowService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -1465,6 +1705,34 @@ var WorkflowService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "GetStateReviews",
 			Handler:    _WorkflowService_GetStateReviews_Handler,
+		},
+		{
+			MethodName: "GetProjectWorkflowState",
+			Handler:    _WorkflowService_GetProjectWorkflowState_Handler,
+		},
+		{
+			MethodName: "AdvanceProjectWorkflow",
+			Handler:    _WorkflowService_AdvanceProjectWorkflow_Handler,
+		},
+		{
+			MethodName: "RollbackProjectWorkflow",
+			Handler:    _WorkflowService_RollbackProjectWorkflow_Handler,
+		},
+		{
+			MethodName: "SetProjectWorkflowState",
+			Handler:    _WorkflowService_SetProjectWorkflowState_Handler,
+		},
+		{
+			MethodName: "ListProjectWorkflowHistory",
+			Handler:    _WorkflowService_ListProjectWorkflowHistory_Handler,
+		},
+		{
+			MethodName: "ListWorkflowProjects",
+			Handler:    _WorkflowService_ListWorkflowProjects_Handler,
+		},
+		{
+			MethodName: "GetWorkflowDashboardStats",
+			Handler:    _WorkflowService_GetWorkflowDashboardStats_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

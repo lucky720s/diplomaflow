@@ -197,7 +197,10 @@ func main() {
 	log.Info("Builtin plugins registered", zap.Strings("plugins", builtin.RegisteredPlugins()))
 
 	eng := engine.NewWorkflowEngine(repo, teamClient, log.Logger)
-	h := runtimegrpc.New(base, eng, reviewSvc, projectClient, log.Logger)
+	runtimeH := runtimegrpc.New(base, eng, reviewSvc, projectClient, log.Logger)
+
+	adminRuntimeSvc := workflow.NewAdminRuntimeService(svc, projectClient, log.Logger)
+	h := runtimegrpc.NewAdminRuntimeHandler(runtimeH, adminRuntimeSvc, log.Logger)
 
 	pcWorker := postcommit.NewWorker(db, projectClient, teamClient, log.Logger)
 	pcGRPC := postcommit.NewGRPCServer(pcWorker, log.Logger)

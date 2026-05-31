@@ -19,15 +19,17 @@ import (
 const _ = grpc.SupportPackageIsVersion9
 
 const (
-	ProjectService_CreateProject_FullMethodName      = "/project.v1.ProjectService/CreateProject"
-	ProjectService_GetProject_FullMethodName         = "/project.v1.ProjectService/GetProject"
-	ProjectService_GetStudentProjects_FullMethodName = "/project.v1.ProjectService/GetStudentProjects"
-	ProjectService_PerformAction_FullMethodName      = "/project.v1.ProjectService/PerformAction"
-	ProjectService_GetProjectRuntime_FullMethodName  = "/project.v1.ProjectService/GetProjectRuntime"
-	ProjectService_CommitTransition_FullMethodName   = "/project.v1.ProjectService/CommitTransition"
-	ProjectService_UpdateProject_FullMethodName      = "/project.v1.ProjectService/UpdateProject"
-	ProjectService_ArchiveProject_FullMethodName     = "/project.v1.ProjectService/ArchiveProject"
-	ProjectService_DeleteProject_FullMethodName      = "/project.v1.ProjectService/DeleteProject"
+	ProjectService_CreateProject_FullMethodName           = "/project.v1.ProjectService/CreateProject"
+	ProjectService_GetProject_FullMethodName              = "/project.v1.ProjectService/GetProject"
+	ProjectService_GetStudentProjects_FullMethodName      = "/project.v1.ProjectService/GetStudentProjects"
+	ProjectService_PerformAction_FullMethodName           = "/project.v1.ProjectService/PerformAction"
+	ProjectService_GetProjectRuntime_FullMethodName       = "/project.v1.ProjectService/GetProjectRuntime"
+	ProjectService_CommitTransition_FullMethodName        = "/project.v1.ProjectService/CommitTransition"
+	ProjectService_UpdateProject_FullMethodName           = "/project.v1.ProjectService/UpdateProject"
+	ProjectService_ArchiveProject_FullMethodName          = "/project.v1.ProjectService/ArchiveProject"
+	ProjectService_DeleteProject_FullMethodName           = "/project.v1.ProjectService/DeleteProject"
+	ProjectService_ListProjectsRuntime_FullMethodName     = "/project.v1.ProjectService/ListProjectsRuntime"
+	ProjectService_ListProjectStateHistory_FullMethodName = "/project.v1.ProjectService/ListProjectStateHistory"
 )
 
 // ProjectServiceClient is the client API for ProjectService service.
@@ -43,6 +45,9 @@ type ProjectServiceClient interface {
 	UpdateProject(ctx context.Context, in *UpdateProjectRequest, opts ...grpc.CallOption) (*UpdateProjectResponse, error)
 	ArchiveProject(ctx context.Context, in *ArchiveProjectRequest, opts ...grpc.CallOption) (*ArchiveProjectResponse, error)
 	DeleteProject(ctx context.Context, in *DeleteProjectRequest, opts ...grpc.CallOption) (*DeleteProjectResponse, error)
+	// Internal/Admin RPCs
+	ListProjectsRuntime(ctx context.Context, in *ListProjectsRuntimeRequest, opts ...grpc.CallOption) (*ListProjectsRuntimeResponse, error)
+	ListProjectStateHistory(ctx context.Context, in *ListProjectStateHistoryRequest, opts ...grpc.CallOption) (*ListProjectStateHistoryResponse, error)
 }
 
 type projectServiceClient struct {
@@ -143,6 +148,26 @@ func (c *projectServiceClient) DeleteProject(ctx context.Context, in *DeleteProj
 	return out, nil
 }
 
+func (c *projectServiceClient) ListProjectsRuntime(ctx context.Context, in *ListProjectsRuntimeRequest, opts ...grpc.CallOption) (*ListProjectsRuntimeResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(ListProjectsRuntimeResponse)
+	err := c.cc.Invoke(ctx, ProjectService_ListProjectsRuntime_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *projectServiceClient) ListProjectStateHistory(ctx context.Context, in *ListProjectStateHistoryRequest, opts ...grpc.CallOption) (*ListProjectStateHistoryResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(ListProjectStateHistoryResponse)
+	err := c.cc.Invoke(ctx, ProjectService_ListProjectStateHistory_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // ProjectServiceServer is the server API for ProjectService service.
 // All implementations must embed UnimplementedProjectServiceServer
 // for forward compatibility.
@@ -156,6 +181,9 @@ type ProjectServiceServer interface {
 	UpdateProject(context.Context, *UpdateProjectRequest) (*UpdateProjectResponse, error)
 	ArchiveProject(context.Context, *ArchiveProjectRequest) (*ArchiveProjectResponse, error)
 	DeleteProject(context.Context, *DeleteProjectRequest) (*DeleteProjectResponse, error)
+	// Internal/Admin RPCs
+	ListProjectsRuntime(context.Context, *ListProjectsRuntimeRequest) (*ListProjectsRuntimeResponse, error)
+	ListProjectStateHistory(context.Context, *ListProjectStateHistoryRequest) (*ListProjectStateHistoryResponse, error)
 	mustEmbedUnimplementedProjectServiceServer()
 }
 
@@ -192,6 +220,12 @@ func (UnimplementedProjectServiceServer) ArchiveProject(context.Context, *Archiv
 }
 func (UnimplementedProjectServiceServer) DeleteProject(context.Context, *DeleteProjectRequest) (*DeleteProjectResponse, error) {
 	return nil, status.Error(codes.Unimplemented, "method DeleteProject not implemented")
+}
+func (UnimplementedProjectServiceServer) ListProjectsRuntime(context.Context, *ListProjectsRuntimeRequest) (*ListProjectsRuntimeResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method ListProjectsRuntime not implemented")
+}
+func (UnimplementedProjectServiceServer) ListProjectStateHistory(context.Context, *ListProjectStateHistoryRequest) (*ListProjectStateHistoryResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method ListProjectStateHistory not implemented")
 }
 func (UnimplementedProjectServiceServer) mustEmbedUnimplementedProjectServiceServer() {}
 func (UnimplementedProjectServiceServer) testEmbeddedByValue()                        {}
@@ -376,6 +410,42 @@ func _ProjectService_DeleteProject_Handler(srv interface{}, ctx context.Context,
 	return interceptor(ctx, in, info, handler)
 }
 
+func _ProjectService_ListProjectsRuntime_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(ListProjectsRuntimeRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(ProjectServiceServer).ListProjectsRuntime(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: ProjectService_ListProjectsRuntime_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(ProjectServiceServer).ListProjectsRuntime(ctx, req.(*ListProjectsRuntimeRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _ProjectService_ListProjectStateHistory_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(ListProjectStateHistoryRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(ProjectServiceServer).ListProjectStateHistory(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: ProjectService_ListProjectStateHistory_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(ProjectServiceServer).ListProjectStateHistory(ctx, req.(*ListProjectStateHistoryRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // ProjectService_ServiceDesc is the grpc.ServiceDesc for ProjectService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -418,6 +488,14 @@ var ProjectService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "DeleteProject",
 			Handler:    _ProjectService_DeleteProject_Handler,
+		},
+		{
+			MethodName: "ListProjectsRuntime",
+			Handler:    _ProjectService_ListProjectsRuntime_Handler,
+		},
+		{
+			MethodName: "ListProjectStateHistory",
+			Handler:    _ProjectService_ListProjectStateHistory_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

@@ -17,6 +17,9 @@ service ProjectService {
   rpc ArchiveProject (ArchiveProjectRequest) returns (ArchiveProjectResponse);
   rpc DeleteProject (DeleteProjectRequest) returns (DeleteProjectResponse);
 
+  // Internal/Admin RPCs
+  rpc ListProjectsRuntime (ListProjectsRuntimeRequest) returns (ListProjectsRuntimeResponse);
+  rpc ListProjectStateHistory (ListProjectStateHistoryRequest) returns (ListProjectStateHistoryResponse);
 }
 
 message CreateProjectRequest {
@@ -138,6 +141,9 @@ message CommitTransitionRequest {
   repeated PostCommitActionGroup post_actions = 11;
 
   string set_status = 12;
+
+  // Extra history metadata (direction, actor_role, transition_id for audit)
+  google.protobuf.Struct history_metadata = 13;
 }
 
 message CommitTransitionResponse {
@@ -163,3 +169,73 @@ message ArchiveProjectResponse { bool success = 1; string status = 2; }
 
 message DeleteProjectRequest { int64 project_id = 1; string reason = 2; }
 message DeleteProjectResponse { bool success = 1; }
+
+// ================= ADMIN/INTERNAL LIST =================
+
+message ListProjectsRuntimeRequest {
+  int64 department_id = 1;
+  int64 university_id = 2;
+  int64 workflow_id   = 3;
+  int64 state_id      = 4;
+  int64 team_id       = 5;
+  int64 student_id    = 6;
+  string status       = 7;
+  string search       = 8;
+  int32  page         = 9;
+  int32  page_size    = 10;
+}
+
+message ProjectRuntimeSummary {
+  int64  project_id        = 1;
+  string title             = 2;
+  int64  student_id        = 3;
+  int64  team_id           = 4;
+  int64  university_id     = 5;
+  int64  department_id     = 6;
+  int64  workflow_id       = 7;
+  int32  workflow_version  = 8;
+  string workflow_name     = 9;
+  int64  current_state_id  = 10;
+  string current_state_name = 11;
+  string status            = 12;
+  google.protobuf.Timestamp deadline_at         = 13;
+  google.protobuf.Timestamp topic_registered_at = 14;
+  google.protobuf.Timestamp created_at          = 15;
+  google.protobuf.Timestamp updated_at          = 16;
+  google.protobuf.Timestamp last_transition_at  = 17;
+}
+
+message ListProjectsRuntimeResponse {
+  repeated ProjectRuntimeSummary projects = 1;
+  int32 total = 2;
+  int32 page  = 3;
+  int32 page_size = 4;
+}
+
+message ListProjectStateHistoryRequest {
+  int64 project_id = 1;
+  int32 limit      = 2;
+  string order     = 3; // "asc" | "desc" (default "desc")
+}
+
+message ProjectStateHistoryItem {
+  int64  id             = 1;
+  int64  project_id     = 2;
+  string event_name     = 3;
+  string status         = 4;
+  int64  changed_by     = 5;
+  string comment        = 6;
+  int64  from_state_id  = 7;
+  int64  to_state_id    = 8;
+  string from_state_name = 9;
+  string to_state_name  = 10;
+  int64  transition_id  = 11;
+  string direction      = 12;
+  string actor_role     = 13;
+  google.protobuf.Struct metadata = 14;
+  google.protobuf.Timestamp created_at = 15;
+}
+
+message ListProjectStateHistoryResponse {
+  repeated ProjectStateHistoryItem items = 1;
+}

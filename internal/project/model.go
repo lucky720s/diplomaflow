@@ -51,6 +51,11 @@ type StateHistory struct {
 	FromStateName string `gorm:"column:from_state_name"`
 	ToStateName   string `gorm:"column:to_state_name"`
 
+	// Added in migration 000017
+	TransitionID *int64 `gorm:"column:transition_id"`
+	Direction    string `gorm:"column:direction"`
+	ActorRole    string `gorm:"column:actor_role"`
+
 	Metadata  datatypes.JSON `gorm:"column:metadata;type:jsonb;default:'{}'"`
 	CreatedAt time.Time      `gorm:"column:created_at"`
 }

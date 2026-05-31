@@ -40,19 +40,25 @@ func (s *Service) CreateProject(ctx context.Context, req *projectv1.CreateProjec
 		DepartmentId: req.DepartmentId,
 	})
 	if err != nil {
-		return nil, errors.New("no active workflow configured for this department")
+		return nil, status.Errorf(codes.FailedPrecondition, "active workflow is not configured for department %d", req.DepartmentId)
 	}
 	if len(wf.States) == 0 {
-		return nil, errors.New("workflow has no states configured")
+		return nil, status.Error(codes.FailedPrecondition, "active workflow has no states configured")
 	}
 
 	// pick initial state
 	initial := wf.States[0]
+	foundInitial := false
 	for _, st := range wf.States {
 		if st.IsInitial {
 			initial = st
+			foundInitial = true
 			break
 		}
+	}
+	if !foundInitial {
+		s.logger.Warn("workflow has no is_initial state, using first state by order_index",
+			zap.Int64("workflow_id", wf.Id))
 	}
 
 	var deadlineAt *time.Time
@@ -245,6 +251,24 @@ func (s *Service) CommitTransition(ctx context.Context, req *projectv1.CommitTra
 		}
 
 		changedBy := req.ChangedBy
+
+		// Build history metadata: merge history_metadata from request with derived fields
+		histMeta := map[string]interface{}{}
+		if req.HistoryMetadata != nil {
+			histMeta = req.HistoryMetadata.AsMap()
+		}
+		// Ensure direction/actor_role are always set from explicit fields too
+		direction, _ := histMeta["direction"].(string)
+		actorRole, _ := histMeta["actor_role"].(string)
+
+		histMetaBytes, _ := json.Marshal(histMeta)
+
+		toStateIDForHistory := p.CurrentStateID
+		var transitionIDPtr *int64
+		if req.TransitionId > 0 {
+			tid := req.TransitionId
+			transitionIDPtr = &tid
+		}
 		h := &StateHistory{
 			ProjectID:     p.ID,
 			EventName:     req.EventName,
@@ -252,10 +276,13 @@ func (s *Service) CommitTransition(ctx context.Context, req *projectv1.CommitTra
 			ChangedBy:     &changedBy,
 			Comment:       req.Comment,
 			FromStateID:   &fromID,
-			ToStateID:     &p.CurrentStateID,
+			ToStateID:     &toStateIDForHistory,
 			FromStateName: fromName,
 			ToStateName:   p.CurrentStateName,
-			Metadata:      datatypes.JSON([]byte(`{}`)),
+			Metadata:      datatypes.JSON(histMetaBytes),
+			TransitionID:  transitionIDPtr,
+			Direction:     direction,
+			ActorRole:     actorRole,
 			CreatedAt:     time.Now().UTC(),
 		}
 		if err := tx.WithContext(ctx).Create(h).Error; err != nil {
@@ -463,6 +490,108 @@ func (s *Service) ArchiveProject(ctx context.Context, req *projectv1.ArchiveProj
 
 	return &projectv1.ArchiveProjectResponse{Success: true, Status: "archived"}, nil
 }
+func (s *Service) ListProjectsRuntime(ctx context.Context, req *projectv1.ListProjectsRuntimeRequest) (*projectv1.ListProjectsRuntimeResponse, error) {
+	f := ProjectFilter{
+		DepartmentID: req.DepartmentId,
+		UniversityID: req.UniversityId,
+		WorkflowID:   req.WorkflowId,
+		StateID:      req.StateId,
+		TeamID:       req.TeamId,
+		StudentID:    req.StudentId,
+		Status:       req.Status,
+		Search:       req.Search,
+		Page:         req.Page,
+		PageSize:     req.PageSize,
+	}
+
+	projects, total, err := s.repo.ListProjectsRuntime(ctx, f)
+	if err != nil {
+		return nil, fmt.Errorf("list projects runtime: %w", err)
+	}
+
+	resp := &projectv1.ListProjectsRuntimeResponse{
+		Total:    int32(total),
+		Page:     req.Page,
+		PageSize: req.PageSize,
+	}
+	for _, p := range projects {
+		item := &projectv1.ProjectRuntimeSummary{
+			ProjectId:        p.ID,
+			Title:            p.Title,
+			StudentId:        p.StudentID,
+			TeamId:           p.TeamID,
+			UniversityId:     p.UniversityID,
+			DepartmentId:     p.DepartmentID,
+			WorkflowId:       p.WorkflowID,
+			WorkflowVersion:  p.WorkflowVersion,
+			WorkflowName:     p.WorkflowName,
+			CurrentStateId:   p.CurrentStateID,
+			CurrentStateName: p.CurrentStateName,
+			Status:           p.Status,
+			CreatedAt:        timestamppb.New(p.CreatedAt),
+			UpdatedAt:        timestamppb.New(p.UpdatedAt),
+		}
+		if p.DeadlineAt != nil {
+			item.DeadlineAt = timestamppb.New(*p.DeadlineAt)
+		}
+		if p.TopicRegisteredAt != nil {
+			item.TopicRegisteredAt = timestamppb.New(*p.TopicRegisteredAt)
+		}
+		resp.Projects = append(resp.Projects, item)
+	}
+	return resp, nil
+}
+
+func (s *Service) ListProjectStateHistory(ctx context.Context, req *projectv1.ListProjectStateHistoryRequest) (*projectv1.ListProjectStateHistoryResponse, error) {
+	items, err := s.repo.ListStateHistory(ctx, req.ProjectId, int(req.Limit), req.Order)
+	if err != nil {
+		return nil, fmt.Errorf("list state history: %w", err)
+	}
+
+	resp := &projectv1.ListProjectStateHistoryResponse{}
+	for _, h := range items {
+		var changedBy int64
+		if h.ChangedBy != nil {
+			changedBy = *h.ChangedBy
+		}
+		var fromStateID, toStateID, transitionID int64
+		if h.FromStateID != nil {
+			fromStateID = *h.FromStateID
+		}
+		if h.ToStateID != nil {
+			toStateID = *h.ToStateID
+		}
+		if h.TransitionID != nil {
+			transitionID = *h.TransitionID
+		}
+
+		metaMap := map[string]interface{}{}
+		if len(h.Metadata) > 0 {
+			_ = json.Unmarshal(h.Metadata, &metaMap)
+		}
+		metaStruct, _ := structpb.NewStruct(metaMap)
+
+		resp.Items = append(resp.Items, &projectv1.ProjectStateHistoryItem{
+			Id:            h.ID,
+			ProjectId:     h.ProjectID,
+			EventName:     h.EventName,
+			Status:        h.Status,
+			ChangedBy:     changedBy,
+			Comment:       h.Comment,
+			FromStateId:   fromStateID,
+			ToStateId:     toStateID,
+			FromStateName: h.FromStateName,
+			ToStateName:   h.ToStateName,
+			TransitionId:  transitionID,
+			Direction:     h.Direction,
+			ActorRole:     h.ActorRole,
+			Metadata:      metaStruct,
+			CreatedAt:     timestamppb.New(h.CreatedAt),
+		})
+	}
+	return resp, nil
+}
+
 func (s *Service) DeleteProject(ctx context.Context, req *projectv1.DeleteProjectRequest) (*projectv1.DeleteProjectResponse, error) {
 	if req == nil {
 		return nil, status.Error(codes.InvalidArgument, "request is nil")

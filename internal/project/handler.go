@@ -25,6 +25,9 @@ type ProjectUseCase interface {
 	UpdateProject(ctx context.Context, req *projectv1.UpdateProjectRequest) (*projectv1.UpdateProjectResponse, error)
 	ArchiveProject(ctx context.Context, req *projectv1.ArchiveProjectRequest) (*projectv1.ArchiveProjectResponse, error)
 	DeleteProject(ctx context.Context, req *projectv1.DeleteProjectRequest) (*projectv1.DeleteProjectResponse, error)
+
+	ListProjectsRuntime(ctx context.Context, req *projectv1.ListProjectsRuntimeRequest) (*projectv1.ListProjectsRuntimeResponse, error)
+	ListProjectStateHistory(ctx context.Context, req *projectv1.ListProjectStateHistoryRequest) (*projectv1.ListProjectStateHistoryResponse, error)
 }
 
 type Handler struct {
@@ -325,4 +328,21 @@ func (h *Handler) DeleteProject(ctx context.Context, req *projectv1.DeleteProjec
 		return nil, status.Error(codes.InvalidArgument, "project_id is required")
 	}
 	return h.service.DeleteProject(ctx, req)
+}
+
+func (h *Handler) ListProjectsRuntime(ctx context.Context, req *projectv1.ListProjectsRuntimeRequest) (*projectv1.ListProjectsRuntimeResponse, error) {
+	if err := requireInternal(ctx, "workflow_service", "admin_service"); err != nil {
+		return nil, err
+	}
+	return h.service.ListProjectsRuntime(ctx, req)
+}
+
+func (h *Handler) ListProjectStateHistory(ctx context.Context, req *projectv1.ListProjectStateHistoryRequest) (*projectv1.ListProjectStateHistoryResponse, error) {
+	if err := requireInternal(ctx, "workflow_service", "admin_service"); err != nil {
+		return nil, err
+	}
+	if req.ProjectId <= 0 {
+		return nil, status.Error(codes.InvalidArgument, "project_id is required")
+	}
+	return h.service.ListProjectStateHistory(ctx, req)
 }

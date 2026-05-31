@@ -187,6 +187,15 @@ service WorkflowService {
   // === REVIEW (оценки/допуск преподов) ===
   rpc SubmitReview(SubmitReviewRequest) returns (SubmitReviewResponse);
   rpc GetStateReviews(GetStateReviewsRequest) returns (GetStateReviewsResponse);
+
+  // === ADMIN PROJECT WORKFLOW RUNTIME ===
+  rpc GetProjectWorkflowState(GetProjectWorkflowStateRequest) returns (ProjectWorkflowStateResponse);
+  rpc AdvanceProjectWorkflow(AdvanceProjectWorkflowRequest) returns (ProjectWorkflowStateResponse);
+  rpc RollbackProjectWorkflow(RollbackProjectWorkflowRequest) returns (ProjectWorkflowStateResponse);
+  rpc SetProjectWorkflowState(SetProjectWorkflowStateRequest) returns (ProjectWorkflowStateResponse);
+  rpc ListProjectWorkflowHistory(ListProjectWorkflowHistoryRequest) returns (ListProjectWorkflowHistoryResponse);
+  rpc ListWorkflowProjects(ListWorkflowProjectsRequest) returns (ListWorkflowProjectsResponse);
+  rpc GetWorkflowDashboardStats(GetWorkflowDashboardStatsRequest) returns (GetWorkflowDashboardStatsResponse);
 }
 
 // ==================== POST-COMMIT ACTIONS (NO KAFKA) ====================
@@ -670,4 +679,155 @@ message ReviewSummaryProto {
   string result          = 6; // "approved"|"rejected"|"passed"|"failed"|"pending"
   double final_score     = 7;
   bool   has_final_score = 8;
+}
+
+// ==================== ADMIN PROJECT RUNTIME MESSAGES ====================
+
+message WorkflowHistoryItem {
+  int64  id              = 1;
+  int64  project_id      = 2;
+  string event_name      = 3;
+  string status          = 4;
+  int64  changed_by      = 5;
+  string comment         = 6;
+  int64  from_state_id   = 7;
+  int64  to_state_id     = 8;
+  string from_state_name = 9;
+  string to_state_name   = 10;
+  int64  transition_id   = 11;
+  string direction       = 12; // "forward"|"rollback"|"set"|"manual"
+  string actor_role      = 13;
+  google.protobuf.Struct metadata    = 14;
+  google.protobuf.Timestamp created_at = 15;
+}
+
+message ProjectWorkflowStateResponse {
+  int64  project_id        = 1;
+  string title             = 2;
+  int64  student_id        = 3;
+  int64  team_id           = 4;
+  int64  university_id     = 5;
+  int64  department_id     = 6;
+
+  int64  workflow_id       = 7;
+  int32  workflow_version  = 8;
+  string workflow_name     = 9;
+
+  int64  current_state_id  = 10;
+  string current_state_name = 11;
+  State  current_state     = 12;
+  State  previous_state    = 13;
+
+  string status            = 14;
+  google.protobuf.Timestamp deadline_at         = 15;
+  google.protobuf.Timestamp topic_registered_at = 16;
+
+  repeated State              states                       = 17;
+  repeated Transition         transitions                  = 18;
+  repeated AvailableTransition available_forward_transitions = 19;
+  repeated AvailableTransition available_rollback_transitions = 20;
+  repeated WorkflowHistoryItem history                     = 21;
+
+  google.protobuf.Struct data = 22;
+}
+
+message GetProjectWorkflowStateRequest {
+  int64 project_id = 1;
+}
+
+message AdvanceProjectWorkflowRequest {
+  int64  project_id    = 1;
+  int64  transition_id = 2; // optional; if 0, uses first available forward transition
+  int64  to_state_id   = 3; // optional; ignored if transition_id > 0
+  string comment       = 4;
+}
+
+message RollbackProjectWorkflowRequest {
+  int64  project_id    = 1;
+  int64  transition_id = 2; // optional
+  int64  to_state_id   = 3; // optional; if 0 uses previous state from history
+  string comment       = 4;
+}
+
+message SetProjectWorkflowStateRequest {
+  int64  project_id  = 1;
+  int64  to_state_id = 2;
+  string comment     = 3;
+}
+
+message ListProjectWorkflowHistoryRequest {
+  int64  project_id = 1;
+  int32  limit      = 2;
+  string order      = 3; // "asc"|"desc"
+}
+
+message ListProjectWorkflowHistoryResponse {
+  repeated WorkflowHistoryItem items = 1;
+}
+
+message ListWorkflowProjectsRequest {
+  int64  university_id = 1;
+  int64  department_id = 2;
+  int64  workflow_id   = 3;
+  int64  state_id      = 4;
+  int64  team_id       = 5;
+  int64  student_id    = 6;
+  string status        = 7;
+  string search        = 8;
+  int32  page          = 9;
+  int32  page_size     = 10;
+}
+
+message WorkflowProjectItem {
+  int64  project_id         = 1;
+  string title              = 2;
+  int64  student_id         = 3;
+  int64  team_id            = 4;
+  int64  university_id      = 5;
+  int64  department_id      = 6;
+  int64  workflow_id        = 7;
+  string workflow_name      = 8;
+  int32  workflow_version   = 9;
+  int64  current_state_id   = 10;
+  string current_state_name = 11;
+  string status             = 12;
+  google.protobuf.Timestamp deadline_at         = 13;
+  google.protobuf.Timestamp topic_registered_at = 14;
+  google.protobuf.Timestamp created_at          = 15;
+  google.protobuf.Timestamp updated_at          = 16;
+  google.protobuf.Timestamp last_transition_at  = 17;
+}
+
+message ListWorkflowProjectsResponse {
+  repeated WorkflowProjectItem projects = 1;
+  int32 total     = 2;
+  int32 page      = 3;
+  int32 page_size = 4;
+}
+
+message StateProjectCount {
+  int64  state_id   = 1;
+  string state_name = 2;
+  int32  count      = 3;
+}
+
+message GetWorkflowDashboardStatsRequest {
+  int64 department_id = 1;
+  int64 workflow_id   = 2; // optional, default active workflow
+}
+
+message GetWorkflowDashboardStatsResponse {
+  int64  workflow_id      = 1;
+  string workflow_name    = 2;
+  bool   workflow_active  = 3;
+
+  int32  total_projects     = 4;
+  int32  active_projects    = 5;
+  int32  completed_projects = 6;
+  int32  archived_projects  = 7;
+  int32  overdue_projects   = 8;
+
+  repeated StateProjectCount projects_by_state = 9;
+
+  repeated WorkflowHistoryItem recent_transitions = 10;
 }

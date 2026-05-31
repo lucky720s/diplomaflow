@@ -21,6 +21,23 @@ type Repository interface {
 	ListByStudent(ctx context.Context, studentID int64) ([]*Project, error)
 
 	GetProjectsWithExpiredDeadlines(ctx context.Context) ([]*Project, error)
+
+	// Admin/internal
+	ListProjectsRuntime(ctx context.Context, f ProjectFilter) ([]*Project, int64, error)
+	ListStateHistory(ctx context.Context, projectID int64, limit int, order string) ([]StateHistory, error)
+}
+
+type ProjectFilter struct {
+	DepartmentID int64
+	UniversityID int64
+	WorkflowID   int64
+	StateID      int64
+	TeamID       int64
+	StudentID    int64
+	Status       string
+	Search       string
+	Page         int32
+	PageSize     int32
 }
 
 type repository struct{ db *gorm.DB }
@@ -212,4 +229,68 @@ func (r *repository) GetProjectsWithExpiredDeadlines(ctx context.Context) ([]*Pr
 			time.Now().UTC(), false).
 		Find(&projects).Error
 	return projects, err
+}
+
+func (r *repository) ListProjectsRuntime(ctx context.Context, f ProjectFilter) ([]*Project, int64, error) {
+	q := r.db.WithContext(ctx).Model(&Project{})
+
+	if f.DepartmentID > 0 {
+		q = q.Where("department_id = ?", f.DepartmentID)
+	}
+	if f.UniversityID > 0 {
+		q = q.Where("university_id = ?", f.UniversityID)
+	}
+	if f.WorkflowID > 0 {
+		q = q.Where("workflow_id = ?", f.WorkflowID)
+	}
+	if f.StateID > 0 {
+		q = q.Where("current_state_id = ?", f.StateID)
+	}
+	if f.TeamID > 0 {
+		q = q.Where("team_id = ?", f.TeamID)
+	}
+	if f.StudentID > 0 {
+		q = q.Where("student_id = ?", f.StudentID)
+	}
+	if f.Status != "" {
+		q = q.Where("status = ?", f.Status)
+	}
+	if f.Search != "" {
+		q = q.Where("title ILIKE ?", "%"+f.Search+"%")
+	}
+
+	var total int64
+	if err := q.Count(&total).Error; err != nil {
+		return nil, 0, err
+	}
+
+	page := f.Page
+	if page < 1 {
+		page = 1
+	}
+	pageSize := f.PageSize
+	if pageSize < 1 || pageSize > 200 {
+		pageSize = 20
+	}
+	offset := (page - 1) * pageSize
+
+	var projects []*Project
+	err := q.Order("created_at DESC").Offset(int(offset)).Limit(int(pageSize)).Find(&projects).Error
+	return projects, total, err
+}
+
+func (r *repository) ListStateHistory(ctx context.Context, projectID int64, limit int, order string) ([]StateHistory, error) {
+	if order != "asc" {
+		order = "desc"
+	}
+	if limit <= 0 || limit > 500 {
+		limit = 100
+	}
+	var items []StateHistory
+	err := r.db.WithContext(ctx).
+		Where("project_id = ?", projectID).
+		Order("created_at " + order).
+		Limit(limit).
+		Find(&items).Error
+	return items, err
 }

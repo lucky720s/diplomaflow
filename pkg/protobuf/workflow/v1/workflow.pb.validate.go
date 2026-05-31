@@ -10225,3 +10225,2260 @@ var _ interface {
 	Cause() error
 	ErrorName() string
 } = ReviewSummaryProtoValidationError{}
+
+// Validate checks the field values on WorkflowHistoryItem with the rules
+// defined in the proto definition for this message. If any rules are
+// violated, the first error encountered is returned, or nil if there are no violations.
+func (m *WorkflowHistoryItem) Validate() error {
+	return m.validate(false)
+}
+
+// ValidateAll checks the field values on WorkflowHistoryItem with the rules
+// defined in the proto definition for this message. If any rules are
+// violated, the result is a list of violation errors wrapped in
+// WorkflowHistoryItemMultiError, or nil if none found.
+func (m *WorkflowHistoryItem) ValidateAll() error {
+	return m.validate(true)
+}
+
+func (m *WorkflowHistoryItem) validate(all bool) error {
+	if m == nil {
+		return nil
+	}
+
+	var errors []error
+
+	// no validation rules for Id
+
+	// no validation rules for ProjectId
+
+	// no validation rules for EventName
+
+	// no validation rules for Status
+
+	// no validation rules for ChangedBy
+
+	// no validation rules for Comment
+
+	// no validation rules for FromStateId
+
+	// no validation rules for ToStateId
+
+	// no validation rules for FromStateName
+
+	// no validation rules for ToStateName
+
+	// no validation rules for TransitionId
+
+	// no validation rules for Direction
+
+	// no validation rules for ActorRole
+
+	if all {
+		switch v := interface{}(m.GetMetadata()).(type) {
+		case interface{ ValidateAll() error }:
+			if err := v.ValidateAll(); err != nil {
+				errors = append(errors, WorkflowHistoryItemValidationError{
+					field:  "Metadata",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		case interface{ Validate() error }:
+			if err := v.Validate(); err != nil {
+				errors = append(errors, WorkflowHistoryItemValidationError{
+					field:  "Metadata",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		}
+	} else if v, ok := interface{}(m.GetMetadata()).(interface{ Validate() error }); ok {
+		if err := v.Validate(); err != nil {
+			return WorkflowHistoryItemValidationError{
+				field:  "Metadata",
+				reason: "embedded message failed validation",
+				cause:  err,
+			}
+		}
+	}
+
+	if all {
+		switch v := interface{}(m.GetCreatedAt()).(type) {
+		case interface{ ValidateAll() error }:
+			if err := v.ValidateAll(); err != nil {
+				errors = append(errors, WorkflowHistoryItemValidationError{
+					field:  "CreatedAt",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		case interface{ Validate() error }:
+			if err := v.Validate(); err != nil {
+				errors = append(errors, WorkflowHistoryItemValidationError{
+					field:  "CreatedAt",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		}
+	} else if v, ok := interface{}(m.GetCreatedAt()).(interface{ Validate() error }); ok {
+		if err := v.Validate(); err != nil {
+			return WorkflowHistoryItemValidationError{
+				field:  "CreatedAt",
+				reason: "embedded message failed validation",
+				cause:  err,
+			}
+		}
+	}
+
+	if len(errors) > 0 {
+		return WorkflowHistoryItemMultiError(errors)
+	}
+
+	return nil
+}
+
+// WorkflowHistoryItemMultiError is an error wrapping multiple validation
+// errors returned by WorkflowHistoryItem.ValidateAll() if the designated
+// constraints aren't met.
+type WorkflowHistoryItemMultiError []error
+
+// Error returns a concatenation of all the error messages it wraps.
+func (m WorkflowHistoryItemMultiError) Error() string {
+	msgs := make([]string, 0, len(m))
+	for _, err := range m {
+		msgs = append(msgs, err.Error())
+	}
+	return strings.Join(msgs, "; ")
+}
+
+// AllErrors returns a list of validation violation errors.
+func (m WorkflowHistoryItemMultiError) AllErrors() []error { return m }
+
+// WorkflowHistoryItemValidationError is the validation error returned by
+// WorkflowHistoryItem.Validate if the designated constraints aren't met.
+type WorkflowHistoryItemValidationError struct {
+	field  string
+	reason string
+	cause  error
+	key    bool
+}
+
+// Field function returns field value.
+func (e WorkflowHistoryItemValidationError) Field() string { return e.field }
+
+// Reason function returns reason value.
+func (e WorkflowHistoryItemValidationError) Reason() string { return e.reason }
+
+// Cause function returns cause value.
+func (e WorkflowHistoryItemValidationError) Cause() error { return e.cause }
+
+// Key function returns key value.
+func (e WorkflowHistoryItemValidationError) Key() bool { return e.key }
+
+// ErrorName returns error name.
+func (e WorkflowHistoryItemValidationError) ErrorName() string {
+	return "WorkflowHistoryItemValidationError"
+}
+
+// Error satisfies the builtin error interface
+func (e WorkflowHistoryItemValidationError) Error() string {
+	cause := ""
+	if e.cause != nil {
+		cause = fmt.Sprintf(" | caused by: %v", e.cause)
+	}
+
+	key := ""
+	if e.key {
+		key = "key for "
+	}
+
+	return fmt.Sprintf(
+		"invalid %sWorkflowHistoryItem.%s: %s%s",
+		key,
+		e.field,
+		e.reason,
+		cause)
+}
+
+var _ error = WorkflowHistoryItemValidationError{}
+
+var _ interface {
+	Field() string
+	Reason() string
+	Key() bool
+	Cause() error
+	ErrorName() string
+} = WorkflowHistoryItemValidationError{}
+
+// Validate checks the field values on ProjectWorkflowStateResponse with the
+// rules defined in the proto definition for this message. If any rules are
+// violated, the first error encountered is returned, or nil if there are no violations.
+func (m *ProjectWorkflowStateResponse) Validate() error {
+	return m.validate(false)
+}
+
+// ValidateAll checks the field values on ProjectWorkflowStateResponse with the
+// rules defined in the proto definition for this message. If any rules are
+// violated, the result is a list of violation errors wrapped in
+// ProjectWorkflowStateResponseMultiError, or nil if none found.
+func (m *ProjectWorkflowStateResponse) ValidateAll() error {
+	return m.validate(true)
+}
+
+func (m *ProjectWorkflowStateResponse) validate(all bool) error {
+	if m == nil {
+		return nil
+	}
+
+	var errors []error
+
+	// no validation rules for ProjectId
+
+	// no validation rules for Title
+
+	// no validation rules for StudentId
+
+	// no validation rules for TeamId
+
+	// no validation rules for UniversityId
+
+	// no validation rules for DepartmentId
+
+	// no validation rules for WorkflowId
+
+	// no validation rules for WorkflowVersion
+
+	// no validation rules for WorkflowName
+
+	// no validation rules for CurrentStateId
+
+	// no validation rules for CurrentStateName
+
+	if all {
+		switch v := interface{}(m.GetCurrentState()).(type) {
+		case interface{ ValidateAll() error }:
+			if err := v.ValidateAll(); err != nil {
+				errors = append(errors, ProjectWorkflowStateResponseValidationError{
+					field:  "CurrentState",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		case interface{ Validate() error }:
+			if err := v.Validate(); err != nil {
+				errors = append(errors, ProjectWorkflowStateResponseValidationError{
+					field:  "CurrentState",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		}
+	} else if v, ok := interface{}(m.GetCurrentState()).(interface{ Validate() error }); ok {
+		if err := v.Validate(); err != nil {
+			return ProjectWorkflowStateResponseValidationError{
+				field:  "CurrentState",
+				reason: "embedded message failed validation",
+				cause:  err,
+			}
+		}
+	}
+
+	if all {
+		switch v := interface{}(m.GetPreviousState()).(type) {
+		case interface{ ValidateAll() error }:
+			if err := v.ValidateAll(); err != nil {
+				errors = append(errors, ProjectWorkflowStateResponseValidationError{
+					field:  "PreviousState",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		case interface{ Validate() error }:
+			if err := v.Validate(); err != nil {
+				errors = append(errors, ProjectWorkflowStateResponseValidationError{
+					field:  "PreviousState",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		}
+	} else if v, ok := interface{}(m.GetPreviousState()).(interface{ Validate() error }); ok {
+		if err := v.Validate(); err != nil {
+			return ProjectWorkflowStateResponseValidationError{
+				field:  "PreviousState",
+				reason: "embedded message failed validation",
+				cause:  err,
+			}
+		}
+	}
+
+	// no validation rules for Status
+
+	if all {
+		switch v := interface{}(m.GetDeadlineAt()).(type) {
+		case interface{ ValidateAll() error }:
+			if err := v.ValidateAll(); err != nil {
+				errors = append(errors, ProjectWorkflowStateResponseValidationError{
+					field:  "DeadlineAt",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		case interface{ Validate() error }:
+			if err := v.Validate(); err != nil {
+				errors = append(errors, ProjectWorkflowStateResponseValidationError{
+					field:  "DeadlineAt",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		}
+	} else if v, ok := interface{}(m.GetDeadlineAt()).(interface{ Validate() error }); ok {
+		if err := v.Validate(); err != nil {
+			return ProjectWorkflowStateResponseValidationError{
+				field:  "DeadlineAt",
+				reason: "embedded message failed validation",
+				cause:  err,
+			}
+		}
+	}
+
+	if all {
+		switch v := interface{}(m.GetTopicRegisteredAt()).(type) {
+		case interface{ ValidateAll() error }:
+			if err := v.ValidateAll(); err != nil {
+				errors = append(errors, ProjectWorkflowStateResponseValidationError{
+					field:  "TopicRegisteredAt",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		case interface{ Validate() error }:
+			if err := v.Validate(); err != nil {
+				errors = append(errors, ProjectWorkflowStateResponseValidationError{
+					field:  "TopicRegisteredAt",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		}
+	} else if v, ok := interface{}(m.GetTopicRegisteredAt()).(interface{ Validate() error }); ok {
+		if err := v.Validate(); err != nil {
+			return ProjectWorkflowStateResponseValidationError{
+				field:  "TopicRegisteredAt",
+				reason: "embedded message failed validation",
+				cause:  err,
+			}
+		}
+	}
+
+	for idx, item := range m.GetStates() {
+		_, _ = idx, item
+
+		if all {
+			switch v := interface{}(item).(type) {
+			case interface{ ValidateAll() error }:
+				if err := v.ValidateAll(); err != nil {
+					errors = append(errors, ProjectWorkflowStateResponseValidationError{
+						field:  fmt.Sprintf("States[%v]", idx),
+						reason: "embedded message failed validation",
+						cause:  err,
+					})
+				}
+			case interface{ Validate() error }:
+				if err := v.Validate(); err != nil {
+					errors = append(errors, ProjectWorkflowStateResponseValidationError{
+						field:  fmt.Sprintf("States[%v]", idx),
+						reason: "embedded message failed validation",
+						cause:  err,
+					})
+				}
+			}
+		} else if v, ok := interface{}(item).(interface{ Validate() error }); ok {
+			if err := v.Validate(); err != nil {
+				return ProjectWorkflowStateResponseValidationError{
+					field:  fmt.Sprintf("States[%v]", idx),
+					reason: "embedded message failed validation",
+					cause:  err,
+				}
+			}
+		}
+
+	}
+
+	for idx, item := range m.GetTransitions() {
+		_, _ = idx, item
+
+		if all {
+			switch v := interface{}(item).(type) {
+			case interface{ ValidateAll() error }:
+				if err := v.ValidateAll(); err != nil {
+					errors = append(errors, ProjectWorkflowStateResponseValidationError{
+						field:  fmt.Sprintf("Transitions[%v]", idx),
+						reason: "embedded message failed validation",
+						cause:  err,
+					})
+				}
+			case interface{ Validate() error }:
+				if err := v.Validate(); err != nil {
+					errors = append(errors, ProjectWorkflowStateResponseValidationError{
+						field:  fmt.Sprintf("Transitions[%v]", idx),
+						reason: "embedded message failed validation",
+						cause:  err,
+					})
+				}
+			}
+		} else if v, ok := interface{}(item).(interface{ Validate() error }); ok {
+			if err := v.Validate(); err != nil {
+				return ProjectWorkflowStateResponseValidationError{
+					field:  fmt.Sprintf("Transitions[%v]", idx),
+					reason: "embedded message failed validation",
+					cause:  err,
+				}
+			}
+		}
+
+	}
+
+	for idx, item := range m.GetAvailableForwardTransitions() {
+		_, _ = idx, item
+
+		if all {
+			switch v := interface{}(item).(type) {
+			case interface{ ValidateAll() error }:
+				if err := v.ValidateAll(); err != nil {
+					errors = append(errors, ProjectWorkflowStateResponseValidationError{
+						field:  fmt.Sprintf("AvailableForwardTransitions[%v]", idx),
+						reason: "embedded message failed validation",
+						cause:  err,
+					})
+				}
+			case interface{ Validate() error }:
+				if err := v.Validate(); err != nil {
+					errors = append(errors, ProjectWorkflowStateResponseValidationError{
+						field:  fmt.Sprintf("AvailableForwardTransitions[%v]", idx),
+						reason: "embedded message failed validation",
+						cause:  err,
+					})
+				}
+			}
+		} else if v, ok := interface{}(item).(interface{ Validate() error }); ok {
+			if err := v.Validate(); err != nil {
+				return ProjectWorkflowStateResponseValidationError{
+					field:  fmt.Sprintf("AvailableForwardTransitions[%v]", idx),
+					reason: "embedded message failed validation",
+					cause:  err,
+				}
+			}
+		}
+
+	}
+
+	for idx, item := range m.GetAvailableRollbackTransitions() {
+		_, _ = idx, item
+
+		if all {
+			switch v := interface{}(item).(type) {
+			case interface{ ValidateAll() error }:
+				if err := v.ValidateAll(); err != nil {
+					errors = append(errors, ProjectWorkflowStateResponseValidationError{
+						field:  fmt.Sprintf("AvailableRollbackTransitions[%v]", idx),
+						reason: "embedded message failed validation",
+						cause:  err,
+					})
+				}
+			case interface{ Validate() error }:
+				if err := v.Validate(); err != nil {
+					errors = append(errors, ProjectWorkflowStateResponseValidationError{
+						field:  fmt.Sprintf("AvailableRollbackTransitions[%v]", idx),
+						reason: "embedded message failed validation",
+						cause:  err,
+					})
+				}
+			}
+		} else if v, ok := interface{}(item).(interface{ Validate() error }); ok {
+			if err := v.Validate(); err != nil {
+				return ProjectWorkflowStateResponseValidationError{
+					field:  fmt.Sprintf("AvailableRollbackTransitions[%v]", idx),
+					reason: "embedded message failed validation",
+					cause:  err,
+				}
+			}
+		}
+
+	}
+
+	for idx, item := range m.GetHistory() {
+		_, _ = idx, item
+
+		if all {
+			switch v := interface{}(item).(type) {
+			case interface{ ValidateAll() error }:
+				if err := v.ValidateAll(); err != nil {
+					errors = append(errors, ProjectWorkflowStateResponseValidationError{
+						field:  fmt.Sprintf("History[%v]", idx),
+						reason: "embedded message failed validation",
+						cause:  err,
+					})
+				}
+			case interface{ Validate() error }:
+				if err := v.Validate(); err != nil {
+					errors = append(errors, ProjectWorkflowStateResponseValidationError{
+						field:  fmt.Sprintf("History[%v]", idx),
+						reason: "embedded message failed validation",
+						cause:  err,
+					})
+				}
+			}
+		} else if v, ok := interface{}(item).(interface{ Validate() error }); ok {
+			if err := v.Validate(); err != nil {
+				return ProjectWorkflowStateResponseValidationError{
+					field:  fmt.Sprintf("History[%v]", idx),
+					reason: "embedded message failed validation",
+					cause:  err,
+				}
+			}
+		}
+
+	}
+
+	if all {
+		switch v := interface{}(m.GetData()).(type) {
+		case interface{ ValidateAll() error }:
+			if err := v.ValidateAll(); err != nil {
+				errors = append(errors, ProjectWorkflowStateResponseValidationError{
+					field:  "Data",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		case interface{ Validate() error }:
+			if err := v.Validate(); err != nil {
+				errors = append(errors, ProjectWorkflowStateResponseValidationError{
+					field:  "Data",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		}
+	} else if v, ok := interface{}(m.GetData()).(interface{ Validate() error }); ok {
+		if err := v.Validate(); err != nil {
+			return ProjectWorkflowStateResponseValidationError{
+				field:  "Data",
+				reason: "embedded message failed validation",
+				cause:  err,
+			}
+		}
+	}
+
+	if len(errors) > 0 {
+		return ProjectWorkflowStateResponseMultiError(errors)
+	}
+
+	return nil
+}
+
+// ProjectWorkflowStateResponseMultiError is an error wrapping multiple
+// validation errors returned by ProjectWorkflowStateResponse.ValidateAll() if
+// the designated constraints aren't met.
+type ProjectWorkflowStateResponseMultiError []error
+
+// Error returns a concatenation of all the error messages it wraps.
+func (m ProjectWorkflowStateResponseMultiError) Error() string {
+	msgs := make([]string, 0, len(m))
+	for _, err := range m {
+		msgs = append(msgs, err.Error())
+	}
+	return strings.Join(msgs, "; ")
+}
+
+// AllErrors returns a list of validation violation errors.
+func (m ProjectWorkflowStateResponseMultiError) AllErrors() []error { return m }
+
+// ProjectWorkflowStateResponseValidationError is the validation error returned
+// by ProjectWorkflowStateResponse.Validate if the designated constraints
+// aren't met.
+type ProjectWorkflowStateResponseValidationError struct {
+	field  string
+	reason string
+	cause  error
+	key    bool
+}
+
+// Field function returns field value.
+func (e ProjectWorkflowStateResponseValidationError) Field() string { return e.field }
+
+// Reason function returns reason value.
+func (e ProjectWorkflowStateResponseValidationError) Reason() string { return e.reason }
+
+// Cause function returns cause value.
+func (e ProjectWorkflowStateResponseValidationError) Cause() error { return e.cause }
+
+// Key function returns key value.
+func (e ProjectWorkflowStateResponseValidationError) Key() bool { return e.key }
+
+// ErrorName returns error name.
+func (e ProjectWorkflowStateResponseValidationError) ErrorName() string {
+	return "ProjectWorkflowStateResponseValidationError"
+}
+
+// Error satisfies the builtin error interface
+func (e ProjectWorkflowStateResponseValidationError) Error() string {
+	cause := ""
+	if e.cause != nil {
+		cause = fmt.Sprintf(" | caused by: %v", e.cause)
+	}
+
+	key := ""
+	if e.key {
+		key = "key for "
+	}
+
+	return fmt.Sprintf(
+		"invalid %sProjectWorkflowStateResponse.%s: %s%s",
+		key,
+		e.field,
+		e.reason,
+		cause)
+}
+
+var _ error = ProjectWorkflowStateResponseValidationError{}
+
+var _ interface {
+	Field() string
+	Reason() string
+	Key() bool
+	Cause() error
+	ErrorName() string
+} = ProjectWorkflowStateResponseValidationError{}
+
+// Validate checks the field values on GetProjectWorkflowStateRequest with the
+// rules defined in the proto definition for this message. If any rules are
+// violated, the first error encountered is returned, or nil if there are no violations.
+func (m *GetProjectWorkflowStateRequest) Validate() error {
+	return m.validate(false)
+}
+
+// ValidateAll checks the field values on GetProjectWorkflowStateRequest with
+// the rules defined in the proto definition for this message. If any rules
+// are violated, the result is a list of violation errors wrapped in
+// GetProjectWorkflowStateRequestMultiError, or nil if none found.
+func (m *GetProjectWorkflowStateRequest) ValidateAll() error {
+	return m.validate(true)
+}
+
+func (m *GetProjectWorkflowStateRequest) validate(all bool) error {
+	if m == nil {
+		return nil
+	}
+
+	var errors []error
+
+	// no validation rules for ProjectId
+
+	if len(errors) > 0 {
+		return GetProjectWorkflowStateRequestMultiError(errors)
+	}
+
+	return nil
+}
+
+// GetProjectWorkflowStateRequestMultiError is an error wrapping multiple
+// validation errors returned by GetProjectWorkflowStateRequest.ValidateAll()
+// if the designated constraints aren't met.
+type GetProjectWorkflowStateRequestMultiError []error
+
+// Error returns a concatenation of all the error messages it wraps.
+func (m GetProjectWorkflowStateRequestMultiError) Error() string {
+	msgs := make([]string, 0, len(m))
+	for _, err := range m {
+		msgs = append(msgs, err.Error())
+	}
+	return strings.Join(msgs, "; ")
+}
+
+// AllErrors returns a list of validation violation errors.
+func (m GetProjectWorkflowStateRequestMultiError) AllErrors() []error { return m }
+
+// GetProjectWorkflowStateRequestValidationError is the validation error
+// returned by GetProjectWorkflowStateRequest.Validate if the designated
+// constraints aren't met.
+type GetProjectWorkflowStateRequestValidationError struct {
+	field  string
+	reason string
+	cause  error
+	key    bool
+}
+
+// Field function returns field value.
+func (e GetProjectWorkflowStateRequestValidationError) Field() string { return e.field }
+
+// Reason function returns reason value.
+func (e GetProjectWorkflowStateRequestValidationError) Reason() string { return e.reason }
+
+// Cause function returns cause value.
+func (e GetProjectWorkflowStateRequestValidationError) Cause() error { return e.cause }
+
+// Key function returns key value.
+func (e GetProjectWorkflowStateRequestValidationError) Key() bool { return e.key }
+
+// ErrorName returns error name.
+func (e GetProjectWorkflowStateRequestValidationError) ErrorName() string {
+	return "GetProjectWorkflowStateRequestValidationError"
+}
+
+// Error satisfies the builtin error interface
+func (e GetProjectWorkflowStateRequestValidationError) Error() string {
+	cause := ""
+	if e.cause != nil {
+		cause = fmt.Sprintf(" | caused by: %v", e.cause)
+	}
+
+	key := ""
+	if e.key {
+		key = "key for "
+	}
+
+	return fmt.Sprintf(
+		"invalid %sGetProjectWorkflowStateRequest.%s: %s%s",
+		key,
+		e.field,
+		e.reason,
+		cause)
+}
+
+var _ error = GetProjectWorkflowStateRequestValidationError{}
+
+var _ interface {
+	Field() string
+	Reason() string
+	Key() bool
+	Cause() error
+	ErrorName() string
+} = GetProjectWorkflowStateRequestValidationError{}
+
+// Validate checks the field values on AdvanceProjectWorkflowRequest with the
+// rules defined in the proto definition for this message. If any rules are
+// violated, the first error encountered is returned, or nil if there are no violations.
+func (m *AdvanceProjectWorkflowRequest) Validate() error {
+	return m.validate(false)
+}
+
+// ValidateAll checks the field values on AdvanceProjectWorkflowRequest with
+// the rules defined in the proto definition for this message. If any rules
+// are violated, the result is a list of violation errors wrapped in
+// AdvanceProjectWorkflowRequestMultiError, or nil if none found.
+func (m *AdvanceProjectWorkflowRequest) ValidateAll() error {
+	return m.validate(true)
+}
+
+func (m *AdvanceProjectWorkflowRequest) validate(all bool) error {
+	if m == nil {
+		return nil
+	}
+
+	var errors []error
+
+	// no validation rules for ProjectId
+
+	// no validation rules for TransitionId
+
+	// no validation rules for ToStateId
+
+	// no validation rules for Comment
+
+	if len(errors) > 0 {
+		return AdvanceProjectWorkflowRequestMultiError(errors)
+	}
+
+	return nil
+}
+
+// AdvanceProjectWorkflowRequestMultiError is an error wrapping multiple
+// validation errors returned by AdvanceProjectWorkflowRequest.ValidateAll()
+// if the designated constraints aren't met.
+type AdvanceProjectWorkflowRequestMultiError []error
+
+// Error returns a concatenation of all the error messages it wraps.
+func (m AdvanceProjectWorkflowRequestMultiError) Error() string {
+	msgs := make([]string, 0, len(m))
+	for _, err := range m {
+		msgs = append(msgs, err.Error())
+	}
+	return strings.Join(msgs, "; ")
+}
+
+// AllErrors returns a list of validation violation errors.
+func (m AdvanceProjectWorkflowRequestMultiError) AllErrors() []error { return m }
+
+// AdvanceProjectWorkflowRequestValidationError is the validation error
+// returned by AdvanceProjectWorkflowRequest.Validate if the designated
+// constraints aren't met.
+type AdvanceProjectWorkflowRequestValidationError struct {
+	field  string
+	reason string
+	cause  error
+	key    bool
+}
+
+// Field function returns field value.
+func (e AdvanceProjectWorkflowRequestValidationError) Field() string { return e.field }
+
+// Reason function returns reason value.
+func (e AdvanceProjectWorkflowRequestValidationError) Reason() string { return e.reason }
+
+// Cause function returns cause value.
+func (e AdvanceProjectWorkflowRequestValidationError) Cause() error { return e.cause }
+
+// Key function returns key value.
+func (e AdvanceProjectWorkflowRequestValidationError) Key() bool { return e.key }
+
+// ErrorName returns error name.
+func (e AdvanceProjectWorkflowRequestValidationError) ErrorName() string {
+	return "AdvanceProjectWorkflowRequestValidationError"
+}
+
+// Error satisfies the builtin error interface
+func (e AdvanceProjectWorkflowRequestValidationError) Error() string {
+	cause := ""
+	if e.cause != nil {
+		cause = fmt.Sprintf(" | caused by: %v", e.cause)
+	}
+
+	key := ""
+	if e.key {
+		key = "key for "
+	}
+
+	return fmt.Sprintf(
+		"invalid %sAdvanceProjectWorkflowRequest.%s: %s%s",
+		key,
+		e.field,
+		e.reason,
+		cause)
+}
+
+var _ error = AdvanceProjectWorkflowRequestValidationError{}
+
+var _ interface {
+	Field() string
+	Reason() string
+	Key() bool
+	Cause() error
+	ErrorName() string
+} = AdvanceProjectWorkflowRequestValidationError{}
+
+// Validate checks the field values on RollbackProjectWorkflowRequest with the
+// rules defined in the proto definition for this message. If any rules are
+// violated, the first error encountered is returned, or nil if there are no violations.
+func (m *RollbackProjectWorkflowRequest) Validate() error {
+	return m.validate(false)
+}
+
+// ValidateAll checks the field values on RollbackProjectWorkflowRequest with
+// the rules defined in the proto definition for this message. If any rules
+// are violated, the result is a list of violation errors wrapped in
+// RollbackProjectWorkflowRequestMultiError, or nil if none found.
+func (m *RollbackProjectWorkflowRequest) ValidateAll() error {
+	return m.validate(true)
+}
+
+func (m *RollbackProjectWorkflowRequest) validate(all bool) error {
+	if m == nil {
+		return nil
+	}
+
+	var errors []error
+
+	// no validation rules for ProjectId
+
+	// no validation rules for TransitionId
+
+	// no validation rules for ToStateId
+
+	// no validation rules for Comment
+
+	if len(errors) > 0 {
+		return RollbackProjectWorkflowRequestMultiError(errors)
+	}
+
+	return nil
+}
+
+// RollbackProjectWorkflowRequestMultiError is an error wrapping multiple
+// validation errors returned by RollbackProjectWorkflowRequest.ValidateAll()
+// if the designated constraints aren't met.
+type RollbackProjectWorkflowRequestMultiError []error
+
+// Error returns a concatenation of all the error messages it wraps.
+func (m RollbackProjectWorkflowRequestMultiError) Error() string {
+	msgs := make([]string, 0, len(m))
+	for _, err := range m {
+		msgs = append(msgs, err.Error())
+	}
+	return strings.Join(msgs, "; ")
+}
+
+// AllErrors returns a list of validation violation errors.
+func (m RollbackProjectWorkflowRequestMultiError) AllErrors() []error { return m }
+
+// RollbackProjectWorkflowRequestValidationError is the validation error
+// returned by RollbackProjectWorkflowRequest.Validate if the designated
+// constraints aren't met.
+type RollbackProjectWorkflowRequestValidationError struct {
+	field  string
+	reason string
+	cause  error
+	key    bool
+}
+
+// Field function returns field value.
+func (e RollbackProjectWorkflowRequestValidationError) Field() string { return e.field }
+
+// Reason function returns reason value.
+func (e RollbackProjectWorkflowRequestValidationError) Reason() string { return e.reason }
+
+// Cause function returns cause value.
+func (e RollbackProjectWorkflowRequestValidationError) Cause() error { return e.cause }
+
+// Key function returns key value.
+func (e RollbackProjectWorkflowRequestValidationError) Key() bool { return e.key }
+
+// ErrorName returns error name.
+func (e RollbackProjectWorkflowRequestValidationError) ErrorName() string {
+	return "RollbackProjectWorkflowRequestValidationError"
+}
+
+// Error satisfies the builtin error interface
+func (e RollbackProjectWorkflowRequestValidationError) Error() string {
+	cause := ""
+	if e.cause != nil {
+		cause = fmt.Sprintf(" | caused by: %v", e.cause)
+	}
+
+	key := ""
+	if e.key {
+		key = "key for "
+	}
+
+	return fmt.Sprintf(
+		"invalid %sRollbackProjectWorkflowRequest.%s: %s%s",
+		key,
+		e.field,
+		e.reason,
+		cause)
+}
+
+var _ error = RollbackProjectWorkflowRequestValidationError{}
+
+var _ interface {
+	Field() string
+	Reason() string
+	Key() bool
+	Cause() error
+	ErrorName() string
+} = RollbackProjectWorkflowRequestValidationError{}
+
+// Validate checks the field values on SetProjectWorkflowStateRequest with the
+// rules defined in the proto definition for this message. If any rules are
+// violated, the first error encountered is returned, or nil if there are no violations.
+func (m *SetProjectWorkflowStateRequest) Validate() error {
+	return m.validate(false)
+}
+
+// ValidateAll checks the field values on SetProjectWorkflowStateRequest with
+// the rules defined in the proto definition for this message. If any rules
+// are violated, the result is a list of violation errors wrapped in
+// SetProjectWorkflowStateRequestMultiError, or nil if none found.
+func (m *SetProjectWorkflowStateRequest) ValidateAll() error {
+	return m.validate(true)
+}
+
+func (m *SetProjectWorkflowStateRequest) validate(all bool) error {
+	if m == nil {
+		return nil
+	}
+
+	var errors []error
+
+	// no validation rules for ProjectId
+
+	// no validation rules for ToStateId
+
+	// no validation rules for Comment
+
+	if len(errors) > 0 {
+		return SetProjectWorkflowStateRequestMultiError(errors)
+	}
+
+	return nil
+}
+
+// SetProjectWorkflowStateRequestMultiError is an error wrapping multiple
+// validation errors returned by SetProjectWorkflowStateRequest.ValidateAll()
+// if the designated constraints aren't met.
+type SetProjectWorkflowStateRequestMultiError []error
+
+// Error returns a concatenation of all the error messages it wraps.
+func (m SetProjectWorkflowStateRequestMultiError) Error() string {
+	msgs := make([]string, 0, len(m))
+	for _, err := range m {
+		msgs = append(msgs, err.Error())
+	}
+	return strings.Join(msgs, "; ")
+}
+
+// AllErrors returns a list of validation violation errors.
+func (m SetProjectWorkflowStateRequestMultiError) AllErrors() []error { return m }
+
+// SetProjectWorkflowStateRequestValidationError is the validation error
+// returned by SetProjectWorkflowStateRequest.Validate if the designated
+// constraints aren't met.
+type SetProjectWorkflowStateRequestValidationError struct {
+	field  string
+	reason string
+	cause  error
+	key    bool
+}
+
+// Field function returns field value.
+func (e SetProjectWorkflowStateRequestValidationError) Field() string { return e.field }
+
+// Reason function returns reason value.
+func (e SetProjectWorkflowStateRequestValidationError) Reason() string { return e.reason }
+
+// Cause function returns cause value.
+func (e SetProjectWorkflowStateRequestValidationError) Cause() error { return e.cause }
+
+// Key function returns key value.
+func (e SetProjectWorkflowStateRequestValidationError) Key() bool { return e.key }
+
+// ErrorName returns error name.
+func (e SetProjectWorkflowStateRequestValidationError) ErrorName() string {
+	return "SetProjectWorkflowStateRequestValidationError"
+}
+
+// Error satisfies the builtin error interface
+func (e SetProjectWorkflowStateRequestValidationError) Error() string {
+	cause := ""
+	if e.cause != nil {
+		cause = fmt.Sprintf(" | caused by: %v", e.cause)
+	}
+
+	key := ""
+	if e.key {
+		key = "key for "
+	}
+
+	return fmt.Sprintf(
+		"invalid %sSetProjectWorkflowStateRequest.%s: %s%s",
+		key,
+		e.field,
+		e.reason,
+		cause)
+}
+
+var _ error = SetProjectWorkflowStateRequestValidationError{}
+
+var _ interface {
+	Field() string
+	Reason() string
+	Key() bool
+	Cause() error
+	ErrorName() string
+} = SetProjectWorkflowStateRequestValidationError{}
+
+// Validate checks the field values on ListProjectWorkflowHistoryRequest with
+// the rules defined in the proto definition for this message. If any rules
+// are violated, the first error encountered is returned, or nil if there are
+// no violations.
+func (m *ListProjectWorkflowHistoryRequest) Validate() error {
+	return m.validate(false)
+}
+
+// ValidateAll checks the field values on ListProjectWorkflowHistoryRequest
+// with the rules defined in the proto definition for this message. If any
+// rules are violated, the result is a list of violation errors wrapped in
+// ListProjectWorkflowHistoryRequestMultiError, or nil if none found.
+func (m *ListProjectWorkflowHistoryRequest) ValidateAll() error {
+	return m.validate(true)
+}
+
+func (m *ListProjectWorkflowHistoryRequest) validate(all bool) error {
+	if m == nil {
+		return nil
+	}
+
+	var errors []error
+
+	// no validation rules for ProjectId
+
+	// no validation rules for Limit
+
+	// no validation rules for Order
+
+	if len(errors) > 0 {
+		return ListProjectWorkflowHistoryRequestMultiError(errors)
+	}
+
+	return nil
+}
+
+// ListProjectWorkflowHistoryRequestMultiError is an error wrapping multiple
+// validation errors returned by
+// ListProjectWorkflowHistoryRequest.ValidateAll() if the designated
+// constraints aren't met.
+type ListProjectWorkflowHistoryRequestMultiError []error
+
+// Error returns a concatenation of all the error messages it wraps.
+func (m ListProjectWorkflowHistoryRequestMultiError) Error() string {
+	msgs := make([]string, 0, len(m))
+	for _, err := range m {
+		msgs = append(msgs, err.Error())
+	}
+	return strings.Join(msgs, "; ")
+}
+
+// AllErrors returns a list of validation violation errors.
+func (m ListProjectWorkflowHistoryRequestMultiError) AllErrors() []error { return m }
+
+// ListProjectWorkflowHistoryRequestValidationError is the validation error
+// returned by ListProjectWorkflowHistoryRequest.Validate if the designated
+// constraints aren't met.
+type ListProjectWorkflowHistoryRequestValidationError struct {
+	field  string
+	reason string
+	cause  error
+	key    bool
+}
+
+// Field function returns field value.
+func (e ListProjectWorkflowHistoryRequestValidationError) Field() string { return e.field }
+
+// Reason function returns reason value.
+func (e ListProjectWorkflowHistoryRequestValidationError) Reason() string { return e.reason }
+
+// Cause function returns cause value.
+func (e ListProjectWorkflowHistoryRequestValidationError) Cause() error { return e.cause }
+
+// Key function returns key value.
+func (e ListProjectWorkflowHistoryRequestValidationError) Key() bool { return e.key }
+
+// ErrorName returns error name.
+func (e ListProjectWorkflowHistoryRequestValidationError) ErrorName() string {
+	return "ListProjectWorkflowHistoryRequestValidationError"
+}
+
+// Error satisfies the builtin error interface
+func (e ListProjectWorkflowHistoryRequestValidationError) Error() string {
+	cause := ""
+	if e.cause != nil {
+		cause = fmt.Sprintf(" | caused by: %v", e.cause)
+	}
+
+	key := ""
+	if e.key {
+		key = "key for "
+	}
+
+	return fmt.Sprintf(
+		"invalid %sListProjectWorkflowHistoryRequest.%s: %s%s",
+		key,
+		e.field,
+		e.reason,
+		cause)
+}
+
+var _ error = ListProjectWorkflowHistoryRequestValidationError{}
+
+var _ interface {
+	Field() string
+	Reason() string
+	Key() bool
+	Cause() error
+	ErrorName() string
+} = ListProjectWorkflowHistoryRequestValidationError{}
+
+// Validate checks the field values on ListProjectWorkflowHistoryResponse with
+// the rules defined in the proto definition for this message. If any rules
+// are violated, the first error encountered is returned, or nil if there are
+// no violations.
+func (m *ListProjectWorkflowHistoryResponse) Validate() error {
+	return m.validate(false)
+}
+
+// ValidateAll checks the field values on ListProjectWorkflowHistoryResponse
+// with the rules defined in the proto definition for this message. If any
+// rules are violated, the result is a list of violation errors wrapped in
+// ListProjectWorkflowHistoryResponseMultiError, or nil if none found.
+func (m *ListProjectWorkflowHistoryResponse) ValidateAll() error {
+	return m.validate(true)
+}
+
+func (m *ListProjectWorkflowHistoryResponse) validate(all bool) error {
+	if m == nil {
+		return nil
+	}
+
+	var errors []error
+
+	for idx, item := range m.GetItems() {
+		_, _ = idx, item
+
+		if all {
+			switch v := interface{}(item).(type) {
+			case interface{ ValidateAll() error }:
+				if err := v.ValidateAll(); err != nil {
+					errors = append(errors, ListProjectWorkflowHistoryResponseValidationError{
+						field:  fmt.Sprintf("Items[%v]", idx),
+						reason: "embedded message failed validation",
+						cause:  err,
+					})
+				}
+			case interface{ Validate() error }:
+				if err := v.Validate(); err != nil {
+					errors = append(errors, ListProjectWorkflowHistoryResponseValidationError{
+						field:  fmt.Sprintf("Items[%v]", idx),
+						reason: "embedded message failed validation",
+						cause:  err,
+					})
+				}
+			}
+		} else if v, ok := interface{}(item).(interface{ Validate() error }); ok {
+			if err := v.Validate(); err != nil {
+				return ListProjectWorkflowHistoryResponseValidationError{
+					field:  fmt.Sprintf("Items[%v]", idx),
+					reason: "embedded message failed validation",
+					cause:  err,
+				}
+			}
+		}
+
+	}
+
+	if len(errors) > 0 {
+		return ListProjectWorkflowHistoryResponseMultiError(errors)
+	}
+
+	return nil
+}
+
+// ListProjectWorkflowHistoryResponseMultiError is an error wrapping multiple
+// validation errors returned by
+// ListProjectWorkflowHistoryResponse.ValidateAll() if the designated
+// constraints aren't met.
+type ListProjectWorkflowHistoryResponseMultiError []error
+
+// Error returns a concatenation of all the error messages it wraps.
+func (m ListProjectWorkflowHistoryResponseMultiError) Error() string {
+	msgs := make([]string, 0, len(m))
+	for _, err := range m {
+		msgs = append(msgs, err.Error())
+	}
+	return strings.Join(msgs, "; ")
+}
+
+// AllErrors returns a list of validation violation errors.
+func (m ListProjectWorkflowHistoryResponseMultiError) AllErrors() []error { return m }
+
+// ListProjectWorkflowHistoryResponseValidationError is the validation error
+// returned by ListProjectWorkflowHistoryResponse.Validate if the designated
+// constraints aren't met.
+type ListProjectWorkflowHistoryResponseValidationError struct {
+	field  string
+	reason string
+	cause  error
+	key    bool
+}
+
+// Field function returns field value.
+func (e ListProjectWorkflowHistoryResponseValidationError) Field() string { return e.field }
+
+// Reason function returns reason value.
+func (e ListProjectWorkflowHistoryResponseValidationError) Reason() string { return e.reason }
+
+// Cause function returns cause value.
+func (e ListProjectWorkflowHistoryResponseValidationError) Cause() error { return e.cause }
+
+// Key function returns key value.
+func (e ListProjectWorkflowHistoryResponseValidationError) Key() bool { return e.key }
+
+// ErrorName returns error name.
+func (e ListProjectWorkflowHistoryResponseValidationError) ErrorName() string {
+	return "ListProjectWorkflowHistoryResponseValidationError"
+}
+
+// Error satisfies the builtin error interface
+func (e ListProjectWorkflowHistoryResponseValidationError) Error() string {
+	cause := ""
+	if e.cause != nil {
+		cause = fmt.Sprintf(" | caused by: %v", e.cause)
+	}
+
+	key := ""
+	if e.key {
+		key = "key for "
+	}
+
+	return fmt.Sprintf(
+		"invalid %sListProjectWorkflowHistoryResponse.%s: %s%s",
+		key,
+		e.field,
+		e.reason,
+		cause)
+}
+
+var _ error = ListProjectWorkflowHistoryResponseValidationError{}
+
+var _ interface {
+	Field() string
+	Reason() string
+	Key() bool
+	Cause() error
+	ErrorName() string
+} = ListProjectWorkflowHistoryResponseValidationError{}
+
+// Validate checks the field values on ListWorkflowProjectsRequest with the
+// rules defined in the proto definition for this message. If any rules are
+// violated, the first error encountered is returned, or nil if there are no violations.
+func (m *ListWorkflowProjectsRequest) Validate() error {
+	return m.validate(false)
+}
+
+// ValidateAll checks the field values on ListWorkflowProjectsRequest with the
+// rules defined in the proto definition for this message. If any rules are
+// violated, the result is a list of violation errors wrapped in
+// ListWorkflowProjectsRequestMultiError, or nil if none found.
+func (m *ListWorkflowProjectsRequest) ValidateAll() error {
+	return m.validate(true)
+}
+
+func (m *ListWorkflowProjectsRequest) validate(all bool) error {
+	if m == nil {
+		return nil
+	}
+
+	var errors []error
+
+	// no validation rules for UniversityId
+
+	// no validation rules for DepartmentId
+
+	// no validation rules for WorkflowId
+
+	// no validation rules for StateId
+
+	// no validation rules for TeamId
+
+	// no validation rules for StudentId
+
+	// no validation rules for Status
+
+	// no validation rules for Search
+
+	// no validation rules for Page
+
+	// no validation rules for PageSize
+
+	if len(errors) > 0 {
+		return ListWorkflowProjectsRequestMultiError(errors)
+	}
+
+	return nil
+}
+
+// ListWorkflowProjectsRequestMultiError is an error wrapping multiple
+// validation errors returned by ListWorkflowProjectsRequest.ValidateAll() if
+// the designated constraints aren't met.
+type ListWorkflowProjectsRequestMultiError []error
+
+// Error returns a concatenation of all the error messages it wraps.
+func (m ListWorkflowProjectsRequestMultiError) Error() string {
+	msgs := make([]string, 0, len(m))
+	for _, err := range m {
+		msgs = append(msgs, err.Error())
+	}
+	return strings.Join(msgs, "; ")
+}
+
+// AllErrors returns a list of validation violation errors.
+func (m ListWorkflowProjectsRequestMultiError) AllErrors() []error { return m }
+
+// ListWorkflowProjectsRequestValidationError is the validation error returned
+// by ListWorkflowProjectsRequest.Validate if the designated constraints
+// aren't met.
+type ListWorkflowProjectsRequestValidationError struct {
+	field  string
+	reason string
+	cause  error
+	key    bool
+}
+
+// Field function returns field value.
+func (e ListWorkflowProjectsRequestValidationError) Field() string { return e.field }
+
+// Reason function returns reason value.
+func (e ListWorkflowProjectsRequestValidationError) Reason() string { return e.reason }
+
+// Cause function returns cause value.
+func (e ListWorkflowProjectsRequestValidationError) Cause() error { return e.cause }
+
+// Key function returns key value.
+func (e ListWorkflowProjectsRequestValidationError) Key() bool { return e.key }
+
+// ErrorName returns error name.
+func (e ListWorkflowProjectsRequestValidationError) ErrorName() string {
+	return "ListWorkflowProjectsRequestValidationError"
+}
+
+// Error satisfies the builtin error interface
+func (e ListWorkflowProjectsRequestValidationError) Error() string {
+	cause := ""
+	if e.cause != nil {
+		cause = fmt.Sprintf(" | caused by: %v", e.cause)
+	}
+
+	key := ""
+	if e.key {
+		key = "key for "
+	}
+
+	return fmt.Sprintf(
+		"invalid %sListWorkflowProjectsRequest.%s: %s%s",
+		key,
+		e.field,
+		e.reason,
+		cause)
+}
+
+var _ error = ListWorkflowProjectsRequestValidationError{}
+
+var _ interface {
+	Field() string
+	Reason() string
+	Key() bool
+	Cause() error
+	ErrorName() string
+} = ListWorkflowProjectsRequestValidationError{}
+
+// Validate checks the field values on WorkflowProjectItem with the rules
+// defined in the proto definition for this message. If any rules are
+// violated, the first error encountered is returned, or nil if there are no violations.
+func (m *WorkflowProjectItem) Validate() error {
+	return m.validate(false)
+}
+
+// ValidateAll checks the field values on WorkflowProjectItem with the rules
+// defined in the proto definition for this message. If any rules are
+// violated, the result is a list of violation errors wrapped in
+// WorkflowProjectItemMultiError, or nil if none found.
+func (m *WorkflowProjectItem) ValidateAll() error {
+	return m.validate(true)
+}
+
+func (m *WorkflowProjectItem) validate(all bool) error {
+	if m == nil {
+		return nil
+	}
+
+	var errors []error
+
+	// no validation rules for ProjectId
+
+	// no validation rules for Title
+
+	// no validation rules for StudentId
+
+	// no validation rules for TeamId
+
+	// no validation rules for UniversityId
+
+	// no validation rules for DepartmentId
+
+	// no validation rules for WorkflowId
+
+	// no validation rules for WorkflowName
+
+	// no validation rules for WorkflowVersion
+
+	// no validation rules for CurrentStateId
+
+	// no validation rules for CurrentStateName
+
+	// no validation rules for Status
+
+	if all {
+		switch v := interface{}(m.GetDeadlineAt()).(type) {
+		case interface{ ValidateAll() error }:
+			if err := v.ValidateAll(); err != nil {
+				errors = append(errors, WorkflowProjectItemValidationError{
+					field:  "DeadlineAt",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		case interface{ Validate() error }:
+			if err := v.Validate(); err != nil {
+				errors = append(errors, WorkflowProjectItemValidationError{
+					field:  "DeadlineAt",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		}
+	} else if v, ok := interface{}(m.GetDeadlineAt()).(interface{ Validate() error }); ok {
+		if err := v.Validate(); err != nil {
+			return WorkflowProjectItemValidationError{
+				field:  "DeadlineAt",
+				reason: "embedded message failed validation",
+				cause:  err,
+			}
+		}
+	}
+
+	if all {
+		switch v := interface{}(m.GetTopicRegisteredAt()).(type) {
+		case interface{ ValidateAll() error }:
+			if err := v.ValidateAll(); err != nil {
+				errors = append(errors, WorkflowProjectItemValidationError{
+					field:  "TopicRegisteredAt",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		case interface{ Validate() error }:
+			if err := v.Validate(); err != nil {
+				errors = append(errors, WorkflowProjectItemValidationError{
+					field:  "TopicRegisteredAt",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		}
+	} else if v, ok := interface{}(m.GetTopicRegisteredAt()).(interface{ Validate() error }); ok {
+		if err := v.Validate(); err != nil {
+			return WorkflowProjectItemValidationError{
+				field:  "TopicRegisteredAt",
+				reason: "embedded message failed validation",
+				cause:  err,
+			}
+		}
+	}
+
+	if all {
+		switch v := interface{}(m.GetCreatedAt()).(type) {
+		case interface{ ValidateAll() error }:
+			if err := v.ValidateAll(); err != nil {
+				errors = append(errors, WorkflowProjectItemValidationError{
+					field:  "CreatedAt",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		case interface{ Validate() error }:
+			if err := v.Validate(); err != nil {
+				errors = append(errors, WorkflowProjectItemValidationError{
+					field:  "CreatedAt",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		}
+	} else if v, ok := interface{}(m.GetCreatedAt()).(interface{ Validate() error }); ok {
+		if err := v.Validate(); err != nil {
+			return WorkflowProjectItemValidationError{
+				field:  "CreatedAt",
+				reason: "embedded message failed validation",
+				cause:  err,
+			}
+		}
+	}
+
+	if all {
+		switch v := interface{}(m.GetUpdatedAt()).(type) {
+		case interface{ ValidateAll() error }:
+			if err := v.ValidateAll(); err != nil {
+				errors = append(errors, WorkflowProjectItemValidationError{
+					field:  "UpdatedAt",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		case interface{ Validate() error }:
+			if err := v.Validate(); err != nil {
+				errors = append(errors, WorkflowProjectItemValidationError{
+					field:  "UpdatedAt",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		}
+	} else if v, ok := interface{}(m.GetUpdatedAt()).(interface{ Validate() error }); ok {
+		if err := v.Validate(); err != nil {
+			return WorkflowProjectItemValidationError{
+				field:  "UpdatedAt",
+				reason: "embedded message failed validation",
+				cause:  err,
+			}
+		}
+	}
+
+	if all {
+		switch v := interface{}(m.GetLastTransitionAt()).(type) {
+		case interface{ ValidateAll() error }:
+			if err := v.ValidateAll(); err != nil {
+				errors = append(errors, WorkflowProjectItemValidationError{
+					field:  "LastTransitionAt",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		case interface{ Validate() error }:
+			if err := v.Validate(); err != nil {
+				errors = append(errors, WorkflowProjectItemValidationError{
+					field:  "LastTransitionAt",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		}
+	} else if v, ok := interface{}(m.GetLastTransitionAt()).(interface{ Validate() error }); ok {
+		if err := v.Validate(); err != nil {
+			return WorkflowProjectItemValidationError{
+				field:  "LastTransitionAt",
+				reason: "embedded message failed validation",
+				cause:  err,
+			}
+		}
+	}
+
+	if len(errors) > 0 {
+		return WorkflowProjectItemMultiError(errors)
+	}
+
+	return nil
+}
+
+// WorkflowProjectItemMultiError is an error wrapping multiple validation
+// errors returned by WorkflowProjectItem.ValidateAll() if the designated
+// constraints aren't met.
+type WorkflowProjectItemMultiError []error
+
+// Error returns a concatenation of all the error messages it wraps.
+func (m WorkflowProjectItemMultiError) Error() string {
+	msgs := make([]string, 0, len(m))
+	for _, err := range m {
+		msgs = append(msgs, err.Error())
+	}
+	return strings.Join(msgs, "; ")
+}
+
+// AllErrors returns a list of validation violation errors.
+func (m WorkflowProjectItemMultiError) AllErrors() []error { return m }
+
+// WorkflowProjectItemValidationError is the validation error returned by
+// WorkflowProjectItem.Validate if the designated constraints aren't met.
+type WorkflowProjectItemValidationError struct {
+	field  string
+	reason string
+	cause  error
+	key    bool
+}
+
+// Field function returns field value.
+func (e WorkflowProjectItemValidationError) Field() string { return e.field }
+
+// Reason function returns reason value.
+func (e WorkflowProjectItemValidationError) Reason() string { return e.reason }
+
+// Cause function returns cause value.
+func (e WorkflowProjectItemValidationError) Cause() error { return e.cause }
+
+// Key function returns key value.
+func (e WorkflowProjectItemValidationError) Key() bool { return e.key }
+
+// ErrorName returns error name.
+func (e WorkflowProjectItemValidationError) ErrorName() string {
+	return "WorkflowProjectItemValidationError"
+}
+
+// Error satisfies the builtin error interface
+func (e WorkflowProjectItemValidationError) Error() string {
+	cause := ""
+	if e.cause != nil {
+		cause = fmt.Sprintf(" | caused by: %v", e.cause)
+	}
+
+	key := ""
+	if e.key {
+		key = "key for "
+	}
+
+	return fmt.Sprintf(
+		"invalid %sWorkflowProjectItem.%s: %s%s",
+		key,
+		e.field,
+		e.reason,
+		cause)
+}
+
+var _ error = WorkflowProjectItemValidationError{}
+
+var _ interface {
+	Field() string
+	Reason() string
+	Key() bool
+	Cause() error
+	ErrorName() string
+} = WorkflowProjectItemValidationError{}
+
+// Validate checks the field values on ListWorkflowProjectsResponse with the
+// rules defined in the proto definition for this message. If any rules are
+// violated, the first error encountered is returned, or nil if there are no violations.
+func (m *ListWorkflowProjectsResponse) Validate() error {
+	return m.validate(false)
+}
+
+// ValidateAll checks the field values on ListWorkflowProjectsResponse with the
+// rules defined in the proto definition for this message. If any rules are
+// violated, the result is a list of violation errors wrapped in
+// ListWorkflowProjectsResponseMultiError, or nil if none found.
+func (m *ListWorkflowProjectsResponse) ValidateAll() error {
+	return m.validate(true)
+}
+
+func (m *ListWorkflowProjectsResponse) validate(all bool) error {
+	if m == nil {
+		return nil
+	}
+
+	var errors []error
+
+	for idx, item := range m.GetProjects() {
+		_, _ = idx, item
+
+		if all {
+			switch v := interface{}(item).(type) {
+			case interface{ ValidateAll() error }:
+				if err := v.ValidateAll(); err != nil {
+					errors = append(errors, ListWorkflowProjectsResponseValidationError{
+						field:  fmt.Sprintf("Projects[%v]", idx),
+						reason: "embedded message failed validation",
+						cause:  err,
+					})
+				}
+			case interface{ Validate() error }:
+				if err := v.Validate(); err != nil {
+					errors = append(errors, ListWorkflowProjectsResponseValidationError{
+						field:  fmt.Sprintf("Projects[%v]", idx),
+						reason: "embedded message failed validation",
+						cause:  err,
+					})
+				}
+			}
+		} else if v, ok := interface{}(item).(interface{ Validate() error }); ok {
+			if err := v.Validate(); err != nil {
+				return ListWorkflowProjectsResponseValidationError{
+					field:  fmt.Sprintf("Projects[%v]", idx),
+					reason: "embedded message failed validation",
+					cause:  err,
+				}
+			}
+		}
+
+	}
+
+	// no validation rules for Total
+
+	// no validation rules for Page
+
+	// no validation rules for PageSize
+
+	if len(errors) > 0 {
+		return ListWorkflowProjectsResponseMultiError(errors)
+	}
+
+	return nil
+}
+
+// ListWorkflowProjectsResponseMultiError is an error wrapping multiple
+// validation errors returned by ListWorkflowProjectsResponse.ValidateAll() if
+// the designated constraints aren't met.
+type ListWorkflowProjectsResponseMultiError []error
+
+// Error returns a concatenation of all the error messages it wraps.
+func (m ListWorkflowProjectsResponseMultiError) Error() string {
+	msgs := make([]string, 0, len(m))
+	for _, err := range m {
+		msgs = append(msgs, err.Error())
+	}
+	return strings.Join(msgs, "; ")
+}
+
+// AllErrors returns a list of validation violation errors.
+func (m ListWorkflowProjectsResponseMultiError) AllErrors() []error { return m }
+
+// ListWorkflowProjectsResponseValidationError is the validation error returned
+// by ListWorkflowProjectsResponse.Validate if the designated constraints
+// aren't met.
+type ListWorkflowProjectsResponseValidationError struct {
+	field  string
+	reason string
+	cause  error
+	key    bool
+}
+
+// Field function returns field value.
+func (e ListWorkflowProjectsResponseValidationError) Field() string { return e.field }
+
+// Reason function returns reason value.
+func (e ListWorkflowProjectsResponseValidationError) Reason() string { return e.reason }
+
+// Cause function returns cause value.
+func (e ListWorkflowProjectsResponseValidationError) Cause() error { return e.cause }
+
+// Key function returns key value.
+func (e ListWorkflowProjectsResponseValidationError) Key() bool { return e.key }
+
+// ErrorName returns error name.
+func (e ListWorkflowProjectsResponseValidationError) ErrorName() string {
+	return "ListWorkflowProjectsResponseValidationError"
+}
+
+// Error satisfies the builtin error interface
+func (e ListWorkflowProjectsResponseValidationError) Error() string {
+	cause := ""
+	if e.cause != nil {
+		cause = fmt.Sprintf(" | caused by: %v", e.cause)
+	}
+
+	key := ""
+	if e.key {
+		key = "key for "
+	}
+
+	return fmt.Sprintf(
+		"invalid %sListWorkflowProjectsResponse.%s: %s%s",
+		key,
+		e.field,
+		e.reason,
+		cause)
+}
+
+var _ error = ListWorkflowProjectsResponseValidationError{}
+
+var _ interface {
+	Field() string
+	Reason() string
+	Key() bool
+	Cause() error
+	ErrorName() string
+} = ListWorkflowProjectsResponseValidationError{}
+
+// Validate checks the field values on StateProjectCount with the rules defined
+// in the proto definition for this message. If any rules are violated, the
+// first error encountered is returned, or nil if there are no violations.
+func (m *StateProjectCount) Validate() error {
+	return m.validate(false)
+}
+
+// ValidateAll checks the field values on StateProjectCount with the rules
+// defined in the proto definition for this message. If any rules are
+// violated, the result is a list of violation errors wrapped in
+// StateProjectCountMultiError, or nil if none found.
+func (m *StateProjectCount) ValidateAll() error {
+	return m.validate(true)
+}
+
+func (m *StateProjectCount) validate(all bool) error {
+	if m == nil {
+		return nil
+	}
+
+	var errors []error
+
+	// no validation rules for StateId
+
+	// no validation rules for StateName
+
+	// no validation rules for Count
+
+	if len(errors) > 0 {
+		return StateProjectCountMultiError(errors)
+	}
+
+	return nil
+}
+
+// StateProjectCountMultiError is an error wrapping multiple validation errors
+// returned by StateProjectCount.ValidateAll() if the designated constraints
+// aren't met.
+type StateProjectCountMultiError []error
+
+// Error returns a concatenation of all the error messages it wraps.
+func (m StateProjectCountMultiError) Error() string {
+	msgs := make([]string, 0, len(m))
+	for _, err := range m {
+		msgs = append(msgs, err.Error())
+	}
+	return strings.Join(msgs, "; ")
+}
+
+// AllErrors returns a list of validation violation errors.
+func (m StateProjectCountMultiError) AllErrors() []error { return m }
+
+// StateProjectCountValidationError is the validation error returned by
+// StateProjectCount.Validate if the designated constraints aren't met.
+type StateProjectCountValidationError struct {
+	field  string
+	reason string
+	cause  error
+	key    bool
+}
+
+// Field function returns field value.
+func (e StateProjectCountValidationError) Field() string { return e.field }
+
+// Reason function returns reason value.
+func (e StateProjectCountValidationError) Reason() string { return e.reason }
+
+// Cause function returns cause value.
+func (e StateProjectCountValidationError) Cause() error { return e.cause }
+
+// Key function returns key value.
+func (e StateProjectCountValidationError) Key() bool { return e.key }
+
+// ErrorName returns error name.
+func (e StateProjectCountValidationError) ErrorName() string {
+	return "StateProjectCountValidationError"
+}
+
+// Error satisfies the builtin error interface
+func (e StateProjectCountValidationError) Error() string {
+	cause := ""
+	if e.cause != nil {
+		cause = fmt.Sprintf(" | caused by: %v", e.cause)
+	}
+
+	key := ""
+	if e.key {
+		key = "key for "
+	}
+
+	return fmt.Sprintf(
+		"invalid %sStateProjectCount.%s: %s%s",
+		key,
+		e.field,
+		e.reason,
+		cause)
+}
+
+var _ error = StateProjectCountValidationError{}
+
+var _ interface {
+	Field() string
+	Reason() string
+	Key() bool
+	Cause() error
+	ErrorName() string
+} = StateProjectCountValidationError{}
+
+// Validate checks the field values on GetWorkflowDashboardStatsRequest with
+// the rules defined in the proto definition for this message. If any rules
+// are violated, the first error encountered is returned, or nil if there are
+// no violations.
+func (m *GetWorkflowDashboardStatsRequest) Validate() error {
+	return m.validate(false)
+}
+
+// ValidateAll checks the field values on GetWorkflowDashboardStatsRequest with
+// the rules defined in the proto definition for this message. If any rules
+// are violated, the result is a list of violation errors wrapped in
+// GetWorkflowDashboardStatsRequestMultiError, or nil if none found.
+func (m *GetWorkflowDashboardStatsRequest) ValidateAll() error {
+	return m.validate(true)
+}
+
+func (m *GetWorkflowDashboardStatsRequest) validate(all bool) error {
+	if m == nil {
+		return nil
+	}
+
+	var errors []error
+
+	// no validation rules for DepartmentId
+
+	// no validation rules for WorkflowId
+
+	if len(errors) > 0 {
+		return GetWorkflowDashboardStatsRequestMultiError(errors)
+	}
+
+	return nil
+}
+
+// GetWorkflowDashboardStatsRequestMultiError is an error wrapping multiple
+// validation errors returned by
+// GetWorkflowDashboardStatsRequest.ValidateAll() if the designated
+// constraints aren't met.
+type GetWorkflowDashboardStatsRequestMultiError []error
+
+// Error returns a concatenation of all the error messages it wraps.
+func (m GetWorkflowDashboardStatsRequestMultiError) Error() string {
+	msgs := make([]string, 0, len(m))
+	for _, err := range m {
+		msgs = append(msgs, err.Error())
+	}
+	return strings.Join(msgs, "; ")
+}
+
+// AllErrors returns a list of validation violation errors.
+func (m GetWorkflowDashboardStatsRequestMultiError) AllErrors() []error { return m }
+
+// GetWorkflowDashboardStatsRequestValidationError is the validation error
+// returned by GetWorkflowDashboardStatsRequest.Validate if the designated
+// constraints aren't met.
+type GetWorkflowDashboardStatsRequestValidationError struct {
+	field  string
+	reason string
+	cause  error
+	key    bool
+}
+
+// Field function returns field value.
+func (e GetWorkflowDashboardStatsRequestValidationError) Field() string { return e.field }
+
+// Reason function returns reason value.
+func (e GetWorkflowDashboardStatsRequestValidationError) Reason() string { return e.reason }
+
+// Cause function returns cause value.
+func (e GetWorkflowDashboardStatsRequestValidationError) Cause() error { return e.cause }
+
+// Key function returns key value.
+func (e GetWorkflowDashboardStatsRequestValidationError) Key() bool { return e.key }
+
+// ErrorName returns error name.
+func (e GetWorkflowDashboardStatsRequestValidationError) ErrorName() string {
+	return "GetWorkflowDashboardStatsRequestValidationError"
+}
+
+// Error satisfies the builtin error interface
+func (e GetWorkflowDashboardStatsRequestValidationError) Error() string {
+	cause := ""
+	if e.cause != nil {
+		cause = fmt.Sprintf(" | caused by: %v", e.cause)
+	}
+
+	key := ""
+	if e.key {
+		key = "key for "
+	}
+
+	return fmt.Sprintf(
+		"invalid %sGetWorkflowDashboardStatsRequest.%s: %s%s",
+		key,
+		e.field,
+		e.reason,
+		cause)
+}
+
+var _ error = GetWorkflowDashboardStatsRequestValidationError{}
+
+var _ interface {
+	Field() string
+	Reason() string
+	Key() bool
+	Cause() error
+	ErrorName() string
+} = GetWorkflowDashboardStatsRequestValidationError{}
+
+// Validate checks the field values on GetWorkflowDashboardStatsResponse with
+// the rules defined in the proto definition for this message. If any rules
+// are violated, the first error encountered is returned, or nil if there are
+// no violations.
+func (m *GetWorkflowDashboardStatsResponse) Validate() error {
+	return m.validate(false)
+}
+
+// ValidateAll checks the field values on GetWorkflowDashboardStatsResponse
+// with the rules defined in the proto definition for this message. If any
+// rules are violated, the result is a list of violation errors wrapped in
+// GetWorkflowDashboardStatsResponseMultiError, or nil if none found.
+func (m *GetWorkflowDashboardStatsResponse) ValidateAll() error {
+	return m.validate(true)
+}
+
+func (m *GetWorkflowDashboardStatsResponse) validate(all bool) error {
+	if m == nil {
+		return nil
+	}
+
+	var errors []error
+
+	// no validation rules for WorkflowId
+
+	// no validation rules for WorkflowName
+
+	// no validation rules for WorkflowActive
+
+	// no validation rules for TotalProjects
+
+	// no validation rules for ActiveProjects
+
+	// no validation rules for CompletedProjects
+
+	// no validation rules for ArchivedProjects
+
+	// no validation rules for OverdueProjects
+
+	for idx, item := range m.GetProjectsByState() {
+		_, _ = idx, item
+
+		if all {
+			switch v := interface{}(item).(type) {
+			case interface{ ValidateAll() error }:
+				if err := v.ValidateAll(); err != nil {
+					errors = append(errors, GetWorkflowDashboardStatsResponseValidationError{
+						field:  fmt.Sprintf("ProjectsByState[%v]", idx),
+						reason: "embedded message failed validation",
+						cause:  err,
+					})
+				}
+			case interface{ Validate() error }:
+				if err := v.Validate(); err != nil {
+					errors = append(errors, GetWorkflowDashboardStatsResponseValidationError{
+						field:  fmt.Sprintf("ProjectsByState[%v]", idx),
+						reason: "embedded message failed validation",
+						cause:  err,
+					})
+				}
+			}
+		} else if v, ok := interface{}(item).(interface{ Validate() error }); ok {
+			if err := v.Validate(); err != nil {
+				return GetWorkflowDashboardStatsResponseValidationError{
+					field:  fmt.Sprintf("ProjectsByState[%v]", idx),
+					reason: "embedded message failed validation",
+					cause:  err,
+				}
+			}
+		}
+
+	}
+
+	for idx, item := range m.GetRecentTransitions() {
+		_, _ = idx, item
+
+		if all {
+			switch v := interface{}(item).(type) {
+			case interface{ ValidateAll() error }:
+				if err := v.ValidateAll(); err != nil {
+					errors = append(errors, GetWorkflowDashboardStatsResponseValidationError{
+						field:  fmt.Sprintf("RecentTransitions[%v]", idx),
+						reason: "embedded message failed validation",
+						cause:  err,
+					})
+				}
+			case interface{ Validate() error }:
+				if err := v.Validate(); err != nil {
+					errors = append(errors, GetWorkflowDashboardStatsResponseValidationError{
+						field:  fmt.Sprintf("RecentTransitions[%v]", idx),
+						reason: "embedded message failed validation",
+						cause:  err,
+					})
+				}
+			}
+		} else if v, ok := interface{}(item).(interface{ Validate() error }); ok {
+			if err := v.Validate(); err != nil {
+				return GetWorkflowDashboardStatsResponseValidationError{
+					field:  fmt.Sprintf("RecentTransitions[%v]", idx),
+					reason: "embedded message failed validation",
+					cause:  err,
+				}
+			}
+		}
+
+	}
+
+	if len(errors) > 0 {
+		return GetWorkflowDashboardStatsResponseMultiError(errors)
+	}
+
+	return nil
+}
+
+// GetWorkflowDashboardStatsResponseMultiError is an error wrapping multiple
+// validation errors returned by
+// GetWorkflowDashboardStatsResponse.ValidateAll() if the designated
+// constraints aren't met.
+type GetWorkflowDashboardStatsResponseMultiError []error
+
+// Error returns a concatenation of all the error messages it wraps.
+func (m GetWorkflowDashboardStatsResponseMultiError) Error() string {
+	msgs := make([]string, 0, len(m))
+	for _, err := range m {
+		msgs = append(msgs, err.Error())
+	}
+	return strings.Join(msgs, "; ")
+}
+
+// AllErrors returns a list of validation violation errors.
+func (m GetWorkflowDashboardStatsResponseMultiError) AllErrors() []error { return m }
+
+// GetWorkflowDashboardStatsResponseValidationError is the validation error
+// returned by GetWorkflowDashboardStatsResponse.Validate if the designated
+// constraints aren't met.
+type GetWorkflowDashboardStatsResponseValidationError struct {
+	field  string
+	reason string
+	cause  error
+	key    bool
+}
+
+// Field function returns field value.
+func (e GetWorkflowDashboardStatsResponseValidationError) Field() string { return e.field }
+
+// Reason function returns reason value.
+func (e GetWorkflowDashboardStatsResponseValidationError) Reason() string { return e.reason }
+
+// Cause function returns cause value.
+func (e GetWorkflowDashboardStatsResponseValidationError) Cause() error { return e.cause }
+
+// Key function returns key value.
+func (e GetWorkflowDashboardStatsResponseValidationError) Key() bool { return e.key }
+
+// ErrorName returns error name.
+func (e GetWorkflowDashboardStatsResponseValidationError) ErrorName() string {
+	return "GetWorkflowDashboardStatsResponseValidationError"
+}
+
+// Error satisfies the builtin error interface
+func (e GetWorkflowDashboardStatsResponseValidationError) Error() string {
+	cause := ""
+	if e.cause != nil {
+		cause = fmt.Sprintf(" | caused by: %v", e.cause)
+	}
+
+	key := ""
+	if e.key {
+		key = "key for "
+	}
+
+	return fmt.Sprintf(
+		"invalid %sGetWorkflowDashboardStatsResponse.%s: %s%s",
+		key,
+		e.field,
+		e.reason,
+		cause)
+}
+
+var _ error = GetWorkflowDashboardStatsResponseValidationError{}
+
+var _ interface {
+	Field() string
+	Reason() string
+	Key() bool
+	Cause() error
+	ErrorName() string
+} = GetWorkflowDashboardStatsResponseValidationError{}

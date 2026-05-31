@@ -44,7 +44,7 @@ func MapGRPCError(c *gin.Context, err error) {
 	case codes.Unauthenticated:
 		httpStatus = http.StatusUnauthorized
 	case codes.FailedPrecondition:
-		httpStatus = http.StatusBadRequest
+		httpStatus = http.StatusPreconditionFailed
 	case codes.DeadlineExceeded:
 		httpStatus = http.StatusGatewayTimeout
 	case codes.Unavailable:
