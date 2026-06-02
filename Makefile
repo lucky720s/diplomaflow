@@ -129,6 +129,7 @@ proto:
 	$(call MKDIR,$(PROTO_OUT)/notification/v1)
 	$(call MKDIR,$(PROTO_OUT)/file/v1)
 	$(call MKDIR,$(PROTO_OUT)/form/v1)
+	$(call MKDIR,$(PROTO_OUT)/chat/v1)
 	$(PROTOC) --plugin=protoc-gen-validate=$(VALIDATE) --proto_path=$(PROTO_DIR) --proto_path=$(THIRD_PARTY) --go_out=$(PROTO_OUT) --go_opt=paths=source_relative --go-grpc_out=$(PROTO_OUT) --go-grpc_opt=paths=source_relative --validate_out="lang=go:$(PROTO_OUT)" --validate_opt=paths=source_relative $(PROTO_FILES)
 
 wire:
@@ -143,6 +144,7 @@ wire:
 	$(WIRE) gen ./internal/team
 	$(WIRE) gen ./internal/university
 	$(WIRE) gen ./internal/workflow
+	$(WIRE) gen ./internal/chat
 
 generate: proto wire
 
@@ -197,6 +199,7 @@ build:
 	$(call build_service,team_service)
 	$(call build_service,university_service)
 	$(call build_service,workflow_service)
+	$(call build_service,chat_service)
 
 build-linux:
 	$(call MKDIR,bin/linux)
@@ -211,6 +214,7 @@ build-linux:
 	$(call build_linux_service,team_service)
 	$(call build_linux_service,university_service)
 	$(call build_linux_service,workflow_service)
+	$(call build_linux_service,chat_service)
 
 # ==================== DOCKER ====================
 

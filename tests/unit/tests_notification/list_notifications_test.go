@@ -16,7 +16,7 @@ import (
 func TestService_ListNotifications(t *testing.T) {
 	repo := new(MockRepository)
 	log := logger.New("test")
-	svc := notification.NewService(repo, log)
+	svc := notification.NewService(repo, notification.NewPusher(&notification.Config{}, log), log)
 
 	expectedList := []*notification.Notification{
 		{ID: 1, Title: "Test 1"},

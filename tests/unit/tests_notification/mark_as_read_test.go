@@ -15,7 +15,7 @@ import (
 func TestService_MarkAsRead(t *testing.T) {
 	repo := new(MockRepository)
 	log := logger.New("test")
-	svc := notification.NewService(repo, log)
+	svc := notification.NewService(repo, notification.NewPusher(&notification.Config{}, log), log)
 
 	repo.On("MarkAsRead", mock.Anything, int64(100), int64(5)).
 		Return(nil)

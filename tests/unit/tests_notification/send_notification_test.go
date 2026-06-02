@@ -15,11 +15,13 @@ import (
 func TestService_SendNotification(t *testing.T) {
 	repo := new(MockRepository)
 	log := logger.New("test")
-	svc := notification.NewService(repo, log)
+	svc := notification.NewService(repo, notification.NewPusher(&notification.Config{}, log), log)
 
 	repo.On("Create", mock.Anything, mock.MatchedBy(func(n *notification.Notification) bool {
 		return n.UserID == 1 && n.Title == "Hello" && n.Type == "info"
 	})).Return(nil)
+	// SendNotification делает best-effort push: подтягивает устройства пользователя.
+	repo.On("ListDevices", mock.Anything, int64(1)).Return([]*notification.DeviceToken(nil), nil)
 
 	id, err := svc.SendNotification(context.Background(), 1, "Hello", "Msg", "link", "info")
 

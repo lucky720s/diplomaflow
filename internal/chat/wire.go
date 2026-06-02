@@ -2,7 +2,7 @@
 //go:build wireinject
 // +build wireinject
 
-package notification
+package chat
 
 import (
 	"github.com/google/wire"
@@ -19,9 +19,8 @@ func InitializeApp(cfg *Config, log *logger.Logger) (*Handler, func(), error) {
 	wire.Build(
 		ProvideDB,
 		NewRepository,
-		NewPusher,
 		NewService,
-		wire.Bind(new(NotificationUseCase), new(*Service)),
+		wire.Bind(new(ChatUseCase), new(*Service)),
 		NewHandler,
 	)
 	return &Handler{}, nil, nil

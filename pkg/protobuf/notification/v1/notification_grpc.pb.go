@@ -25,6 +25,9 @@ const (
 	NotificationService_MarkAsRead_FullMethodName         = "/notification.v1.NotificationService/MarkAsRead"
 	NotificationService_DeleteNotification_FullMethodName = "/notification.v1.NotificationService/DeleteNotification"
 	NotificationService_MarkAllAsRead_FullMethodName      = "/notification.v1.NotificationService/MarkAllAsRead"
+	NotificationService_RegisterDevice_FullMethodName     = "/notification.v1.NotificationService/RegisterDevice"
+	NotificationService_UnregisterDevice_FullMethodName   = "/notification.v1.NotificationService/UnregisterDevice"
+	NotificationService_ListDevices_FullMethodName        = "/notification.v1.NotificationService/ListDevices"
 )
 
 // NotificationServiceClient is the client API for NotificationService service.
@@ -36,6 +39,11 @@ type NotificationServiceClient interface {
 	MarkAsRead(ctx context.Context, in *MarkAsReadRequest, opts ...grpc.CallOption) (*emptypb.Empty, error)
 	DeleteNotification(ctx context.Context, in *DeleteNotificationRequest, opts ...grpc.CallOption) (*emptypb.Empty, error)
 	MarkAllAsRead(ctx context.Context, in *MarkAllAsReadRequest, opts ...grpc.CallOption) (*MarkAllAsReadResponse, error)
+	// Mobile push (FCM): регистрация/удаление device-токенов.
+	// user_id берётся из metadata (x-user-id), а не из тела запроса.
+	RegisterDevice(ctx context.Context, in *RegisterDeviceRequest, opts ...grpc.CallOption) (*RegisterDeviceResponse, error)
+	UnregisterDevice(ctx context.Context, in *UnregisterDeviceRequest, opts ...grpc.CallOption) (*emptypb.Empty, error)
+	ListDevices(ctx context.Context, in *ListDevicesRequest, opts ...grpc.CallOption) (*ListDevicesResponse, error)
 }
 
 type notificationServiceClient struct {
@@ -96,6 +104,36 @@ func (c *notificationServiceClient) MarkAllAsRead(ctx context.Context, in *MarkA
 	return out, nil
 }
 
+func (c *notificationServiceClient) RegisterDevice(ctx context.Context, in *RegisterDeviceRequest, opts ...grpc.CallOption) (*RegisterDeviceResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(RegisterDeviceResponse)
+	err := c.cc.Invoke(ctx, NotificationService_RegisterDevice_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *notificationServiceClient) UnregisterDevice(ctx context.Context, in *UnregisterDeviceRequest, opts ...grpc.CallOption) (*emptypb.Empty, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(emptypb.Empty)
+	err := c.cc.Invoke(ctx, NotificationService_UnregisterDevice_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *notificationServiceClient) ListDevices(ctx context.Context, in *ListDevicesRequest, opts ...grpc.CallOption) (*ListDevicesResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(ListDevicesResponse)
+	err := c.cc.Invoke(ctx, NotificationService_ListDevices_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // NotificationServiceServer is the server API for NotificationService service.
 // All implementations must embed UnimplementedNotificationServiceServer
 // for forward compatibility.
@@ -105,6 +143,11 @@ type NotificationServiceServer interface {
 	MarkAsRead(context.Context, *MarkAsReadRequest) (*emptypb.Empty, error)
 	DeleteNotification(context.Context, *DeleteNotificationRequest) (*emptypb.Empty, error)
 	MarkAllAsRead(context.Context, *MarkAllAsReadRequest) (*MarkAllAsReadResponse, error)
+	// Mobile push (FCM): регистрация/удаление device-токенов.
+	// user_id берётся из metadata (x-user-id), а не из тела запроса.
+	RegisterDevice(context.Context, *RegisterDeviceRequest) (*RegisterDeviceResponse, error)
+	UnregisterDevice(context.Context, *UnregisterDeviceRequest) (*emptypb.Empty, error)
+	ListDevices(context.Context, *ListDevicesRequest) (*ListDevicesResponse, error)
 	mustEmbedUnimplementedNotificationServiceServer()
 }
 
@@ -129,6 +172,15 @@ func (UnimplementedNotificationServiceServer) DeleteNotification(context.Context
 }
 func (UnimplementedNotificationServiceServer) MarkAllAsRead(context.Context, *MarkAllAsReadRequest) (*MarkAllAsReadResponse, error) {
 	return nil, status.Error(codes.Unimplemented, "method MarkAllAsRead not implemented")
+}
+func (UnimplementedNotificationServiceServer) RegisterDevice(context.Context, *RegisterDeviceRequest) (*RegisterDeviceResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method RegisterDevice not implemented")
+}
+func (UnimplementedNotificationServiceServer) UnregisterDevice(context.Context, *UnregisterDeviceRequest) (*emptypb.Empty, error) {
+	return nil, status.Error(codes.Unimplemented, "method UnregisterDevice not implemented")
+}
+func (UnimplementedNotificationServiceServer) ListDevices(context.Context, *ListDevicesRequest) (*ListDevicesResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method ListDevices not implemented")
 }
 func (UnimplementedNotificationServiceServer) mustEmbedUnimplementedNotificationServiceServer() {}
 func (UnimplementedNotificationServiceServer) testEmbeddedByValue()                             {}
@@ -241,6 +293,60 @@ func _NotificationService_MarkAllAsRead_Handler(srv interface{}, ctx context.Con
 	return interceptor(ctx, in, info, handler)
 }
 
+func _NotificationService_RegisterDevice_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(RegisterDeviceRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(NotificationServiceServer).RegisterDevice(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: NotificationService_RegisterDevice_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(NotificationServiceServer).RegisterDevice(ctx, req.(*RegisterDeviceRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _NotificationService_UnregisterDevice_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(UnregisterDeviceRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(NotificationServiceServer).UnregisterDevice(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: NotificationService_UnregisterDevice_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(NotificationServiceServer).UnregisterDevice(ctx, req.(*UnregisterDeviceRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _NotificationService_ListDevices_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(ListDevicesRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(NotificationServiceServer).ListDevices(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: NotificationService_ListDevices_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(NotificationServiceServer).ListDevices(ctx, req.(*ListDevicesRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // NotificationService_ServiceDesc is the grpc.ServiceDesc for NotificationService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -267,6 +373,18 @@ var NotificationService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "MarkAllAsRead",
 			Handler:    _NotificationService_MarkAllAsRead_Handler,
+		},
+		{
+			MethodName: "RegisterDevice",
+			Handler:    _NotificationService_RegisterDevice_Handler,
+		},
+		{
+			MethodName: "UnregisterDevice",
+			Handler:    _NotificationService_UnregisterDevice_Handler,
+		},
+		{
+			MethodName: "ListDevices",
+			Handler:    _NotificationService_ListDevices_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

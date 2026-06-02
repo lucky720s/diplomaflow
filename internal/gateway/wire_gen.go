@@ -13,6 +13,7 @@ import (
 	"github.com/lucky720s/diplomaflow/pkg/logger"
 	v1_9 "github.com/lucky720s/diplomaflow/pkg/protobuf/admin/v1"
 	"github.com/lucky720s/diplomaflow/pkg/protobuf/auth/v1"
+	v1_11 "github.com/lucky720s/diplomaflow/pkg/protobuf/chat/v1"
 	v1_7 "github.com/lucky720s/diplomaflow/pkg/protobuf/file/v1"
 	v1_8 "github.com/lucky720s/diplomaflow/pkg/protobuf/form/v1"
 	v1_6 "github.com/lucky720s/diplomaflow/pkg/protobuf/notification/v1"
@@ -128,8 +129,24 @@ func InitializeApp(cfg *config.Config, log *logger.Logger) (*handler.Handler, fu
 		cleanup()
 		return nil, nil, err
 	}
-	handlerHandler := handler.NewHandler(authServiceClient, projectServiceClient, teamServiceClient, universityServiceClient, workflowServiceClient, notificationServiceClient, fileServiceClient, formServiceClient, adminServiceClient, normControlServiceClient, taskServiceClient)
+	chatServiceClient, cleanup12, err := ProvideChatClient(cfg)
+	if err != nil {
+		cleanup11()
+		cleanup10()
+		cleanup9()
+		cleanup8()
+		cleanup7()
+		cleanup6()
+		cleanup5()
+		cleanup4()
+		cleanup3()
+		cleanup2()
+		cleanup()
+		return nil, nil, err
+	}
+	handlerHandler := handler.NewHandler(authServiceClient, projectServiceClient, teamServiceClient, universityServiceClient, workflowServiceClient, notificationServiceClient, fileServiceClient, formServiceClient, adminServiceClient, normControlServiceClient, taskServiceClient, chatServiceClient)
 	return handlerHandler, func() {
+		cleanup12()
 		cleanup11()
 		cleanup10()
 		cleanup9()
@@ -242,4 +259,12 @@ func ProvideNormControlClient(cfg *config.Config) (v1_9.NormControlServiceClient
 		return nil, nil, err
 	}
 	return v1_9.NewNormControlServiceClient(conn), cleanup, nil
+}
+
+func ProvideChatClient(cfg *config.Config) (v1_11.ChatServiceClient, func(), error) {
+	conn, cleanup, err := provideConn(cfg.ChatServiceAddr)
+	if err != nil {
+		return nil, nil, err
+	}
+	return v1_11.NewChatServiceClient(conn), cleanup, nil
 }

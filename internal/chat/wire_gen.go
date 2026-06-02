@@ -4,7 +4,7 @@
 //go:build !wireinject
 // +build !wireinject
 
-package notification
+package chat
 
 import (
 	"github.com/lucky720s/diplomaflow/pkg/database"
@@ -19,9 +19,8 @@ func InitializeApp(cfg *Config, log *logger.Logger) (*Handler, func(), error) {
 	if err != nil {
 		return nil, nil, err
 	}
-	notificationRepository := NewRepository(db)
-	pusher := NewPusher(cfg, log)
-	service := NewService(notificationRepository, pusher, log)
+	chatRepository := NewRepository(db)
+	service := NewService(chatRepository, log)
 	handler := NewHandler(service)
 	return handler, func() {
 		cleanup()

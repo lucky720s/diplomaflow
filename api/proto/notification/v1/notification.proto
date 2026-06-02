@@ -13,6 +13,12 @@ service NotificationService {
   rpc MarkAsRead (MarkAsReadRequest) returns (google.protobuf.Empty);
   rpc DeleteNotification (DeleteNotificationRequest) returns (google.protobuf.Empty);
   rpc MarkAllAsRead (MarkAllAsReadRequest) returns (MarkAllAsReadResponse);
+
+  // Mobile push (FCM): регистрация/удаление device-токенов.
+  // user_id берётся из metadata (x-user-id), а не из тела запроса.
+  rpc RegisterDevice (RegisterDeviceRequest) returns (RegisterDeviceResponse);
+  rpc UnregisterDevice (UnregisterDeviceRequest) returns (google.protobuf.Empty);
+  rpc ListDevices (ListDevicesRequest) returns (ListDevicesResponse);
 }
 
 message SendNotificationRequest {
@@ -65,4 +71,37 @@ message MarkAllAsReadRequest {
 
 message MarkAllAsReadResponse {
   int32 updated_count = 1;
+}
+
+// ==================== Mobile push (FCM) ====================
+
+message DeviceToken {
+  int64 id = 1;
+  string token = 2;
+  string platform = 3; // android | ios | web
+  google.protobuf.Timestamp created_at = 4;
+}
+
+message RegisterDeviceRequest {
+  // user_id заполняется из metadata на стороне сервиса; в теле игнорируется.
+  int64 user_id = 1;
+  string token = 2;
+  string platform = 3;
+}
+
+message RegisterDeviceResponse {
+  DeviceToken device = 1;
+}
+
+message UnregisterDeviceRequest {
+  int64 user_id = 1;
+  string token = 2;
+}
+
+message ListDevicesRequest {
+  int64 user_id = 1;
+}
+
+message ListDevicesResponse {
+  repeated DeviceToken devices = 1;
 }

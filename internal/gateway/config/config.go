@@ -22,6 +22,7 @@ type Config struct {
 	AdminServiceAddr        string   `mapstructure:"services_admin_addr"`
 	RedisAddr               string   `mapstructure:"redis_addr"`
 	TaskServiceAddr         string   `mapstructure:"services_task_addr"`
+	ChatServiceAddr         string   `mapstructure:"services_chat_addr"`
 	AllowedOrigins          []string `mapstructure:"allowed_origins"`
 	// MaxUploadBytes is the single upload size limit enforced at the gateway.
 	// Keep aligned with nginx client_max_body_size and the file service limit.
@@ -68,6 +69,7 @@ func Load(path string, cfg interface{}) error {
 	_ = v.BindEnv("services_file_addr", "SERVICES_FILE_ADDR")
 	_ = v.BindEnv("services_form_addr", "SERVICES_FORM_ADDR")
 	_ = v.BindEnv("services_admin_addr", "SERVICES_ADMIN_ADDR")
+	_ = v.BindEnv("services_chat_addr", "SERVICES_CHAT_ADDR")
 
 	_ = v.BindEnv("redis_addr", "REDIS_ADDR")
 	_ = v.BindEnv("max_upload_bytes", "MAX_UPLOAD_BYTES")

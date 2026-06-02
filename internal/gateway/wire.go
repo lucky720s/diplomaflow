@@ -14,6 +14,7 @@ import (
 	"github.com/lucky720s/diplomaflow/pkg/logger"
 	adminv1 "github.com/lucky720s/diplomaflow/pkg/protobuf/admin/v1"
 	authv1 "github.com/lucky720s/diplomaflow/pkg/protobuf/auth/v1"
+	chatv1 "github.com/lucky720s/diplomaflow/pkg/protobuf/chat/v1"
 	filev1 "github.com/lucky720s/diplomaflow/pkg/protobuf/file/v1"
 	formv1 "github.com/lucky720s/diplomaflow/pkg/protobuf/form/v1"
 	notificationv1 "github.com/lucky720s/diplomaflow/pkg/protobuf/notification/v1"
@@ -127,6 +128,14 @@ func ProvideNormControlClient(cfg *config.Config) (adminv1.NormControlServiceCli
 	return adminv1.NewNormControlServiceClient(conn), cleanup, nil
 }
 
+func ProvideChatClient(cfg *config.Config) (chatv1.ChatServiceClient, func(), error) {
+	conn, cleanup, err := provideConn(cfg.ChatServiceAddr)
+	if err != nil {
+		return nil, nil, err
+	}
+	return chatv1.NewChatServiceClient(conn), cleanup, nil
+}
+
 func InitializeApp(cfg *config.Config, log *logger.Logger) (*handler.Handler, func(), error) {
 	wire.Build(
 		ProvideAuthClient,
@@ -140,6 +149,7 @@ func InitializeApp(cfg *config.Config, log *logger.Logger) (*handler.Handler, fu
 		ProvideTaskClient,
 		ProvideAdminClient,
 		ProvideNormControlClient,
+		ProvideChatClient,
 		handler.NewHandler,
 	)
 	return &handler.Handler{}, nil, nil

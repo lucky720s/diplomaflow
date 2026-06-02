@@ -6,4 +6,9 @@ type Config struct {
 	Database struct {
 		DSN string `mapstructure:"dsn"`
 	} `mapstructure:"database"`
+	// FCM — конфигурация push-уведомлений. Пусто => push отключён (noop).
+	FCM struct {
+		ServerKey string `mapstructure:"server_key"`
+		Endpoint  string `mapstructure:"endpoint"`
+	} `mapstructure:"fcm"`
 }

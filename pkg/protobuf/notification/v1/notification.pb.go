@@ -547,6 +547,319 @@ func (x *MarkAllAsReadResponse) GetUpdatedCount() int32 {
 	return 0
 }
 
+type DeviceToken struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Id            int64                  `protobuf:"varint,1,opt,name=id,proto3" json:"id,omitempty"`
+	Token         string                 `protobuf:"bytes,2,opt,name=token,proto3" json:"token,omitempty"`
+	Platform      string                 `protobuf:"bytes,3,opt,name=platform,proto3" json:"platform,omitempty"` // android | ios | web
+	CreatedAt     *timestamppb.Timestamp `protobuf:"bytes,4,opt,name=created_at,json=createdAt,proto3" json:"created_at,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *DeviceToken) Reset() {
+	*x = DeviceToken{}
+	mi := &file_notification_v1_notification_proto_msgTypes[9]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *DeviceToken) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*DeviceToken) ProtoMessage() {}
+
+func (x *DeviceToken) ProtoReflect() protoreflect.Message {
+	mi := &file_notification_v1_notification_proto_msgTypes[9]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use DeviceToken.ProtoReflect.Descriptor instead.
+func (*DeviceToken) Descriptor() ([]byte, []int) {
+	return file_notification_v1_notification_proto_rawDescGZIP(), []int{9}
+}
+
+func (x *DeviceToken) GetId() int64 {
+	if x != nil {
+		return x.Id
+	}
+	return 0
+}
+
+func (x *DeviceToken) GetToken() string {
+	if x != nil {
+		return x.Token
+	}
+	return ""
+}
+
+func (x *DeviceToken) GetPlatform() string {
+	if x != nil {
+		return x.Platform
+	}
+	return ""
+}
+
+func (x *DeviceToken) GetCreatedAt() *timestamppb.Timestamp {
+	if x != nil {
+		return x.CreatedAt
+	}
+	return nil
+}
+
+type RegisterDeviceRequest struct {
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// user_id заполняется из metadata на стороне сервиса; в теле игнорируется.
+	UserId        int64  `protobuf:"varint,1,opt,name=user_id,json=userId,proto3" json:"user_id,omitempty"`
+	Token         string `protobuf:"bytes,2,opt,name=token,proto3" json:"token,omitempty"`
+	Platform      string `protobuf:"bytes,3,opt,name=platform,proto3" json:"platform,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *RegisterDeviceRequest) Reset() {
+	*x = RegisterDeviceRequest{}
+	mi := &file_notification_v1_notification_proto_msgTypes[10]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *RegisterDeviceRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*RegisterDeviceRequest) ProtoMessage() {}
+
+func (x *RegisterDeviceRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_notification_v1_notification_proto_msgTypes[10]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use RegisterDeviceRequest.ProtoReflect.Descriptor instead.
+func (*RegisterDeviceRequest) Descriptor() ([]byte, []int) {
+	return file_notification_v1_notification_proto_rawDescGZIP(), []int{10}
+}
+
+func (x *RegisterDeviceRequest) GetUserId() int64 {
+	if x != nil {
+		return x.UserId
+	}
+	return 0
+}
+
+func (x *RegisterDeviceRequest) GetToken() string {
+	if x != nil {
+		return x.Token
+	}
+	return ""
+}
+
+func (x *RegisterDeviceRequest) GetPlatform() string {
+	if x != nil {
+		return x.Platform
+	}
+	return ""
+}
+
+type RegisterDeviceResponse struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Device        *DeviceToken           `protobuf:"bytes,1,opt,name=device,proto3" json:"device,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *RegisterDeviceResponse) Reset() {
+	*x = RegisterDeviceResponse{}
+	mi := &file_notification_v1_notification_proto_msgTypes[11]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *RegisterDeviceResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*RegisterDeviceResponse) ProtoMessage() {}
+
+func (x *RegisterDeviceResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_notification_v1_notification_proto_msgTypes[11]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use RegisterDeviceResponse.ProtoReflect.Descriptor instead.
+func (*RegisterDeviceResponse) Descriptor() ([]byte, []int) {
+	return file_notification_v1_notification_proto_rawDescGZIP(), []int{11}
+}
+
+func (x *RegisterDeviceResponse) GetDevice() *DeviceToken {
+	if x != nil {
+		return x.Device
+	}
+	return nil
+}
+
+type UnregisterDeviceRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	UserId        int64                  `protobuf:"varint,1,opt,name=user_id,json=userId,proto3" json:"user_id,omitempty"`
+	Token         string                 `protobuf:"bytes,2,opt,name=token,proto3" json:"token,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *UnregisterDeviceRequest) Reset() {
+	*x = UnregisterDeviceRequest{}
+	mi := &file_notification_v1_notification_proto_msgTypes[12]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *UnregisterDeviceRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*UnregisterDeviceRequest) ProtoMessage() {}
+
+func (x *UnregisterDeviceRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_notification_v1_notification_proto_msgTypes[12]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use UnregisterDeviceRequest.ProtoReflect.Descriptor instead.
+func (*UnregisterDeviceRequest) Descriptor() ([]byte, []int) {
+	return file_notification_v1_notification_proto_rawDescGZIP(), []int{12}
+}
+
+func (x *UnregisterDeviceRequest) GetUserId() int64 {
+	if x != nil {
+		return x.UserId
+	}
+	return 0
+}
+
+func (x *UnregisterDeviceRequest) GetToken() string {
+	if x != nil {
+		return x.Token
+	}
+	return ""
+}
+
+type ListDevicesRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	UserId        int64                  `protobuf:"varint,1,opt,name=user_id,json=userId,proto3" json:"user_id,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *ListDevicesRequest) Reset() {
+	*x = ListDevicesRequest{}
+	mi := &file_notification_v1_notification_proto_msgTypes[13]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ListDevicesRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ListDevicesRequest) ProtoMessage() {}
+
+func (x *ListDevicesRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_notification_v1_notification_proto_msgTypes[13]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ListDevicesRequest.ProtoReflect.Descriptor instead.
+func (*ListDevicesRequest) Descriptor() ([]byte, []int) {
+	return file_notification_v1_notification_proto_rawDescGZIP(), []int{13}
+}
+
+func (x *ListDevicesRequest) GetUserId() int64 {
+	if x != nil {
+		return x.UserId
+	}
+	return 0
+}
+
+type ListDevicesResponse struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Devices       []*DeviceToken         `protobuf:"bytes,1,rep,name=devices,proto3" json:"devices,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *ListDevicesResponse) Reset() {
+	*x = ListDevicesResponse{}
+	mi := &file_notification_v1_notification_proto_msgTypes[14]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ListDevicesResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ListDevicesResponse) ProtoMessage() {}
+
+func (x *ListDevicesResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_notification_v1_notification_proto_msgTypes[14]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ListDevicesResponse.ProtoReflect.Descriptor instead.
+func (*ListDevicesResponse) Descriptor() ([]byte, []int) {
+	return file_notification_v1_notification_proto_rawDescGZIP(), []int{14}
+}
+
+func (x *ListDevicesResponse) GetDevices() []*DeviceToken {
+	if x != nil {
+		return x.Devices
+	}
+	return nil
+}
+
 var File_notification_v1_notification_proto protoreflect.FileDescriptor
 
 const file_notification_v1_notification_proto_rawDesc = "" +
@@ -588,14 +901,36 @@ const file_notification_v1_notification_proto_rawDesc = "" +
 	"\x14MarkAllAsReadRequest\x12\x17\n" +
 	"\auser_id\x18\x01 \x01(\x03R\x06userId\"<\n" +
 	"\x15MarkAllAsReadResponse\x12#\n" +
-	"\rupdated_count\x18\x01 \x01(\x05R\fupdatedCount2\xee\x03\n" +
+	"\rupdated_count\x18\x01 \x01(\x05R\fupdatedCount\"\x8a\x01\n" +
+	"\vDeviceToken\x12\x0e\n" +
+	"\x02id\x18\x01 \x01(\x03R\x02id\x12\x14\n" +
+	"\x05token\x18\x02 \x01(\tR\x05token\x12\x1a\n" +
+	"\bplatform\x18\x03 \x01(\tR\bplatform\x129\n" +
+	"\n" +
+	"created_at\x18\x04 \x01(\v2\x1a.google.protobuf.TimestampR\tcreatedAt\"b\n" +
+	"\x15RegisterDeviceRequest\x12\x17\n" +
+	"\auser_id\x18\x01 \x01(\x03R\x06userId\x12\x14\n" +
+	"\x05token\x18\x02 \x01(\tR\x05token\x12\x1a\n" +
+	"\bplatform\x18\x03 \x01(\tR\bplatform\"N\n" +
+	"\x16RegisterDeviceResponse\x124\n" +
+	"\x06device\x18\x01 \x01(\v2\x1c.notification.v1.DeviceTokenR\x06device\"H\n" +
+	"\x17UnregisterDeviceRequest\x12\x17\n" +
+	"\auser_id\x18\x01 \x01(\x03R\x06userId\x12\x14\n" +
+	"\x05token\x18\x02 \x01(\tR\x05token\"-\n" +
+	"\x12ListDevicesRequest\x12\x17\n" +
+	"\auser_id\x18\x01 \x01(\x03R\x06userId\"M\n" +
+	"\x13ListDevicesResponse\x126\n" +
+	"\adevices\x18\x01 \x03(\v2\x1c.notification.v1.DeviceTokenR\adevices2\x81\x06\n" +
 	"\x13NotificationService\x12g\n" +
 	"\x10SendNotification\x12(.notification.v1.SendNotificationRequest\x1a).notification.v1.SendNotificationResponse\x12j\n" +
 	"\x11ListNotifications\x12).notification.v1.ListNotificationsRequest\x1a*.notification.v1.ListNotificationsResponse\x12H\n" +
 	"\n" +
 	"MarkAsRead\x12\".notification.v1.MarkAsReadRequest\x1a\x16.google.protobuf.Empty\x12X\n" +
 	"\x12DeleteNotification\x12*.notification.v1.DeleteNotificationRequest\x1a\x16.google.protobuf.Empty\x12^\n" +
-	"\rMarkAllAsRead\x12%.notification.v1.MarkAllAsReadRequest\x1a&.notification.v1.MarkAllAsReadResponseB?Z=github.com/lucky720s/diplomaflow/pkg/protobuf/notification/v1b\x06proto3"
+	"\rMarkAllAsRead\x12%.notification.v1.MarkAllAsReadRequest\x1a&.notification.v1.MarkAllAsReadResponse\x12a\n" +
+	"\x0eRegisterDevice\x12&.notification.v1.RegisterDeviceRequest\x1a'.notification.v1.RegisterDeviceResponse\x12T\n" +
+	"\x10UnregisterDevice\x12(.notification.v1.UnregisterDeviceRequest\x1a\x16.google.protobuf.Empty\x12X\n" +
+	"\vListDevices\x12#.notification.v1.ListDevicesRequest\x1a$.notification.v1.ListDevicesResponseB?Z=github.com/lucky720s/diplomaflow/pkg/protobuf/notification/v1b\x06proto3"
 
 var (
 	file_notification_v1_notification_proto_rawDescOnce sync.Once
@@ -609,7 +944,7 @@ func file_notification_v1_notification_proto_rawDescGZIP() []byte {
 	return file_notification_v1_notification_proto_rawDescData
 }
 
-var file_notification_v1_notification_proto_msgTypes = make([]protoimpl.MessageInfo, 9)
+var file_notification_v1_notification_proto_msgTypes = make([]protoimpl.MessageInfo, 15)
 var file_notification_v1_notification_proto_goTypes = []any{
 	(*SendNotificationRequest)(nil),   // 0: notification.v1.SendNotificationRequest
 	(*SendNotificationResponse)(nil),  // 1: notification.v1.SendNotificationResponse
@@ -620,27 +955,42 @@ var file_notification_v1_notification_proto_goTypes = []any{
 	(*DeleteNotificationRequest)(nil), // 6: notification.v1.DeleteNotificationRequest
 	(*MarkAllAsReadRequest)(nil),      // 7: notification.v1.MarkAllAsReadRequest
 	(*MarkAllAsReadResponse)(nil),     // 8: notification.v1.MarkAllAsReadResponse
-	(*timestamppb.Timestamp)(nil),     // 9: google.protobuf.Timestamp
-	(*emptypb.Empty)(nil),             // 10: google.protobuf.Empty
+	(*DeviceToken)(nil),               // 9: notification.v1.DeviceToken
+	(*RegisterDeviceRequest)(nil),     // 10: notification.v1.RegisterDeviceRequest
+	(*RegisterDeviceResponse)(nil),    // 11: notification.v1.RegisterDeviceResponse
+	(*UnregisterDeviceRequest)(nil),   // 12: notification.v1.UnregisterDeviceRequest
+	(*ListDevicesRequest)(nil),        // 13: notification.v1.ListDevicesRequest
+	(*ListDevicesResponse)(nil),       // 14: notification.v1.ListDevicesResponse
+	(*timestamppb.Timestamp)(nil),     // 15: google.protobuf.Timestamp
+	(*emptypb.Empty)(nil),             // 16: google.protobuf.Empty
 }
 var file_notification_v1_notification_proto_depIdxs = []int32{
-	9,  // 0: notification.v1.Notification.created_at:type_name -> google.protobuf.Timestamp
+	15, // 0: notification.v1.Notification.created_at:type_name -> google.protobuf.Timestamp
 	3,  // 1: notification.v1.ListNotificationsResponse.notifications:type_name -> notification.v1.Notification
-	0,  // 2: notification.v1.NotificationService.SendNotification:input_type -> notification.v1.SendNotificationRequest
-	2,  // 3: notification.v1.NotificationService.ListNotifications:input_type -> notification.v1.ListNotificationsRequest
-	5,  // 4: notification.v1.NotificationService.MarkAsRead:input_type -> notification.v1.MarkAsReadRequest
-	6,  // 5: notification.v1.NotificationService.DeleteNotification:input_type -> notification.v1.DeleteNotificationRequest
-	7,  // 6: notification.v1.NotificationService.MarkAllAsRead:input_type -> notification.v1.MarkAllAsReadRequest
-	1,  // 7: notification.v1.NotificationService.SendNotification:output_type -> notification.v1.SendNotificationResponse
-	4,  // 8: notification.v1.NotificationService.ListNotifications:output_type -> notification.v1.ListNotificationsResponse
-	10, // 9: notification.v1.NotificationService.MarkAsRead:output_type -> google.protobuf.Empty
-	10, // 10: notification.v1.NotificationService.DeleteNotification:output_type -> google.protobuf.Empty
-	8,  // 11: notification.v1.NotificationService.MarkAllAsRead:output_type -> notification.v1.MarkAllAsReadResponse
-	7,  // [7:12] is the sub-list for method output_type
-	2,  // [2:7] is the sub-list for method input_type
-	2,  // [2:2] is the sub-list for extension type_name
-	2,  // [2:2] is the sub-list for extension extendee
-	0,  // [0:2] is the sub-list for field type_name
+	15, // 2: notification.v1.DeviceToken.created_at:type_name -> google.protobuf.Timestamp
+	9,  // 3: notification.v1.RegisterDeviceResponse.device:type_name -> notification.v1.DeviceToken
+	9,  // 4: notification.v1.ListDevicesResponse.devices:type_name -> notification.v1.DeviceToken
+	0,  // 5: notification.v1.NotificationService.SendNotification:input_type -> notification.v1.SendNotificationRequest
+	2,  // 6: notification.v1.NotificationService.ListNotifications:input_type -> notification.v1.ListNotificationsRequest
+	5,  // 7: notification.v1.NotificationService.MarkAsRead:input_type -> notification.v1.MarkAsReadRequest
+	6,  // 8: notification.v1.NotificationService.DeleteNotification:input_type -> notification.v1.DeleteNotificationRequest
+	7,  // 9: notification.v1.NotificationService.MarkAllAsRead:input_type -> notification.v1.MarkAllAsReadRequest
+	10, // 10: notification.v1.NotificationService.RegisterDevice:input_type -> notification.v1.RegisterDeviceRequest
+	12, // 11: notification.v1.NotificationService.UnregisterDevice:input_type -> notification.v1.UnregisterDeviceRequest
+	13, // 12: notification.v1.NotificationService.ListDevices:input_type -> notification.v1.ListDevicesRequest
+	1,  // 13: notification.v1.NotificationService.SendNotification:output_type -> notification.v1.SendNotificationResponse
+	4,  // 14: notification.v1.NotificationService.ListNotifications:output_type -> notification.v1.ListNotificationsResponse
+	16, // 15: notification.v1.NotificationService.MarkAsRead:output_type -> google.protobuf.Empty
+	16, // 16: notification.v1.NotificationService.DeleteNotification:output_type -> google.protobuf.Empty
+	8,  // 17: notification.v1.NotificationService.MarkAllAsRead:output_type -> notification.v1.MarkAllAsReadResponse
+	11, // 18: notification.v1.NotificationService.RegisterDevice:output_type -> notification.v1.RegisterDeviceResponse
+	16, // 19: notification.v1.NotificationService.UnregisterDevice:output_type -> google.protobuf.Empty
+	14, // 20: notification.v1.NotificationService.ListDevices:output_type -> notification.v1.ListDevicesResponse
+	13, // [13:21] is the sub-list for method output_type
+	5,  // [5:13] is the sub-list for method input_type
+	5,  // [5:5] is the sub-list for extension type_name
+	5,  // [5:5] is the sub-list for extension extendee
+	0,  // [0:5] is the sub-list for field type_name
 }
 
 func init() { file_notification_v1_notification_proto_init() }
@@ -654,7 +1004,7 @@ func file_notification_v1_notification_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_notification_v1_notification_proto_rawDesc), len(file_notification_v1_notification_proto_rawDesc)),
 			NumEnums:      0,
-			NumMessages:   9,
+			NumMessages:   15,
 			NumExtensions: 0,
 			NumServices:   1,
 		},

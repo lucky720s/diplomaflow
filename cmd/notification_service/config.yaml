@@ -2,3 +2,7 @@ env: "local"
 grpc_port: 8087
 database:
   dsn: ""
+# Push (FCM). Пусто => push отключён (noop). Задаётся через env в проде.
+fcm:
+  server_key: ""
+  endpoint: ""

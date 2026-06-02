@@ -21,6 +21,7 @@ x-service-addrs-docker: &svc_addrs_docker
   SERVICES_FORM_ADDR: form_service:8089
   SERVICES_ADMIN_ADDR: admin_service:8090
   SERVICES_TASK_ADDR: task_service:8091
+  SERVICES_CHAT_ADDR: chat_service:8092
 
 # ============================================================
 # Лимит логов контейнеров
@@ -388,6 +389,27 @@ services:
         condition: service_started
     healthcheck:
       test: ["CMD", "grpc_health_probe", "-addr=127.0.0.1:8091", "-service=task.v1.TaskService"]
+      interval: 10s
+      timeout: 3s
+      retries: 15
+      start_period: 20s
+    restart: unless-stopped
+
+  chat_service:
+    build:
+      context: .
+      dockerfile: cmd/chat_service/Dockerfile
+    logging: *default-logging
+    networks: [diplomaflow]
+    environment:
+      <<: *common_env
+      GRPC_PORT: "8092"
+      METRICS_PORT: "9092"
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
+    healthcheck:
+      test: ["CMD", "grpc_health_probe", "-addr=127.0.0.1:8092", "-service=chat.v1.ChatService"]
       interval: 10s
       timeout: 3s
       retries: 15

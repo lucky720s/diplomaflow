@@ -50,6 +50,24 @@ func (m *MockRepository) MarkAllAsRead(ctx context.Context, userID int64) (int64
 	return args.Get(0).(int64), args.Error(1)
 }
 
+func (m *MockRepository) UpsertDevice(ctx context.Context, d *notification.DeviceToken) error {
+	args := m.Called(ctx, d)
+	return args.Error(0)
+}
+
+func (m *MockRepository) DeleteDevice(ctx context.Context, userID int64, token string) error {
+	args := m.Called(ctx, userID, token)
+	return args.Error(0)
+}
+
+func (m *MockRepository) ListDevices(ctx context.Context, userID int64) ([]*notification.DeviceToken, error) {
+	args := m.Called(ctx, userID)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+	return args.Get(0).([]*notification.DeviceToken), args.Error(1)
+}
+
 type MockNotificationService struct {
 	mock.Mock
 }
@@ -92,4 +110,25 @@ func (m *MockNotificationService) DeleteNotification(ctx context.Context, id, us
 func (m *MockNotificationService) MarkAllAsRead(ctx context.Context, userID int64) (int64, error) {
 	args := m.Called(ctx, userID)
 	return args.Get(0).(int64), args.Error(1)
+}
+
+func (m *MockNotificationService) RegisterDevice(ctx context.Context, userID int64, token, platform string) (*notification.DeviceToken, error) {
+	args := m.Called(ctx, userID, token, platform)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+	return args.Get(0).(*notification.DeviceToken), args.Error(1)
+}
+
+func (m *MockNotificationService) UnregisterDevice(ctx context.Context, userID int64, token string) error {
+	args := m.Called(ctx, userID, token)
+	return args.Error(0)
+}
+
+func (m *MockNotificationService) ListDevices(ctx context.Context, userID int64) ([]*notification.DeviceToken, error) {
+	args := m.Called(ctx, userID)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+	return args.Get(0).([]*notification.DeviceToken), args.Error(1)
 }

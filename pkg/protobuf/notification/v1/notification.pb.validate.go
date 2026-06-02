@@ -1058,3 +1058,722 @@ var _ interface {
 	Cause() error
 	ErrorName() string
 } = MarkAllAsReadResponseValidationError{}
+
+// Validate checks the field values on DeviceToken with the rules defined in
+// the proto definition for this message. If any rules are violated, the first
+// error encountered is returned, or nil if there are no violations.
+func (m *DeviceToken) Validate() error {
+	return m.validate(false)
+}
+
+// ValidateAll checks the field values on DeviceToken with the rules defined in
+// the proto definition for this message. If any rules are violated, the
+// result is a list of violation errors wrapped in DeviceTokenMultiError, or
+// nil if none found.
+func (m *DeviceToken) ValidateAll() error {
+	return m.validate(true)
+}
+
+func (m *DeviceToken) validate(all bool) error {
+	if m == nil {
+		return nil
+	}
+
+	var errors []error
+
+	// no validation rules for Id
+
+	// no validation rules for Token
+
+	// no validation rules for Platform
+
+	if all {
+		switch v := interface{}(m.GetCreatedAt()).(type) {
+		case interface{ ValidateAll() error }:
+			if err := v.ValidateAll(); err != nil {
+				errors = append(errors, DeviceTokenValidationError{
+					field:  "CreatedAt",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		case interface{ Validate() error }:
+			if err := v.Validate(); err != nil {
+				errors = append(errors, DeviceTokenValidationError{
+					field:  "CreatedAt",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		}
+	} else if v, ok := interface{}(m.GetCreatedAt()).(interface{ Validate() error }); ok {
+		if err := v.Validate(); err != nil {
+			return DeviceTokenValidationError{
+				field:  "CreatedAt",
+				reason: "embedded message failed validation",
+				cause:  err,
+			}
+		}
+	}
+
+	if len(errors) > 0 {
+		return DeviceTokenMultiError(errors)
+	}
+
+	return nil
+}
+
+// DeviceTokenMultiError is an error wrapping multiple validation errors
+// returned by DeviceToken.ValidateAll() if the designated constraints aren't met.
+type DeviceTokenMultiError []error
+
+// Error returns a concatenation of all the error messages it wraps.
+func (m DeviceTokenMultiError) Error() string {
+	msgs := make([]string, 0, len(m))
+	for _, err := range m {
+		msgs = append(msgs, err.Error())
+	}
+	return strings.Join(msgs, "; ")
+}
+
+// AllErrors returns a list of validation violation errors.
+func (m DeviceTokenMultiError) AllErrors() []error { return m }
+
+// DeviceTokenValidationError is the validation error returned by
+// DeviceToken.Validate if the designated constraints aren't met.
+type DeviceTokenValidationError struct {
+	field  string
+	reason string
+	cause  error
+	key    bool
+}
+
+// Field function returns field value.
+func (e DeviceTokenValidationError) Field() string { return e.field }
+
+// Reason function returns reason value.
+func (e DeviceTokenValidationError) Reason() string { return e.reason }
+
+// Cause function returns cause value.
+func (e DeviceTokenValidationError) Cause() error { return e.cause }
+
+// Key function returns key value.
+func (e DeviceTokenValidationError) Key() bool { return e.key }
+
+// ErrorName returns error name.
+func (e DeviceTokenValidationError) ErrorName() string { return "DeviceTokenValidationError" }
+
+// Error satisfies the builtin error interface
+func (e DeviceTokenValidationError) Error() string {
+	cause := ""
+	if e.cause != nil {
+		cause = fmt.Sprintf(" | caused by: %v", e.cause)
+	}
+
+	key := ""
+	if e.key {
+		key = "key for "
+	}
+
+	return fmt.Sprintf(
+		"invalid %sDeviceToken.%s: %s%s",
+		key,
+		e.field,
+		e.reason,
+		cause)
+}
+
+var _ error = DeviceTokenValidationError{}
+
+var _ interface {
+	Field() string
+	Reason() string
+	Key() bool
+	Cause() error
+	ErrorName() string
+} = DeviceTokenValidationError{}
+
+// Validate checks the field values on RegisterDeviceRequest with the rules
+// defined in the proto definition for this message. If any rules are
+// violated, the first error encountered is returned, or nil if there are no violations.
+func (m *RegisterDeviceRequest) Validate() error {
+	return m.validate(false)
+}
+
+// ValidateAll checks the field values on RegisterDeviceRequest with the rules
+// defined in the proto definition for this message. If any rules are
+// violated, the result is a list of violation errors wrapped in
+// RegisterDeviceRequestMultiError, or nil if none found.
+func (m *RegisterDeviceRequest) ValidateAll() error {
+	return m.validate(true)
+}
+
+func (m *RegisterDeviceRequest) validate(all bool) error {
+	if m == nil {
+		return nil
+	}
+
+	var errors []error
+
+	// no validation rules for UserId
+
+	// no validation rules for Token
+
+	// no validation rules for Platform
+
+	if len(errors) > 0 {
+		return RegisterDeviceRequestMultiError(errors)
+	}
+
+	return nil
+}
+
+// RegisterDeviceRequestMultiError is an error wrapping multiple validation
+// errors returned by RegisterDeviceRequest.ValidateAll() if the designated
+// constraints aren't met.
+type RegisterDeviceRequestMultiError []error
+
+// Error returns a concatenation of all the error messages it wraps.
+func (m RegisterDeviceRequestMultiError) Error() string {
+	msgs := make([]string, 0, len(m))
+	for _, err := range m {
+		msgs = append(msgs, err.Error())
+	}
+	return strings.Join(msgs, "; ")
+}
+
+// AllErrors returns a list of validation violation errors.
+func (m RegisterDeviceRequestMultiError) AllErrors() []error { return m }
+
+// RegisterDeviceRequestValidationError is the validation error returned by
+// RegisterDeviceRequest.Validate if the designated constraints aren't met.
+type RegisterDeviceRequestValidationError struct {
+	field  string
+	reason string
+	cause  error
+	key    bool
+}
+
+// Field function returns field value.
+func (e RegisterDeviceRequestValidationError) Field() string { return e.field }
+
+// Reason function returns reason value.
+func (e RegisterDeviceRequestValidationError) Reason() string { return e.reason }
+
+// Cause function returns cause value.
+func (e RegisterDeviceRequestValidationError) Cause() error { return e.cause }
+
+// Key function returns key value.
+func (e RegisterDeviceRequestValidationError) Key() bool { return e.key }
+
+// ErrorName returns error name.
+func (e RegisterDeviceRequestValidationError) ErrorName() string {
+	return "RegisterDeviceRequestValidationError"
+}
+
+// Error satisfies the builtin error interface
+func (e RegisterDeviceRequestValidationError) Error() string {
+	cause := ""
+	if e.cause != nil {
+		cause = fmt.Sprintf(" | caused by: %v", e.cause)
+	}
+
+	key := ""
+	if e.key {
+		key = "key for "
+	}
+
+	return fmt.Sprintf(
+		"invalid %sRegisterDeviceRequest.%s: %s%s",
+		key,
+		e.field,
+		e.reason,
+		cause)
+}
+
+var _ error = RegisterDeviceRequestValidationError{}
+
+var _ interface {
+	Field() string
+	Reason() string
+	Key() bool
+	Cause() error
+	ErrorName() string
+} = RegisterDeviceRequestValidationError{}
+
+// Validate checks the field values on RegisterDeviceResponse with the rules
+// defined in the proto definition for this message. If any rules are
+// violated, the first error encountered is returned, or nil if there are no violations.
+func (m *RegisterDeviceResponse) Validate() error {
+	return m.validate(false)
+}
+
+// ValidateAll checks the field values on RegisterDeviceResponse with the rules
+// defined in the proto definition for this message. If any rules are
+// violated, the result is a list of violation errors wrapped in
+// RegisterDeviceResponseMultiError, or nil if none found.
+func (m *RegisterDeviceResponse) ValidateAll() error {
+	return m.validate(true)
+}
+
+func (m *RegisterDeviceResponse) validate(all bool) error {
+	if m == nil {
+		return nil
+	}
+
+	var errors []error
+
+	if all {
+		switch v := interface{}(m.GetDevice()).(type) {
+		case interface{ ValidateAll() error }:
+			if err := v.ValidateAll(); err != nil {
+				errors = append(errors, RegisterDeviceResponseValidationError{
+					field:  "Device",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		case interface{ Validate() error }:
+			if err := v.Validate(); err != nil {
+				errors = append(errors, RegisterDeviceResponseValidationError{
+					field:  "Device",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		}
+	} else if v, ok := interface{}(m.GetDevice()).(interface{ Validate() error }); ok {
+		if err := v.Validate(); err != nil {
+			return RegisterDeviceResponseValidationError{
+				field:  "Device",
+				reason: "embedded message failed validation",
+				cause:  err,
+			}
+		}
+	}
+
+	if len(errors) > 0 {
+		return RegisterDeviceResponseMultiError(errors)
+	}
+
+	return nil
+}
+
+// RegisterDeviceResponseMultiError is an error wrapping multiple validation
+// errors returned by RegisterDeviceResponse.ValidateAll() if the designated
+// constraints aren't met.
+type RegisterDeviceResponseMultiError []error
+
+// Error returns a concatenation of all the error messages it wraps.
+func (m RegisterDeviceResponseMultiError) Error() string {
+	msgs := make([]string, 0, len(m))
+	for _, err := range m {
+		msgs = append(msgs, err.Error())
+	}
+	return strings.Join(msgs, "; ")
+}
+
+// AllErrors returns a list of validation violation errors.
+func (m RegisterDeviceResponseMultiError) AllErrors() []error { return m }
+
+// RegisterDeviceResponseValidationError is the validation error returned by
+// RegisterDeviceResponse.Validate if the designated constraints aren't met.
+type RegisterDeviceResponseValidationError struct {
+	field  string
+	reason string
+	cause  error
+	key    bool
+}
+
+// Field function returns field value.
+func (e RegisterDeviceResponseValidationError) Field() string { return e.field }
+
+// Reason function returns reason value.
+func (e RegisterDeviceResponseValidationError) Reason() string { return e.reason }
+
+// Cause function returns cause value.
+func (e RegisterDeviceResponseValidationError) Cause() error { return e.cause }
+
+// Key function returns key value.
+func (e RegisterDeviceResponseValidationError) Key() bool { return e.key }
+
+// ErrorName returns error name.
+func (e RegisterDeviceResponseValidationError) ErrorName() string {
+	return "RegisterDeviceResponseValidationError"
+}
+
+// Error satisfies the builtin error interface
+func (e RegisterDeviceResponseValidationError) Error() string {
+	cause := ""
+	if e.cause != nil {
+		cause = fmt.Sprintf(" | caused by: %v", e.cause)
+	}
+
+	key := ""
+	if e.key {
+		key = "key for "
+	}
+
+	return fmt.Sprintf(
+		"invalid %sRegisterDeviceResponse.%s: %s%s",
+		key,
+		e.field,
+		e.reason,
+		cause)
+}
+
+var _ error = RegisterDeviceResponseValidationError{}
+
+var _ interface {
+	Field() string
+	Reason() string
+	Key() bool
+	Cause() error
+	ErrorName() string
+} = RegisterDeviceResponseValidationError{}
+
+// Validate checks the field values on UnregisterDeviceRequest with the rules
+// defined in the proto definition for this message. If any rules are
+// violated, the first error encountered is returned, or nil if there are no violations.
+func (m *UnregisterDeviceRequest) Validate() error {
+	return m.validate(false)
+}
+
+// ValidateAll checks the field values on UnregisterDeviceRequest with the
+// rules defined in the proto definition for this message. If any rules are
+// violated, the result is a list of violation errors wrapped in
+// UnregisterDeviceRequestMultiError, or nil if none found.
+func (m *UnregisterDeviceRequest) ValidateAll() error {
+	return m.validate(true)
+}
+
+func (m *UnregisterDeviceRequest) validate(all bool) error {
+	if m == nil {
+		return nil
+	}
+
+	var errors []error
+
+	// no validation rules for UserId
+
+	// no validation rules for Token
+
+	if len(errors) > 0 {
+		return UnregisterDeviceRequestMultiError(errors)
+	}
+
+	return nil
+}
+
+// UnregisterDeviceRequestMultiError is an error wrapping multiple validation
+// errors returned by UnregisterDeviceRequest.ValidateAll() if the designated
+// constraints aren't met.
+type UnregisterDeviceRequestMultiError []error
+
+// Error returns a concatenation of all the error messages it wraps.
+func (m UnregisterDeviceRequestMultiError) Error() string {
+	msgs := make([]string, 0, len(m))
+	for _, err := range m {
+		msgs = append(msgs, err.Error())
+	}
+	return strings.Join(msgs, "; ")
+}
+
+// AllErrors returns a list of validation violation errors.
+func (m UnregisterDeviceRequestMultiError) AllErrors() []error { return m }
+
+// UnregisterDeviceRequestValidationError is the validation error returned by
+// UnregisterDeviceRequest.Validate if the designated constraints aren't met.
+type UnregisterDeviceRequestValidationError struct {
+	field  string
+	reason string
+	cause  error
+	key    bool
+}
+
+// Field function returns field value.
+func (e UnregisterDeviceRequestValidationError) Field() string { return e.field }
+
+// Reason function returns reason value.
+func (e UnregisterDeviceRequestValidationError) Reason() string { return e.reason }
+
+// Cause function returns cause value.
+func (e UnregisterDeviceRequestValidationError) Cause() error { return e.cause }
+
+// Key function returns key value.
+func (e UnregisterDeviceRequestValidationError) Key() bool { return e.key }
+
+// ErrorName returns error name.
+func (e UnregisterDeviceRequestValidationError) ErrorName() string {
+	return "UnregisterDeviceRequestValidationError"
+}
+
+// Error satisfies the builtin error interface
+func (e UnregisterDeviceRequestValidationError) Error() string {
+	cause := ""
+	if e.cause != nil {
+		cause = fmt.Sprintf(" | caused by: %v", e.cause)
+	}
+
+	key := ""
+	if e.key {
+		key = "key for "
+	}
+
+	return fmt.Sprintf(
+		"invalid %sUnregisterDeviceRequest.%s: %s%s",
+		key,
+		e.field,
+		e.reason,
+		cause)
+}
+
+var _ error = UnregisterDeviceRequestValidationError{}
+
+var _ interface {
+	Field() string
+	Reason() string
+	Key() bool
+	Cause() error
+	ErrorName() string
+} = UnregisterDeviceRequestValidationError{}
+
+// Validate checks the field values on ListDevicesRequest with the rules
+// defined in the proto definition for this message. If any rules are
+// violated, the first error encountered is returned, or nil if there are no violations.
+func (m *ListDevicesRequest) Validate() error {
+	return m.validate(false)
+}
+
+// ValidateAll checks the field values on ListDevicesRequest with the rules
+// defined in the proto definition for this message. If any rules are
+// violated, the result is a list of violation errors wrapped in
+// ListDevicesRequestMultiError, or nil if none found.
+func (m *ListDevicesRequest) ValidateAll() error {
+	return m.validate(true)
+}
+
+func (m *ListDevicesRequest) validate(all bool) error {
+	if m == nil {
+		return nil
+	}
+
+	var errors []error
+
+	// no validation rules for UserId
+
+	if len(errors) > 0 {
+		return ListDevicesRequestMultiError(errors)
+	}
+
+	return nil
+}
+
+// ListDevicesRequestMultiError is an error wrapping multiple validation errors
+// returned by ListDevicesRequest.ValidateAll() if the designated constraints
+// aren't met.
+type ListDevicesRequestMultiError []error
+
+// Error returns a concatenation of all the error messages it wraps.
+func (m ListDevicesRequestMultiError) Error() string {
+	msgs := make([]string, 0, len(m))
+	for _, err := range m {
+		msgs = append(msgs, err.Error())
+	}
+	return strings.Join(msgs, "; ")
+}
+
+// AllErrors returns a list of validation violation errors.
+func (m ListDevicesRequestMultiError) AllErrors() []error { return m }
+
+// ListDevicesRequestValidationError is the validation error returned by
+// ListDevicesRequest.Validate if the designated constraints aren't met.
+type ListDevicesRequestValidationError struct {
+	field  string
+	reason string
+	cause  error
+	key    bool
+}
+
+// Field function returns field value.
+func (e ListDevicesRequestValidationError) Field() string { return e.field }
+
+// Reason function returns reason value.
+func (e ListDevicesRequestValidationError) Reason() string { return e.reason }
+
+// Cause function returns cause value.
+func (e ListDevicesRequestValidationError) Cause() error { return e.cause }
+
+// Key function returns key value.
+func (e ListDevicesRequestValidationError) Key() bool { return e.key }
+
+// ErrorName returns error name.
+func (e ListDevicesRequestValidationError) ErrorName() string {
+	return "ListDevicesRequestValidationError"
+}
+
+// Error satisfies the builtin error interface
+func (e ListDevicesRequestValidationError) Error() string {
+	cause := ""
+	if e.cause != nil {
+		cause = fmt.Sprintf(" | caused by: %v", e.cause)
+	}
+
+	key := ""
+	if e.key {
+		key = "key for "
+	}
+
+	return fmt.Sprintf(
+		"invalid %sListDevicesRequest.%s: %s%s",
+		key,
+		e.field,
+		e.reason,
+		cause)
+}
+
+var _ error = ListDevicesRequestValidationError{}
+
+var _ interface {
+	Field() string
+	Reason() string
+	Key() bool
+	Cause() error
+	ErrorName() string
+} = ListDevicesRequestValidationError{}
+
+// Validate checks the field values on ListDevicesResponse with the rules
+// defined in the proto definition for this message. If any rules are
+// violated, the first error encountered is returned, or nil if there are no violations.
+func (m *ListDevicesResponse) Validate() error {
+	return m.validate(false)
+}
+
+// ValidateAll checks the field values on ListDevicesResponse with the rules
+// defined in the proto definition for this message. If any rules are
+// violated, the result is a list of violation errors wrapped in
+// ListDevicesResponseMultiError, or nil if none found.
+func (m *ListDevicesResponse) ValidateAll() error {
+	return m.validate(true)
+}
+
+func (m *ListDevicesResponse) validate(all bool) error {
+	if m == nil {
+		return nil
+	}
+
+	var errors []error
+
+	for idx, item := range m.GetDevices() {
+		_, _ = idx, item
+
+		if all {
+			switch v := interface{}(item).(type) {
+			case interface{ ValidateAll() error }:
+				if err := v.ValidateAll(); err != nil {
+					errors = append(errors, ListDevicesResponseValidationError{
+						field:  fmt.Sprintf("Devices[%v]", idx),
+						reason: "embedded message failed validation",
+						cause:  err,
+					})
+				}
+			case interface{ Validate() error }:
+				if err := v.Validate(); err != nil {
+					errors = append(errors, ListDevicesResponseValidationError{
+						field:  fmt.Sprintf("Devices[%v]", idx),
+						reason: "embedded message failed validation",
+						cause:  err,
+					})
+				}
+			}
+		} else if v, ok := interface{}(item).(interface{ Validate() error }); ok {
+			if err := v.Validate(); err != nil {
+				return ListDevicesResponseValidationError{
+					field:  fmt.Sprintf("Devices[%v]", idx),
+					reason: "embedded message failed validation",
+					cause:  err,
+				}
+			}
+		}
+
+	}
+
+	if len(errors) > 0 {
+		return ListDevicesResponseMultiError(errors)
+	}
+
+	return nil
+}
+
+// ListDevicesResponseMultiError is an error wrapping multiple validation
+// errors returned by ListDevicesResponse.ValidateAll() if the designated
+// constraints aren't met.
+type ListDevicesResponseMultiError []error
+
+// Error returns a concatenation of all the error messages it wraps.
+func (m ListDevicesResponseMultiError) Error() string {
+	msgs := make([]string, 0, len(m))
+	for _, err := range m {
+		msgs = append(msgs, err.Error())
+	}
+	return strings.Join(msgs, "; ")
+}
+
+// AllErrors returns a list of validation violation errors.
+func (m ListDevicesResponseMultiError) AllErrors() []error { return m }
+
+// ListDevicesResponseValidationError is the validation error returned by
+// ListDevicesResponse.Validate if the designated constraints aren't met.
+type ListDevicesResponseValidationError struct {
+	field  string
+	reason string
+	cause  error
+	key    bool
+}
+
+// Field function returns field value.
+func (e ListDevicesResponseValidationError) Field() string { return e.field }
+
+// Reason function returns reason value.
+func (e ListDevicesResponseValidationError) Reason() string { return e.reason }
+
+// Cause function returns cause value.
+func (e ListDevicesResponseValidationError) Cause() error { return e.cause }
+
+// Key function returns key value.
+func (e ListDevicesResponseValidationError) Key() bool { return e.key }
+
+// ErrorName returns error name.
+func (e ListDevicesResponseValidationError) ErrorName() string {
+	return "ListDevicesResponseValidationError"
+}
+
+// Error satisfies the builtin error interface
+func (e ListDevicesResponseValidationError) Error() string {
+	cause := ""
+	if e.cause != nil {
+		cause = fmt.Sprintf(" | caused by: %v", e.cause)
+	}
+
+	key := ""
+	if e.key {
+		key = "key for "
+	}
+
+	return fmt.Sprintf(
+		"invalid %sListDevicesResponse.%s: %s%s",
+		key,
+		e.field,
+		e.reason,
+		cause)
+}
+
+var _ error = ListDevicesResponseValidationError{}
+
+var _ interface {
+	Field() string
+	Reason() string
+	Key() bool
+	Cause() error
+	ErrorName() string
+} = ListDevicesResponseValidationError{}

@@ -290,6 +290,33 @@ func main() {
 			onboarding.GET("", handler.GetOnboardingStatus)
 		}
 
+		// Mobile BFF: агрегированные эндпоинты под Flutter-приложение.
+		mobile := v1.Group("/mobile")
+		mobile.Use(middleware.AuthMiddleware(cfg.JWTSecret))
+		{
+			mobile.GET("/home", handler.GetMobileHome)
+
+			// Push (FCM) device tokens.
+			mobile.GET("/devices", handler.ListDevices)
+			mobile.POST("/devices", handler.RegisterDevice)
+			mobile.DELETE("/devices", handler.UnregisterDevice)
+		}
+
+		// Chat: история через REST + realtime через WebSocket.
+		chat := v1.Group("/chat")
+		chat.Use(middleware.AuthMiddleware(cfg.JWTSecret))
+		{
+			chat.GET("/conversations", handler.ListConversations)
+			chat.POST("/conversations", handler.CreateConversation)
+			chat.GET("/conversations/:id", handler.GetConversation)
+			chat.GET("/conversations/:id/messages", handler.ListMessages)
+			chat.POST("/conversations/:id/messages", handler.SendMessage)
+			chat.POST("/conversations/:id/read", handler.MarkChatRead)
+
+			// WebSocket: realtime-канал (Authorization: Bearer <token>).
+			chat.GET("/ws", handler.ChatWebSocket)
+		}
+
 		tasks := v1.Group("/tasks")
 		tasks.Use(middleware.AuthMiddleware(cfg.JWTSecret))
 		{
@@ -456,6 +483,7 @@ func main() {
 		{Name: "form", Addr: cfg.FormServiceAddr, ServiceName: "form.v1.FormService"},
 		{Name: "admin", Addr: cfg.AdminServiceAddr, ServiceName: "admin.v1.AdminService"},
 		{Name: "admin_norm", Addr: cfg.AdminServiceAddr, ServiceName: "admin.v1.NormControlService"},
+		{Name: "chat", Addr: cfg.ChatServiceAddr, ServiceName: "chat.v1.ChatService"},
 	}
 
 	router.GET("/healthz", func(c *gin.Context) {

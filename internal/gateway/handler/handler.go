@@ -1,8 +1,10 @@
 package handler
 
 import (
+	"github.com/lucky720s/diplomaflow/internal/gateway/ws"
 	adminv1 "github.com/lucky720s/diplomaflow/pkg/protobuf/admin/v1"
 	authv1 "github.com/lucky720s/diplomaflow/pkg/protobuf/auth/v1"
+	chatv1 "github.com/lucky720s/diplomaflow/pkg/protobuf/chat/v1"
 	filev1 "github.com/lucky720s/diplomaflow/pkg/protobuf/file/v1"
 	formv1 "github.com/lucky720s/diplomaflow/pkg/protobuf/form/v1"
 	notificationv1 "github.com/lucky720s/diplomaflow/pkg/protobuf/notification/v1"
@@ -25,6 +27,8 @@ type Handler struct {
 	adminClient        adminv1.AdminServiceClient
 	normControlClient  adminv1.NormControlServiceClient
 	taskClient         taskv1.TaskServiceClient
+	chatClient         chatv1.ChatServiceClient
+	chatHub            *ws.Hub
 }
 
 func NewHandler(
@@ -39,6 +43,7 @@ func NewHandler(
 	adminClient adminv1.AdminServiceClient,
 	normControlClient adminv1.NormControlServiceClient,
 	taskClient taskv1.TaskServiceClient,
+	chatClient chatv1.ChatServiceClient,
 ) *Handler {
 	return &Handler{
 		authClient:         authClient,
@@ -52,5 +57,7 @@ func NewHandler(
 		adminClient:        adminClient,
 		normControlClient:  normControlClient,
 		taskClient:         taskClient,
+		chatClient:         chatClient,
+		chatHub:            ws.NewHub(),
 	}
 }

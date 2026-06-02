@@ -19,6 +19,10 @@ type NotificationUseCase interface {
 	MarkAsRead(ctx context.Context, id, userID int64) error
 	DeleteNotification(ctx context.Context, id, userID int64) error
 	MarkAllAsRead(ctx context.Context, userID int64) (int64, error)
+
+	RegisterDevice(ctx context.Context, userID int64, token, platform string) (*DeviceToken, error)
+	UnregisterDevice(ctx context.Context, userID int64, token string) error
+	ListDevices(ctx context.Context, userID int64) ([]*DeviceToken, error)
 }
 
 type Handler struct {
@@ -182,4 +186,61 @@ func (h *Handler) MarkAllAsRead(ctx context.Context, req *notificationv1.MarkAll
 	return &notificationv1.MarkAllAsReadResponse{
 		UpdatedCount: int32(count),
 	}, nil
+}
+
+// ==================== Mobile push (FCM) ====================
+
+func toPBDevice(d *DeviceToken) *notificationv1.DeviceToken {
+	return &notificationv1.DeviceToken{
+		Id:        d.ID,
+		Token:     d.Token,
+		Platform:  d.Platform,
+		CreatedAt: timestamppb.New(d.CreatedAt),
+	}
+}
+
+func (h *Handler) RegisterDevice(ctx context.Context, req *notificationv1.RegisterDeviceRequest) (*notificationv1.RegisterDeviceResponse, error) {
+	userID, ok := userIDFromMD(ctx)
+	if !ok {
+		return nil, status.Error(codes.Unauthenticated, "missing x-user-id")
+	}
+	if strings.TrimSpace(req.Token) == "" {
+		return nil, status.Error(codes.InvalidArgument, "token is required")
+	}
+
+	d, err := h.service.RegisterDevice(ctx, userID, req.Token, req.Platform)
+	if err != nil {
+		return nil, status.Errorf(codes.Internal, "register device failed: %v", err)
+	}
+	return &notificationv1.RegisterDeviceResponse{Device: toPBDevice(d)}, nil
+}
+
+func (h *Handler) UnregisterDevice(ctx context.Context, req *notificationv1.UnregisterDeviceRequest) (*emptypb.Empty, error) {
+	userID, ok := userIDFromMD(ctx)
+	if !ok {
+		return nil, status.Error(codes.Unauthenticated, "missing x-user-id")
+	}
+	if strings.TrimSpace(req.Token) == "" {
+		return nil, status.Error(codes.InvalidArgument, "token is required")
+	}
+	if err := h.service.UnregisterDevice(ctx, userID, req.Token); err != nil {
+		return nil, status.Errorf(codes.Internal, "unregister device failed: %v", err)
+	}
+	return &emptypb.Empty{}, nil
+}
+
+func (h *Handler) ListDevices(ctx context.Context, _ *notificationv1.ListDevicesRequest) (*notificationv1.ListDevicesResponse, error) {
+	userID, ok := userIDFromMD(ctx)
+	if !ok {
+		return nil, status.Error(codes.Unauthenticated, "missing x-user-id")
+	}
+	devices, err := h.service.ListDevices(ctx, userID)
+	if err != nil {
+		return nil, status.Errorf(codes.Internal, "list devices failed: %v", err)
+	}
+	pb := make([]*notificationv1.DeviceToken, 0, len(devices))
+	for _, d := range devices {
+		pb = append(pb, toPBDevice(d))
+	}
+	return &notificationv1.ListDevicesResponse{Devices: pb}, nil
 }

@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"gorm.io/gorm"
+	"gorm.io/gorm/clause"
 )
 
 var ErrNotificationNotFound = errors.New("notification not found")
@@ -16,6 +17,11 @@ type Repository interface {
 	MarkAsRead(ctx context.Context, id int64, userID int64) error
 	MarkAllAsRead(ctx context.Context, userID int64) (int64, error)
 	Delete(ctx context.Context, id int64, userID int64) error
+
+	// Device tokens (mobile push).
+	UpsertDevice(ctx context.Context, d *DeviceToken) error
+	DeleteDevice(ctx context.Context, userID int64, token string) error
+	ListDevices(ctx context.Context, userID int64) ([]*DeviceToken, error)
 }
 
 type repository struct {
@@ -85,4 +91,38 @@ func (r *repository) MarkAllAsRead(ctx context.Context, userID int64) (int64, er
 		Where("user_id = ? AND is_read = ? AND deleted_at IS NULL", userID, false).
 		Update("is_read", true)
 	return result.RowsAffected, result.Error
+}
+
+// UpsertDevice регистрирует/переустанавливает токен. Один и тот же токен может
+// "переехать" к другому пользователю (переустановка/смена аккаунта на устройстве),
+// поэтому конфликт по token обновляет владельца.
+func (r *repository) UpsertDevice(ctx context.Context, d *DeviceToken) error {
+	now := time.Now().UTC()
+	d.CreatedAt = now
+	d.UpdatedAt = now
+	return r.db.WithContext(ctx).
+		Clauses(clause.OnConflict{
+			Columns: []clause.Column{{Name: "token"}},
+			DoUpdates: clause.Assignments(map[string]interface{}{
+				"user_id":    d.UserID,
+				"platform":   d.Platform,
+				"updated_at": now,
+			}),
+		}).
+		Create(d).Error
+}
+
+func (r *repository) DeleteDevice(ctx context.Context, userID int64, token string) error {
+	return r.db.WithContext(ctx).
+		Where("user_id = ? AND token = ?", userID, token).
+		Delete(&DeviceToken{}).Error
+}
+
+func (r *repository) ListDevices(ctx context.Context, userID int64) ([]*DeviceToken, error) {
+	var devices []*DeviceToken
+	err := r.db.WithContext(ctx).
+		Where("user_id = ?", userID).
+		Order("created_at DESC").
+		Find(&devices).Error
+	return devices, err
 }
