@@ -2,14 +2,19 @@ package handler
 
 import (
 	"context"
+	"fmt"
 	"net/http"
 	"strconv"
+	"strings"
 
 	"github.com/gin-gonic/gin"
+	adminv1 "github.com/lucky720s/diplomaflow/pkg/protobuf/admin/v1"
+	formv1 "github.com/lucky720s/diplomaflow/pkg/protobuf/form/v1"
 	projectv1 "github.com/lucky720s/diplomaflow/pkg/protobuf/project/v1"
 	workflowv1 "github.com/lucky720s/diplomaflow/pkg/protobuf/workflow/v1"
 	"golang.org/x/sync/errgroup"
 	"google.golang.org/grpc/metadata"
+	"google.golang.org/protobuf/types/known/structpb"
 	"google.golang.org/protobuf/types/known/timestamppb"
 )
 
@@ -105,6 +110,11 @@ func (h *Handler) GetProjectDetails(c *gin.Context) {
 	availableActions := h.buildAvailableActions(transitions)
 	history := h.buildHistory(projectResp)
 
+	// Определяем, была ли уже отправка для текущего этапа (project_id + current_state_id).
+	currentStageSubmission := h.buildCurrentStageSubmission(ctx, projectID, runtimeResp, workflowFull)
+	// Дублируем краткую сводку внутрь текущего stage для удобства фронта.
+	injectSubmissionStatusIntoCurrentStage(stages, currentStageSubmission)
+
 	c.JSON(http.StatusOK, gin.H{
 		"project": gin.H{
 			"id":                  projectResp.ProjectId,
@@ -121,11 +131,179 @@ func (h *Handler) GetProjectDetails(c *gin.Context) {
 			"deadline_at":         formatTimestamp(runtimeResp.DeadlineAt),
 			"topic_registered_at": formatTimestamp(projectResp.TopicRegisteredAt),
 		},
-		"stages":            stages,
-		"available_actions": availableActions,
-		"history":           history,
-		"viewer":            gin.H{"id": userID, "role": userRole},
+		"stages":                   stages,
+		"available_actions":        availableActions,
+		"history":                  history,
+		"current_stage_submission": currentStageSubmission,
+		"viewer":                   gin.H{"id": userID, "role": userRole},
 	})
+}
+
+// buildCurrentStageSubmission определяет, была ли уже отправка/submit по ТЕКУЩЕМУ этапу
+// проекта. Проверка строго по связке project_id + current_state_id, потому что проект
+// может возвращаться на доработку или переходить между этапами.
+func (h *Handler) buildCurrentStageSubmission(
+	ctx context.Context,
+	projectID int64,
+	runtime *projectv1.GetProjectRuntimeResponse,
+	wf *workflowv1.WorkflowFull,
+) gin.H {
+	stateID := runtime.CurrentStateId
+	stateName := runtime.CurrentStateName
+
+	// Тип текущего стэйта из workflow.
+	stateType := workflowv1.StateType_STATE_TYPE_UNSPECIFIED
+	if wf != nil {
+		for _, st := range wf.States {
+			if st != nil && st.Id == stateID {
+				stateType = st.Type
+				break
+			}
+		}
+	}
+
+	notSubmitted := gin.H{
+		"state_id":      stateID,
+		"state_name":    stateName,
+		"submitted":     false,
+		"status":        "not_submitted",
+		"submitted_at":  nil,
+		"submission_id": nil,
+		"message":       "Можно отправить документы.",
+	}
+
+	switch stateType {
+	// Этапы, где студент уже ничего не отправляет — идёт проверка.
+	case workflowv1.StateType_REVIEW, workflowv1.StateType_APPROVAL:
+		return gin.H{
+			"state_id":      stateID,
+			"state_name":    stateName,
+			"submitted":     true,
+			"status":        "waiting_review",
+			"submitted_at":  nil,
+			"submission_id": nil,
+			"message":       "Этап ожидает проверки.",
+		}
+
+	// Этапы заполнения формы.
+	case workflowv1.StateType_FORM_SUBMIT:
+		if h.formClient != nil {
+			forms, err := h.formClient.ListProjectForms(ctx, &formv1.ListProjectFormsRequest{ProjectId: projectID})
+			if err == nil && forms != nil {
+				for _, f := range forms.Forms {
+					if f != nil && f.StepId == stateID {
+						return submittedStage(stateID, stateName, formatTimestamp(f.CreatedAt), f.SubmissionId)
+					}
+				}
+			}
+		}
+		// Fallback: ключи в project.data (form_submitted_state_{id} / form_submission_id_state_{id}).
+		if sub := formSubmissionFromData(runtime.Data, stateID, stateName); sub != nil {
+			return sub
+		}
+		return notSubmitted
+
+	// DOCUMENT_UPLOAD и прочие submission-based этапы (pre-defense, economics, antiplagiat…).
+	default:
+		if h.adminClient != nil {
+			resp, err := h.adminClient.ListSubmissions(ctx, &adminv1.ListSubmissionsRequest{
+				ProjectId: projectID,
+				StepId:    stateID,
+				PageSize:  50,
+			})
+			if err == nil && resp != nil {
+				// Список отсортирован по created_at DESC — берём первую рабочую запись (самую свежую).
+				for _, s := range resp.Submissions {
+					if s == nil || s.StepId != stateID {
+						continue
+					}
+					if isWorkingSubmissionStatus(s.Status) {
+						return submittedStage(stateID, stateName, formatTimestamp(s.SubmittedAt), s.Id)
+					}
+				}
+			}
+		}
+		return notSubmitted
+	}
+}
+
+// submittedStage — стандартный ответ для уже отправленного этапа.
+func submittedStage(stateID int64, stateName string, submittedAt, submissionID interface{}) gin.H {
+	return gin.H{
+		"state_id":      stateID,
+		"state_name":    stateName,
+		"submitted":     true,
+		"status":        "pending_review",
+		"submitted_at":  submittedAt,
+		"submission_id": submissionID,
+		"message":       "Документы отправлены. Ожидайте проверки.",
+	}
+}
+
+// isWorkingSubmissionStatus — true для статусов, означающих «отправлено и ждёт проверки».
+// approved / rejected / revision_requested сюда НЕ входят — после них можно отправлять заново.
+func isWorkingSubmissionStatus(s string) bool {
+	switch strings.ToLower(strings.TrimSpace(s)) {
+	case "pending", "submitted", "pending_review", "uploaded", "sent", "in_review", "under_review", "waiting_review":
+		return true
+	}
+	return false
+}
+
+// formSubmissionFromData достаёт состояние отправки формы из project.data по ключам
+// form_submitted_state_{state_id} и form_submission_id_state_{state_id}.
+func formSubmissionFromData(data *structpb.Struct, stateID int64, stateName string) gin.H {
+	if data == nil {
+		return nil
+	}
+	m := data.AsMap()
+	submittedKey := fmt.Sprintf("form_submitted_state_%d", stateID)
+	idKey := fmt.Sprintf("form_submission_id_state_%d", stateID)
+
+	val, ok := m[submittedKey]
+	if !ok {
+		return nil
+	}
+
+	submitted := false
+	switch v := val.(type) {
+	case bool:
+		submitted = v
+	case string:
+		submitted = v == "true" || v == "1"
+	case float64:
+		submitted = v != 0
+	}
+	if !submitted {
+		return nil
+	}
+
+	var submissionID interface{}
+	if idv, ok := m[idKey]; ok {
+		submissionID = idv
+	}
+	return submittedStage(stateID, stateName, nil, submissionID)
+}
+
+// injectSubmissionStatusIntoCurrentStage добавляет краткую сводку submission_status
+// в стэйт со status == "current".
+func injectSubmissionStatusIntoCurrentStage(stages []gin.H, submission gin.H) {
+	if submission == nil {
+		return
+	}
+	for _, st := range stages {
+		if st == nil {
+			continue
+		}
+		if status, _ := st["status"].(string); status == "current" {
+			st["submission_status"] = gin.H{
+				"submitted": submission["submitted"],
+				"status":    submission["status"],
+				"message":   submission["message"],
+			}
+			return
+		}
+	}
 }
 
 // loadReviewSummaries загружает review-сводки для всех стэйтов workflow у которых есть review_config.

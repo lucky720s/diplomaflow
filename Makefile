@@ -24,6 +24,7 @@ else
 	SLEEP5 = sleep 5
 	PROTOC ?= protoc
 	BUILD_TIME := $(shell date -u +"%Y-%m-%dT%H:%M:%SZ" 2>/dev/null || echo unknown)
+endif
 
 # ==================== VARIABLES ====================
 
@@ -174,7 +175,6 @@ coverage:
 	go tool cover -html=coverage/coverage.out -o coverage/coverage.html
 	go tool cover -func=coverage/coverage.out
 
-<<<<<<< HEAD
 # ==================== BUILD ====================
 
 define build_service
@@ -184,8 +184,6 @@ endef
 define build_linux_service
 	$(CROSS_LINUX_ENV) go build $(LDFLAGS) -o bin/linux/$(1) ./cmd/$(1)
 endef
-
-# ==================== BUILD ====================
 
 build:
 	$(call build_service,api_gateway)
