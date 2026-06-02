@@ -419,7 +419,6 @@ func (h *Handler) ListTasks(ctx context.Context, req *taskv1.ListTasksRequest) (
 	}
 	return out, nil
 }
-
 func (h *Handler) MoveTask(ctx context.Context, req *taskv1.MoveTaskRequest) (*taskv1.Task, error) {
 	auth, ok := GetAuthContext(ctx)
 	if !ok {
@@ -431,7 +430,7 @@ func (h *Handler) MoveTask(ctx context.Context, req *taskv1.MoveTaskRequest) (*t
 		return nil, status.Error(codes.NotFound, "task not found")
 	}
 
-	err = h.accessChecker.CanModifyTask(ctx, existingTask, auth)
+	err = h.accessChecker.CanMoveTask(ctx, existingTask, req.ToColumnId, auth)
 	if err != nil {
 		return nil, toGRPCError(err)
 	}

@@ -230,3 +230,23 @@ func (ac *AccessChecker) CanModifyColumn(ctx context.Context, columnID int64, au
 	}
 	return ac.CheckColumnAccess(ctx, columnID, auth)
 }
+func (ac *AccessChecker) CanMoveTask(ctx context.Context, task *Task, toColumnID int64, auth AuthContext) error {
+	if IsInternalCall(auth) {
+		return nil
+	}
+
+	if err := ac.CheckBoardAccess(ctx, task.BoardID, auth); err != nil {
+		return err
+	}
+
+	column, err := ac.repo.GetColumn(ctx, toColumnID)
+	if err != nil {
+		return ErrColumnNotFound
+	}
+
+	if column.BoardID != task.BoardID {
+		return ErrAccessDenied
+	}
+
+	return nil
+}

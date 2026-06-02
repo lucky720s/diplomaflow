@@ -402,6 +402,10 @@ func (r *repository) MoveTask(ctx context.Context, taskID, toColumnID int64, pos
 			return err
 		}
 
+		if toColumn.BoardID != task.BoardID {
+			return ErrAccessDenied
+		}
+
 		newStatus := task.Status
 		switch toColumn.Slug {
 		case "todo":
