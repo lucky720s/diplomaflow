@@ -11,4 +11,6 @@ type Config struct {
 		ServerKey string `mapstructure:"server_key"`
 		Endpoint  string `mapstructure:"endpoint"`
 	} `mapstructure:"fcm"`
+	// Realtime через Redis Pub/Sub. Пусто => публикация отключена (no-op).
+	RedisAddr string `mapstructure:"redis_addr"`
 }

@@ -8,6 +8,7 @@ import (
 	"github.com/lucky720s/diplomaflow/internal/notification"
 	"github.com/lucky720s/diplomaflow/pkg/logger"
 	notificationv1 "github.com/lucky720s/diplomaflow/pkg/protobuf/notification/v1"
+	"github.com/lucky720s/diplomaflow/pkg/realtime"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 	"google.golang.org/grpc/metadata"
@@ -16,7 +17,8 @@ import (
 func TestService_ListNotifications(t *testing.T) {
 	repo := new(MockRepository)
 	log := logger.New("test")
-	svc := notification.NewService(repo, notification.NewPusher(&notification.Config{}, log), log)
+	pub, _, _ := realtime.NewPublisher("")
+	svc := notification.NewService(repo, notification.NewPusher(&notification.Config{}, log), pub, log)
 
 	expectedList := []*notification.Notification{
 		{ID: 1, Title: "Test 1"},

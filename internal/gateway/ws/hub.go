@@ -22,15 +22,21 @@ const (
 	sendBuffer = 32
 )
 
-// Hub хранит соединения, сгруппированные по userID (один пользователь может быть
-// подключён с нескольких устройств).
+// Hub хранит активные соединения двумя индексами:
+//   - clients: по userID (адресная доставка, используется чатом);
+//   - rooms:   по топику (board:{id}, project:{id}, conversation:{id}, user:{id})
+//     для подписочной realtime-доставки через Redis Pub/Sub.
 type Hub struct {
 	mu      sync.RWMutex
 	clients map[int64]map[*Client]struct{}
+	rooms   map[string]map[*Client]struct{}
 }
 
 func NewHub() *Hub {
-	return &Hub{clients: make(map[int64]map[*Client]struct{})}
+	return &Hub{
+		clients: make(map[int64]map[*Client]struct{}),
+		rooms:   make(map[string]map[*Client]struct{}),
+	}
 }
 
 // Client — одно WS-соединение пользователя с собственной очередью на запись.
@@ -39,6 +45,7 @@ type Client struct {
 	conn   *websocket.Conn
 	send   chan []byte
 	hub    *Hub
+	topics map[string]struct{} // комнаты, на которые подписан клиент (под hub.mu)
 }
 
 func (h *Hub) NewClient(conn *websocket.Conn, userID int64) *Client {
@@ -47,6 +54,7 @@ func (h *Hub) NewClient(conn *websocket.Conn, userID int64) *Client {
 		conn:   conn,
 		send:   make(chan []byte, sendBuffer),
 		hub:    h,
+		topics: make(map[string]struct{}),
 	}
 }
 
@@ -62,6 +70,17 @@ func (h *Hub) Register(c *Client) {
 func (h *Hub) Unregister(c *Client) {
 	h.mu.Lock()
 	defer h.mu.Unlock()
+	// Убираем из всех комнат.
+	for topic := range c.topics {
+		if set, ok := h.rooms[topic]; ok {
+			delete(set, c)
+			if len(set) == 0 {
+				delete(h.rooms, topic)
+			}
+		}
+	}
+	c.topics = nil
+
 	if set, ok := h.clients[c.UserID]; ok {
 		if _, ok := set[c]; ok {
 			delete(set, c)
@@ -73,6 +92,30 @@ func (h *Hub) Unregister(c *Client) {
 	}
 }
 
+// Join подписывает клиента на топик (комнату).
+func (h *Hub) Join(c *Client, topic string) {
+	h.mu.Lock()
+	defer h.mu.Unlock()
+	if h.rooms[topic] == nil {
+		h.rooms[topic] = make(map[*Client]struct{})
+	}
+	h.rooms[topic][c] = struct{}{}
+	c.topics[topic] = struct{}{}
+}
+
+// Leave отписывает клиента от топика.
+func (h *Hub) Leave(c *Client, topic string) {
+	h.mu.Lock()
+	defer h.mu.Unlock()
+	if set, ok := h.rooms[topic]; ok {
+		delete(set, c)
+		if len(set) == 0 {
+			delete(h.rooms, topic)
+		}
+	}
+	delete(c.topics, topic)
+}
+
 // SendToUsers кладёт payload в очередь всем подключённым клиентам из списка.
 // Если очередь клиента переполнена (медленный потребитель) — сообщение для него
 // дропается, чтобы не блокировать рассылку.
@@ -81,11 +124,24 @@ func (h *Hub) SendToUsers(userIDs []int64, payload []byte) {
 	defer h.mu.RUnlock()
 	for _, uid := range userIDs {
 		for c := range h.clients[uid] {
-			select {
-			case c.send <- payload:
-			default:
-			}
+			trySend(c, payload)
 		}
+	}
+}
+
+// SendToTopic рассылает payload всем клиентам, подписанным на топик.
+func (h *Hub) SendToTopic(topic string, payload []byte) {
+	h.mu.RLock()
+	defer h.mu.RUnlock()
+	for c := range h.rooms[topic] {
+		trySend(c, payload)
+	}
+}
+
+func trySend(c *Client, payload []byte) {
+	select {
+	case c.send <- payload:
+	default:
 	}
 }
 

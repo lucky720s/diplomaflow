@@ -6,3 +6,5 @@ database:
 fcm:
   server_key: ""
   endpoint: ""
+# Realtime через Redis Pub/Sub. Пусто => публикация отключена (no-op).
+redis_addr: ""

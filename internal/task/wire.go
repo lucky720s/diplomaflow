@@ -8,6 +8,7 @@ import (
 	authv1 "github.com/lucky720s/diplomaflow/pkg/protobuf/auth/v1"
 	notificationv1 "github.com/lucky720s/diplomaflow/pkg/protobuf/notification/v1"
 	teamv1 "github.com/lucky720s/diplomaflow/pkg/protobuf/team/v1"
+	"github.com/lucky720s/diplomaflow/pkg/realtime"
 	"go.uber.org/zap"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
@@ -53,6 +54,11 @@ func ProvideAuthClient(cfg *Config) (authv1.AuthServiceClient, func(), error) {
 	return client, func() { conn.Close() }, nil
 }
 
+// ProvideRealtimePublisher — publisher realtime-событий (Redis Pub/Sub).
+func ProvideRealtimePublisher(cfg *Config) (realtime.Publisher, func(), error) {
+	return realtime.NewPublisher(cfg.RedisAddr)
+}
+
 // InitializeApp инициализирует приложение task_service
 func InitializeApp(cfg *Config, db *gorm.DB, logger *zap.Logger) (*Handler, func(), error) {
 	wire.Build(
@@ -60,9 +66,10 @@ func InitializeApp(cfg *Config, db *gorm.DB, logger *zap.Logger) (*Handler, func
 		ProvideTeamClient,         // cfg → TeamServiceClient
 		ProvideNotificationClient, // cfg → NotificationServiceClient
 		ProvideAuthClient,         // cfg → AuthServiceClient (обогащение UserPreview)
+		ProvideRealtimePublisher,  // cfg → realtime.Publisher (Redis Pub/Sub)
 		NewService,                // Repository + TeamServiceClient + NotificationServiceClient + logger → *Service
 		NewAccessChecker,          // ✅ Repository + TeamServiceClient + logger → *AccessChecker
-		NewHandler,                // *Service + *AccessChecker + AuthServiceClient + logger → *Handler
+		NewHandler,                // *Service + *AccessChecker + AuthServiceClient + Publisher + logger → *Handler
 	)
 	return nil, nil, nil
 }

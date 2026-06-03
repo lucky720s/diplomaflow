@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"os"
 	"time"
 
@@ -11,6 +12,7 @@ import (
 	"github.com/lucky720s/diplomaflow/internal/gateway/middleware"
 	"github.com/lucky720s/diplomaflow/pkg/logger"
 	"github.com/lucky720s/diplomaflow/pkg/metrics"
+	"github.com/lucky720s/diplomaflow/pkg/realtime"
 	"github.com/redis/go-redis/v9"
 	"go.uber.org/zap"
 )
@@ -37,6 +39,17 @@ func main() {
 	rdb := redis.NewClient(&redis.Options{
 		Addr: cfg.RedisAddr,
 	})
+
+	// Realtime: подписываемся на Redis Pub/Sub и фаним события в WS-клиентов.
+	rtCtx, rtCancel := context.WithCancel(context.Background())
+	defer rtCancel()
+	rtSub := realtime.NewSubscriber(rdb)
+	defer rtSub.Close()
+	go func() {
+		for ev := range rtSub.Events(rtCtx) {
+			handler.DispatchRealtime(ev)
+		}
+	}()
 	registry := metrics.NewRegistry("api_gateway")
 	middleware.MustRegisterGatewayMetrics(registry)
 	router := gin.New()
@@ -315,6 +328,13 @@ func main() {
 
 			// WebSocket: realtime-канал (Authorization: Bearer <token>).
 			chat.GET("/ws", handler.ChatWebSocket)
+		}
+
+		// Единый realtime-канал (доска, уведомления) поверх Redis Pub/Sub.
+		realtimeGroup := v1.Group("/realtime")
+		realtimeGroup.Use(middleware.AuthMiddleware(cfg.JWTSecret))
+		{
+			realtimeGroup.GET("/ws", handler.RealtimeWebSocket)
 		}
 
 		tasks := v1.Group("/tasks")

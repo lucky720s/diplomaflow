@@ -186,6 +186,7 @@ services:
       <<: *common_env
       GRPC_PORT: "8087"
       METRICS_PORT: "9087"
+      REDIS_ADDR: redis:6379
     depends_on:
       migrate:
         condition: service_completed_successfully
@@ -372,6 +373,7 @@ services:
       <<: *common_env
       GRPC_PORT: "8091"
       METRICS_PORT: "9191"
+      REDIS_ADDR: redis:6379
       SERVICES_AUTH_ADDR: auth_service:8082
       SERVICES_TEAM_ADDR: team_service:8084
       SERVICES_NOTIFICATION_ADDR: notification_service:8087

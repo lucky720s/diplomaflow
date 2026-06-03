@@ -4,6 +4,9 @@ grpc_port: 8091
 database:
   dsn: ""
 
+# Realtime через Redis Pub/Sub. Пусто => публикация отключена (no-op).
+redis_addr: ""
+
 services:
   auth_addr: "auth_service:8082"
   team_addr: "team_service:8084"

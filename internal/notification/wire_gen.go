@@ -9,6 +9,7 @@ package notification
 import (
 	"github.com/lucky720s/diplomaflow/pkg/database"
 	"github.com/lucky720s/diplomaflow/pkg/logger"
+	"github.com/lucky720s/diplomaflow/pkg/realtime"
 	"gorm.io/gorm"
 )
 
@@ -21,9 +22,15 @@ func InitializeApp(cfg *Config, log *logger.Logger) (*Handler, func(), error) {
 	}
 	notificationRepository := NewRepository(db)
 	pusher := NewPusher(cfg, log)
-	service := NewService(notificationRepository, pusher, log)
+	publisher, cleanup2, err := ProvideRealtimePublisher(cfg)
+	if err != nil {
+		cleanup()
+		return nil, nil, err
+	}
+	service := NewService(notificationRepository, pusher, publisher, log)
 	handler := NewHandler(service)
 	return handler, func() {
+		cleanup2()
 		cleanup()
 	}, nil
 }
@@ -32,4 +39,8 @@ func InitializeApp(cfg *Config, log *logger.Logger) (*Handler, func(), error) {
 
 func ProvideDB(cfg *Config) (*gorm.DB, func(), error) {
 	return database.NewConnection(cfg.Database.DSN)
+}
+
+func ProvideRealtimePublisher(cfg *Config) (realtime.Publisher, func(), error) {
+	return realtime.NewPublisher(cfg.RedisAddr)
 }

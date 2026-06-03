@@ -6,17 +6,19 @@ import (
 	"time"
 
 	"github.com/lucky720s/diplomaflow/pkg/logger"
+	"github.com/lucky720s/diplomaflow/pkg/realtime"
 	"go.uber.org/zap"
 )
 
 type Service struct {
-	repo   Repository
-	pusher Pusher
-	logger *logger.Logger
+	repo      Repository
+	pusher    Pusher
+	publisher realtime.Publisher
+	logger    *logger.Logger
 }
 
-func NewService(repo Repository, pusher Pusher, log *logger.Logger) *Service {
-	return &Service{repo: repo, pusher: pusher, logger: log}
+func NewService(repo Repository, pusher Pusher, publisher realtime.Publisher, log *logger.Logger) *Service {
+	return &Service{repo: repo, pusher: pusher, publisher: publisher, logger: log}
 }
 
 func (s *Service) SendNotification(ctx context.Context, userID int64, title, message, link, nType string) (int64, error) {
@@ -38,7 +40,32 @@ func (s *Service) SendNotification(ctx context.Context, userID int64, title, mes
 	// ломать создание уведомления в БД.
 	s.pushToUser(ctx, userID, title, message, link)
 
+	// Realtime: живой бейдж/тост в WebSocket (best-effort).
+	s.publishRealtime(ctx, n)
+
 	return n.ID, nil
+}
+
+// publishRealtime отправляет событие notification.created в топик пользователя.
+func (s *Service) publishRealtime(ctx context.Context, n *Notification) {
+	if s.publisher == nil {
+		return
+	}
+	ev, err := realtime.NewEvent(realtime.EventNotificationCreated, realtime.UserTopic(n.UserID), map[string]any{
+		"id":         n.ID,
+		"title":      n.Title,
+		"message":    n.Message,
+		"link":       n.Link,
+		"type":       n.Type,
+		"is_read":    n.IsRead,
+		"created_at": n.CreatedAt,
+	})
+	if err != nil {
+		return
+	}
+	if pErr := s.publisher.Publish(ctx, ev); pErr != nil {
+		s.logger.Warn("realtime publish failed", zap.Error(pErr))
+	}
 }
 
 // pushToUser отправляет push на все устройства пользователя (best-effort).

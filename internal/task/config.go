@@ -1,10 +1,11 @@
 package task
 
 type Config struct {
-	Env      string         `mapstructure:"env"`
-	GRPCPort string         `mapstructure:"grpc_port"`
-	Database DatabaseConfig `mapstructure:"database"`
-	Services ServicesConfig `mapstructure:"services"`
+	Env       string         `mapstructure:"env"`
+	GRPCPort  string         `mapstructure:"grpc_port"`
+	Database  DatabaseConfig `mapstructure:"database"`
+	Services  ServicesConfig `mapstructure:"services"`
+	RedisAddr string         `mapstructure:"redis_addr"`
 }
 
 type DatabaseConfig struct {

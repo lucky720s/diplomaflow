@@ -8,6 +8,7 @@ import (
 
 	authv1 "github.com/lucky720s/diplomaflow/pkg/protobuf/auth/v1"
 	taskv1 "github.com/lucky720s/diplomaflow/pkg/protobuf/task/v1"
+	"github.com/lucky720s/diplomaflow/pkg/realtime"
 	"go.uber.org/zap"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
@@ -20,15 +21,33 @@ type Handler struct {
 	service       *Service
 	accessChecker *AccessChecker
 	authClient    authv1.AuthServiceClient
+	publisher     realtime.Publisher
 	logger        *zap.Logger
 }
 
-func NewHandler(svc *Service, accessChecker *AccessChecker, authClient authv1.AuthServiceClient, logger *zap.Logger) *Handler {
+func NewHandler(svc *Service, accessChecker *AccessChecker, authClient authv1.AuthServiceClient, publisher realtime.Publisher, logger *zap.Logger) *Handler {
 	return &Handler{
 		service:       svc,
 		accessChecker: accessChecker,
 		authClient:    authClient,
+		publisher:     publisher,
 		logger:        logger,
+	}
+}
+
+// publishEvent публикует realtime-событие best-effort: ошибка/отсутствие Redis
+// не влияет на основную операцию.
+func (h *Handler) publishEvent(ctx context.Context, eventType, topic string, payload any) {
+	if h.publisher == nil {
+		return
+	}
+	ev, err := realtime.NewEvent(eventType, topic, payload)
+	if err != nil {
+		h.logger.Warn("realtime: build event failed", zap.Error(err))
+		return
+	}
+	if err := h.publisher.Publish(ctx, ev); err != nil {
+		h.logger.Warn("realtime: publish failed", zap.String("type", eventType), zap.Error(err))
 	}
 }
 
@@ -279,7 +298,9 @@ func (h *Handler) CreateTask(ctx context.Context, req *taskv1.CreateTaskRequest)
 		return nil, status.Errorf(codes.Internal, "create task: %v", err)
 	}
 
-	return h.taskToProto(task), nil
+	pb := h.taskToProto(task)
+	h.publishEvent(ctx, realtime.EventTaskCreated, realtime.BoardTopic(task.BoardID), pb)
+	return pb, nil
 }
 
 func (h *Handler) GetTask(ctx context.Context, req *taskv1.GetTaskRequest) (*taskv1.GetTaskResponse, error) {
@@ -363,7 +384,9 @@ func (h *Handler) UpdateTask(ctx context.Context, req *taskv1.UpdateTaskRequest)
 		return nil, status.Errorf(codes.Internal, "update task: %v", err)
 	}
 
-	return h.taskToProto(task), nil
+	pb := h.taskToProto(task)
+	h.publishEvent(ctx, realtime.EventTaskUpdated, realtime.BoardTopic(task.BoardID), pb)
+	return pb, nil
 }
 
 func (h *Handler) DeleteTask(ctx context.Context, req *taskv1.DeleteTaskRequest) (*emptypb.Empty, error) {
@@ -385,6 +408,10 @@ func (h *Handler) DeleteTask(ctx context.Context, req *taskv1.DeleteTaskRequest)
 		return nil, status.Errorf(codes.Internal, "delete task: %v", err)
 	}
 
+	h.publishEvent(ctx, realtime.EventTaskDeleted, realtime.BoardTopic(existingTask.BoardID), map[string]int64{
+		"task_id":  req.TaskId,
+		"board_id": existingTask.BoardID,
+	})
 	return &emptypb.Empty{}, nil
 }
 
@@ -462,7 +489,9 @@ func (h *Handler) MoveTask(ctx context.Context, req *taskv1.MoveTaskRequest) (*t
 		return nil, status.Errorf(codes.Internal, "move task: %v", err)
 	}
 
-	return h.taskToProto(task), nil
+	pb := h.taskToProto(task)
+	h.publishEvent(ctx, realtime.EventTaskMoved, realtime.BoardTopic(task.BoardID), pb)
+	return pb, nil
 }
 
 func (h *Handler) ReorderTasks(ctx context.Context, req *taskv1.ReorderTasksRequest) (*emptypb.Empty, error) {
@@ -611,6 +640,9 @@ func (h *Handler) CreateComment(ctx context.Context, req *taskv1.CreateCommentRe
 
 	pb := h.commentToProto(comment)
 	h.enrichComments(ctx, []*taskv1.Comment{pb})
+	if t, tErr := h.service.GetTask(ctx, req.TaskId); tErr == nil && t != nil {
+		h.publishEvent(ctx, realtime.EventCommentCreated, realtime.BoardTopic(t.BoardID), pb)
+	}
 	return pb, nil
 }
 

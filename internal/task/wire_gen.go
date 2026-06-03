@@ -10,6 +10,7 @@ import (
 	v1_3 "github.com/lucky720s/diplomaflow/pkg/protobuf/auth/v1"
 	v1_2 "github.com/lucky720s/diplomaflow/pkg/protobuf/notification/v1"
 	"github.com/lucky720s/diplomaflow/pkg/protobuf/team/v1"
+	"github.com/lucky720s/diplomaflow/pkg/realtime"
 	"go.uber.org/zap"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
@@ -38,8 +39,16 @@ func InitializeApp(cfg *Config, db *gorm.DB, logger *zap.Logger) (*Handler, func
 		cleanup()
 		return nil, nil, err
 	}
-	handler := NewHandler(service, accessChecker, authServiceClient, logger)
+	publisher, cleanup4, err := ProvideRealtimePublisher(cfg)
+	if err != nil {
+		cleanup3()
+		cleanup2()
+		cleanup()
+		return nil, nil, err
+	}
+	handler := NewHandler(service, accessChecker, authServiceClient, publisher, logger)
 	return handler, func() {
+		cleanup4()
 		cleanup3()
 		cleanup2()
 		cleanup()
@@ -82,4 +91,9 @@ func ProvideAuthClient(cfg *Config) (v1_3.AuthServiceClient, func(), error) {
 	}
 	client := v1_3.NewAuthServiceClient(conn)
 	return client, func() { conn.Close() }, nil
+}
+
+// ProvideRealtimePublisher — publisher realtime-событий (Redis Pub/Sub).
+func ProvideRealtimePublisher(cfg *Config) (realtime.Publisher, func(), error) {
+	return realtime.NewPublisher(cfg.RedisAddr)
 }
