@@ -513,6 +513,24 @@ func main() {
 			departments.GET("/:id/topic-registrations", handler.GetDepartmentTopicRegistrations)
 		}
 
+		// Teacher Department Progress (read-only, department-scoped).
+		//
+		// NOT the admin panel. Access is NOT a base-role check: it requires the
+		// dynamic department role `department_progress_viewer` (roles /
+		// user_role_assignments), verified per-request and per-department inside
+		// each handler via requireDepartmentProgressAccess. Therefore only
+		// AuthMiddleware is applied here — no RBACMiddleware("teacher").
+		//
+		// GetDepartmentProgressTeamDetails already returns workflow, history and
+		// grades, so no separate workflow/history/grades routes are exposed yet.
+		teacherDP := v1.Group("/teacher/department-progress")
+		teacherDP.Use(middleware.AuthMiddleware(cfg.JWTSecret))
+		{
+			teacherDP.GET("/summary", handler.TeacherDPSummary)
+			teacherDP.GET("/teams", handler.TeacherDPListTeams)
+			teacherDP.GET("/teams/:team_id", handler.TeacherDPTeamDetails)
+		}
+
 	}
 
 	checker := gatewayhealth.NewChecker(rdb, 2*time.Second)

@@ -97,6 +97,13 @@ service AdminService {
   // Delete allowed only if project is archived
   rpc DeleteArchivedProjectAdmin(DeleteArchivedProjectAdminRequest) returns (DeleteArchivedProjectAdminResponse);
 
+  // ==================== Department Progress (teacher-facing, read-only) ====================
+  // Aggregated, department-scoped views for the teacher "department progress" module.
+  // department_id is required on all three and enforced in SQL (cross-department guard).
+  rpc GetDepartmentProgressSummary(DepartmentProgressSummaryRequest) returns (DepartmentProgressSummaryResponse);
+  rpc ListDepartmentProgressTeams(ListDepartmentProgressTeamsRequest) returns (ListDepartmentProgressTeamsResponse);
+  rpc GetDepartmentProgressTeamDetails(GetDepartmentProgressTeamDetailsRequest) returns (DepartmentProgressTeamDetailsResponse);
+
 }
 
 // ==================== Topic Registration Messages ====================
@@ -1224,4 +1231,199 @@ message DeleteArchivedProjectAdminRequest {
 
 message DeleteArchivedProjectAdminResponse {
   bool success = 1;
+}
+
+// ==================== Department Progress Messages (teacher-facing) ====================
+
+message DepartmentProgressSummaryRequest {
+  int64 department_id = 1 [(validate.rules).int64.gt = 0];
+}
+
+message DepartmentProgressStats {
+  int32 total_students = 1;
+  int32 total_teams = 2;
+  int32 total_projects = 3;
+  int32 completed_projects = 4;
+  int32 pending_topic_registrations = 5;
+  int32 pending_supervisor_requests = 6;
+  int32 pending_norm_control = 7;
+  int32 pending_antiplagiat = 8;
+  int32 pending_pre_defenses = 9;
+  int32 scheduled_pre_defenses = 10;
+  int32 admitted_count = 11;
+  int32 not_admitted_count = 12;
+  int32 revision_required_count = 13;
+  float average_grade = 14;      // valid only when has_average_grade is true
+  bool has_average_grade = 15;   // false => average_grade should be treated as null
+}
+
+message DepartmentProgressSummaryResponse {
+  DepartmentProgressStats stats = 1;
+  repeated StepProgress workflow = 2;
+  repeated RecentActivity recent_activities = 3;
+}
+
+message ListDepartmentProgressTeamsRequest {
+  int64 department_id = 1 [(validate.rules).int64.gt = 0];
+  string search = 2;
+  int64 supervisor_id = 3;
+  string current_stage = 4;
+  string topic_status = 5;
+  string norm_control_status = 6;
+  string antiplagiat_status = 7;
+  string pre_defense_status = 8;
+  string admission_status = 9;
+  int32 min_grade = 10;
+  int32 max_grade = 11;
+  bool has_min_grade = 12;
+  bool has_max_grade = 13;
+  int32 page = 14;
+  int32 page_size = 15;
+  string sort_by = 16;    // team_name|project_title|current_stage|progress_percentage|last_activity_at|final_grade|admission_status
+  string sort_order = 17; // asc|desc
+}
+
+message DepartmentProgressTeam {
+  int64 team_id = 1;
+  string team_name = 2;
+  int64 project_id = 3;
+  string project_title = 4;
+  SupervisorInfo supervisor = 5;
+  repeated TeamMemberInfo members = 6;
+  string current_stage = 7;
+  string current_stage_display = 8;
+  float progress_percentage = 9;
+  string topic_status = 10;
+  string norm_control_status = 11;
+  string antiplagiat_status = 12;
+  int32 antiplagiat_percent = 13;
+  bool has_antiplagiat_percent = 14;
+  string pre_defense_status = 15;
+  int32 pre_defense_grade = 16;
+  bool has_pre_defense_grade = 17;
+  string admission_status = 18; // not_decided|admitted|not_admitted|revision_required
+  int32 final_grade = 19;
+  bool has_final_grade = 20;
+  google.protobuf.Timestamp last_activity_at = 21;
+  google.protobuf.Timestamp created_at = 22;
+  google.protobuf.Timestamp updated_at = 23;
+}
+
+message ListDepartmentProgressTeamsResponse {
+  repeated DepartmentProgressTeam teams = 1;
+  int64 total_count = 2;
+  int32 page = 3;
+  int32 page_size = 4;
+}
+
+message GetDepartmentProgressTeamDetailsRequest {
+  int64 team_id = 1 [(validate.rules).int64.gt = 0];
+  int64 department_id = 2 [(validate.rules).int64.gt = 0];
+}
+
+message DepartmentProgressTeamInfo {
+  int64 team_id = 1;
+  string team_name = 2;
+  string status = 3;
+  google.protobuf.Timestamp created_at = 4;
+  google.protobuf.Timestamp updated_at = 5;
+}
+
+message DepartmentProgressProjectInfo {
+  int64 project_id = 1;
+  string title_kz = 2;
+  string title_ru = 3;
+  string title_en = 4;
+  string title_display = 5;
+  string description = 6;
+  string current_state = 7;
+  int64 current_step_id = 8;
+}
+
+message DepartmentProgressStep {
+  int64 step_id = 1;
+  string step_name = 2;
+  string display_name = 3;
+  string status = 4; // not_started|pending|submitted|approved|rejected|revision_requested|completed
+  google.protobuf.Timestamp completed_at = 5;
+  string reviewer_name = 6;
+  int32 grade = 7;
+  bool has_grade = 8;
+  string admission_status = 9;
+  string comment = 10;
+}
+
+message DepartmentProgressWorkflow {
+  string current_state = 1;
+  float progress_percentage = 2;
+  repeated DepartmentProgressStep steps = 3;
+}
+
+message DepartmentProgressTopicRegistration {
+  string status = 1;
+  string proposed_topic_kz = 2;
+  string proposed_topic_ru = 3;
+  string proposed_topic_en = 4;
+  string reviewer_name = 5;
+  google.protobuf.Timestamp reviewed_at = 6;
+  string comment = 7;
+  string rejection_reason = 8;
+}
+
+message DepartmentProgressNormControl {
+  string status = 1;
+  string submission_id = 2;
+  string reviewer_name = 3;
+  google.protobuf.Timestamp reviewed_at = 4;
+  int32 issues_count = 5;
+  int32 critical_issues_count = 6;
+}
+
+message DepartmentProgressAntiplagiat {
+  string status = 1;
+  int32 similarity_percent = 2;
+  bool has_similarity_percent = 3;
+  int32 ai_percent = 4;
+  bool has_ai_percent = 5;
+  google.protobuf.Timestamp checked_at = 6;
+  string reviewer_name = 7;
+}
+
+message DepartmentProgressPreDefense {
+  string id = 1;
+  string status = 2;
+  google.protobuf.Timestamp scheduled_date = 3;
+  string location = 4;
+  int32 grade = 5;
+  bool has_grade = 6;
+  string result = 7;
+  string admission_status = 8;
+  string comment = 9;
+  repeated PreDefenseCommissionMember commission = 10;
+}
+
+message UnifiedHistoryItem {
+  string id = 1;
+  string source = 2; // team|project|topic|supervisor_request|submission|norm_control|antiplagiat|pre_defense|grade
+  string action = 3;
+  int64 actor_id = 4;
+  string actor_name = 5;
+  string old_value = 6;
+  string new_value = 7;
+  string comment = 8;
+  google.protobuf.Timestamp created_at = 9;
+}
+
+message DepartmentProgressTeamDetailsResponse {
+  DepartmentProgressTeamInfo team = 1;
+  DepartmentProgressProjectInfo project = 2;
+  SupervisorInfo supervisor = 3;
+  repeated TeamMemberInfo members = 4;
+  DepartmentProgressWorkflow workflow = 5;
+  DepartmentProgressTopicRegistration topic_registration = 6;
+  DepartmentProgressNormControl norm_control = 7;
+  DepartmentProgressAntiplagiat antiplagiat = 8;
+  repeated DepartmentProgressPreDefense pre_defenses = 9;
+  repeated GradeInfo grades = 10;
+  repeated UnifiedHistoryItem history = 11;
 }

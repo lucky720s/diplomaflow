@@ -19004,3 +19004,2943 @@ var _ interface {
 	Cause() error
 	ErrorName() string
 } = DeleteArchivedProjectAdminResponseValidationError{}
+
+// Validate checks the field values on DepartmentProgressSummaryRequest with
+// the rules defined in the proto definition for this message. If any rules
+// are violated, the first error encountered is returned, or nil if there are
+// no violations.
+func (m *DepartmentProgressSummaryRequest) Validate() error {
+	return m.validate(false)
+}
+
+// ValidateAll checks the field values on DepartmentProgressSummaryRequest with
+// the rules defined in the proto definition for this message. If any rules
+// are violated, the result is a list of violation errors wrapped in
+// DepartmentProgressSummaryRequestMultiError, or nil if none found.
+func (m *DepartmentProgressSummaryRequest) ValidateAll() error {
+	return m.validate(true)
+}
+
+func (m *DepartmentProgressSummaryRequest) validate(all bool) error {
+	if m == nil {
+		return nil
+	}
+
+	var errors []error
+
+	if m.GetDepartmentId() <= 0 {
+		err := DepartmentProgressSummaryRequestValidationError{
+			field:  "DepartmentId",
+			reason: "value must be greater than 0",
+		}
+		if !all {
+			return err
+		}
+		errors = append(errors, err)
+	}
+
+	if len(errors) > 0 {
+		return DepartmentProgressSummaryRequestMultiError(errors)
+	}
+
+	return nil
+}
+
+// DepartmentProgressSummaryRequestMultiError is an error wrapping multiple
+// validation errors returned by
+// DepartmentProgressSummaryRequest.ValidateAll() if the designated
+// constraints aren't met.
+type DepartmentProgressSummaryRequestMultiError []error
+
+// Error returns a concatenation of all the error messages it wraps.
+func (m DepartmentProgressSummaryRequestMultiError) Error() string {
+	msgs := make([]string, 0, len(m))
+	for _, err := range m {
+		msgs = append(msgs, err.Error())
+	}
+	return strings.Join(msgs, "; ")
+}
+
+// AllErrors returns a list of validation violation errors.
+func (m DepartmentProgressSummaryRequestMultiError) AllErrors() []error { return m }
+
+// DepartmentProgressSummaryRequestValidationError is the validation error
+// returned by DepartmentProgressSummaryRequest.Validate if the designated
+// constraints aren't met.
+type DepartmentProgressSummaryRequestValidationError struct {
+	field  string
+	reason string
+	cause  error
+	key    bool
+}
+
+// Field function returns field value.
+func (e DepartmentProgressSummaryRequestValidationError) Field() string { return e.field }
+
+// Reason function returns reason value.
+func (e DepartmentProgressSummaryRequestValidationError) Reason() string { return e.reason }
+
+// Cause function returns cause value.
+func (e DepartmentProgressSummaryRequestValidationError) Cause() error { return e.cause }
+
+// Key function returns key value.
+func (e DepartmentProgressSummaryRequestValidationError) Key() bool { return e.key }
+
+// ErrorName returns error name.
+func (e DepartmentProgressSummaryRequestValidationError) ErrorName() string {
+	return "DepartmentProgressSummaryRequestValidationError"
+}
+
+// Error satisfies the builtin error interface
+func (e DepartmentProgressSummaryRequestValidationError) Error() string {
+	cause := ""
+	if e.cause != nil {
+		cause = fmt.Sprintf(" | caused by: %v", e.cause)
+	}
+
+	key := ""
+	if e.key {
+		key = "key for "
+	}
+
+	return fmt.Sprintf(
+		"invalid %sDepartmentProgressSummaryRequest.%s: %s%s",
+		key,
+		e.field,
+		e.reason,
+		cause)
+}
+
+var _ error = DepartmentProgressSummaryRequestValidationError{}
+
+var _ interface {
+	Field() string
+	Reason() string
+	Key() bool
+	Cause() error
+	ErrorName() string
+} = DepartmentProgressSummaryRequestValidationError{}
+
+// Validate checks the field values on DepartmentProgressStats with the rules
+// defined in the proto definition for this message. If any rules are
+// violated, the first error encountered is returned, or nil if there are no violations.
+func (m *DepartmentProgressStats) Validate() error {
+	return m.validate(false)
+}
+
+// ValidateAll checks the field values on DepartmentProgressStats with the
+// rules defined in the proto definition for this message. If any rules are
+// violated, the result is a list of violation errors wrapped in
+// DepartmentProgressStatsMultiError, or nil if none found.
+func (m *DepartmentProgressStats) ValidateAll() error {
+	return m.validate(true)
+}
+
+func (m *DepartmentProgressStats) validate(all bool) error {
+	if m == nil {
+		return nil
+	}
+
+	var errors []error
+
+	// no validation rules for TotalStudents
+
+	// no validation rules for TotalTeams
+
+	// no validation rules for TotalProjects
+
+	// no validation rules for CompletedProjects
+
+	// no validation rules for PendingTopicRegistrations
+
+	// no validation rules for PendingSupervisorRequests
+
+	// no validation rules for PendingNormControl
+
+	// no validation rules for PendingAntiplagiat
+
+	// no validation rules for PendingPreDefenses
+
+	// no validation rules for ScheduledPreDefenses
+
+	// no validation rules for AdmittedCount
+
+	// no validation rules for NotAdmittedCount
+
+	// no validation rules for RevisionRequiredCount
+
+	// no validation rules for AverageGrade
+
+	// no validation rules for HasAverageGrade
+
+	if len(errors) > 0 {
+		return DepartmentProgressStatsMultiError(errors)
+	}
+
+	return nil
+}
+
+// DepartmentProgressStatsMultiError is an error wrapping multiple validation
+// errors returned by DepartmentProgressStats.ValidateAll() if the designated
+// constraints aren't met.
+type DepartmentProgressStatsMultiError []error
+
+// Error returns a concatenation of all the error messages it wraps.
+func (m DepartmentProgressStatsMultiError) Error() string {
+	msgs := make([]string, 0, len(m))
+	for _, err := range m {
+		msgs = append(msgs, err.Error())
+	}
+	return strings.Join(msgs, "; ")
+}
+
+// AllErrors returns a list of validation violation errors.
+func (m DepartmentProgressStatsMultiError) AllErrors() []error { return m }
+
+// DepartmentProgressStatsValidationError is the validation error returned by
+// DepartmentProgressStats.Validate if the designated constraints aren't met.
+type DepartmentProgressStatsValidationError struct {
+	field  string
+	reason string
+	cause  error
+	key    bool
+}
+
+// Field function returns field value.
+func (e DepartmentProgressStatsValidationError) Field() string { return e.field }
+
+// Reason function returns reason value.
+func (e DepartmentProgressStatsValidationError) Reason() string { return e.reason }
+
+// Cause function returns cause value.
+func (e DepartmentProgressStatsValidationError) Cause() error { return e.cause }
+
+// Key function returns key value.
+func (e DepartmentProgressStatsValidationError) Key() bool { return e.key }
+
+// ErrorName returns error name.
+func (e DepartmentProgressStatsValidationError) ErrorName() string {
+	return "DepartmentProgressStatsValidationError"
+}
+
+// Error satisfies the builtin error interface
+func (e DepartmentProgressStatsValidationError) Error() string {
+	cause := ""
+	if e.cause != nil {
+		cause = fmt.Sprintf(" | caused by: %v", e.cause)
+	}
+
+	key := ""
+	if e.key {
+		key = "key for "
+	}
+
+	return fmt.Sprintf(
+		"invalid %sDepartmentProgressStats.%s: %s%s",
+		key,
+		e.field,
+		e.reason,
+		cause)
+}
+
+var _ error = DepartmentProgressStatsValidationError{}
+
+var _ interface {
+	Field() string
+	Reason() string
+	Key() bool
+	Cause() error
+	ErrorName() string
+} = DepartmentProgressStatsValidationError{}
+
+// Validate checks the field values on DepartmentProgressSummaryResponse with
+// the rules defined in the proto definition for this message. If any rules
+// are violated, the first error encountered is returned, or nil if there are
+// no violations.
+func (m *DepartmentProgressSummaryResponse) Validate() error {
+	return m.validate(false)
+}
+
+// ValidateAll checks the field values on DepartmentProgressSummaryResponse
+// with the rules defined in the proto definition for this message. If any
+// rules are violated, the result is a list of violation errors wrapped in
+// DepartmentProgressSummaryResponseMultiError, or nil if none found.
+func (m *DepartmentProgressSummaryResponse) ValidateAll() error {
+	return m.validate(true)
+}
+
+func (m *DepartmentProgressSummaryResponse) validate(all bool) error {
+	if m == nil {
+		return nil
+	}
+
+	var errors []error
+
+	if all {
+		switch v := interface{}(m.GetStats()).(type) {
+		case interface{ ValidateAll() error }:
+			if err := v.ValidateAll(); err != nil {
+				errors = append(errors, DepartmentProgressSummaryResponseValidationError{
+					field:  "Stats",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		case interface{ Validate() error }:
+			if err := v.Validate(); err != nil {
+				errors = append(errors, DepartmentProgressSummaryResponseValidationError{
+					field:  "Stats",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		}
+	} else if v, ok := interface{}(m.GetStats()).(interface{ Validate() error }); ok {
+		if err := v.Validate(); err != nil {
+			return DepartmentProgressSummaryResponseValidationError{
+				field:  "Stats",
+				reason: "embedded message failed validation",
+				cause:  err,
+			}
+		}
+	}
+
+	for idx, item := range m.GetWorkflow() {
+		_, _ = idx, item
+
+		if all {
+			switch v := interface{}(item).(type) {
+			case interface{ ValidateAll() error }:
+				if err := v.ValidateAll(); err != nil {
+					errors = append(errors, DepartmentProgressSummaryResponseValidationError{
+						field:  fmt.Sprintf("Workflow[%v]", idx),
+						reason: "embedded message failed validation",
+						cause:  err,
+					})
+				}
+			case interface{ Validate() error }:
+				if err := v.Validate(); err != nil {
+					errors = append(errors, DepartmentProgressSummaryResponseValidationError{
+						field:  fmt.Sprintf("Workflow[%v]", idx),
+						reason: "embedded message failed validation",
+						cause:  err,
+					})
+				}
+			}
+		} else if v, ok := interface{}(item).(interface{ Validate() error }); ok {
+			if err := v.Validate(); err != nil {
+				return DepartmentProgressSummaryResponseValidationError{
+					field:  fmt.Sprintf("Workflow[%v]", idx),
+					reason: "embedded message failed validation",
+					cause:  err,
+				}
+			}
+		}
+
+	}
+
+	for idx, item := range m.GetRecentActivities() {
+		_, _ = idx, item
+
+		if all {
+			switch v := interface{}(item).(type) {
+			case interface{ ValidateAll() error }:
+				if err := v.ValidateAll(); err != nil {
+					errors = append(errors, DepartmentProgressSummaryResponseValidationError{
+						field:  fmt.Sprintf("RecentActivities[%v]", idx),
+						reason: "embedded message failed validation",
+						cause:  err,
+					})
+				}
+			case interface{ Validate() error }:
+				if err := v.Validate(); err != nil {
+					errors = append(errors, DepartmentProgressSummaryResponseValidationError{
+						field:  fmt.Sprintf("RecentActivities[%v]", idx),
+						reason: "embedded message failed validation",
+						cause:  err,
+					})
+				}
+			}
+		} else if v, ok := interface{}(item).(interface{ Validate() error }); ok {
+			if err := v.Validate(); err != nil {
+				return DepartmentProgressSummaryResponseValidationError{
+					field:  fmt.Sprintf("RecentActivities[%v]", idx),
+					reason: "embedded message failed validation",
+					cause:  err,
+				}
+			}
+		}
+
+	}
+
+	if len(errors) > 0 {
+		return DepartmentProgressSummaryResponseMultiError(errors)
+	}
+
+	return nil
+}
+
+// DepartmentProgressSummaryResponseMultiError is an error wrapping multiple
+// validation errors returned by
+// DepartmentProgressSummaryResponse.ValidateAll() if the designated
+// constraints aren't met.
+type DepartmentProgressSummaryResponseMultiError []error
+
+// Error returns a concatenation of all the error messages it wraps.
+func (m DepartmentProgressSummaryResponseMultiError) Error() string {
+	msgs := make([]string, 0, len(m))
+	for _, err := range m {
+		msgs = append(msgs, err.Error())
+	}
+	return strings.Join(msgs, "; ")
+}
+
+// AllErrors returns a list of validation violation errors.
+func (m DepartmentProgressSummaryResponseMultiError) AllErrors() []error { return m }
+
+// DepartmentProgressSummaryResponseValidationError is the validation error
+// returned by DepartmentProgressSummaryResponse.Validate if the designated
+// constraints aren't met.
+type DepartmentProgressSummaryResponseValidationError struct {
+	field  string
+	reason string
+	cause  error
+	key    bool
+}
+
+// Field function returns field value.
+func (e DepartmentProgressSummaryResponseValidationError) Field() string { return e.field }
+
+// Reason function returns reason value.
+func (e DepartmentProgressSummaryResponseValidationError) Reason() string { return e.reason }
+
+// Cause function returns cause value.
+func (e DepartmentProgressSummaryResponseValidationError) Cause() error { return e.cause }
+
+// Key function returns key value.
+func (e DepartmentProgressSummaryResponseValidationError) Key() bool { return e.key }
+
+// ErrorName returns error name.
+func (e DepartmentProgressSummaryResponseValidationError) ErrorName() string {
+	return "DepartmentProgressSummaryResponseValidationError"
+}
+
+// Error satisfies the builtin error interface
+func (e DepartmentProgressSummaryResponseValidationError) Error() string {
+	cause := ""
+	if e.cause != nil {
+		cause = fmt.Sprintf(" | caused by: %v", e.cause)
+	}
+
+	key := ""
+	if e.key {
+		key = "key for "
+	}
+
+	return fmt.Sprintf(
+		"invalid %sDepartmentProgressSummaryResponse.%s: %s%s",
+		key,
+		e.field,
+		e.reason,
+		cause)
+}
+
+var _ error = DepartmentProgressSummaryResponseValidationError{}
+
+var _ interface {
+	Field() string
+	Reason() string
+	Key() bool
+	Cause() error
+	ErrorName() string
+} = DepartmentProgressSummaryResponseValidationError{}
+
+// Validate checks the field values on ListDepartmentProgressTeamsRequest with
+// the rules defined in the proto definition for this message. If any rules
+// are violated, the first error encountered is returned, or nil if there are
+// no violations.
+func (m *ListDepartmentProgressTeamsRequest) Validate() error {
+	return m.validate(false)
+}
+
+// ValidateAll checks the field values on ListDepartmentProgressTeamsRequest
+// with the rules defined in the proto definition for this message. If any
+// rules are violated, the result is a list of violation errors wrapped in
+// ListDepartmentProgressTeamsRequestMultiError, or nil if none found.
+func (m *ListDepartmentProgressTeamsRequest) ValidateAll() error {
+	return m.validate(true)
+}
+
+func (m *ListDepartmentProgressTeamsRequest) validate(all bool) error {
+	if m == nil {
+		return nil
+	}
+
+	var errors []error
+
+	if m.GetDepartmentId() <= 0 {
+		err := ListDepartmentProgressTeamsRequestValidationError{
+			field:  "DepartmentId",
+			reason: "value must be greater than 0",
+		}
+		if !all {
+			return err
+		}
+		errors = append(errors, err)
+	}
+
+	// no validation rules for Search
+
+	// no validation rules for SupervisorId
+
+	// no validation rules for CurrentStage
+
+	// no validation rules for TopicStatus
+
+	// no validation rules for NormControlStatus
+
+	// no validation rules for AntiplagiatStatus
+
+	// no validation rules for PreDefenseStatus
+
+	// no validation rules for AdmissionStatus
+
+	// no validation rules for MinGrade
+
+	// no validation rules for MaxGrade
+
+	// no validation rules for HasMinGrade
+
+	// no validation rules for HasMaxGrade
+
+	// no validation rules for Page
+
+	// no validation rules for PageSize
+
+	// no validation rules for SortBy
+
+	// no validation rules for SortOrder
+
+	if len(errors) > 0 {
+		return ListDepartmentProgressTeamsRequestMultiError(errors)
+	}
+
+	return nil
+}
+
+// ListDepartmentProgressTeamsRequestMultiError is an error wrapping multiple
+// validation errors returned by
+// ListDepartmentProgressTeamsRequest.ValidateAll() if the designated
+// constraints aren't met.
+type ListDepartmentProgressTeamsRequestMultiError []error
+
+// Error returns a concatenation of all the error messages it wraps.
+func (m ListDepartmentProgressTeamsRequestMultiError) Error() string {
+	msgs := make([]string, 0, len(m))
+	for _, err := range m {
+		msgs = append(msgs, err.Error())
+	}
+	return strings.Join(msgs, "; ")
+}
+
+// AllErrors returns a list of validation violation errors.
+func (m ListDepartmentProgressTeamsRequestMultiError) AllErrors() []error { return m }
+
+// ListDepartmentProgressTeamsRequestValidationError is the validation error
+// returned by ListDepartmentProgressTeamsRequest.Validate if the designated
+// constraints aren't met.
+type ListDepartmentProgressTeamsRequestValidationError struct {
+	field  string
+	reason string
+	cause  error
+	key    bool
+}
+
+// Field function returns field value.
+func (e ListDepartmentProgressTeamsRequestValidationError) Field() string { return e.field }
+
+// Reason function returns reason value.
+func (e ListDepartmentProgressTeamsRequestValidationError) Reason() string { return e.reason }
+
+// Cause function returns cause value.
+func (e ListDepartmentProgressTeamsRequestValidationError) Cause() error { return e.cause }
+
+// Key function returns key value.
+func (e ListDepartmentProgressTeamsRequestValidationError) Key() bool { return e.key }
+
+// ErrorName returns error name.
+func (e ListDepartmentProgressTeamsRequestValidationError) ErrorName() string {
+	return "ListDepartmentProgressTeamsRequestValidationError"
+}
+
+// Error satisfies the builtin error interface
+func (e ListDepartmentProgressTeamsRequestValidationError) Error() string {
+	cause := ""
+	if e.cause != nil {
+		cause = fmt.Sprintf(" | caused by: %v", e.cause)
+	}
+
+	key := ""
+	if e.key {
+		key = "key for "
+	}
+
+	return fmt.Sprintf(
+		"invalid %sListDepartmentProgressTeamsRequest.%s: %s%s",
+		key,
+		e.field,
+		e.reason,
+		cause)
+}
+
+var _ error = ListDepartmentProgressTeamsRequestValidationError{}
+
+var _ interface {
+	Field() string
+	Reason() string
+	Key() bool
+	Cause() error
+	ErrorName() string
+} = ListDepartmentProgressTeamsRequestValidationError{}
+
+// Validate checks the field values on DepartmentProgressTeam with the rules
+// defined in the proto definition for this message. If any rules are
+// violated, the first error encountered is returned, or nil if there are no violations.
+func (m *DepartmentProgressTeam) Validate() error {
+	return m.validate(false)
+}
+
+// ValidateAll checks the field values on DepartmentProgressTeam with the rules
+// defined in the proto definition for this message. If any rules are
+// violated, the result is a list of violation errors wrapped in
+// DepartmentProgressTeamMultiError, or nil if none found.
+func (m *DepartmentProgressTeam) ValidateAll() error {
+	return m.validate(true)
+}
+
+func (m *DepartmentProgressTeam) validate(all bool) error {
+	if m == nil {
+		return nil
+	}
+
+	var errors []error
+
+	// no validation rules for TeamId
+
+	// no validation rules for TeamName
+
+	// no validation rules for ProjectId
+
+	// no validation rules for ProjectTitle
+
+	if all {
+		switch v := interface{}(m.GetSupervisor()).(type) {
+		case interface{ ValidateAll() error }:
+			if err := v.ValidateAll(); err != nil {
+				errors = append(errors, DepartmentProgressTeamValidationError{
+					field:  "Supervisor",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		case interface{ Validate() error }:
+			if err := v.Validate(); err != nil {
+				errors = append(errors, DepartmentProgressTeamValidationError{
+					field:  "Supervisor",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		}
+	} else if v, ok := interface{}(m.GetSupervisor()).(interface{ Validate() error }); ok {
+		if err := v.Validate(); err != nil {
+			return DepartmentProgressTeamValidationError{
+				field:  "Supervisor",
+				reason: "embedded message failed validation",
+				cause:  err,
+			}
+		}
+	}
+
+	for idx, item := range m.GetMembers() {
+		_, _ = idx, item
+
+		if all {
+			switch v := interface{}(item).(type) {
+			case interface{ ValidateAll() error }:
+				if err := v.ValidateAll(); err != nil {
+					errors = append(errors, DepartmentProgressTeamValidationError{
+						field:  fmt.Sprintf("Members[%v]", idx),
+						reason: "embedded message failed validation",
+						cause:  err,
+					})
+				}
+			case interface{ Validate() error }:
+				if err := v.Validate(); err != nil {
+					errors = append(errors, DepartmentProgressTeamValidationError{
+						field:  fmt.Sprintf("Members[%v]", idx),
+						reason: "embedded message failed validation",
+						cause:  err,
+					})
+				}
+			}
+		} else if v, ok := interface{}(item).(interface{ Validate() error }); ok {
+			if err := v.Validate(); err != nil {
+				return DepartmentProgressTeamValidationError{
+					field:  fmt.Sprintf("Members[%v]", idx),
+					reason: "embedded message failed validation",
+					cause:  err,
+				}
+			}
+		}
+
+	}
+
+	// no validation rules for CurrentStage
+
+	// no validation rules for CurrentStageDisplay
+
+	// no validation rules for ProgressPercentage
+
+	// no validation rules for TopicStatus
+
+	// no validation rules for NormControlStatus
+
+	// no validation rules for AntiplagiatStatus
+
+	// no validation rules for AntiplagiatPercent
+
+	// no validation rules for HasAntiplagiatPercent
+
+	// no validation rules for PreDefenseStatus
+
+	// no validation rules for PreDefenseGrade
+
+	// no validation rules for HasPreDefenseGrade
+
+	// no validation rules for AdmissionStatus
+
+	// no validation rules for FinalGrade
+
+	// no validation rules for HasFinalGrade
+
+	if all {
+		switch v := interface{}(m.GetLastActivityAt()).(type) {
+		case interface{ ValidateAll() error }:
+			if err := v.ValidateAll(); err != nil {
+				errors = append(errors, DepartmentProgressTeamValidationError{
+					field:  "LastActivityAt",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		case interface{ Validate() error }:
+			if err := v.Validate(); err != nil {
+				errors = append(errors, DepartmentProgressTeamValidationError{
+					field:  "LastActivityAt",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		}
+	} else if v, ok := interface{}(m.GetLastActivityAt()).(interface{ Validate() error }); ok {
+		if err := v.Validate(); err != nil {
+			return DepartmentProgressTeamValidationError{
+				field:  "LastActivityAt",
+				reason: "embedded message failed validation",
+				cause:  err,
+			}
+		}
+	}
+
+	if all {
+		switch v := interface{}(m.GetCreatedAt()).(type) {
+		case interface{ ValidateAll() error }:
+			if err := v.ValidateAll(); err != nil {
+				errors = append(errors, DepartmentProgressTeamValidationError{
+					field:  "CreatedAt",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		case interface{ Validate() error }:
+			if err := v.Validate(); err != nil {
+				errors = append(errors, DepartmentProgressTeamValidationError{
+					field:  "CreatedAt",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		}
+	} else if v, ok := interface{}(m.GetCreatedAt()).(interface{ Validate() error }); ok {
+		if err := v.Validate(); err != nil {
+			return DepartmentProgressTeamValidationError{
+				field:  "CreatedAt",
+				reason: "embedded message failed validation",
+				cause:  err,
+			}
+		}
+	}
+
+	if all {
+		switch v := interface{}(m.GetUpdatedAt()).(type) {
+		case interface{ ValidateAll() error }:
+			if err := v.ValidateAll(); err != nil {
+				errors = append(errors, DepartmentProgressTeamValidationError{
+					field:  "UpdatedAt",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		case interface{ Validate() error }:
+			if err := v.Validate(); err != nil {
+				errors = append(errors, DepartmentProgressTeamValidationError{
+					field:  "UpdatedAt",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		}
+	} else if v, ok := interface{}(m.GetUpdatedAt()).(interface{ Validate() error }); ok {
+		if err := v.Validate(); err != nil {
+			return DepartmentProgressTeamValidationError{
+				field:  "UpdatedAt",
+				reason: "embedded message failed validation",
+				cause:  err,
+			}
+		}
+	}
+
+	if len(errors) > 0 {
+		return DepartmentProgressTeamMultiError(errors)
+	}
+
+	return nil
+}
+
+// DepartmentProgressTeamMultiError is an error wrapping multiple validation
+// errors returned by DepartmentProgressTeam.ValidateAll() if the designated
+// constraints aren't met.
+type DepartmentProgressTeamMultiError []error
+
+// Error returns a concatenation of all the error messages it wraps.
+func (m DepartmentProgressTeamMultiError) Error() string {
+	msgs := make([]string, 0, len(m))
+	for _, err := range m {
+		msgs = append(msgs, err.Error())
+	}
+	return strings.Join(msgs, "; ")
+}
+
+// AllErrors returns a list of validation violation errors.
+func (m DepartmentProgressTeamMultiError) AllErrors() []error { return m }
+
+// DepartmentProgressTeamValidationError is the validation error returned by
+// DepartmentProgressTeam.Validate if the designated constraints aren't met.
+type DepartmentProgressTeamValidationError struct {
+	field  string
+	reason string
+	cause  error
+	key    bool
+}
+
+// Field function returns field value.
+func (e DepartmentProgressTeamValidationError) Field() string { return e.field }
+
+// Reason function returns reason value.
+func (e DepartmentProgressTeamValidationError) Reason() string { return e.reason }
+
+// Cause function returns cause value.
+func (e DepartmentProgressTeamValidationError) Cause() error { return e.cause }
+
+// Key function returns key value.
+func (e DepartmentProgressTeamValidationError) Key() bool { return e.key }
+
+// ErrorName returns error name.
+func (e DepartmentProgressTeamValidationError) ErrorName() string {
+	return "DepartmentProgressTeamValidationError"
+}
+
+// Error satisfies the builtin error interface
+func (e DepartmentProgressTeamValidationError) Error() string {
+	cause := ""
+	if e.cause != nil {
+		cause = fmt.Sprintf(" | caused by: %v", e.cause)
+	}
+
+	key := ""
+	if e.key {
+		key = "key for "
+	}
+
+	return fmt.Sprintf(
+		"invalid %sDepartmentProgressTeam.%s: %s%s",
+		key,
+		e.field,
+		e.reason,
+		cause)
+}
+
+var _ error = DepartmentProgressTeamValidationError{}
+
+var _ interface {
+	Field() string
+	Reason() string
+	Key() bool
+	Cause() error
+	ErrorName() string
+} = DepartmentProgressTeamValidationError{}
+
+// Validate checks the field values on ListDepartmentProgressTeamsResponse with
+// the rules defined in the proto definition for this message. If any rules
+// are violated, the first error encountered is returned, or nil if there are
+// no violations.
+func (m *ListDepartmentProgressTeamsResponse) Validate() error {
+	return m.validate(false)
+}
+
+// ValidateAll checks the field values on ListDepartmentProgressTeamsResponse
+// with the rules defined in the proto definition for this message. If any
+// rules are violated, the result is a list of violation errors wrapped in
+// ListDepartmentProgressTeamsResponseMultiError, or nil if none found.
+func (m *ListDepartmentProgressTeamsResponse) ValidateAll() error {
+	return m.validate(true)
+}
+
+func (m *ListDepartmentProgressTeamsResponse) validate(all bool) error {
+	if m == nil {
+		return nil
+	}
+
+	var errors []error
+
+	for idx, item := range m.GetTeams() {
+		_, _ = idx, item
+
+		if all {
+			switch v := interface{}(item).(type) {
+			case interface{ ValidateAll() error }:
+				if err := v.ValidateAll(); err != nil {
+					errors = append(errors, ListDepartmentProgressTeamsResponseValidationError{
+						field:  fmt.Sprintf("Teams[%v]", idx),
+						reason: "embedded message failed validation",
+						cause:  err,
+					})
+				}
+			case interface{ Validate() error }:
+				if err := v.Validate(); err != nil {
+					errors = append(errors, ListDepartmentProgressTeamsResponseValidationError{
+						field:  fmt.Sprintf("Teams[%v]", idx),
+						reason: "embedded message failed validation",
+						cause:  err,
+					})
+				}
+			}
+		} else if v, ok := interface{}(item).(interface{ Validate() error }); ok {
+			if err := v.Validate(); err != nil {
+				return ListDepartmentProgressTeamsResponseValidationError{
+					field:  fmt.Sprintf("Teams[%v]", idx),
+					reason: "embedded message failed validation",
+					cause:  err,
+				}
+			}
+		}
+
+	}
+
+	// no validation rules for TotalCount
+
+	// no validation rules for Page
+
+	// no validation rules for PageSize
+
+	if len(errors) > 0 {
+		return ListDepartmentProgressTeamsResponseMultiError(errors)
+	}
+
+	return nil
+}
+
+// ListDepartmentProgressTeamsResponseMultiError is an error wrapping multiple
+// validation errors returned by
+// ListDepartmentProgressTeamsResponse.ValidateAll() if the designated
+// constraints aren't met.
+type ListDepartmentProgressTeamsResponseMultiError []error
+
+// Error returns a concatenation of all the error messages it wraps.
+func (m ListDepartmentProgressTeamsResponseMultiError) Error() string {
+	msgs := make([]string, 0, len(m))
+	for _, err := range m {
+		msgs = append(msgs, err.Error())
+	}
+	return strings.Join(msgs, "; ")
+}
+
+// AllErrors returns a list of validation violation errors.
+func (m ListDepartmentProgressTeamsResponseMultiError) AllErrors() []error { return m }
+
+// ListDepartmentProgressTeamsResponseValidationError is the validation error
+// returned by ListDepartmentProgressTeamsResponse.Validate if the designated
+// constraints aren't met.
+type ListDepartmentProgressTeamsResponseValidationError struct {
+	field  string
+	reason string
+	cause  error
+	key    bool
+}
+
+// Field function returns field value.
+func (e ListDepartmentProgressTeamsResponseValidationError) Field() string { return e.field }
+
+// Reason function returns reason value.
+func (e ListDepartmentProgressTeamsResponseValidationError) Reason() string { return e.reason }
+
+// Cause function returns cause value.
+func (e ListDepartmentProgressTeamsResponseValidationError) Cause() error { return e.cause }
+
+// Key function returns key value.
+func (e ListDepartmentProgressTeamsResponseValidationError) Key() bool { return e.key }
+
+// ErrorName returns error name.
+func (e ListDepartmentProgressTeamsResponseValidationError) ErrorName() string {
+	return "ListDepartmentProgressTeamsResponseValidationError"
+}
+
+// Error satisfies the builtin error interface
+func (e ListDepartmentProgressTeamsResponseValidationError) Error() string {
+	cause := ""
+	if e.cause != nil {
+		cause = fmt.Sprintf(" | caused by: %v", e.cause)
+	}
+
+	key := ""
+	if e.key {
+		key = "key for "
+	}
+
+	return fmt.Sprintf(
+		"invalid %sListDepartmentProgressTeamsResponse.%s: %s%s",
+		key,
+		e.field,
+		e.reason,
+		cause)
+}
+
+var _ error = ListDepartmentProgressTeamsResponseValidationError{}
+
+var _ interface {
+	Field() string
+	Reason() string
+	Key() bool
+	Cause() error
+	ErrorName() string
+} = ListDepartmentProgressTeamsResponseValidationError{}
+
+// Validate checks the field values on GetDepartmentProgressTeamDetailsRequest
+// with the rules defined in the proto definition for this message. If any
+// rules are violated, the first error encountered is returned, or nil if
+// there are no violations.
+func (m *GetDepartmentProgressTeamDetailsRequest) Validate() error {
+	return m.validate(false)
+}
+
+// ValidateAll checks the field values on
+// GetDepartmentProgressTeamDetailsRequest with the rules defined in the proto
+// definition for this message. If any rules are violated, the result is a
+// list of violation errors wrapped in
+// GetDepartmentProgressTeamDetailsRequestMultiError, or nil if none found.
+func (m *GetDepartmentProgressTeamDetailsRequest) ValidateAll() error {
+	return m.validate(true)
+}
+
+func (m *GetDepartmentProgressTeamDetailsRequest) validate(all bool) error {
+	if m == nil {
+		return nil
+	}
+
+	var errors []error
+
+	if m.GetTeamId() <= 0 {
+		err := GetDepartmentProgressTeamDetailsRequestValidationError{
+			field:  "TeamId",
+			reason: "value must be greater than 0",
+		}
+		if !all {
+			return err
+		}
+		errors = append(errors, err)
+	}
+
+	if m.GetDepartmentId() <= 0 {
+		err := GetDepartmentProgressTeamDetailsRequestValidationError{
+			field:  "DepartmentId",
+			reason: "value must be greater than 0",
+		}
+		if !all {
+			return err
+		}
+		errors = append(errors, err)
+	}
+
+	if len(errors) > 0 {
+		return GetDepartmentProgressTeamDetailsRequestMultiError(errors)
+	}
+
+	return nil
+}
+
+// GetDepartmentProgressTeamDetailsRequestMultiError is an error wrapping
+// multiple validation errors returned by
+// GetDepartmentProgressTeamDetailsRequest.ValidateAll() if the designated
+// constraints aren't met.
+type GetDepartmentProgressTeamDetailsRequestMultiError []error
+
+// Error returns a concatenation of all the error messages it wraps.
+func (m GetDepartmentProgressTeamDetailsRequestMultiError) Error() string {
+	msgs := make([]string, 0, len(m))
+	for _, err := range m {
+		msgs = append(msgs, err.Error())
+	}
+	return strings.Join(msgs, "; ")
+}
+
+// AllErrors returns a list of validation violation errors.
+func (m GetDepartmentProgressTeamDetailsRequestMultiError) AllErrors() []error { return m }
+
+// GetDepartmentProgressTeamDetailsRequestValidationError is the validation
+// error returned by GetDepartmentProgressTeamDetailsRequest.Validate if the
+// designated constraints aren't met.
+type GetDepartmentProgressTeamDetailsRequestValidationError struct {
+	field  string
+	reason string
+	cause  error
+	key    bool
+}
+
+// Field function returns field value.
+func (e GetDepartmentProgressTeamDetailsRequestValidationError) Field() string { return e.field }
+
+// Reason function returns reason value.
+func (e GetDepartmentProgressTeamDetailsRequestValidationError) Reason() string { return e.reason }
+
+// Cause function returns cause value.
+func (e GetDepartmentProgressTeamDetailsRequestValidationError) Cause() error { return e.cause }
+
+// Key function returns key value.
+func (e GetDepartmentProgressTeamDetailsRequestValidationError) Key() bool { return e.key }
+
+// ErrorName returns error name.
+func (e GetDepartmentProgressTeamDetailsRequestValidationError) ErrorName() string {
+	return "GetDepartmentProgressTeamDetailsRequestValidationError"
+}
+
+// Error satisfies the builtin error interface
+func (e GetDepartmentProgressTeamDetailsRequestValidationError) Error() string {
+	cause := ""
+	if e.cause != nil {
+		cause = fmt.Sprintf(" | caused by: %v", e.cause)
+	}
+
+	key := ""
+	if e.key {
+		key = "key for "
+	}
+
+	return fmt.Sprintf(
+		"invalid %sGetDepartmentProgressTeamDetailsRequest.%s: %s%s",
+		key,
+		e.field,
+		e.reason,
+		cause)
+}
+
+var _ error = GetDepartmentProgressTeamDetailsRequestValidationError{}
+
+var _ interface {
+	Field() string
+	Reason() string
+	Key() bool
+	Cause() error
+	ErrorName() string
+} = GetDepartmentProgressTeamDetailsRequestValidationError{}
+
+// Validate checks the field values on DepartmentProgressTeamInfo with the
+// rules defined in the proto definition for this message. If any rules are
+// violated, the first error encountered is returned, or nil if there are no violations.
+func (m *DepartmentProgressTeamInfo) Validate() error {
+	return m.validate(false)
+}
+
+// ValidateAll checks the field values on DepartmentProgressTeamInfo with the
+// rules defined in the proto definition for this message. If any rules are
+// violated, the result is a list of violation errors wrapped in
+// DepartmentProgressTeamInfoMultiError, or nil if none found.
+func (m *DepartmentProgressTeamInfo) ValidateAll() error {
+	return m.validate(true)
+}
+
+func (m *DepartmentProgressTeamInfo) validate(all bool) error {
+	if m == nil {
+		return nil
+	}
+
+	var errors []error
+
+	// no validation rules for TeamId
+
+	// no validation rules for TeamName
+
+	// no validation rules for Status
+
+	if all {
+		switch v := interface{}(m.GetCreatedAt()).(type) {
+		case interface{ ValidateAll() error }:
+			if err := v.ValidateAll(); err != nil {
+				errors = append(errors, DepartmentProgressTeamInfoValidationError{
+					field:  "CreatedAt",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		case interface{ Validate() error }:
+			if err := v.Validate(); err != nil {
+				errors = append(errors, DepartmentProgressTeamInfoValidationError{
+					field:  "CreatedAt",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		}
+	} else if v, ok := interface{}(m.GetCreatedAt()).(interface{ Validate() error }); ok {
+		if err := v.Validate(); err != nil {
+			return DepartmentProgressTeamInfoValidationError{
+				field:  "CreatedAt",
+				reason: "embedded message failed validation",
+				cause:  err,
+			}
+		}
+	}
+
+	if all {
+		switch v := interface{}(m.GetUpdatedAt()).(type) {
+		case interface{ ValidateAll() error }:
+			if err := v.ValidateAll(); err != nil {
+				errors = append(errors, DepartmentProgressTeamInfoValidationError{
+					field:  "UpdatedAt",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		case interface{ Validate() error }:
+			if err := v.Validate(); err != nil {
+				errors = append(errors, DepartmentProgressTeamInfoValidationError{
+					field:  "UpdatedAt",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		}
+	} else if v, ok := interface{}(m.GetUpdatedAt()).(interface{ Validate() error }); ok {
+		if err := v.Validate(); err != nil {
+			return DepartmentProgressTeamInfoValidationError{
+				field:  "UpdatedAt",
+				reason: "embedded message failed validation",
+				cause:  err,
+			}
+		}
+	}
+
+	if len(errors) > 0 {
+		return DepartmentProgressTeamInfoMultiError(errors)
+	}
+
+	return nil
+}
+
+// DepartmentProgressTeamInfoMultiError is an error wrapping multiple
+// validation errors returned by DepartmentProgressTeamInfo.ValidateAll() if
+// the designated constraints aren't met.
+type DepartmentProgressTeamInfoMultiError []error
+
+// Error returns a concatenation of all the error messages it wraps.
+func (m DepartmentProgressTeamInfoMultiError) Error() string {
+	msgs := make([]string, 0, len(m))
+	for _, err := range m {
+		msgs = append(msgs, err.Error())
+	}
+	return strings.Join(msgs, "; ")
+}
+
+// AllErrors returns a list of validation violation errors.
+func (m DepartmentProgressTeamInfoMultiError) AllErrors() []error { return m }
+
+// DepartmentProgressTeamInfoValidationError is the validation error returned
+// by DepartmentProgressTeamInfo.Validate if the designated constraints aren't met.
+type DepartmentProgressTeamInfoValidationError struct {
+	field  string
+	reason string
+	cause  error
+	key    bool
+}
+
+// Field function returns field value.
+func (e DepartmentProgressTeamInfoValidationError) Field() string { return e.field }
+
+// Reason function returns reason value.
+func (e DepartmentProgressTeamInfoValidationError) Reason() string { return e.reason }
+
+// Cause function returns cause value.
+func (e DepartmentProgressTeamInfoValidationError) Cause() error { return e.cause }
+
+// Key function returns key value.
+func (e DepartmentProgressTeamInfoValidationError) Key() bool { return e.key }
+
+// ErrorName returns error name.
+func (e DepartmentProgressTeamInfoValidationError) ErrorName() string {
+	return "DepartmentProgressTeamInfoValidationError"
+}
+
+// Error satisfies the builtin error interface
+func (e DepartmentProgressTeamInfoValidationError) Error() string {
+	cause := ""
+	if e.cause != nil {
+		cause = fmt.Sprintf(" | caused by: %v", e.cause)
+	}
+
+	key := ""
+	if e.key {
+		key = "key for "
+	}
+
+	return fmt.Sprintf(
+		"invalid %sDepartmentProgressTeamInfo.%s: %s%s",
+		key,
+		e.field,
+		e.reason,
+		cause)
+}
+
+var _ error = DepartmentProgressTeamInfoValidationError{}
+
+var _ interface {
+	Field() string
+	Reason() string
+	Key() bool
+	Cause() error
+	ErrorName() string
+} = DepartmentProgressTeamInfoValidationError{}
+
+// Validate checks the field values on DepartmentProgressProjectInfo with the
+// rules defined in the proto definition for this message. If any rules are
+// violated, the first error encountered is returned, or nil if there are no violations.
+func (m *DepartmentProgressProjectInfo) Validate() error {
+	return m.validate(false)
+}
+
+// ValidateAll checks the field values on DepartmentProgressProjectInfo with
+// the rules defined in the proto definition for this message. If any rules
+// are violated, the result is a list of violation errors wrapped in
+// DepartmentProgressProjectInfoMultiError, or nil if none found.
+func (m *DepartmentProgressProjectInfo) ValidateAll() error {
+	return m.validate(true)
+}
+
+func (m *DepartmentProgressProjectInfo) validate(all bool) error {
+	if m == nil {
+		return nil
+	}
+
+	var errors []error
+
+	// no validation rules for ProjectId
+
+	// no validation rules for TitleKz
+
+	// no validation rules for TitleRu
+
+	// no validation rules for TitleEn
+
+	// no validation rules for TitleDisplay
+
+	// no validation rules for Description
+
+	// no validation rules for CurrentState
+
+	// no validation rules for CurrentStepId
+
+	if len(errors) > 0 {
+		return DepartmentProgressProjectInfoMultiError(errors)
+	}
+
+	return nil
+}
+
+// DepartmentProgressProjectInfoMultiError is an error wrapping multiple
+// validation errors returned by DepartmentProgressProjectInfo.ValidateAll()
+// if the designated constraints aren't met.
+type DepartmentProgressProjectInfoMultiError []error
+
+// Error returns a concatenation of all the error messages it wraps.
+func (m DepartmentProgressProjectInfoMultiError) Error() string {
+	msgs := make([]string, 0, len(m))
+	for _, err := range m {
+		msgs = append(msgs, err.Error())
+	}
+	return strings.Join(msgs, "; ")
+}
+
+// AllErrors returns a list of validation violation errors.
+func (m DepartmentProgressProjectInfoMultiError) AllErrors() []error { return m }
+
+// DepartmentProgressProjectInfoValidationError is the validation error
+// returned by DepartmentProgressProjectInfo.Validate if the designated
+// constraints aren't met.
+type DepartmentProgressProjectInfoValidationError struct {
+	field  string
+	reason string
+	cause  error
+	key    bool
+}
+
+// Field function returns field value.
+func (e DepartmentProgressProjectInfoValidationError) Field() string { return e.field }
+
+// Reason function returns reason value.
+func (e DepartmentProgressProjectInfoValidationError) Reason() string { return e.reason }
+
+// Cause function returns cause value.
+func (e DepartmentProgressProjectInfoValidationError) Cause() error { return e.cause }
+
+// Key function returns key value.
+func (e DepartmentProgressProjectInfoValidationError) Key() bool { return e.key }
+
+// ErrorName returns error name.
+func (e DepartmentProgressProjectInfoValidationError) ErrorName() string {
+	return "DepartmentProgressProjectInfoValidationError"
+}
+
+// Error satisfies the builtin error interface
+func (e DepartmentProgressProjectInfoValidationError) Error() string {
+	cause := ""
+	if e.cause != nil {
+		cause = fmt.Sprintf(" | caused by: %v", e.cause)
+	}
+
+	key := ""
+	if e.key {
+		key = "key for "
+	}
+
+	return fmt.Sprintf(
+		"invalid %sDepartmentProgressProjectInfo.%s: %s%s",
+		key,
+		e.field,
+		e.reason,
+		cause)
+}
+
+var _ error = DepartmentProgressProjectInfoValidationError{}
+
+var _ interface {
+	Field() string
+	Reason() string
+	Key() bool
+	Cause() error
+	ErrorName() string
+} = DepartmentProgressProjectInfoValidationError{}
+
+// Validate checks the field values on DepartmentProgressStep with the rules
+// defined in the proto definition for this message. If any rules are
+// violated, the first error encountered is returned, or nil if there are no violations.
+func (m *DepartmentProgressStep) Validate() error {
+	return m.validate(false)
+}
+
+// ValidateAll checks the field values on DepartmentProgressStep with the rules
+// defined in the proto definition for this message. If any rules are
+// violated, the result is a list of violation errors wrapped in
+// DepartmentProgressStepMultiError, or nil if none found.
+func (m *DepartmentProgressStep) ValidateAll() error {
+	return m.validate(true)
+}
+
+func (m *DepartmentProgressStep) validate(all bool) error {
+	if m == nil {
+		return nil
+	}
+
+	var errors []error
+
+	// no validation rules for StepId
+
+	// no validation rules for StepName
+
+	// no validation rules for DisplayName
+
+	// no validation rules for Status
+
+	if all {
+		switch v := interface{}(m.GetCompletedAt()).(type) {
+		case interface{ ValidateAll() error }:
+			if err := v.ValidateAll(); err != nil {
+				errors = append(errors, DepartmentProgressStepValidationError{
+					field:  "CompletedAt",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		case interface{ Validate() error }:
+			if err := v.Validate(); err != nil {
+				errors = append(errors, DepartmentProgressStepValidationError{
+					field:  "CompletedAt",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		}
+	} else if v, ok := interface{}(m.GetCompletedAt()).(interface{ Validate() error }); ok {
+		if err := v.Validate(); err != nil {
+			return DepartmentProgressStepValidationError{
+				field:  "CompletedAt",
+				reason: "embedded message failed validation",
+				cause:  err,
+			}
+		}
+	}
+
+	// no validation rules for ReviewerName
+
+	// no validation rules for Grade
+
+	// no validation rules for HasGrade
+
+	// no validation rules for AdmissionStatus
+
+	// no validation rules for Comment
+
+	if len(errors) > 0 {
+		return DepartmentProgressStepMultiError(errors)
+	}
+
+	return nil
+}
+
+// DepartmentProgressStepMultiError is an error wrapping multiple validation
+// errors returned by DepartmentProgressStep.ValidateAll() if the designated
+// constraints aren't met.
+type DepartmentProgressStepMultiError []error
+
+// Error returns a concatenation of all the error messages it wraps.
+func (m DepartmentProgressStepMultiError) Error() string {
+	msgs := make([]string, 0, len(m))
+	for _, err := range m {
+		msgs = append(msgs, err.Error())
+	}
+	return strings.Join(msgs, "; ")
+}
+
+// AllErrors returns a list of validation violation errors.
+func (m DepartmentProgressStepMultiError) AllErrors() []error { return m }
+
+// DepartmentProgressStepValidationError is the validation error returned by
+// DepartmentProgressStep.Validate if the designated constraints aren't met.
+type DepartmentProgressStepValidationError struct {
+	field  string
+	reason string
+	cause  error
+	key    bool
+}
+
+// Field function returns field value.
+func (e DepartmentProgressStepValidationError) Field() string { return e.field }
+
+// Reason function returns reason value.
+func (e DepartmentProgressStepValidationError) Reason() string { return e.reason }
+
+// Cause function returns cause value.
+func (e DepartmentProgressStepValidationError) Cause() error { return e.cause }
+
+// Key function returns key value.
+func (e DepartmentProgressStepValidationError) Key() bool { return e.key }
+
+// ErrorName returns error name.
+func (e DepartmentProgressStepValidationError) ErrorName() string {
+	return "DepartmentProgressStepValidationError"
+}
+
+// Error satisfies the builtin error interface
+func (e DepartmentProgressStepValidationError) Error() string {
+	cause := ""
+	if e.cause != nil {
+		cause = fmt.Sprintf(" | caused by: %v", e.cause)
+	}
+
+	key := ""
+	if e.key {
+		key = "key for "
+	}
+
+	return fmt.Sprintf(
+		"invalid %sDepartmentProgressStep.%s: %s%s",
+		key,
+		e.field,
+		e.reason,
+		cause)
+}
+
+var _ error = DepartmentProgressStepValidationError{}
+
+var _ interface {
+	Field() string
+	Reason() string
+	Key() bool
+	Cause() error
+	ErrorName() string
+} = DepartmentProgressStepValidationError{}
+
+// Validate checks the field values on DepartmentProgressWorkflow with the
+// rules defined in the proto definition for this message. If any rules are
+// violated, the first error encountered is returned, or nil if there are no violations.
+func (m *DepartmentProgressWorkflow) Validate() error {
+	return m.validate(false)
+}
+
+// ValidateAll checks the field values on DepartmentProgressWorkflow with the
+// rules defined in the proto definition for this message. If any rules are
+// violated, the result is a list of violation errors wrapped in
+// DepartmentProgressWorkflowMultiError, or nil if none found.
+func (m *DepartmentProgressWorkflow) ValidateAll() error {
+	return m.validate(true)
+}
+
+func (m *DepartmentProgressWorkflow) validate(all bool) error {
+	if m == nil {
+		return nil
+	}
+
+	var errors []error
+
+	// no validation rules for CurrentState
+
+	// no validation rules for ProgressPercentage
+
+	for idx, item := range m.GetSteps() {
+		_, _ = idx, item
+
+		if all {
+			switch v := interface{}(item).(type) {
+			case interface{ ValidateAll() error }:
+				if err := v.ValidateAll(); err != nil {
+					errors = append(errors, DepartmentProgressWorkflowValidationError{
+						field:  fmt.Sprintf("Steps[%v]", idx),
+						reason: "embedded message failed validation",
+						cause:  err,
+					})
+				}
+			case interface{ Validate() error }:
+				if err := v.Validate(); err != nil {
+					errors = append(errors, DepartmentProgressWorkflowValidationError{
+						field:  fmt.Sprintf("Steps[%v]", idx),
+						reason: "embedded message failed validation",
+						cause:  err,
+					})
+				}
+			}
+		} else if v, ok := interface{}(item).(interface{ Validate() error }); ok {
+			if err := v.Validate(); err != nil {
+				return DepartmentProgressWorkflowValidationError{
+					field:  fmt.Sprintf("Steps[%v]", idx),
+					reason: "embedded message failed validation",
+					cause:  err,
+				}
+			}
+		}
+
+	}
+
+	if len(errors) > 0 {
+		return DepartmentProgressWorkflowMultiError(errors)
+	}
+
+	return nil
+}
+
+// DepartmentProgressWorkflowMultiError is an error wrapping multiple
+// validation errors returned by DepartmentProgressWorkflow.ValidateAll() if
+// the designated constraints aren't met.
+type DepartmentProgressWorkflowMultiError []error
+
+// Error returns a concatenation of all the error messages it wraps.
+func (m DepartmentProgressWorkflowMultiError) Error() string {
+	msgs := make([]string, 0, len(m))
+	for _, err := range m {
+		msgs = append(msgs, err.Error())
+	}
+	return strings.Join(msgs, "; ")
+}
+
+// AllErrors returns a list of validation violation errors.
+func (m DepartmentProgressWorkflowMultiError) AllErrors() []error { return m }
+
+// DepartmentProgressWorkflowValidationError is the validation error returned
+// by DepartmentProgressWorkflow.Validate if the designated constraints aren't met.
+type DepartmentProgressWorkflowValidationError struct {
+	field  string
+	reason string
+	cause  error
+	key    bool
+}
+
+// Field function returns field value.
+func (e DepartmentProgressWorkflowValidationError) Field() string { return e.field }
+
+// Reason function returns reason value.
+func (e DepartmentProgressWorkflowValidationError) Reason() string { return e.reason }
+
+// Cause function returns cause value.
+func (e DepartmentProgressWorkflowValidationError) Cause() error { return e.cause }
+
+// Key function returns key value.
+func (e DepartmentProgressWorkflowValidationError) Key() bool { return e.key }
+
+// ErrorName returns error name.
+func (e DepartmentProgressWorkflowValidationError) ErrorName() string {
+	return "DepartmentProgressWorkflowValidationError"
+}
+
+// Error satisfies the builtin error interface
+func (e DepartmentProgressWorkflowValidationError) Error() string {
+	cause := ""
+	if e.cause != nil {
+		cause = fmt.Sprintf(" | caused by: %v", e.cause)
+	}
+
+	key := ""
+	if e.key {
+		key = "key for "
+	}
+
+	return fmt.Sprintf(
+		"invalid %sDepartmentProgressWorkflow.%s: %s%s",
+		key,
+		e.field,
+		e.reason,
+		cause)
+}
+
+var _ error = DepartmentProgressWorkflowValidationError{}
+
+var _ interface {
+	Field() string
+	Reason() string
+	Key() bool
+	Cause() error
+	ErrorName() string
+} = DepartmentProgressWorkflowValidationError{}
+
+// Validate checks the field values on DepartmentProgressTopicRegistration with
+// the rules defined in the proto definition for this message. If any rules
+// are violated, the first error encountered is returned, or nil if there are
+// no violations.
+func (m *DepartmentProgressTopicRegistration) Validate() error {
+	return m.validate(false)
+}
+
+// ValidateAll checks the field values on DepartmentProgressTopicRegistration
+// with the rules defined in the proto definition for this message. If any
+// rules are violated, the result is a list of violation errors wrapped in
+// DepartmentProgressTopicRegistrationMultiError, or nil if none found.
+func (m *DepartmentProgressTopicRegistration) ValidateAll() error {
+	return m.validate(true)
+}
+
+func (m *DepartmentProgressTopicRegistration) validate(all bool) error {
+	if m == nil {
+		return nil
+	}
+
+	var errors []error
+
+	// no validation rules for Status
+
+	// no validation rules for ProposedTopicKz
+
+	// no validation rules for ProposedTopicRu
+
+	// no validation rules for ProposedTopicEn
+
+	// no validation rules for ReviewerName
+
+	if all {
+		switch v := interface{}(m.GetReviewedAt()).(type) {
+		case interface{ ValidateAll() error }:
+			if err := v.ValidateAll(); err != nil {
+				errors = append(errors, DepartmentProgressTopicRegistrationValidationError{
+					field:  "ReviewedAt",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		case interface{ Validate() error }:
+			if err := v.Validate(); err != nil {
+				errors = append(errors, DepartmentProgressTopicRegistrationValidationError{
+					field:  "ReviewedAt",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		}
+	} else if v, ok := interface{}(m.GetReviewedAt()).(interface{ Validate() error }); ok {
+		if err := v.Validate(); err != nil {
+			return DepartmentProgressTopicRegistrationValidationError{
+				field:  "ReviewedAt",
+				reason: "embedded message failed validation",
+				cause:  err,
+			}
+		}
+	}
+
+	// no validation rules for Comment
+
+	// no validation rules for RejectionReason
+
+	if len(errors) > 0 {
+		return DepartmentProgressTopicRegistrationMultiError(errors)
+	}
+
+	return nil
+}
+
+// DepartmentProgressTopicRegistrationMultiError is an error wrapping multiple
+// validation errors returned by
+// DepartmentProgressTopicRegistration.ValidateAll() if the designated
+// constraints aren't met.
+type DepartmentProgressTopicRegistrationMultiError []error
+
+// Error returns a concatenation of all the error messages it wraps.
+func (m DepartmentProgressTopicRegistrationMultiError) Error() string {
+	msgs := make([]string, 0, len(m))
+	for _, err := range m {
+		msgs = append(msgs, err.Error())
+	}
+	return strings.Join(msgs, "; ")
+}
+
+// AllErrors returns a list of validation violation errors.
+func (m DepartmentProgressTopicRegistrationMultiError) AllErrors() []error { return m }
+
+// DepartmentProgressTopicRegistrationValidationError is the validation error
+// returned by DepartmentProgressTopicRegistration.Validate if the designated
+// constraints aren't met.
+type DepartmentProgressTopicRegistrationValidationError struct {
+	field  string
+	reason string
+	cause  error
+	key    bool
+}
+
+// Field function returns field value.
+func (e DepartmentProgressTopicRegistrationValidationError) Field() string { return e.field }
+
+// Reason function returns reason value.
+func (e DepartmentProgressTopicRegistrationValidationError) Reason() string { return e.reason }
+
+// Cause function returns cause value.
+func (e DepartmentProgressTopicRegistrationValidationError) Cause() error { return e.cause }
+
+// Key function returns key value.
+func (e DepartmentProgressTopicRegistrationValidationError) Key() bool { return e.key }
+
+// ErrorName returns error name.
+func (e DepartmentProgressTopicRegistrationValidationError) ErrorName() string {
+	return "DepartmentProgressTopicRegistrationValidationError"
+}
+
+// Error satisfies the builtin error interface
+func (e DepartmentProgressTopicRegistrationValidationError) Error() string {
+	cause := ""
+	if e.cause != nil {
+		cause = fmt.Sprintf(" | caused by: %v", e.cause)
+	}
+
+	key := ""
+	if e.key {
+		key = "key for "
+	}
+
+	return fmt.Sprintf(
+		"invalid %sDepartmentProgressTopicRegistration.%s: %s%s",
+		key,
+		e.field,
+		e.reason,
+		cause)
+}
+
+var _ error = DepartmentProgressTopicRegistrationValidationError{}
+
+var _ interface {
+	Field() string
+	Reason() string
+	Key() bool
+	Cause() error
+	ErrorName() string
+} = DepartmentProgressTopicRegistrationValidationError{}
+
+// Validate checks the field values on DepartmentProgressNormControl with the
+// rules defined in the proto definition for this message. If any rules are
+// violated, the first error encountered is returned, or nil if there are no violations.
+func (m *DepartmentProgressNormControl) Validate() error {
+	return m.validate(false)
+}
+
+// ValidateAll checks the field values on DepartmentProgressNormControl with
+// the rules defined in the proto definition for this message. If any rules
+// are violated, the result is a list of violation errors wrapped in
+// DepartmentProgressNormControlMultiError, or nil if none found.
+func (m *DepartmentProgressNormControl) ValidateAll() error {
+	return m.validate(true)
+}
+
+func (m *DepartmentProgressNormControl) validate(all bool) error {
+	if m == nil {
+		return nil
+	}
+
+	var errors []error
+
+	// no validation rules for Status
+
+	// no validation rules for SubmissionId
+
+	// no validation rules for ReviewerName
+
+	if all {
+		switch v := interface{}(m.GetReviewedAt()).(type) {
+		case interface{ ValidateAll() error }:
+			if err := v.ValidateAll(); err != nil {
+				errors = append(errors, DepartmentProgressNormControlValidationError{
+					field:  "ReviewedAt",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		case interface{ Validate() error }:
+			if err := v.Validate(); err != nil {
+				errors = append(errors, DepartmentProgressNormControlValidationError{
+					field:  "ReviewedAt",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		}
+	} else if v, ok := interface{}(m.GetReviewedAt()).(interface{ Validate() error }); ok {
+		if err := v.Validate(); err != nil {
+			return DepartmentProgressNormControlValidationError{
+				field:  "ReviewedAt",
+				reason: "embedded message failed validation",
+				cause:  err,
+			}
+		}
+	}
+
+	// no validation rules for IssuesCount
+
+	// no validation rules for CriticalIssuesCount
+
+	if len(errors) > 0 {
+		return DepartmentProgressNormControlMultiError(errors)
+	}
+
+	return nil
+}
+
+// DepartmentProgressNormControlMultiError is an error wrapping multiple
+// validation errors returned by DepartmentProgressNormControl.ValidateAll()
+// if the designated constraints aren't met.
+type DepartmentProgressNormControlMultiError []error
+
+// Error returns a concatenation of all the error messages it wraps.
+func (m DepartmentProgressNormControlMultiError) Error() string {
+	msgs := make([]string, 0, len(m))
+	for _, err := range m {
+		msgs = append(msgs, err.Error())
+	}
+	return strings.Join(msgs, "; ")
+}
+
+// AllErrors returns a list of validation violation errors.
+func (m DepartmentProgressNormControlMultiError) AllErrors() []error { return m }
+
+// DepartmentProgressNormControlValidationError is the validation error
+// returned by DepartmentProgressNormControl.Validate if the designated
+// constraints aren't met.
+type DepartmentProgressNormControlValidationError struct {
+	field  string
+	reason string
+	cause  error
+	key    bool
+}
+
+// Field function returns field value.
+func (e DepartmentProgressNormControlValidationError) Field() string { return e.field }
+
+// Reason function returns reason value.
+func (e DepartmentProgressNormControlValidationError) Reason() string { return e.reason }
+
+// Cause function returns cause value.
+func (e DepartmentProgressNormControlValidationError) Cause() error { return e.cause }
+
+// Key function returns key value.
+func (e DepartmentProgressNormControlValidationError) Key() bool { return e.key }
+
+// ErrorName returns error name.
+func (e DepartmentProgressNormControlValidationError) ErrorName() string {
+	return "DepartmentProgressNormControlValidationError"
+}
+
+// Error satisfies the builtin error interface
+func (e DepartmentProgressNormControlValidationError) Error() string {
+	cause := ""
+	if e.cause != nil {
+		cause = fmt.Sprintf(" | caused by: %v", e.cause)
+	}
+
+	key := ""
+	if e.key {
+		key = "key for "
+	}
+
+	return fmt.Sprintf(
+		"invalid %sDepartmentProgressNormControl.%s: %s%s",
+		key,
+		e.field,
+		e.reason,
+		cause)
+}
+
+var _ error = DepartmentProgressNormControlValidationError{}
+
+var _ interface {
+	Field() string
+	Reason() string
+	Key() bool
+	Cause() error
+	ErrorName() string
+} = DepartmentProgressNormControlValidationError{}
+
+// Validate checks the field values on DepartmentProgressAntiplagiat with the
+// rules defined in the proto definition for this message. If any rules are
+// violated, the first error encountered is returned, or nil if there are no violations.
+func (m *DepartmentProgressAntiplagiat) Validate() error {
+	return m.validate(false)
+}
+
+// ValidateAll checks the field values on DepartmentProgressAntiplagiat with
+// the rules defined in the proto definition for this message. If any rules
+// are violated, the result is a list of violation errors wrapped in
+// DepartmentProgressAntiplagiatMultiError, or nil if none found.
+func (m *DepartmentProgressAntiplagiat) ValidateAll() error {
+	return m.validate(true)
+}
+
+func (m *DepartmentProgressAntiplagiat) validate(all bool) error {
+	if m == nil {
+		return nil
+	}
+
+	var errors []error
+
+	// no validation rules for Status
+
+	// no validation rules for SimilarityPercent
+
+	// no validation rules for HasSimilarityPercent
+
+	// no validation rules for AiPercent
+
+	// no validation rules for HasAiPercent
+
+	if all {
+		switch v := interface{}(m.GetCheckedAt()).(type) {
+		case interface{ ValidateAll() error }:
+			if err := v.ValidateAll(); err != nil {
+				errors = append(errors, DepartmentProgressAntiplagiatValidationError{
+					field:  "CheckedAt",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		case interface{ Validate() error }:
+			if err := v.Validate(); err != nil {
+				errors = append(errors, DepartmentProgressAntiplagiatValidationError{
+					field:  "CheckedAt",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		}
+	} else if v, ok := interface{}(m.GetCheckedAt()).(interface{ Validate() error }); ok {
+		if err := v.Validate(); err != nil {
+			return DepartmentProgressAntiplagiatValidationError{
+				field:  "CheckedAt",
+				reason: "embedded message failed validation",
+				cause:  err,
+			}
+		}
+	}
+
+	// no validation rules for ReviewerName
+
+	if len(errors) > 0 {
+		return DepartmentProgressAntiplagiatMultiError(errors)
+	}
+
+	return nil
+}
+
+// DepartmentProgressAntiplagiatMultiError is an error wrapping multiple
+// validation errors returned by DepartmentProgressAntiplagiat.ValidateAll()
+// if the designated constraints aren't met.
+type DepartmentProgressAntiplagiatMultiError []error
+
+// Error returns a concatenation of all the error messages it wraps.
+func (m DepartmentProgressAntiplagiatMultiError) Error() string {
+	msgs := make([]string, 0, len(m))
+	for _, err := range m {
+		msgs = append(msgs, err.Error())
+	}
+	return strings.Join(msgs, "; ")
+}
+
+// AllErrors returns a list of validation violation errors.
+func (m DepartmentProgressAntiplagiatMultiError) AllErrors() []error { return m }
+
+// DepartmentProgressAntiplagiatValidationError is the validation error
+// returned by DepartmentProgressAntiplagiat.Validate if the designated
+// constraints aren't met.
+type DepartmentProgressAntiplagiatValidationError struct {
+	field  string
+	reason string
+	cause  error
+	key    bool
+}
+
+// Field function returns field value.
+func (e DepartmentProgressAntiplagiatValidationError) Field() string { return e.field }
+
+// Reason function returns reason value.
+func (e DepartmentProgressAntiplagiatValidationError) Reason() string { return e.reason }
+
+// Cause function returns cause value.
+func (e DepartmentProgressAntiplagiatValidationError) Cause() error { return e.cause }
+
+// Key function returns key value.
+func (e DepartmentProgressAntiplagiatValidationError) Key() bool { return e.key }
+
+// ErrorName returns error name.
+func (e DepartmentProgressAntiplagiatValidationError) ErrorName() string {
+	return "DepartmentProgressAntiplagiatValidationError"
+}
+
+// Error satisfies the builtin error interface
+func (e DepartmentProgressAntiplagiatValidationError) Error() string {
+	cause := ""
+	if e.cause != nil {
+		cause = fmt.Sprintf(" | caused by: %v", e.cause)
+	}
+
+	key := ""
+	if e.key {
+		key = "key for "
+	}
+
+	return fmt.Sprintf(
+		"invalid %sDepartmentProgressAntiplagiat.%s: %s%s",
+		key,
+		e.field,
+		e.reason,
+		cause)
+}
+
+var _ error = DepartmentProgressAntiplagiatValidationError{}
+
+var _ interface {
+	Field() string
+	Reason() string
+	Key() bool
+	Cause() error
+	ErrorName() string
+} = DepartmentProgressAntiplagiatValidationError{}
+
+// Validate checks the field values on DepartmentProgressPreDefense with the
+// rules defined in the proto definition for this message. If any rules are
+// violated, the first error encountered is returned, or nil if there are no violations.
+func (m *DepartmentProgressPreDefense) Validate() error {
+	return m.validate(false)
+}
+
+// ValidateAll checks the field values on DepartmentProgressPreDefense with the
+// rules defined in the proto definition for this message. If any rules are
+// violated, the result is a list of violation errors wrapped in
+// DepartmentProgressPreDefenseMultiError, or nil if none found.
+func (m *DepartmentProgressPreDefense) ValidateAll() error {
+	return m.validate(true)
+}
+
+func (m *DepartmentProgressPreDefense) validate(all bool) error {
+	if m == nil {
+		return nil
+	}
+
+	var errors []error
+
+	// no validation rules for Id
+
+	// no validation rules for Status
+
+	if all {
+		switch v := interface{}(m.GetScheduledDate()).(type) {
+		case interface{ ValidateAll() error }:
+			if err := v.ValidateAll(); err != nil {
+				errors = append(errors, DepartmentProgressPreDefenseValidationError{
+					field:  "ScheduledDate",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		case interface{ Validate() error }:
+			if err := v.Validate(); err != nil {
+				errors = append(errors, DepartmentProgressPreDefenseValidationError{
+					field:  "ScheduledDate",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		}
+	} else if v, ok := interface{}(m.GetScheduledDate()).(interface{ Validate() error }); ok {
+		if err := v.Validate(); err != nil {
+			return DepartmentProgressPreDefenseValidationError{
+				field:  "ScheduledDate",
+				reason: "embedded message failed validation",
+				cause:  err,
+			}
+		}
+	}
+
+	// no validation rules for Location
+
+	// no validation rules for Grade
+
+	// no validation rules for HasGrade
+
+	// no validation rules for Result
+
+	// no validation rules for AdmissionStatus
+
+	// no validation rules for Comment
+
+	for idx, item := range m.GetCommission() {
+		_, _ = idx, item
+
+		if all {
+			switch v := interface{}(item).(type) {
+			case interface{ ValidateAll() error }:
+				if err := v.ValidateAll(); err != nil {
+					errors = append(errors, DepartmentProgressPreDefenseValidationError{
+						field:  fmt.Sprintf("Commission[%v]", idx),
+						reason: "embedded message failed validation",
+						cause:  err,
+					})
+				}
+			case interface{ Validate() error }:
+				if err := v.Validate(); err != nil {
+					errors = append(errors, DepartmentProgressPreDefenseValidationError{
+						field:  fmt.Sprintf("Commission[%v]", idx),
+						reason: "embedded message failed validation",
+						cause:  err,
+					})
+				}
+			}
+		} else if v, ok := interface{}(item).(interface{ Validate() error }); ok {
+			if err := v.Validate(); err != nil {
+				return DepartmentProgressPreDefenseValidationError{
+					field:  fmt.Sprintf("Commission[%v]", idx),
+					reason: "embedded message failed validation",
+					cause:  err,
+				}
+			}
+		}
+
+	}
+
+	if len(errors) > 0 {
+		return DepartmentProgressPreDefenseMultiError(errors)
+	}
+
+	return nil
+}
+
+// DepartmentProgressPreDefenseMultiError is an error wrapping multiple
+// validation errors returned by DepartmentProgressPreDefense.ValidateAll() if
+// the designated constraints aren't met.
+type DepartmentProgressPreDefenseMultiError []error
+
+// Error returns a concatenation of all the error messages it wraps.
+func (m DepartmentProgressPreDefenseMultiError) Error() string {
+	msgs := make([]string, 0, len(m))
+	for _, err := range m {
+		msgs = append(msgs, err.Error())
+	}
+	return strings.Join(msgs, "; ")
+}
+
+// AllErrors returns a list of validation violation errors.
+func (m DepartmentProgressPreDefenseMultiError) AllErrors() []error { return m }
+
+// DepartmentProgressPreDefenseValidationError is the validation error returned
+// by DepartmentProgressPreDefense.Validate if the designated constraints
+// aren't met.
+type DepartmentProgressPreDefenseValidationError struct {
+	field  string
+	reason string
+	cause  error
+	key    bool
+}
+
+// Field function returns field value.
+func (e DepartmentProgressPreDefenseValidationError) Field() string { return e.field }
+
+// Reason function returns reason value.
+func (e DepartmentProgressPreDefenseValidationError) Reason() string { return e.reason }
+
+// Cause function returns cause value.
+func (e DepartmentProgressPreDefenseValidationError) Cause() error { return e.cause }
+
+// Key function returns key value.
+func (e DepartmentProgressPreDefenseValidationError) Key() bool { return e.key }
+
+// ErrorName returns error name.
+func (e DepartmentProgressPreDefenseValidationError) ErrorName() string {
+	return "DepartmentProgressPreDefenseValidationError"
+}
+
+// Error satisfies the builtin error interface
+func (e DepartmentProgressPreDefenseValidationError) Error() string {
+	cause := ""
+	if e.cause != nil {
+		cause = fmt.Sprintf(" | caused by: %v", e.cause)
+	}
+
+	key := ""
+	if e.key {
+		key = "key for "
+	}
+
+	return fmt.Sprintf(
+		"invalid %sDepartmentProgressPreDefense.%s: %s%s",
+		key,
+		e.field,
+		e.reason,
+		cause)
+}
+
+var _ error = DepartmentProgressPreDefenseValidationError{}
+
+var _ interface {
+	Field() string
+	Reason() string
+	Key() bool
+	Cause() error
+	ErrorName() string
+} = DepartmentProgressPreDefenseValidationError{}
+
+// Validate checks the field values on UnifiedHistoryItem with the rules
+// defined in the proto definition for this message. If any rules are
+// violated, the first error encountered is returned, or nil if there are no violations.
+func (m *UnifiedHistoryItem) Validate() error {
+	return m.validate(false)
+}
+
+// ValidateAll checks the field values on UnifiedHistoryItem with the rules
+// defined in the proto definition for this message. If any rules are
+// violated, the result is a list of violation errors wrapped in
+// UnifiedHistoryItemMultiError, or nil if none found.
+func (m *UnifiedHistoryItem) ValidateAll() error {
+	return m.validate(true)
+}
+
+func (m *UnifiedHistoryItem) validate(all bool) error {
+	if m == nil {
+		return nil
+	}
+
+	var errors []error
+
+	// no validation rules for Id
+
+	// no validation rules for Source
+
+	// no validation rules for Action
+
+	// no validation rules for ActorId
+
+	// no validation rules for ActorName
+
+	// no validation rules for OldValue
+
+	// no validation rules for NewValue
+
+	// no validation rules for Comment
+
+	if all {
+		switch v := interface{}(m.GetCreatedAt()).(type) {
+		case interface{ ValidateAll() error }:
+			if err := v.ValidateAll(); err != nil {
+				errors = append(errors, UnifiedHistoryItemValidationError{
+					field:  "CreatedAt",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		case interface{ Validate() error }:
+			if err := v.Validate(); err != nil {
+				errors = append(errors, UnifiedHistoryItemValidationError{
+					field:  "CreatedAt",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		}
+	} else if v, ok := interface{}(m.GetCreatedAt()).(interface{ Validate() error }); ok {
+		if err := v.Validate(); err != nil {
+			return UnifiedHistoryItemValidationError{
+				field:  "CreatedAt",
+				reason: "embedded message failed validation",
+				cause:  err,
+			}
+		}
+	}
+
+	if len(errors) > 0 {
+		return UnifiedHistoryItemMultiError(errors)
+	}
+
+	return nil
+}
+
+// UnifiedHistoryItemMultiError is an error wrapping multiple validation errors
+// returned by UnifiedHistoryItem.ValidateAll() if the designated constraints
+// aren't met.
+type UnifiedHistoryItemMultiError []error
+
+// Error returns a concatenation of all the error messages it wraps.
+func (m UnifiedHistoryItemMultiError) Error() string {
+	msgs := make([]string, 0, len(m))
+	for _, err := range m {
+		msgs = append(msgs, err.Error())
+	}
+	return strings.Join(msgs, "; ")
+}
+
+// AllErrors returns a list of validation violation errors.
+func (m UnifiedHistoryItemMultiError) AllErrors() []error { return m }
+
+// UnifiedHistoryItemValidationError is the validation error returned by
+// UnifiedHistoryItem.Validate if the designated constraints aren't met.
+type UnifiedHistoryItemValidationError struct {
+	field  string
+	reason string
+	cause  error
+	key    bool
+}
+
+// Field function returns field value.
+func (e UnifiedHistoryItemValidationError) Field() string { return e.field }
+
+// Reason function returns reason value.
+func (e UnifiedHistoryItemValidationError) Reason() string { return e.reason }
+
+// Cause function returns cause value.
+func (e UnifiedHistoryItemValidationError) Cause() error { return e.cause }
+
+// Key function returns key value.
+func (e UnifiedHistoryItemValidationError) Key() bool { return e.key }
+
+// ErrorName returns error name.
+func (e UnifiedHistoryItemValidationError) ErrorName() string {
+	return "UnifiedHistoryItemValidationError"
+}
+
+// Error satisfies the builtin error interface
+func (e UnifiedHistoryItemValidationError) Error() string {
+	cause := ""
+	if e.cause != nil {
+		cause = fmt.Sprintf(" | caused by: %v", e.cause)
+	}
+
+	key := ""
+	if e.key {
+		key = "key for "
+	}
+
+	return fmt.Sprintf(
+		"invalid %sUnifiedHistoryItem.%s: %s%s",
+		key,
+		e.field,
+		e.reason,
+		cause)
+}
+
+var _ error = UnifiedHistoryItemValidationError{}
+
+var _ interface {
+	Field() string
+	Reason() string
+	Key() bool
+	Cause() error
+	ErrorName() string
+} = UnifiedHistoryItemValidationError{}
+
+// Validate checks the field values on DepartmentProgressTeamDetailsResponse
+// with the rules defined in the proto definition for this message. If any
+// rules are violated, the first error encountered is returned, or nil if
+// there are no violations.
+func (m *DepartmentProgressTeamDetailsResponse) Validate() error {
+	return m.validate(false)
+}
+
+// ValidateAll checks the field values on DepartmentProgressTeamDetailsResponse
+// with the rules defined in the proto definition for this message. If any
+// rules are violated, the result is a list of violation errors wrapped in
+// DepartmentProgressTeamDetailsResponseMultiError, or nil if none found.
+func (m *DepartmentProgressTeamDetailsResponse) ValidateAll() error {
+	return m.validate(true)
+}
+
+func (m *DepartmentProgressTeamDetailsResponse) validate(all bool) error {
+	if m == nil {
+		return nil
+	}
+
+	var errors []error
+
+	if all {
+		switch v := interface{}(m.GetTeam()).(type) {
+		case interface{ ValidateAll() error }:
+			if err := v.ValidateAll(); err != nil {
+				errors = append(errors, DepartmentProgressTeamDetailsResponseValidationError{
+					field:  "Team",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		case interface{ Validate() error }:
+			if err := v.Validate(); err != nil {
+				errors = append(errors, DepartmentProgressTeamDetailsResponseValidationError{
+					field:  "Team",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		}
+	} else if v, ok := interface{}(m.GetTeam()).(interface{ Validate() error }); ok {
+		if err := v.Validate(); err != nil {
+			return DepartmentProgressTeamDetailsResponseValidationError{
+				field:  "Team",
+				reason: "embedded message failed validation",
+				cause:  err,
+			}
+		}
+	}
+
+	if all {
+		switch v := interface{}(m.GetProject()).(type) {
+		case interface{ ValidateAll() error }:
+			if err := v.ValidateAll(); err != nil {
+				errors = append(errors, DepartmentProgressTeamDetailsResponseValidationError{
+					field:  "Project",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		case interface{ Validate() error }:
+			if err := v.Validate(); err != nil {
+				errors = append(errors, DepartmentProgressTeamDetailsResponseValidationError{
+					field:  "Project",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		}
+	} else if v, ok := interface{}(m.GetProject()).(interface{ Validate() error }); ok {
+		if err := v.Validate(); err != nil {
+			return DepartmentProgressTeamDetailsResponseValidationError{
+				field:  "Project",
+				reason: "embedded message failed validation",
+				cause:  err,
+			}
+		}
+	}
+
+	if all {
+		switch v := interface{}(m.GetSupervisor()).(type) {
+		case interface{ ValidateAll() error }:
+			if err := v.ValidateAll(); err != nil {
+				errors = append(errors, DepartmentProgressTeamDetailsResponseValidationError{
+					field:  "Supervisor",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		case interface{ Validate() error }:
+			if err := v.Validate(); err != nil {
+				errors = append(errors, DepartmentProgressTeamDetailsResponseValidationError{
+					field:  "Supervisor",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		}
+	} else if v, ok := interface{}(m.GetSupervisor()).(interface{ Validate() error }); ok {
+		if err := v.Validate(); err != nil {
+			return DepartmentProgressTeamDetailsResponseValidationError{
+				field:  "Supervisor",
+				reason: "embedded message failed validation",
+				cause:  err,
+			}
+		}
+	}
+
+	for idx, item := range m.GetMembers() {
+		_, _ = idx, item
+
+		if all {
+			switch v := interface{}(item).(type) {
+			case interface{ ValidateAll() error }:
+				if err := v.ValidateAll(); err != nil {
+					errors = append(errors, DepartmentProgressTeamDetailsResponseValidationError{
+						field:  fmt.Sprintf("Members[%v]", idx),
+						reason: "embedded message failed validation",
+						cause:  err,
+					})
+				}
+			case interface{ Validate() error }:
+				if err := v.Validate(); err != nil {
+					errors = append(errors, DepartmentProgressTeamDetailsResponseValidationError{
+						field:  fmt.Sprintf("Members[%v]", idx),
+						reason: "embedded message failed validation",
+						cause:  err,
+					})
+				}
+			}
+		} else if v, ok := interface{}(item).(interface{ Validate() error }); ok {
+			if err := v.Validate(); err != nil {
+				return DepartmentProgressTeamDetailsResponseValidationError{
+					field:  fmt.Sprintf("Members[%v]", idx),
+					reason: "embedded message failed validation",
+					cause:  err,
+				}
+			}
+		}
+
+	}
+
+	if all {
+		switch v := interface{}(m.GetWorkflow()).(type) {
+		case interface{ ValidateAll() error }:
+			if err := v.ValidateAll(); err != nil {
+				errors = append(errors, DepartmentProgressTeamDetailsResponseValidationError{
+					field:  "Workflow",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		case interface{ Validate() error }:
+			if err := v.Validate(); err != nil {
+				errors = append(errors, DepartmentProgressTeamDetailsResponseValidationError{
+					field:  "Workflow",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		}
+	} else if v, ok := interface{}(m.GetWorkflow()).(interface{ Validate() error }); ok {
+		if err := v.Validate(); err != nil {
+			return DepartmentProgressTeamDetailsResponseValidationError{
+				field:  "Workflow",
+				reason: "embedded message failed validation",
+				cause:  err,
+			}
+		}
+	}
+
+	if all {
+		switch v := interface{}(m.GetTopicRegistration()).(type) {
+		case interface{ ValidateAll() error }:
+			if err := v.ValidateAll(); err != nil {
+				errors = append(errors, DepartmentProgressTeamDetailsResponseValidationError{
+					field:  "TopicRegistration",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		case interface{ Validate() error }:
+			if err := v.Validate(); err != nil {
+				errors = append(errors, DepartmentProgressTeamDetailsResponseValidationError{
+					field:  "TopicRegistration",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		}
+	} else if v, ok := interface{}(m.GetTopicRegistration()).(interface{ Validate() error }); ok {
+		if err := v.Validate(); err != nil {
+			return DepartmentProgressTeamDetailsResponseValidationError{
+				field:  "TopicRegistration",
+				reason: "embedded message failed validation",
+				cause:  err,
+			}
+		}
+	}
+
+	if all {
+		switch v := interface{}(m.GetNormControl()).(type) {
+		case interface{ ValidateAll() error }:
+			if err := v.ValidateAll(); err != nil {
+				errors = append(errors, DepartmentProgressTeamDetailsResponseValidationError{
+					field:  "NormControl",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		case interface{ Validate() error }:
+			if err := v.Validate(); err != nil {
+				errors = append(errors, DepartmentProgressTeamDetailsResponseValidationError{
+					field:  "NormControl",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		}
+	} else if v, ok := interface{}(m.GetNormControl()).(interface{ Validate() error }); ok {
+		if err := v.Validate(); err != nil {
+			return DepartmentProgressTeamDetailsResponseValidationError{
+				field:  "NormControl",
+				reason: "embedded message failed validation",
+				cause:  err,
+			}
+		}
+	}
+
+	if all {
+		switch v := interface{}(m.GetAntiplagiat()).(type) {
+		case interface{ ValidateAll() error }:
+			if err := v.ValidateAll(); err != nil {
+				errors = append(errors, DepartmentProgressTeamDetailsResponseValidationError{
+					field:  "Antiplagiat",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		case interface{ Validate() error }:
+			if err := v.Validate(); err != nil {
+				errors = append(errors, DepartmentProgressTeamDetailsResponseValidationError{
+					field:  "Antiplagiat",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		}
+	} else if v, ok := interface{}(m.GetAntiplagiat()).(interface{ Validate() error }); ok {
+		if err := v.Validate(); err != nil {
+			return DepartmentProgressTeamDetailsResponseValidationError{
+				field:  "Antiplagiat",
+				reason: "embedded message failed validation",
+				cause:  err,
+			}
+		}
+	}
+
+	for idx, item := range m.GetPreDefenses() {
+		_, _ = idx, item
+
+		if all {
+			switch v := interface{}(item).(type) {
+			case interface{ ValidateAll() error }:
+				if err := v.ValidateAll(); err != nil {
+					errors = append(errors, DepartmentProgressTeamDetailsResponseValidationError{
+						field:  fmt.Sprintf("PreDefenses[%v]", idx),
+						reason: "embedded message failed validation",
+						cause:  err,
+					})
+				}
+			case interface{ Validate() error }:
+				if err := v.Validate(); err != nil {
+					errors = append(errors, DepartmentProgressTeamDetailsResponseValidationError{
+						field:  fmt.Sprintf("PreDefenses[%v]", idx),
+						reason: "embedded message failed validation",
+						cause:  err,
+					})
+				}
+			}
+		} else if v, ok := interface{}(item).(interface{ Validate() error }); ok {
+			if err := v.Validate(); err != nil {
+				return DepartmentProgressTeamDetailsResponseValidationError{
+					field:  fmt.Sprintf("PreDefenses[%v]", idx),
+					reason: "embedded message failed validation",
+					cause:  err,
+				}
+			}
+		}
+
+	}
+
+	for idx, item := range m.GetGrades() {
+		_, _ = idx, item
+
+		if all {
+			switch v := interface{}(item).(type) {
+			case interface{ ValidateAll() error }:
+				if err := v.ValidateAll(); err != nil {
+					errors = append(errors, DepartmentProgressTeamDetailsResponseValidationError{
+						field:  fmt.Sprintf("Grades[%v]", idx),
+						reason: "embedded message failed validation",
+						cause:  err,
+					})
+				}
+			case interface{ Validate() error }:
+				if err := v.Validate(); err != nil {
+					errors = append(errors, DepartmentProgressTeamDetailsResponseValidationError{
+						field:  fmt.Sprintf("Grades[%v]", idx),
+						reason: "embedded message failed validation",
+						cause:  err,
+					})
+				}
+			}
+		} else if v, ok := interface{}(item).(interface{ Validate() error }); ok {
+			if err := v.Validate(); err != nil {
+				return DepartmentProgressTeamDetailsResponseValidationError{
+					field:  fmt.Sprintf("Grades[%v]", idx),
+					reason: "embedded message failed validation",
+					cause:  err,
+				}
+			}
+		}
+
+	}
+
+	for idx, item := range m.GetHistory() {
+		_, _ = idx, item
+
+		if all {
+			switch v := interface{}(item).(type) {
+			case interface{ ValidateAll() error }:
+				if err := v.ValidateAll(); err != nil {
+					errors = append(errors, DepartmentProgressTeamDetailsResponseValidationError{
+						field:  fmt.Sprintf("History[%v]", idx),
+						reason: "embedded message failed validation",
+						cause:  err,
+					})
+				}
+			case interface{ Validate() error }:
+				if err := v.Validate(); err != nil {
+					errors = append(errors, DepartmentProgressTeamDetailsResponseValidationError{
+						field:  fmt.Sprintf("History[%v]", idx),
+						reason: "embedded message failed validation",
+						cause:  err,
+					})
+				}
+			}
+		} else if v, ok := interface{}(item).(interface{ Validate() error }); ok {
+			if err := v.Validate(); err != nil {
+				return DepartmentProgressTeamDetailsResponseValidationError{
+					field:  fmt.Sprintf("History[%v]", idx),
+					reason: "embedded message failed validation",
+					cause:  err,
+				}
+			}
+		}
+
+	}
+
+	if len(errors) > 0 {
+		return DepartmentProgressTeamDetailsResponseMultiError(errors)
+	}
+
+	return nil
+}
+
+// DepartmentProgressTeamDetailsResponseMultiError is an error wrapping
+// multiple validation errors returned by
+// DepartmentProgressTeamDetailsResponse.ValidateAll() if the designated
+// constraints aren't met.
+type DepartmentProgressTeamDetailsResponseMultiError []error
+
+// Error returns a concatenation of all the error messages it wraps.
+func (m DepartmentProgressTeamDetailsResponseMultiError) Error() string {
+	msgs := make([]string, 0, len(m))
+	for _, err := range m {
+		msgs = append(msgs, err.Error())
+	}
+	return strings.Join(msgs, "; ")
+}
+
+// AllErrors returns a list of validation violation errors.
+func (m DepartmentProgressTeamDetailsResponseMultiError) AllErrors() []error { return m }
+
+// DepartmentProgressTeamDetailsResponseValidationError is the validation error
+// returned by DepartmentProgressTeamDetailsResponse.Validate if the
+// designated constraints aren't met.
+type DepartmentProgressTeamDetailsResponseValidationError struct {
+	field  string
+	reason string
+	cause  error
+	key    bool
+}
+
+// Field function returns field value.
+func (e DepartmentProgressTeamDetailsResponseValidationError) Field() string { return e.field }
+
+// Reason function returns reason value.
+func (e DepartmentProgressTeamDetailsResponseValidationError) Reason() string { return e.reason }
+
+// Cause function returns cause value.
+func (e DepartmentProgressTeamDetailsResponseValidationError) Cause() error { return e.cause }
+
+// Key function returns key value.
+func (e DepartmentProgressTeamDetailsResponseValidationError) Key() bool { return e.key }
+
+// ErrorName returns error name.
+func (e DepartmentProgressTeamDetailsResponseValidationError) ErrorName() string {
+	return "DepartmentProgressTeamDetailsResponseValidationError"
+}
+
+// Error satisfies the builtin error interface
+func (e DepartmentProgressTeamDetailsResponseValidationError) Error() string {
+	cause := ""
+	if e.cause != nil {
+		cause = fmt.Sprintf(" | caused by: %v", e.cause)
+	}
+
+	key := ""
+	if e.key {
+		key = "key for "
+	}
+
+	return fmt.Sprintf(
+		"invalid %sDepartmentProgressTeamDetailsResponse.%s: %s%s",
+		key,
+		e.field,
+		e.reason,
+		cause)
+}
+
+var _ error = DepartmentProgressTeamDetailsResponseValidationError{}
+
+var _ interface {
+	Field() string
+	Reason() string
+	Key() bool
+	Cause() error
+	ErrorName() string
+} = DepartmentProgressTeamDetailsResponseValidationError{}

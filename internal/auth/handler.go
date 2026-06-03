@@ -459,8 +459,15 @@ func (h *Handler) ListUserDepartmentRoles(ctx context.Context, req *authv1.ListU
 	if err := requireInternal(ctx, "api_gateway"); err != nil {
 		return nil, err
 	}
+	// Admins may read anyone's department roles. Any authenticated user may read
+	// their OWN slugs (self-scoped lookup used by department-progress access
+	// checks). No other cross-user reads are allowed.
 	if err := requireAdmin(ctx); err != nil {
-		return nil, err
+		md, _ := metadata.FromIncomingContext(ctx)
+		callerID := mdInt64(md, "x-user-id")
+		if callerID == 0 || callerID != req.UserId {
+			return nil, err
+		}
 	}
 	if req.UserId == 0 || req.DepartmentId == 0 {
 		return nil, status.Error(codes.InvalidArgument, "user_id and department_id are required")

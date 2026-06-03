@@ -155,6 +155,20 @@ type Repository interface {
 	GetProjectInfo(ctx context.Context, projectID int64) (*ProjectInfo, error)
 	GetTeamProgress(ctx context.Context, projectID int64) ([]*TeamProgressRow, error)
 	GetStateHistory(ctx context.Context, projectID int64) ([]*StateHistoryRow, error)
+
+	// ==================== Department Progress (teacher-facing, read-only) ====================
+	GetDepartmentProgressSummaryStats(ctx context.Context, departmentID int64) (*DepartmentProgressStatsData, error)
+	ListDepartmentProgressTeams(ctx context.Context, filter DepartmentProgressTeamFilter) ([]*dpTeamRow, int64, error)
+	GetDPTeamMembers(ctx context.Context, teamIDs []int64) (map[int64][]*DPMember, error)
+	GetDPSupervisors(ctx context.Context, supervisorIDs []int64) (map[int64]*DPUser, error)
+	GetDPTeamHead(ctx context.Context, teamID, departmentID int64) (*DPTeamInfo, error)
+	GetDPWorkflowSteps(ctx context.Context, projectID, workflowID int64) ([]*DPStep, error)
+	GetDPTopicRegistration(ctx context.Context, projectID int64) (*DPTopicRegistration, error)
+	GetDPNormControl(ctx context.Context, projectID int64) (*DPNormControl, error)
+	GetDPAntiplagiat(ctx context.Context, projectID int64) (*DPAntiplagiat, error)
+	GetDPPreDefenses(ctx context.Context, projectID int64) ([]*DPPreDefense, error)
+	GetDPProjectDepartmentID(ctx context.Context, projectID int64) (int64, error)
+	GetDPUnifiedHistory(ctx context.Context, projectID, teamID int64) ([]*UnifiedHistoryItem, error)
 }
 
 type TopicRegistrationFilter struct {
