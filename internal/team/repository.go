@@ -522,16 +522,34 @@ func (r *repository) CreateInviteSafe(ctx context.Context, invite *TeamInvite) e
 	now := time.Now().UTC()
 
 	return r.db.WithContext(ctx).Transaction(func(tx *gorm.DB) error {
-		var existing int64
+		var existing TeamInvite
 
-		if err := tx.Model(&TeamInvite{}).
-			Where("team_id = ? AND user_id = ? AND status = ?", invite.TeamID, invite.UserID, InviteStatusPending).
-			Count(&existing).Error; err != nil {
-			return err
+		err := tx.Clauses(clause.Locking{Strength: "UPDATE"}).
+			Where("team_id = ? AND user_id = ?", invite.TeamID, invite.UserID).
+			Order("created_at DESC").
+			First(&existing).Error
+
+		if err == nil {
+			if existing.Status == InviteStatusPending {
+				return ErrPendingInviteExists
+			}
+
+			// Если раньше отклонили/истекло — разрешаем повторно отправить приглашение
+			existing.Status = InviteStatusPending
+			existing.InviterID = invite.InviterID
+			existing.UpdatedAt = now
+
+			if invite.ExpiresAt.IsZero() {
+				existing.ExpiresAt = now.Add(3 * 24 * time.Hour)
+			} else {
+				existing.ExpiresAt = invite.ExpiresAt
+			}
+
+			return tx.Save(&existing).Error
 		}
 
-		if existing > 0 {
-			return ErrPendingInviteExists
+		if !errors.Is(err, gorm.ErrRecordNotFound) {
+			return err
 		}
 
 		invite.Status = InviteStatusPending
