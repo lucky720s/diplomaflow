@@ -1126,6 +1126,7 @@ func (r *repository) DeleteTeamByAdmin(ctx context.Context, teamID int64, reason
 			ActorID:      deletedBy,
 			TargetID:     teamID,
 			TargetType:   "team",
+			Metadata:     datatypes.JSON([]byte(`{}`)),
 			CreatedAt:    now,
 		}).Error; err != nil {
 			return err
