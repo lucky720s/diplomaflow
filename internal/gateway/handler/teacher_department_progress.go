@@ -8,6 +8,8 @@ import (
 	"github.com/gin-gonic/gin"
 	adminv1 "github.com/lucky720s/diplomaflow/pkg/protobuf/admin/v1"
 	authv1 "github.com/lucky720s/diplomaflow/pkg/protobuf/auth/v1"
+	"google.golang.org/protobuf/encoding/protojson"
+	"google.golang.org/protobuf/proto"
 )
 
 // Teacher-facing, read-only department-progress endpoints.
@@ -41,6 +43,19 @@ var dpAllowedAdmissionStatus = map[string]struct{}{
 	"admitted":          {},
 	"not_admitted":      {},
 	"revision_required": {},
+}
+
+func writeProtoJSON(c *gin.Context, status int, msg proto.Message) {
+	b, err := protojson.MarshalOptions{
+		EmitUnpopulated: true,
+		UseProtoNames:   true,
+	}.Marshal(msg)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to encode response"})
+		return
+	}
+
+	c.Data(status, "application/json; charset=utf-8", b)
 }
 
 // dpResolveDepartmentStrict picks requested department.
@@ -181,7 +196,7 @@ func (h *Handler) TeacherDPSummary(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, resp)
+	writeProtoJSON(c, http.StatusOK, resp)
 }
 
 // GET /api/v1/teacher/department-progress/teams
@@ -266,7 +281,7 @@ func (h *Handler) TeacherDPListTeams(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, resp)
+	writeProtoJSON(c, http.StatusOK, resp)
 }
 
 // GET /api/v1/teacher/department-progress/teams/:team_id
@@ -294,5 +309,5 @@ func (h *Handler) TeacherDPTeamDetails(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, resp)
+	writeProtoJSON(c, http.StatusOK, resp)
 }
