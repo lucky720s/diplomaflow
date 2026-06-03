@@ -50,7 +50,11 @@ type TopicRegistration struct {
 	TeamID    int64 `gorm:"index"`
 	ProjectID int64 `gorm:"index;not null"`
 
-	ProposedTopic    string `gorm:"not null"`
+	// Официальная тема — 3 языка (kz/ru/en).
+	ProposedTopicKz string `gorm:"column:proposed_topic_kz;size:500;not null"`
+	ProposedTopicRu string `gorm:"column:proposed_topic_ru;size:500;not null"`
+	ProposedTopicEn string `gorm:"column:proposed_topic_en;size:500;not null"`
+
 	TopicDescription string `gorm:"type:text"`
 
 	SupervisorID int64 `gorm:"index;not null"`

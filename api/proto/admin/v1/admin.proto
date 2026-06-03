@@ -106,19 +106,24 @@ message TopicRegistrationInfo {
   int64 team_id = 2;       // optional (0 если не известен/не нужен)
   string team_name = 3;
   int64 project_id = 4;    // canonical
-  string proposed_topic = 5;
-  string topic_description = 6;
-  int64 supervisor_id = 7;
-  string supervisor_name = 8;
-  int64 submitted_by = 9;
-  string submitter_name = 10;
-  string status = 11; // pending, approved, rejected, revision_requested
-  string rejection_reason = 12;
-  string comment = 13;
-  google.protobuf.Timestamp submitted_at = 14;
-  google.protobuf.Timestamp reviewed_at = 15;
-  int64 reviewed_by = 16;
-  string reviewer_name = 17;
+
+  // Официальная тема — 3 языка (kz/ru/en).
+  string proposed_topic_kz = 5;
+  string proposed_topic_ru = 6;
+  string proposed_topic_en = 7;
+
+  string topic_description = 8;
+  int64 supervisor_id = 9;
+  string supervisor_name = 10;
+  int64 submitted_by = 11;
+  string submitter_name = 12;
+  string status = 13; // pending, approved, rejected, revision_requested
+  string rejection_reason = 14;
+  string comment = 15;
+  google.protobuf.Timestamp submitted_at = 16;
+  google.protobuf.Timestamp reviewed_at = 17;
+  int64 reviewed_by = 18;
+  string reviewer_name = 19;
 }
 
 message SubmitTopicRegistrationRequest {
@@ -128,10 +133,14 @@ message SubmitTopicRegistrationRequest {
   // team_id optional: если 0 — admin_service сам получит team_id из project runtime
   int64 team_id = 2;
 
-  string proposed_topic = 3 [(validate.rules).string.min_len = 5];
-  string topic_description = 4;
-  int64 supervisor_id = 5 [(validate.rules).int64.gt = 0];
-  int64 submitted_by = 6 [(validate.rules).int64.gt = 0];
+  // Официальная тема — 3 языка (kz/ru/en). Валидация — в handler/service.
+  string proposed_topic_kz = 3;
+  string proposed_topic_ru = 4;
+  string proposed_topic_en = 5;
+
+  string topic_description = 6;
+  int64 supervisor_id = 7 [(validate.rules).int64.gt = 0];
+  int64 submitted_by = 8 [(validate.rules).int64.gt = 0];
 }
 
 message SubmitTopicRegistrationResponse {

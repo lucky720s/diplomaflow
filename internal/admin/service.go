@@ -6,6 +6,7 @@ import (
 	"errors"
 	"fmt"
 	"strconv"
+	"strings"
 	"time"
 
 	"github.com/google/uuid"
@@ -224,7 +225,9 @@ func (s *Service) tryPerformIfAvailable(ctx context.Context, actorID int64, acto
 type SubmitTopicRegistrationRequest struct {
 	ProjectID        int64
 	TeamID           int64 // optional (0 allowed)
-	ProposedTopic    string
+	ProposedTopicKz  string
+	ProposedTopicRu  string
+	ProposedTopicEn  string
 	TopicDescription string
 	SupervisorID     int64
 	SubmittedBy      int64
@@ -243,8 +246,14 @@ func (s *Service) SubmitTopicRegistration(ctx context.Context, req *SubmitTopicR
 	if req.SupervisorID <= 0 {
 		return nil, errors.New("supervisor_id is required")
 	}
-	if req.ProposedTopic == "" {
-		return nil, errors.New("proposed_topic is required")
+	if strings.TrimSpace(req.ProposedTopicKz) == "" {
+		return nil, errors.New("proposed_topic_kz is required")
+	}
+	if strings.TrimSpace(req.ProposedTopicRu) == "" {
+		return nil, errors.New("proposed_topic_ru is required")
+	}
+	if strings.TrimSpace(req.ProposedTopicEn) == "" {
+		return nil, errors.New("proposed_topic_en is required")
 	}
 
 	teamID, err := s.resolveTeamIDByProject(ctx, req.ProjectID, req.TeamID)
@@ -272,12 +281,17 @@ func (s *Service) SubmitTopicRegistration(ctx context.Context, req *SubmitTopicR
 		ID:               uuid.New().String(),
 		TeamID:           teamID,
 		ProjectID:        req.ProjectID,
-		ProposedTopic:    req.ProposedTopic,
-		TopicDescription: req.TopicDescription,
+		ProposedTopicKz:  strings.TrimSpace(req.ProposedTopicKz),
+		ProposedTopicRu:  strings.TrimSpace(req.ProposedTopicRu),
+		ProposedTopicEn:  strings.TrimSpace(req.ProposedTopicEn),
+		TopicDescription: strings.TrimSpace(req.TopicDescription),
 		SupervisorID:     req.SupervisorID,
 		SubmittedBy:      req.SubmittedBy,
 		Status:           StatusPending,
 	}
+
+	// Для логов/уведомлений/preview используем русский вариант.
+	displayTopic := reg.ProposedTopicRu
 
 	if err := s.repo.CreateTopicRegistration(ctx, reg); err != nil {
 		return nil, fmt.Errorf("не удалось создать заявление: %w", err)
@@ -297,7 +311,7 @@ func (s *Service) SubmitTopicRegistration(ctx context.Context, req *SubmitTopicR
 
 	_ = s.repo.LogActivity(ctx, &AdminActivity{
 		ActivityType: ActivityTypeTopicRegistration,
-		Description:  fmt.Sprintf("Заявление на тему '%s' подано (project=%d, team=%d)", req.ProposedTopic, req.ProjectID, teamID),
+		Description:  fmt.Sprintf("Заявление на тему '%s' подано (project=%d, team=%d)", displayTopic, req.ProjectID, teamID),
 		ActorID:      req.SubmittedBy,
 		TargetID:     teamID,
 		TargetType:   "team",
@@ -312,9 +326,15 @@ func (s *Service) SubmitTopicRegistration(ctx context.Context, req *SubmitTopicR
 	// =====================================================================
 	actorID, actorRole := s.callerFromContext(ctx, req.SubmittedBy, "student")
 	if wfErr := s.tryPerformIfAvailable(ctx, actorID, actorRole, req.ProjectID, "TOPIC_SUBMITTED", map[string]interface{}{
-		"source":          "admin_service",
-		"registration_id": reg.ID,
-		"proposed_topic":  req.ProposedTopic,
+		"source":            "admin_service",
+		"registration_id":   reg.ID,
+		"proposed_topic":    reg.ProposedTopicRu, // preview / совместимость со старыми conditions/UI
+		"proposed_topic_kz": reg.ProposedTopicKz,
+		"proposed_topic_ru": reg.ProposedTopicRu,
+		"proposed_topic_en": reg.ProposedTopicEn,
+		"topic_description": reg.TopicDescription,
+		"supervisor_id":     reg.SupervisorID,
+		"submitted_by":      reg.SubmittedBy,
 	}); wfErr != nil {
 		s.logger.Warn("Failed to perform TOPIC_SUBMITTED transition (non-blocking)",
 			zap.Error(wfErr),
@@ -324,7 +344,7 @@ func (s *Service) SubmitTopicRegistration(ctx context.Context, req *SubmitTopicR
 	// notify supervisor (если это его тема)
 	s.notifyBestEffort(ctx, reg.SupervisorID,
 		"Новая тема на согласование",
-		fmt.Sprintf("Команда «%d» подала тему: %s", teamID, reg.ProposedTopic),
+		fmt.Sprintf("Команда «%d» подала тему: %s", teamID, displayTopic),
 		fmt.Sprintf("/teacher/diploms/%d", reg.ProjectID),
 		"topic_registration_submitted",
 	)
@@ -332,7 +352,7 @@ func (s *Service) SubmitTopicRegistration(ctx context.Context, req *SubmitTopicR
 	// notify team
 	s.notifyTeamBestEffort(ctx, teamID,
 		"Тема отправлена на согласование",
-		fmt.Sprintf("Тема: %s", reg.ProposedTopic),
+		fmt.Sprintf("Тема: %s", displayTopic),
 		"/diplom",
 		"topic_registration_submitted_team",
 	)
@@ -438,7 +458,7 @@ func (s *Service) ReviewTopicRegistration(ctx context.Context, req *ReviewTopicR
 	case "approve":
 		s.notifyTeamBestEffort(ctx, reg.TeamID,
 			"Тема утверждена",
-			fmt.Sprintf("Тема: %s", reg.ProposedTopic),
+			fmt.Sprintf("Тема: %s", reg.ProposedTopicRu),
 			"/diplom",
 			"topic_registration_approved",
 		)

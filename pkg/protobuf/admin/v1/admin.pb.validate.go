@@ -65,7 +65,11 @@ func (m *TopicRegistrationInfo) validate(all bool) error {
 
 	// no validation rules for ProjectId
 
-	// no validation rules for ProposedTopic
+	// no validation rules for ProposedTopicKz
+
+	// no validation rules for ProposedTopicRu
+
+	// no validation rules for ProposedTopicEn
 
 	// no validation rules for TopicDescription
 
@@ -260,16 +264,11 @@ func (m *SubmitTopicRegistrationRequest) validate(all bool) error {
 
 	// no validation rules for TeamId
 
-	if utf8.RuneCountInString(m.GetProposedTopic()) < 5 {
-		err := SubmitTopicRegistrationRequestValidationError{
-			field:  "ProposedTopic",
-			reason: "value length must be at least 5 runes",
-		}
-		if !all {
-			return err
-		}
-		errors = append(errors, err)
-	}
+	// no validation rules for ProposedTopicKz
+
+	// no validation rules for ProposedTopicRu
+
+	// no validation rules for ProposedTopicEn
 
 	// no validation rules for TopicDescription
 

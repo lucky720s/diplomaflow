@@ -26,24 +26,27 @@ const (
 )
 
 type TopicRegistrationInfo struct {
-	state            protoimpl.MessageState `protogen:"open.v1"`
-	Id               string                 `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
-	TeamId           int64                  `protobuf:"varint,2,opt,name=team_id,json=teamId,proto3" json:"team_id,omitempty"` // optional (0 если не известен/не нужен)
-	TeamName         string                 `protobuf:"bytes,3,opt,name=team_name,json=teamName,proto3" json:"team_name,omitempty"`
-	ProjectId        int64                  `protobuf:"varint,4,opt,name=project_id,json=projectId,proto3" json:"project_id,omitempty"` // canonical
-	ProposedTopic    string                 `protobuf:"bytes,5,opt,name=proposed_topic,json=proposedTopic,proto3" json:"proposed_topic,omitempty"`
-	TopicDescription string                 `protobuf:"bytes,6,opt,name=topic_description,json=topicDescription,proto3" json:"topic_description,omitempty"`
-	SupervisorId     int64                  `protobuf:"varint,7,opt,name=supervisor_id,json=supervisorId,proto3" json:"supervisor_id,omitempty"`
-	SupervisorName   string                 `protobuf:"bytes,8,opt,name=supervisor_name,json=supervisorName,proto3" json:"supervisor_name,omitempty"`
-	SubmittedBy      int64                  `protobuf:"varint,9,opt,name=submitted_by,json=submittedBy,proto3" json:"submitted_by,omitempty"`
-	SubmitterName    string                 `protobuf:"bytes,10,opt,name=submitter_name,json=submitterName,proto3" json:"submitter_name,omitempty"`
-	Status           string                 `protobuf:"bytes,11,opt,name=status,proto3" json:"status,omitempty"` // pending, approved, rejected, revision_requested
-	RejectionReason  string                 `protobuf:"bytes,12,opt,name=rejection_reason,json=rejectionReason,proto3" json:"rejection_reason,omitempty"`
-	Comment          string                 `protobuf:"bytes,13,opt,name=comment,proto3" json:"comment,omitempty"`
-	SubmittedAt      *timestamppb.Timestamp `protobuf:"bytes,14,opt,name=submitted_at,json=submittedAt,proto3" json:"submitted_at,omitempty"`
-	ReviewedAt       *timestamppb.Timestamp `protobuf:"bytes,15,opt,name=reviewed_at,json=reviewedAt,proto3" json:"reviewed_at,omitempty"`
-	ReviewedBy       int64                  `protobuf:"varint,16,opt,name=reviewed_by,json=reviewedBy,proto3" json:"reviewed_by,omitempty"`
-	ReviewerName     string                 `protobuf:"bytes,17,opt,name=reviewer_name,json=reviewerName,proto3" json:"reviewer_name,omitempty"`
+	state     protoimpl.MessageState `protogen:"open.v1"`
+	Id        string                 `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
+	TeamId    int64                  `protobuf:"varint,2,opt,name=team_id,json=teamId,proto3" json:"team_id,omitempty"` // optional (0 если не известен/не нужен)
+	TeamName  string                 `protobuf:"bytes,3,opt,name=team_name,json=teamName,proto3" json:"team_name,omitempty"`
+	ProjectId int64                  `protobuf:"varint,4,opt,name=project_id,json=projectId,proto3" json:"project_id,omitempty"` // canonical
+	// Официальная тема — 3 языка (kz/ru/en).
+	ProposedTopicKz  string                 `protobuf:"bytes,5,opt,name=proposed_topic_kz,json=proposedTopicKz,proto3" json:"proposed_topic_kz,omitempty"`
+	ProposedTopicRu  string                 `protobuf:"bytes,6,opt,name=proposed_topic_ru,json=proposedTopicRu,proto3" json:"proposed_topic_ru,omitempty"`
+	ProposedTopicEn  string                 `protobuf:"bytes,7,opt,name=proposed_topic_en,json=proposedTopicEn,proto3" json:"proposed_topic_en,omitempty"`
+	TopicDescription string                 `protobuf:"bytes,8,opt,name=topic_description,json=topicDescription,proto3" json:"topic_description,omitempty"`
+	SupervisorId     int64                  `protobuf:"varint,9,opt,name=supervisor_id,json=supervisorId,proto3" json:"supervisor_id,omitempty"`
+	SupervisorName   string                 `protobuf:"bytes,10,opt,name=supervisor_name,json=supervisorName,proto3" json:"supervisor_name,omitempty"`
+	SubmittedBy      int64                  `protobuf:"varint,11,opt,name=submitted_by,json=submittedBy,proto3" json:"submitted_by,omitempty"`
+	SubmitterName    string                 `protobuf:"bytes,12,opt,name=submitter_name,json=submitterName,proto3" json:"submitter_name,omitempty"`
+	Status           string                 `protobuf:"bytes,13,opt,name=status,proto3" json:"status,omitempty"` // pending, approved, rejected, revision_requested
+	RejectionReason  string                 `protobuf:"bytes,14,opt,name=rejection_reason,json=rejectionReason,proto3" json:"rejection_reason,omitempty"`
+	Comment          string                 `protobuf:"bytes,15,opt,name=comment,proto3" json:"comment,omitempty"`
+	SubmittedAt      *timestamppb.Timestamp `protobuf:"bytes,16,opt,name=submitted_at,json=submittedAt,proto3" json:"submitted_at,omitempty"`
+	ReviewedAt       *timestamppb.Timestamp `protobuf:"bytes,17,opt,name=reviewed_at,json=reviewedAt,proto3" json:"reviewed_at,omitempty"`
+	ReviewedBy       int64                  `protobuf:"varint,18,opt,name=reviewed_by,json=reviewedBy,proto3" json:"reviewed_by,omitempty"`
+	ReviewerName     string                 `protobuf:"bytes,19,opt,name=reviewer_name,json=reviewerName,proto3" json:"reviewer_name,omitempty"`
 	unknownFields    protoimpl.UnknownFields
 	sizeCache        protoimpl.SizeCache
 }
@@ -106,9 +109,23 @@ func (x *TopicRegistrationInfo) GetProjectId() int64 {
 	return 0
 }
 
-func (x *TopicRegistrationInfo) GetProposedTopic() string {
+func (x *TopicRegistrationInfo) GetProposedTopicKz() string {
 	if x != nil {
-		return x.ProposedTopic
+		return x.ProposedTopicKz
+	}
+	return ""
+}
+
+func (x *TopicRegistrationInfo) GetProposedTopicRu() string {
+	if x != nil {
+		return x.ProposedTopicRu
+	}
+	return ""
+}
+
+func (x *TopicRegistrationInfo) GetProposedTopicEn() string {
+	if x != nil {
+		return x.ProposedTopicEn
 	}
 	return ""
 }
@@ -202,11 +219,14 @@ type SubmitTopicRegistrationRequest struct {
 	// NEW: project-first
 	ProjectId int64 `protobuf:"varint,1,opt,name=project_id,json=projectId,proto3" json:"project_id,omitempty"`
 	// team_id optional: если 0 — admin_service сам получит team_id из project runtime
-	TeamId           int64  `protobuf:"varint,2,opt,name=team_id,json=teamId,proto3" json:"team_id,omitempty"`
-	ProposedTopic    string `protobuf:"bytes,3,opt,name=proposed_topic,json=proposedTopic,proto3" json:"proposed_topic,omitempty"`
-	TopicDescription string `protobuf:"bytes,4,opt,name=topic_description,json=topicDescription,proto3" json:"topic_description,omitempty"`
-	SupervisorId     int64  `protobuf:"varint,5,opt,name=supervisor_id,json=supervisorId,proto3" json:"supervisor_id,omitempty"`
-	SubmittedBy      int64  `protobuf:"varint,6,opt,name=submitted_by,json=submittedBy,proto3" json:"submitted_by,omitempty"`
+	TeamId int64 `protobuf:"varint,2,opt,name=team_id,json=teamId,proto3" json:"team_id,omitempty"`
+	// Официальная тема — 3 языка (kz/ru/en). Валидация — в handler/service.
+	ProposedTopicKz  string `protobuf:"bytes,3,opt,name=proposed_topic_kz,json=proposedTopicKz,proto3" json:"proposed_topic_kz,omitempty"`
+	ProposedTopicRu  string `protobuf:"bytes,4,opt,name=proposed_topic_ru,json=proposedTopicRu,proto3" json:"proposed_topic_ru,omitempty"`
+	ProposedTopicEn  string `protobuf:"bytes,5,opt,name=proposed_topic_en,json=proposedTopicEn,proto3" json:"proposed_topic_en,omitempty"`
+	TopicDescription string `protobuf:"bytes,6,opt,name=topic_description,json=topicDescription,proto3" json:"topic_description,omitempty"`
+	SupervisorId     int64  `protobuf:"varint,7,opt,name=supervisor_id,json=supervisorId,proto3" json:"supervisor_id,omitempty"`
+	SubmittedBy      int64  `protobuf:"varint,8,opt,name=submitted_by,json=submittedBy,proto3" json:"submitted_by,omitempty"`
 	unknownFields    protoimpl.UnknownFields
 	sizeCache        protoimpl.SizeCache
 }
@@ -255,9 +275,23 @@ func (x *SubmitTopicRegistrationRequest) GetTeamId() int64 {
 	return 0
 }
 
-func (x *SubmitTopicRegistrationRequest) GetProposedTopic() string {
+func (x *SubmitTopicRegistrationRequest) GetProposedTopicKz() string {
 	if x != nil {
-		return x.ProposedTopic
+		return x.ProposedTopicKz
+	}
+	return ""
+}
+
+func (x *SubmitTopicRegistrationRequest) GetProposedTopicRu() string {
+	if x != nil {
+		return x.ProposedTopicRu
+	}
+	return ""
+}
+
+func (x *SubmitTopicRegistrationRequest) GetProposedTopicEn() string {
+	if x != nil {
+		return x.ProposedTopicEn
 	}
 	return ""
 }
@@ -10113,37 +10147,41 @@ var File_admin_v1_admin_proto protoreflect.FileDescriptor
 
 const file_admin_v1_admin_proto_rawDesc = "" +
 	"\n" +
-	"\x14admin/v1/admin.proto\x12\badmin.v1\x1a\x17validate/validate.proto\x1a\x1fgoogle/protobuf/timestamp.proto\x1a\x1cgoogle/protobuf/struct.proto\x1a\x1bgoogle/protobuf/empty.proto\"\x87\x05\n" +
+	"\x14admin/v1/admin.proto\x12\badmin.v1\x1a\x17validate/validate.proto\x1a\x1fgoogle/protobuf/timestamp.proto\x1a\x1cgoogle/protobuf/struct.proto\x1a\x1bgoogle/protobuf/empty.proto\"\xe4\x05\n" +
 	"\x15TopicRegistrationInfo\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\tR\x02id\x12\x17\n" +
 	"\ateam_id\x18\x02 \x01(\x03R\x06teamId\x12\x1b\n" +
 	"\tteam_name\x18\x03 \x01(\tR\bteamName\x12\x1d\n" +
 	"\n" +
-	"project_id\x18\x04 \x01(\x03R\tprojectId\x12%\n" +
-	"\x0eproposed_topic\x18\x05 \x01(\tR\rproposedTopic\x12+\n" +
-	"\x11topic_description\x18\x06 \x01(\tR\x10topicDescription\x12#\n" +
-	"\rsupervisor_id\x18\a \x01(\x03R\fsupervisorId\x12'\n" +
-	"\x0fsupervisor_name\x18\b \x01(\tR\x0esupervisorName\x12!\n" +
-	"\fsubmitted_by\x18\t \x01(\x03R\vsubmittedBy\x12%\n" +
-	"\x0esubmitter_name\x18\n" +
-	" \x01(\tR\rsubmitterName\x12\x16\n" +
-	"\x06status\x18\v \x01(\tR\x06status\x12)\n" +
-	"\x10rejection_reason\x18\f \x01(\tR\x0frejectionReason\x12\x18\n" +
-	"\acomment\x18\r \x01(\tR\acomment\x12=\n" +
-	"\fsubmitted_at\x18\x0e \x01(\v2\x1a.google.protobuf.TimestampR\vsubmittedAt\x12;\n" +
-	"\vreviewed_at\x18\x0f \x01(\v2\x1a.google.protobuf.TimestampR\n" +
+	"project_id\x18\x04 \x01(\x03R\tprojectId\x12*\n" +
+	"\x11proposed_topic_kz\x18\x05 \x01(\tR\x0fproposedTopicKz\x12*\n" +
+	"\x11proposed_topic_ru\x18\x06 \x01(\tR\x0fproposedTopicRu\x12*\n" +
+	"\x11proposed_topic_en\x18\a \x01(\tR\x0fproposedTopicEn\x12+\n" +
+	"\x11topic_description\x18\b \x01(\tR\x10topicDescription\x12#\n" +
+	"\rsupervisor_id\x18\t \x01(\x03R\fsupervisorId\x12'\n" +
+	"\x0fsupervisor_name\x18\n" +
+	" \x01(\tR\x0esupervisorName\x12!\n" +
+	"\fsubmitted_by\x18\v \x01(\x03R\vsubmittedBy\x12%\n" +
+	"\x0esubmitter_name\x18\f \x01(\tR\rsubmitterName\x12\x16\n" +
+	"\x06status\x18\r \x01(\tR\x06status\x12)\n" +
+	"\x10rejection_reason\x18\x0e \x01(\tR\x0frejectionReason\x12\x18\n" +
+	"\acomment\x18\x0f \x01(\tR\acomment\x12=\n" +
+	"\fsubmitted_at\x18\x10 \x01(\v2\x1a.google.protobuf.TimestampR\vsubmittedAt\x12;\n" +
+	"\vreviewed_at\x18\x11 \x01(\v2\x1a.google.protobuf.TimestampR\n" +
 	"reviewedAt\x12\x1f\n" +
-	"\vreviewed_by\x18\x10 \x01(\x03R\n" +
+	"\vreviewed_by\x18\x12 \x01(\x03R\n" +
 	"reviewedBy\x12#\n" +
-	"\rreviewer_name\x18\x11 \x01(\tR\freviewerName\"\x98\x02\n" +
+	"\rreviewer_name\x18\x13 \x01(\tR\freviewerName\"\xec\x02\n" +
 	"\x1eSubmitTopicRegistrationRequest\x12&\n" +
 	"\n" +
 	"project_id\x18\x01 \x01(\x03B\a\xfaB\x04\"\x02 \x00R\tprojectId\x12\x17\n" +
-	"\ateam_id\x18\x02 \x01(\x03R\x06teamId\x12.\n" +
-	"\x0eproposed_topic\x18\x03 \x01(\tB\a\xfaB\x04r\x02\x10\x05R\rproposedTopic\x12+\n" +
-	"\x11topic_description\x18\x04 \x01(\tR\x10topicDescription\x12,\n" +
-	"\rsupervisor_id\x18\x05 \x01(\x03B\a\xfaB\x04\"\x02 \x00R\fsupervisorId\x12*\n" +
-	"\fsubmitted_by\x18\x06 \x01(\x03B\a\xfaB\x04\"\x02 \x00R\vsubmittedBy\"~\n" +
+	"\ateam_id\x18\x02 \x01(\x03R\x06teamId\x12*\n" +
+	"\x11proposed_topic_kz\x18\x03 \x01(\tR\x0fproposedTopicKz\x12*\n" +
+	"\x11proposed_topic_ru\x18\x04 \x01(\tR\x0fproposedTopicRu\x12*\n" +
+	"\x11proposed_topic_en\x18\x05 \x01(\tR\x0fproposedTopicEn\x12+\n" +
+	"\x11topic_description\x18\x06 \x01(\tR\x10topicDescription\x12,\n" +
+	"\rsupervisor_id\x18\a \x01(\x03B\a\xfaB\x04\"\x02 \x00R\fsupervisorId\x12*\n" +
+	"\fsubmitted_by\x18\b \x01(\x03B\a\xfaB\x04\"\x02 \x00R\vsubmittedBy\"~\n" +
 	"\x1fSubmitTopicRegistrationResponse\x12\x18\n" +
 	"\asuccess\x18\x01 \x01(\bR\asuccess\x12'\n" +
 	"\x0fregistration_id\x18\x02 \x01(\tR\x0eregistrationId\x12\x18\n" +

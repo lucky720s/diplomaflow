@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"strconv"
+	"strings"
 	"time"
 
 	adminv1 "github.com/lucky720s/diplomaflow/pkg/protobuf/admin/v1"
@@ -499,8 +500,14 @@ func (h *Handler) SubmitTopicRegistration(ctx context.Context, req *adminv1.Subm
 	if req.ProjectId == 0 {
 		return nil, status.Error(codes.InvalidArgument, "project_id is required")
 	}
-	if req.ProposedTopic == "" {
-		return nil, status.Error(codes.InvalidArgument, "proposed_topic is required")
+	if strings.TrimSpace(req.ProposedTopicKz) == "" {
+		return nil, status.Error(codes.InvalidArgument, "proposed_topic_kz is required")
+	}
+	if strings.TrimSpace(req.ProposedTopicRu) == "" {
+		return nil, status.Error(codes.InvalidArgument, "proposed_topic_ru is required")
+	}
+	if strings.TrimSpace(req.ProposedTopicEn) == "" {
+		return nil, status.Error(codes.InvalidArgument, "proposed_topic_en is required")
 	}
 	if req.SupervisorId == 0 {
 		return nil, status.Error(codes.InvalidArgument, "supervisor_id is required")
@@ -512,7 +519,9 @@ func (h *Handler) SubmitTopicRegistration(ctx context.Context, req *adminv1.Subm
 	reg, err := h.service.SubmitTopicRegistration(ctx, &SubmitTopicRegistrationRequest{
 		ProjectID:        req.ProjectId,
 		TeamID:           req.TeamId,
-		ProposedTopic:    req.ProposedTopic,
+		ProposedTopicKz:  req.ProposedTopicKz,
+		ProposedTopicRu:  req.ProposedTopicRu,
+		ProposedTopicEn:  req.ProposedTopicEn,
 		TopicDescription: req.TopicDescription,
 		SupervisorID:     req.SupervisorId,
 		SubmittedBy:      req.SubmittedBy,
@@ -561,7 +570,9 @@ func (h *Handler) ListTopicRegistrations(ctx context.Context, req *adminv1.ListT
 			Id:               r.ID,
 			TeamId:           r.TeamID,
 			ProjectId:        r.ProjectID,
-			ProposedTopic:    r.ProposedTopic,
+			ProposedTopicKz:  r.ProposedTopicKz,
+			ProposedTopicRu:  r.ProposedTopicRu,
+			ProposedTopicEn:  r.ProposedTopicEn,
 			TopicDescription: r.TopicDescription,
 			SupervisorId:     r.SupervisorID,
 			SubmittedBy:      r.SubmittedBy,
@@ -599,7 +610,9 @@ func (h *Handler) GetTopicRegistration(ctx context.Context, req *adminv1.GetTopi
 		Id:               reg.ID,
 		TeamId:           reg.TeamID,
 		ProjectId:        reg.ProjectID,
-		ProposedTopic:    reg.ProposedTopic,
+		ProposedTopicKz:  reg.ProposedTopicKz,
+		ProposedTopicRu:  reg.ProposedTopicRu,
+		ProposedTopicEn:  reg.ProposedTopicEn,
 		TopicDescription: reg.TopicDescription,
 		SupervisorId:     reg.SupervisorID,
 		SubmittedBy:      reg.SubmittedBy,
@@ -661,7 +674,9 @@ func (h *Handler) ReviewTopicRegistration(ctx context.Context, req *adminv1.Revi
 		Id:               reg.ID,
 		TeamId:           reg.TeamID,
 		ProjectId:        reg.ProjectID,
-		ProposedTopic:    reg.ProposedTopic,
+		ProposedTopicKz:  reg.ProposedTopicKz,
+		ProposedTopicRu:  reg.ProposedTopicRu,
+		ProposedTopicEn:  reg.ProposedTopicEn,
 		TopicDescription: reg.TopicDescription,
 		SupervisorId:     reg.SupervisorID,
 		Status:           reg.Status,

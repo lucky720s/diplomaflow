@@ -257,7 +257,9 @@ func (h *Handler) SubmitTopicRegistration(c *gin.Context) {
 	}
 
 	var req struct {
-		ProposedTopic    string `json:"proposed_topic" binding:"required,min=5"`
+		ProposedTopicKz  string `json:"proposed_topic_kz" binding:"required"`
+		ProposedTopicRu  string `json:"proposed_topic_ru" binding:"required"`
+		ProposedTopicEn  string `json:"proposed_topic_en" binding:"required"`
 		TopicDescription string `json:"topic_description"`
 		SupervisorID     int64  `json:"supervisor_id" binding:"required"`
 	}
@@ -269,7 +271,9 @@ func (h *Handler) SubmitTopicRegistration(c *gin.Context) {
 	resp, err := h.adminClient.SubmitTopicRegistration(adminPanelCtx(c), &adminv1.SubmitTopicRegistrationRequest{
 		ProjectId:        projectID,
 		TeamId:           0, // optional; admin_service resolves via project runtime
-		ProposedTopic:    req.ProposedTopic,
+		ProposedTopicKz:  req.ProposedTopicKz,
+		ProposedTopicRu:  req.ProposedTopicRu,
+		ProposedTopicEn:  req.ProposedTopicEn,
 		TopicDescription: req.TopicDescription,
 		SupervisorId:     req.SupervisorID,
 		SubmittedBy:      userID,
