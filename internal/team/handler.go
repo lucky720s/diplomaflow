@@ -3,6 +3,7 @@ package team
 import (
 	"context"
 	"strconv"
+	"strings"
 
 	adminv1 "github.com/lucky720s/diplomaflow/pkg/protobuf/admin/v1"
 	authv1 "github.com/lucky720s/diplomaflow/pkg/protobuf/auth/v1"
@@ -89,28 +90,28 @@ func requireAuth(ctx context.Context) (userID int64, role string, univID int64, 
 }
 
 // ---- RPCs ----
-
 func (h *Handler) CreateTeam(ctx context.Context, req *teamv1.CreateTeamRequest) (*teamv1.CreateTeamResponse, error) {
-	if req.Name == "" {
-		return nil, status.Error(codes.InvalidArgument, "name is required")
-	}
-
-	userID, role, univID, deptID, err := requireAuth(ctx)
+	userID, _, universityID, departmentID, err := requireAuth(ctx)
 	if err != nil {
 		return nil, err
 	}
-	// Обычно команды создают студенты; admin тоже можно (если нужно) — оставим.
-	if role == "" {
-		return nil, status.Error(codes.PermissionDenied, "forbidden")
+
+	leaderID := req.LeaderId
+	if leaderID == 0 {
+		leaderID = userID
+	}
+	if leaderID != userID {
+		return nil, status.Error(codes.PermissionDenied, "leader_id must be current user")
 	}
 
-	// НЕ доверяем req.LeaderId: лидер = requester
-	teamID, err := h.service.CreateTeam(ctx, req.Name, userID, req.MemberIds, deptID, univID)
+	teamID, err := h.service.CreateTeam(ctx, req.Name, leaderID, req.MemberIds, departmentID, universityID)
 	if err != nil {
-		h.logger.Error("CreateTeam failed", zap.Error(err))
 		return nil, mapError(err)
 	}
-	return &teamv1.CreateTeamResponse{TeamId: teamID}, nil
+
+	return &teamv1.CreateTeamResponse{
+		TeamId: teamID,
+	}, nil
 }
 
 func (h *Handler) GetTeam(ctx context.Context, req *teamv1.GetTeamRequest) (*teamv1.GetTeamResponse, error) {
@@ -364,7 +365,10 @@ func (h *Handler) AddMember(ctx context.Context, req *teamv1.AddMemberRequest) (
 	if err := h.service.AddMember(ctx, req.TeamId, req.UserId, req.Role, userID); err != nil {
 		return nil, mapError(err)
 	}
-	return &teamv1.AddMemberResponse{Success: true, Message: "Member added successfully"}, nil
+	return &teamv1.AddMemberResponse{
+		Success: true,
+		Message: "Приглашение отправлено",
+	}, nil
 }
 
 func (h *Handler) RemoveMember(ctx context.Context, req *teamv1.RemoveMemberRequest) (*emptypb.Empty, error) {
@@ -381,7 +385,6 @@ func (h *Handler) RemoveMember(ctx context.Context, req *teamv1.RemoveMemberRequ
 	}
 	return &emptypb.Empty{}, nil
 }
-
 func (h *Handler) GetMyInvites(ctx context.Context, req *teamv1.GetMyInvitesRequest) (*teamv1.GetMyInvitesResponse, error) {
 	userID, _, _, _, err := requireAuth(ctx)
 	if err != nil {
@@ -396,20 +399,57 @@ func (h *Handler) GetMyInvites(ctx context.Context, req *teamv1.GetMyInvitesRequ
 		return nil, mapError(err)
 	}
 
+	inviterIDs := make([]int64, 0, len(invitesWithTeams))
+	seenInviters := map[int64]struct{}{}
+
+	for _, inv := range invitesWithTeams {
+		if inv.InviterID <= 0 {
+			continue
+		}
+		if _, ok := seenInviters[inv.InviterID]; ok {
+			continue
+		}
+		seenInviters[inv.InviterID] = struct{}{}
+		inviterIDs = append(inviterIDs, inv.InviterID)
+	}
+
+	users := map[int64]*authv1.UserPreview{}
+	if len(inviterIDs) > 0 {
+		authCtx := metadata.AppendToOutgoingContext(ctx, "x-internal-service", "team_service")
+		au, err := h.service.authClient.BatchGetUserPreviews(authCtx, &authv1.BatchGetUserPreviewsRequest{
+			Ids: inviterIDs,
+		})
+		if err != nil {
+			h.logger.Warn("BatchGetUserPreviews for invite inviters failed", zap.Error(err))
+		} else if au != nil {
+			for _, u := range au.Users {
+				users[u.Id] = u
+			}
+		}
+	}
+
 	pbInvites := make([]*teamv1.Invite, 0, len(invitesWithTeams))
 	for _, inv := range invitesWithTeams {
-		pbInvites = append(pbInvites, &teamv1.Invite{
+		pb := &teamv1.Invite{
 			Id:        inv.ID,
 			TeamId:    inv.TeamID,
 			TeamName:  inv.TeamName,
 			InviterId: inv.InviterID,
 			Status:    inv.Status,
-		})
+			CreatedAt: inv.CreatedAt.UTC().Format("2006-01-02T15:04:05Z"),
+			ExpiresAt: inv.ExpiresAt.UTC().Format("2006-01-02T15:04:05Z"),
+		}
+
+		if u := users[inv.InviterID]; u != nil {
+			pb.InviterName = strings.TrimSpace(u.FirstName + " " + u.LastName)
+			pb.InviterEmail = u.Email
+		}
+
+		pbInvites = append(pbInvites, pb)
 	}
 
 	return &teamv1.GetMyInvitesResponse{Invites: pbInvites}, nil
 }
-
 func (h *Handler) RespondToInvite(ctx context.Context, req *teamv1.RespondToInviteRequest) (*teamv1.RespondToInviteResponse, error) {
 	userID, _, _, _, err := requireAuth(ctx)
 	if err != nil {
@@ -587,6 +627,12 @@ func mapError(err error) error {
 		return status.Error(codes.PermissionDenied, "only team leader can perform this action")
 	case ErrAlreadyInTeam:
 		return status.Error(codes.AlreadyExists, "user is already in a team")
+	case ErrPendingInviteExists:
+		return status.Error(codes.AlreadyExists, "pending invite already exists")
+	case ErrInviteAlreadyProcessed:
+		return status.Error(codes.FailedPrecondition, "invite already processed")
+	case ErrInviteExpired:
+		return status.Error(codes.FailedPrecondition, "invite expired")
 	case ErrCannotRemoveLeader:
 		return status.Error(codes.FailedPrecondition, "cannot remove team leader")
 	case ErrNewLeaderNotInTeam:

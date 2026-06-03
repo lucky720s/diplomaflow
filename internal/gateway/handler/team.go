@@ -123,6 +123,7 @@ func (h *Handler) GetMyInvites(c *gin.Context) {
 
 func (h *Handler) RespondToInvite(c *gin.Context) {
 	userID := c.GetInt64("userId")
+
 	inviteID, err := strconv.ParseInt(c.Param("id"), 10, 64)
 	if err != nil || inviteID <= 0 {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid invite id"})
@@ -132,13 +133,13 @@ func (h *Handler) RespondToInvite(c *gin.Context) {
 	var jsonReq struct {
 		Accept bool `json:"accept"`
 	}
+
 	if bindErr := c.ShouldBindJSON(&jsonReq); bindErr != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": bindErr.Error()})
 		return
 	}
 
-	ctx := outgoingCtx(c)
-	_, err = h.teamClient.RespondToInvite(ctx, &teamv1.RespondToInviteRequest{
+	resp, err := h.teamClient.RespondToInvite(outgoingCtx(c), &teamv1.RespondToInviteRequest{
 		InviteId: inviteID,
 		UserId:   userID,
 		Accept:   jsonReq.Accept,
@@ -147,9 +148,12 @@ func (h *Handler) RespondToInvite(c *gin.Context) {
 		MapGRPCError(c, err)
 		return
 	}
-	c.JSON(http.StatusOK, gin.H{"success": true})
-}
 
+	c.JSON(http.StatusOK, gin.H{
+		"success": true,
+		"message": resp.Message,
+	})
+}
 func (h *Handler) GetMyTeam(c *gin.Context) {
 	userID := c.GetInt64("userId")
 	if userID == 0 {

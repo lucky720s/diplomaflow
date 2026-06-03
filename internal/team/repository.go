@@ -6,15 +6,19 @@ import (
 	"time"
 
 	"gorm.io/gorm"
+	"gorm.io/gorm/clause"
 )
 
 var (
-	ErrTeamNotFound      = errors.New("team not found")
-	ErrMemberNotFound    = errors.New("member not found")
-	ErrNotTeamMember     = errors.New("user is not a team member")
-	ErrNotTeamLeader     = errors.New("user is not the team leader")
-	ErrAlreadyInTeam     = errors.New("user is already in a team")
-	ErrCannotLeaveAsLast = errors.New("cannot leave team as last member without deleting")
+	ErrTeamNotFound           = errors.New("team not found")
+	ErrMemberNotFound         = errors.New("member not found")
+	ErrNotTeamMember          = errors.New("user is not a team member")
+	ErrNotTeamLeader          = errors.New("user is not the team leader")
+	ErrAlreadyInTeam          = errors.New("user is already in a team")
+	ErrCannotLeaveAsLast      = errors.New("cannot leave team as last member without deleting")
+	ErrPendingInviteExists    = errors.New("pending invite already exists")
+	ErrInviteAlreadyProcessed = errors.New("invite already processed")
+	ErrInviteExpired          = errors.New("invite expired")
 )
 
 type TeamInviteWithTeam struct {
@@ -61,6 +65,11 @@ type Repository interface {
 	GetUsersInTeams(ctx context.Context, userIDs []int64) (map[int64]bool, error)
 
 	GetSupervisorAssignment(ctx context.Context, teamID int64) (*SupervisorAssignment, error)
+
+	HasPendingInvite(ctx context.Context, teamID, userID int64) (bool, error)
+	CreateInviteSafe(ctx context.Context, invite *TeamInvite) error
+	AcceptInvite(ctx context.Context, inviteID, userID int64, maxTeamSize int32) (*TeamInvite, error)
+	RejectInvite(ctx context.Context, inviteID, userID int64) (*TeamInvite, error)
 }
 
 type repository struct {
@@ -364,4 +373,175 @@ func (r *repository) GetUsersInTeams(ctx context.Context, userIDs []int64) (map[
 		result[m.UserID] = true
 	}
 	return result, err
+}
+
+func (r *repository) HasPendingInvite(ctx context.Context, teamID, userID int64) (bool, error) {
+	var count int64
+
+	err := r.db.WithContext(ctx).
+		Model(&TeamInvite{}).
+		Where("team_id = ? AND user_id = ? AND status = ?", teamID, userID, InviteStatusPending).
+		Count(&count).Error
+
+	return count > 0, err
+}
+func (r *repository) AcceptInvite(ctx context.Context, inviteID, userID int64, maxTeamSize int32) (*TeamInvite, error) {
+	now := time.Now().UTC()
+
+	var invite TeamInvite
+
+	err := r.db.WithContext(ctx).Transaction(func(tx *gorm.DB) error {
+		if err := tx.Clauses(clause.Locking{Strength: "UPDATE"}).
+			First(&invite, "id = ? AND user_id = ?", inviteID, userID).Error; err != nil {
+			return err
+		}
+
+		if invite.Status != InviteStatusPending {
+			return ErrInviteAlreadyProcessed
+		}
+
+		if now.After(invite.ExpiresAt) {
+			invite.Status = InviteStatusExpired
+			invite.UpdatedAt = now
+
+			if err := tx.Save(&invite).Error; err != nil {
+				return err
+			}
+
+			return ErrInviteExpired
+		}
+
+		var team Team
+		if err := tx.Clauses(clause.Locking{Strength: "UPDATE"}).
+			First(&team, "id = ?", invite.TeamID).Error; err != nil {
+			return err
+		}
+
+		if team.CompositionLocked {
+			return ErrTeamCompositionLocked
+		}
+
+		var existingMember int64
+		if err := tx.Model(&TeamMember{}).
+			Where("user_id = ?", userID).
+			Count(&existingMember).Error; err != nil {
+			return err
+		}
+
+		if existingMember > 0 {
+			invite.Status = InviteStatusDeclined
+			invite.UpdatedAt = now
+
+			if err := tx.Save(&invite).Error; err != nil {
+				return err
+			}
+
+			return ErrAlreadyInTeam
+		}
+
+		if maxTeamSize > 0 {
+			var memberCount int64
+			if err := tx.Model(&TeamMember{}).
+				Where("team_id = ?", invite.TeamID).
+				Count(&memberCount).Error; err != nil {
+				return err
+			}
+
+			if int32(memberCount) >= maxTeamSize {
+				return ErrTeamFull
+			}
+		}
+
+		if err := tx.Create(&TeamMember{
+			TeamID:    invite.TeamID,
+			UserID:    userID,
+			Role:      RoleMember,
+			CreatedAt: now,
+		}).Error; err != nil {
+			return err
+		}
+
+		invite.Status = InviteStatusAccepted
+		invite.UpdatedAt = now
+
+		if err := tx.Save(&invite).Error; err != nil {
+			return err
+		}
+
+		// После вступления отменяем остальные pending invites этого студента.
+		if err := tx.Model(&TeamInvite{}).
+			Where("user_id = ? AND id <> ? AND status = ?", userID, inviteID, InviteStatusPending).
+			Updates(map[string]any{
+				"status":     InviteStatusDeclined,
+				"updated_at": now,
+			}).Error; err != nil {
+			return err
+		}
+
+		return nil
+	})
+
+	if err != nil {
+		return nil, err
+	}
+
+	return &invite, nil
+}
+func (r *repository) RejectInvite(ctx context.Context, inviteID, userID int64) (*TeamInvite, error) {
+	now := time.Now().UTC()
+
+	var invite TeamInvite
+
+	err := r.db.WithContext(ctx).Transaction(func(tx *gorm.DB) error {
+		if err := tx.Clauses(clause.Locking{Strength: "UPDATE"}).
+			First(&invite, "id = ? AND user_id = ?", inviteID, userID).Error; err != nil {
+			return err
+		}
+
+		if invite.Status != InviteStatusPending {
+			return ErrInviteAlreadyProcessed
+		}
+
+		if now.After(invite.ExpiresAt) {
+			invite.Status = InviteStatusExpired
+		} else {
+			invite.Status = InviteStatusDeclined
+		}
+
+		invite.UpdatedAt = now
+		return tx.Save(&invite).Error
+	})
+
+	if err != nil {
+		return nil, err
+	}
+
+	return &invite, nil
+}
+func (r *repository) CreateInviteSafe(ctx context.Context, invite *TeamInvite) error {
+	now := time.Now().UTC()
+
+	return r.db.WithContext(ctx).Transaction(func(tx *gorm.DB) error {
+		var existing int64
+
+		if err := tx.Model(&TeamInvite{}).
+			Where("team_id = ? AND user_id = ? AND status = ?", invite.TeamID, invite.UserID, InviteStatusPending).
+			Count(&existing).Error; err != nil {
+			return err
+		}
+
+		if existing > 0 {
+			return ErrPendingInviteExists
+		}
+
+		invite.Status = InviteStatusPending
+		invite.CreatedAt = now
+		invite.UpdatedAt = now
+
+		if invite.ExpiresAt.IsZero() {
+			invite.ExpiresAt = now.Add(3 * 24 * time.Hour)
+		}
+
+		return tx.Create(invite).Error
+	})
 }

@@ -104,6 +104,10 @@ message Invite {
   string team_name = 3;
   int64 inviter_id = 4;
   string status = 5;
+  string inviter_name = 6;
+  string inviter_email = 7;
+  string created_at = 8;
+  string expires_at = 9;
 }
 
 message GetMyInvitesRequest {

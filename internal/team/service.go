@@ -105,6 +105,11 @@ func (s *Service) CreateTeam(
 	memberIDs []int64,
 	departmentID, universityID int64,
 ) (int64, error) {
+	name = strings.TrimSpace(name)
+	if name == "" {
+		return 0, errors.New("team name is required")
+	}
+
 	inTeam, err := s.repo.IsUserInTeam(ctx, leaderID)
 	if err != nil {
 		return 0, fmt.Errorf("check user team: %w", err)
@@ -113,21 +118,35 @@ func (s *Service) CreateTeam(
 		return 0, ErrAlreadyInTeam
 	}
 
-	// team config from workflow (internal)
+	uniqueMemberIDs := make([]int64, 0, len(memberIDs))
+	seen := map[int64]struct{}{}
+
+	for _, memberID := range memberIDs {
+		if memberID <= 0 || memberID == leaderID {
+			continue
+		}
+		if _, ok := seen[memberID]; ok {
+			continue
+		}
+		seen[memberID] = struct{}{}
+		uniqueMemberIDs = append(uniqueMemberIDs, memberID)
+	}
+
 	cfg, cfgErr := s.workflowClient.GetTeamConfiguration(s.workflowInternalCtx(ctx), &workflowv1.GetTeamConfigurationRequest{
 		DepartmentId: departmentID,
 		WorkflowId:   0,
 		StateId:      0,
 	})
+
 	if cfgErr == nil && cfg != nil && cfg.TeamConfig != nil && cfg.TeamConfig.MaxSize > 0 {
-		requested := int32(1 + len(memberIDs)) // leader + invited
+		requested := int32(1 + len(uniqueMemberIDs))
 		if requested > cfg.TeamConfig.MaxSize {
 			return 0, ErrTeamFull
 		}
 	}
 
-	// create team with unique code
 	var team *Team
+
 	for i := 0; i < 10; i++ {
 		code, err := generateInviteCode()
 		if err != nil {
@@ -147,14 +166,15 @@ func (s *Service) CreateTeam(
 			}
 			return 0, fmt.Errorf("create team: %w", err)
 		}
+
 		team = t
 		break
 	}
+
 	if team == nil {
 		return 0, errors.New("failed to generate unique invite code")
 	}
 
-	// add leader
 	if err := s.repo.AddMember(ctx, &TeamMember{
 		TeamID: team.ID,
 		UserID: leaderID,
@@ -171,18 +191,12 @@ func (s *Service) CreateTeam(
 		"team_created",
 	)
 
-	// invite expiry days
 	inviteDays := int32(3)
 	if cfgErr == nil && cfg != nil && cfg.InviteExpireDays > 0 {
 		inviteDays = cfg.InviteExpireDays
 	}
 
-	// create invites
-	for _, memberID := range memberIDs {
-		if memberID == leaderID {
-			continue
-		}
-
+	for _, memberID := range uniqueMemberIDs {
 		memberInTeam, err := s.repo.IsUserInTeam(ctx, memberID)
 		if err != nil {
 			s.logger.Warn("check member team failed", zap.Int64("user_id", memberID), zap.Error(err))
@@ -199,20 +213,32 @@ func (s *Service) CreateTeam(
 			Status:    InviteStatusPending,
 			ExpiresAt: time.Now().UTC().Add(time.Duration(inviteDays) * 24 * time.Hour),
 		}
-		if err := s.repo.CreateInvite(ctx, invite); err != nil {
-			s.logger.Warn("create invite failed", zap.Int64("team_id", team.ID), zap.Int64("user_id", memberID), zap.Error(err))
+
+		if err := s.repo.CreateInviteSafe(ctx, invite); err != nil {
+			s.logger.Warn(
+				"create invite failed",
+				zap.Int64("team_id", team.ID),
+				zap.Int64("user_id", memberID),
+				zap.Error(err),
+			)
 			continue
 		}
 
 		s.notifyBestEffort(ctx, memberID,
 			"Приглашение в команду",
-			fmt.Sprintf("Вас пригласили в команду \"%s\". Откройте приглашения, чтобы принять/отклонить.", team.Name),
+			fmt.Sprintf("Вас пригласили в команду \"%s\". Откройте приглашения, чтобы принять или отклонить.", team.Name),
 			"/dashboard/team",
 			"team_invite",
 		)
 	}
 
-	s.logger.Info("Team created", zap.Int64("team_id", team.ID), zap.String("name", name), zap.Int64("leader_id", leaderID))
+	s.logger.Info(
+		"Team created",
+		zap.Int64("team_id", team.ID),
+		zap.String("name", name),
+		zap.Int64("leader_id", leaderID),
+	)
+
 	return team.ID, nil
 }
 
@@ -413,16 +439,22 @@ func (s *Service) TransferLeadership(ctx context.Context, teamID int64, currentL
 	s.logger.Info("Leadership transferred", zap.Int64("team_id", teamID), zap.Int64("from_user", currentLeaderID), zap.Int64("to_user", newLeaderID))
 	return s.GetTeam(ctx, teamID)
 }
-
 func (s *Service) AddMember(ctx context.Context, teamID int64, userID int64, role string, requesterID int64) error {
-	if err := s.ensureCompositionUnlocked(ctx, teamID); err != nil {
-		return err
+	if teamID <= 0 || userID <= 0 || requesterID <= 0 {
+		return ErrUnauthorized
 	}
+
 	if err := s.validateLeader(ctx, teamID, requesterID); err != nil {
 		return err
 	}
-	if err := s.ensureTeamNotFull(ctx, teamID); err != nil {
+
+	team, err := s.repo.GetByID(ctx, teamID)
+	if err != nil {
 		return err
+	}
+
+	if team.CompositionLocked {
+		return ErrTeamCompositionLocked
 	}
 
 	inTeam, err := s.repo.IsUserInTeam(ctx, userID)
@@ -432,25 +464,58 @@ func (s *Service) AddMember(ctx context.Context, teamID int64, userID int64, rol
 	if inTeam {
 		return ErrAlreadyInTeam
 	}
-	if role == "" {
-		role = RoleMember
+
+	hasPendingInvite, err := s.repo.HasPendingInvite(ctx, teamID, userID)
+	if err != nil {
+		return err
+	}
+	if hasPendingInvite {
+		return ErrPendingInviteExists
 	}
 
-	if err := s.repo.AddMember(ctx, &TeamMember{TeamID: teamID, UserID: userID, Role: role}); err != nil {
+	maxSize, err := s.getMaxTeamSizeFromWorkflow(ctx, team.DepartmentID)
+	if err == nil && maxSize > 0 {
+		memberCount, err := s.repo.GetMemberCount(ctx, teamID)
+		if err != nil {
+			return err
+		}
+
+		pendingCount, err := s.repo.GetPendingInvitesCount(ctx, teamID)
+		if err != nil {
+			return err
+		}
+
+		if int32(memberCount+pendingCount) >= maxSize {
+			return ErrTeamFull
+		}
+	}
+
+	invite := &TeamInvite{
+		TeamID:    teamID,
+		UserID:    userID,
+		InviterID: requesterID,
+		Status:    InviteStatusPending,
+		ExpiresAt: time.Now().UTC().Add(3 * 24 * time.Hour),
+	}
+
+	if err := s.repo.CreateInviteSafe(ctx, invite); err != nil {
 		return err
 	}
 
 	memberName := s.userDisplayName(ctx, userID)
 
-	s.notifyBestEffort(ctx, userID, "Вы добавлены в команду",
-		"Вас добавили в команду. Откройте страницу команды.",
-		"/dashboard/team", "team_member_added")
+	s.notifyBestEffort(ctx, userID,
+		"Приглашение в команду",
+		fmt.Sprintf("Вас пригласили в команду \"%s\". Откройте приглашение, чтобы принять или отклонить.", team.Name),
+		"/dashboard/team",
+		"team_invite",
+	)
 
 	s.notifyBestEffort(ctx, requesterID,
-		"Участник добавлен в команду",
-		fmt.Sprintf("Вы добавили пользователя %s в команду.", memberName),
+		"Приглашение отправлено",
+		fmt.Sprintf("Вы отправили приглашение пользователю %s.", memberName),
 		"/dashboard/team",
-		"team_member_added_leader",
+		"team_invite_sent",
 	)
 
 	return nil
@@ -515,7 +580,6 @@ func (s *Service) userDisplayName(ctx context.Context, userID int64) string {
 	}
 	return fmt.Sprintf("ID %d", userID)
 }
-
 func (s *Service) RespondToInvite(ctx context.Context, inviteID int64, userID int64, accept bool) error {
 	invite, err := s.repo.GetInvite(ctx, inviteID)
 	if err != nil {
@@ -525,54 +589,61 @@ func (s *Service) RespondToInvite(ctx context.Context, inviteID int64, userID in
 		return ErrUnauthorized
 	}
 	if invite.Status != InviteStatusPending {
-		return errors.New("invite already processed")
+		return ErrInviteAlreadyProcessed
 	}
-	if time.Now().UTC().After(invite.ExpiresAt) {
-		invite.Status = InviteStatusExpired
-		_ = s.repo.UpdateInvite(ctx, invite)
-		return errors.New("invite expired")
+
+	team, err := s.repo.GetByID(ctx, invite.TeamID)
+	if err != nil {
+		return err
+	}
+
+	maxTeamSize, err := s.getMaxTeamSizeFromWorkflow(ctx, team.DepartmentID)
+	if err != nil {
+		maxTeamSize = 0
 	}
 
 	if accept {
-		if err := s.ensureCompositionUnlocked(ctx, invite.TeamID); err != nil {
-			return err
-		}
-		if err := s.ensureTeamNotFull(ctx, invite.TeamID); err != nil {
-			return err
-		}
+		var acceptedInvite *TeamInvite
 
-		inTeam, _ := s.repo.IsUserInTeam(ctx, userID)
-		if inTeam {
-			invite.Status = InviteStatusDeclined
-			_ = s.repo.UpdateInvite(ctx, invite)
-			return ErrAlreadyInTeam
-		}
-
-		if err := s.repo.AddMember(ctx, &TeamMember{TeamID: invite.TeamID, UserID: userID, Role: RoleMember}); err != nil {
+		acceptedInvite, err = s.repo.AcceptInvite(ctx, inviteID, userID, maxTeamSize)
+		if err != nil {
 			return err
 		}
-		invite.Status = InviteStatusAccepted
 
 		accepterName := s.userDisplayName(ctx, userID)
-		s.notifyBestEffort(ctx, invite.InviterID,
+
+		s.notifyBestEffort(ctx, acceptedInvite.InviterID,
 			"Приглашение принято",
 			fmt.Sprintf("%s принял(а) приглашение в команду.", accepterName),
 			"/dashboard/team",
 			"team_invite_accepted",
 		)
 
-	} else {
-		invite.Status = InviteStatusDeclined
-		declinerName := s.userDisplayName(ctx, userID)
-		s.notifyBestEffort(ctx, invite.InviterID,
-			"Приглашение отклонено",
-			fmt.Sprintf("%s отклонил(а) приглашение в команду.", declinerName),
+		s.notifyBestEffort(ctx, userID,
+			"Вы вступили в команду",
+			fmt.Sprintf("Вы успешно вступили в команду \"%s\".", team.Name),
 			"/dashboard/team",
-			"team_invite_declined",
+			"team_invite_joined",
 		)
+
+		return nil
 	}
 
-	return s.repo.UpdateInvite(ctx, invite)
+	rejectedInvite, err := s.repo.RejectInvite(ctx, inviteID, userID)
+	if err != nil {
+		return err
+	}
+
+	declinerName := s.userDisplayName(ctx, userID)
+
+	s.notifyBestEffort(ctx, rejectedInvite.InviterID,
+		"Приглашение отклонено",
+		fmt.Sprintf("%s отклонил(а) приглашение в команду.", declinerName),
+		"/dashboard/team",
+		"team_invite_declined",
+	)
+
+	return nil
 }
 
 func (s *Service) GetAvailableStudents(ctx context.Context, universityID int64, departmentID int64, excludeUserID int64) ([]*authv1.UserPreview, error) {
@@ -787,30 +858,6 @@ func (s *Service) getMaxTeamSizeFromWorkflow(ctx context.Context, departmentID i
 	return cfg.TeamConfig.MaxSize, nil
 }
 
-func (s *Service) ensureTeamNotFull(ctx context.Context, teamID int64) error {
-	team, err := s.repo.GetByID(ctx, teamID)
-	if err != nil {
-		return err
-	}
-
-	maxSize, err := s.getMaxTeamSizeFromWorkflow(ctx, team.DepartmentID)
-	if err != nil {
-		// fail-open
-		return nil
-	}
-	if maxSize <= 0 {
-		return nil
-	}
-
-	cnt, err := s.repo.GetMemberCount(ctx, teamID)
-	if err != nil {
-		return err
-	}
-	if int32(cnt) >= maxSize {
-		return ErrTeamFull
-	}
-	return nil
-}
 func (s *Service) UpdateTeamFull(ctx context.Context, teamID int64, name string, requesterID int64) (*Team, []*TeamMember, error) {
 	team, err := s.UpdateTeam(ctx, teamID, name, requesterID)
 	if err != nil {

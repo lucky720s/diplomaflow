@@ -1409,6 +1409,14 @@ func (m *Invite) validate(all bool) error {
 
 	// no validation rules for Status
 
+	// no validation rules for InviterName
+
+	// no validation rules for InviterEmail
+
+	// no validation rules for CreatedAt
+
+	// no validation rules for ExpiresAt
+
 	if len(errors) > 0 {
 		return InviteMultiError(errors)
 	}
