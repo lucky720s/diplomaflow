@@ -115,7 +115,7 @@ func InitializeApp(cfg *config.Config, log *logger.Logger) (*handler.Handler, fu
 		cleanup()
 		return nil, nil, err
 	}
-	taskServiceClient, cleanup11, err := ProvideTaskClient(cfg)
+	antiplagiatServiceClient, cleanup11, err := ProvideAntiplagiatClient(cfg)
 	if err != nil {
 		cleanup10()
 		cleanup9()
@@ -129,7 +129,7 @@ func InitializeApp(cfg *config.Config, log *logger.Logger) (*handler.Handler, fu
 		cleanup()
 		return nil, nil, err
 	}
-	chatServiceClient, cleanup12, err := ProvideChatClient(cfg)
+	taskServiceClient, cleanup12, err := ProvideTaskClient(cfg)
 	if err != nil {
 		cleanup11()
 		cleanup10()
@@ -144,8 +144,25 @@ func InitializeApp(cfg *config.Config, log *logger.Logger) (*handler.Handler, fu
 		cleanup()
 		return nil, nil, err
 	}
-	handlerHandler := handler.NewHandler(authServiceClient, projectServiceClient, teamServiceClient, universityServiceClient, workflowServiceClient, notificationServiceClient, fileServiceClient, formServiceClient, adminServiceClient, normControlServiceClient, taskServiceClient, chatServiceClient)
+	chatServiceClient, cleanup13, err := ProvideChatClient(cfg)
+	if err != nil {
+		cleanup12()
+		cleanup11()
+		cleanup10()
+		cleanup9()
+		cleanup8()
+		cleanup7()
+		cleanup6()
+		cleanup5()
+		cleanup4()
+		cleanup3()
+		cleanup2()
+		cleanup()
+		return nil, nil, err
+	}
+	handlerHandler := handler.NewHandler(authServiceClient, projectServiceClient, teamServiceClient, universityServiceClient, workflowServiceClient, notificationServiceClient, fileServiceClient, formServiceClient, adminServiceClient, normControlServiceClient, antiplagiatServiceClient, taskServiceClient, chatServiceClient)
 	return handlerHandler, func() {
+		cleanup13()
 		cleanup12()
 		cleanup11()
 		cleanup10()
@@ -259,6 +276,14 @@ func ProvideNormControlClient(cfg *config.Config) (v1_9.NormControlServiceClient
 		return nil, nil, err
 	}
 	return v1_9.NewNormControlServiceClient(conn), cleanup, nil
+}
+
+func ProvideAntiplagiatClient(cfg *config.Config) (v1_9.AntiplagiatServiceClient, func(), error) {
+	conn, cleanup, err := provideConn(cfg.AdminServiceAddr)
+	if err != nil {
+		return nil, nil, err
+	}
+	return v1_9.NewAntiplagiatServiceClient(conn), cleanup, nil
 }
 
 func ProvideChatClient(cfg *config.Config) (v1_11.ChatServiceClient, func(), error) {

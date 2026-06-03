@@ -128,6 +128,14 @@ func ProvideNormControlClient(cfg *config.Config) (adminv1.NormControlServiceCli
 	return adminv1.NewNormControlServiceClient(conn), cleanup, nil
 }
 
+func ProvideAntiplagiatClient(cfg *config.Config) (adminv1.AntiplagiatServiceClient, func(), error) {
+	conn, cleanup, err := provideConn(cfg.AdminServiceAddr)
+	if err != nil {
+		return nil, nil, err
+	}
+	return adminv1.NewAntiplagiatServiceClient(conn), cleanup, nil
+}
+
 func ProvideChatClient(cfg *config.Config) (chatv1.ChatServiceClient, func(), error) {
 	conn, cleanup, err := provideConn(cfg.ChatServiceAddr)
 	if err != nil {
@@ -149,6 +157,7 @@ func InitializeApp(cfg *config.Config, log *logger.Logger) (*handler.Handler, fu
 		ProvideTaskClient,
 		ProvideAdminClient,
 		ProvideNormControlClient,
+		ProvideAntiplagiatClient,
 		ProvideChatClient,
 		handler.NewHandler,
 	)

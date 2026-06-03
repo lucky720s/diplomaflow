@@ -26,6 +26,7 @@ type Handler struct {
 	formClient         formv1.FormServiceClient
 	adminClient        adminv1.AdminServiceClient
 	normControlClient  adminv1.NormControlServiceClient
+	antiplagClient     adminv1.AntiplagiatServiceClient
 	taskClient         taskv1.TaskServiceClient
 	chatClient         chatv1.ChatServiceClient
 	chatHub            *ws.Hub
@@ -42,6 +43,7 @@ func NewHandler(
 	formClient formv1.FormServiceClient,
 	adminClient adminv1.AdminServiceClient,
 	normControlClient adminv1.NormControlServiceClient,
+	antiplagClient adminv1.AntiplagiatServiceClient,
 	taskClient taskv1.TaskServiceClient,
 	chatClient chatv1.ChatServiceClient,
 ) *Handler {
@@ -56,6 +58,7 @@ func NewHandler(
 		formClient:         formClient,
 		adminClient:        adminClient,
 		normControlClient:  normControlClient,
+		antiplagClient:     antiplagClient,
 		taskClient:         taskClient,
 		chatClient:         chatClient,
 		chatHub:            ws.NewHub(),

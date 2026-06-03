@@ -438,7 +438,7 @@ func main() {
 		{
 			students.GET("/supervisor-requests", handler.ListSupervisorRequestsForStudent)
 		}
-
+		//norm-control
 		norm := v1.Group("/norm-control")
 		norm.Use(middleware.AuthMiddleware(cfg.JWTSecret))
 		norm.Use(middleware.RBACMiddleware("admin", "norm_control"))
@@ -461,6 +461,28 @@ func main() {
 			norm.GET("/checklists", handler.NormListChecklists)
 			norm.POST("/checklists", handler.NormCreateChecklist)
 		}
+
+		//antiplagiat
+		antiplag := v1.Group("/antiplagiat")
+		antiplag.Use(middleware.AuthMiddleware(cfg.JWTSecret))
+		antiplag.Use(middleware.RBACMiddleware("admin", "antiplagiat"))
+		{
+			antiplag.GET("/pending", handler.AntiplagListPending)
+			antiplag.GET("/documents/:id", handler.AntiplagGetDocument)
+
+			antiplag.POST("/documents/:id/start", handler.AntiplagStartReview)
+			antiplag.POST("/documents/:id/scores", handler.AntiplagSetScores)
+
+			antiplag.POST("/documents/:id/comments", handler.AntiplagAddComment)
+			antiplag.PUT("/comments/:id", handler.AntiplagUpdateComment)
+			antiplag.DELETE("/comments/:id", handler.AntiplagDeleteComment)
+
+			antiplag.POST("/documents/:id/approve", handler.AntiplagApprove)
+			antiplag.POST("/documents/:id/return", handler.AntiplagReturn)
+
+			antiplag.GET("/history/:project_id", handler.AntiplagHistory)
+		}
+
 		adminTech := v1.Group("/admin-tech")
 		adminTech.Use(middleware.AuthMiddleware(cfg.JWTSecret))
 		adminTech.Use(middleware.RBACMiddleware("admin"))

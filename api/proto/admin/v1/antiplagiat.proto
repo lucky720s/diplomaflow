@@ -1,0 +1,175 @@
+syntax = "proto3";
+
+package admin.v1;
+
+import "validate/validate.proto";
+import "google/protobuf/timestamp.proto";
+import "file/v1/file.proto";
+
+option go_package = "github.com/lucky720s/diplomaflow/pkg/protobuf/admin/v1";
+
+// ==================== Service ====================
+// на антиплагиат: процент оригинальности (1-100) и процент ИИ-содержания (0-100).
+service AntiplagiatService {
+  rpc ListAntiplagPending(ListAntiplagPendingRequest) returns (ListAntiplagPendingResponse);
+  rpc GetAntiplagDocument(GetAntiplagDocumentRequest) returns (AntiplagDocumentResponse);
+  rpc StartAntiplagReview(StartAntiplagReviewRequest) returns (StartAntiplagReviewResponse);
+
+  // Две разные методики оценки выставляются одним вызовом (или каждая по отдельности).
+  rpc SetAntiplagScores(SetAntiplagScoresRequest) returns (SetAntiplagScoresResponse);
+
+  rpc AddAntiplagComment(AddAntiplagCommentRequest) returns (AddAntiplagCommentResponse);
+  rpc UpdateAntiplagComment(UpdateAntiplagCommentRequest) returns (UpdateAntiplagCommentResponse);
+  rpc DeleteAntiplagComment(DeleteAntiplagCommentRequest) returns (DeleteAntiplagCommentResponse);
+
+  rpc ApproveAntiplagDocument(ApproveAntiplagRequest) returns (ApproveAntiplagResponse);
+  rpc ReturnAntiplagForRevision(ReturnAntiplagRequest) returns (ReturnAntiplagResponse);
+
+  rpc GetAntiplagHistory(GetAntiplagHistoryRequest) returns (GetAntiplagHistoryResponse);
+}
+
+// ==================== Common models ====================
+message AntiplagPendingDocument {
+  string id = 1;                 // submission_id
+  int64 project_id = 2;
+  int64 team_id = 3;
+  string status = 4;             // submitted|in_review|returned|approved
+  string file_id = 5;
+  int32 version = 6;
+  int64 checker_id = 7;
+
+  // Две метрики (заполняются проверяющим вручную). -1 = ещё не выставлено.
+  int32 plagiarism_score = 8;    // % оригинальности / антиплагиат (1..100)
+  int32 ai_score = 9;            // % ИИ-содержания (0..100)
+
+  google.protobuf.Timestamp submitted_at = 10;
+  // Unified file contract for the primary document. null when no file is attached.
+  file.v1.FileRef file = 11;
+}
+
+message AntiplagComment {
+  string id = 1;
+  string check_id = 2;           // submission_id
+  string text = 3;
+  int32 page_number = 4;
+  google.protobuf.Timestamp created_at = 5;
+}
+
+// ==================== RPCs ====================
+message ListAntiplagPendingRequest {
+  string status = 1;
+  int64 team_id = 2;
+  int64 checker_id = 3;
+  int64 department_id = 4;
+  int32 page = 5;
+  int32 page_size = 6;
+}
+
+message ListAntiplagPendingResponse {
+  repeated AntiplagPendingDocument documents = 1;
+  int64 total_count = 2;
+}
+
+message GetAntiplagDocumentRequest {
+  string id = 1 [(validate.rules).string.min_len = 1];
+}
+
+message AntiplagDocumentResponse {
+  AntiplagPendingDocument document = 1;
+  repeated AntiplagComment comments = 2;
+  string overall_comment = 3;
+}
+
+message StartAntiplagReviewRequest {
+  string id = 1 [(validate.rules).string.min_len = 1];
+  int64 checker_id = 2 [(validate.rules).int64.gt = 0];
+}
+
+message StartAntiplagReviewResponse {
+  bool success = 1;
+  string status = 2;
+}
+
+// Метод 1: антиплагиат (оригинальность). Метод 2: ИИ-содержание.
+// has_* флаги нужны, чтобы можно было выставить только одну из метрик.
+message SetAntiplagScoresRequest {
+  string id = 1 [(validate.rules).string.min_len = 1];
+
+  bool has_plagiarism = 2;
+  int32 plagiarism_score = 3 [(validate.rules).int32 = {gte: 0, lte: 100}];
+
+  bool has_ai = 4;
+  int32 ai_score = 5 [(validate.rules).int32 = {gte: 0, lte: 100}];
+}
+
+message SetAntiplagScoresResponse {
+  int32 plagiarism_score = 1;
+  int32 ai_score = 2;
+}
+
+message AddAntiplagCommentRequest {
+  string document_id = 1 [(validate.rules).string.min_len = 1];
+  string text = 2 [(validate.rules).string.min_len = 1];
+  int32 page_number = 3;
+}
+
+message AddAntiplagCommentResponse {
+  AntiplagComment comment = 1;
+}
+
+message UpdateAntiplagCommentRequest {
+  string id = 1 [(validate.rules).string.min_len = 1];
+  string text = 2;
+  int32 page_number = 3;
+}
+
+message UpdateAntiplagCommentResponse {
+  AntiplagComment comment = 1;
+}
+
+message DeleteAntiplagCommentRequest {
+  string id = 1 [(validate.rules).string.min_len = 1];
+}
+
+message DeleteAntiplagCommentResponse {
+  bool success = 1;
+}
+
+message ApproveAntiplagRequest {
+  string id = 1 [(validate.rules).string.min_len = 1];
+  int64 checker_id = 2 [(validate.rules).int64.gt = 0];
+  string comment = 3;
+}
+
+message ApproveAntiplagResponse {
+  bool success = 1;
+  string status = 2;
+}
+
+message ReturnAntiplagRequest {
+  string id = 1 [(validate.rules).string.min_len = 1];
+  int64 checker_id = 2 [(validate.rules).int64.gt = 0];
+  string comment = 3;
+}
+
+message ReturnAntiplagResponse {
+  bool success = 1;
+  string status = 2;
+}
+
+message GetAntiplagHistoryRequest {
+  int64 project_id = 1 [(validate.rules).int64.gt = 0];
+}
+
+message AntiplagHistoryItem {
+  string id = 1;
+  int64 project_id = 2;
+  string action = 3;
+  int64 actor_id = 4;
+  string comment = 5;
+  google.protobuf.Timestamp created_at = 6;
+}
+
+message GetAntiplagHistoryResponse {
+  repeated AntiplagHistoryItem history = 1;
+}

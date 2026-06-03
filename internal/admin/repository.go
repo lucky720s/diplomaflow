@@ -127,6 +127,21 @@ type Repository interface {
 
 	StatsNormIssuesByCategory(ctx context.Context, departmentID int64) (map[string]int64, error)
 
+	// ==================== Antiplagiat ====================
+	EnsureAntiplagCheckForSubmission(ctx context.Context, submissionID string) (*AntiplagCheck, error)
+	ListAntiplagChecks(ctx context.Context, filter AntiplagCheckFilter) ([]*AntiplagCheck, int64, error)
+	GetAntiplagCheck(ctx context.Context, submissionID string) (*AntiplagCheck, error)
+	UpdateAntiplagCheck(ctx context.Context, check *AntiplagCheck) error
+
+	ListAntiplagComments(ctx context.Context, submissionID string) ([]*AntiplagComment, error)
+	GetAntiplagComment(ctx context.Context, id string) (*AntiplagComment, error)
+	CreateAntiplagComment(ctx context.Context, c *AntiplagComment) error
+	UpdateAntiplagComment(ctx context.Context, c *AntiplagComment) error
+	DeleteAntiplagComment(ctx context.Context, id string) error
+
+	AddAntiplagHistory(ctx context.Context, h *AntiplagHistory) error
+	ListAntiplagHistory(ctx context.Context, projectID int64) ([]*AntiplagHistory, error)
+
 	// Supervisor Settings
 	GetSupervisorSettings(ctx context.Context, userID, departmentID int64) (*SupervisorSettings, error)
 	UpsertSupervisorSettings(ctx context.Context, s *SupervisorSettings) error

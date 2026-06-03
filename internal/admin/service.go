@@ -1726,6 +1726,7 @@ func (s *Service) SubmitDocumentForStep(ctx context.Context, req *SubmitDocument
 		return nil, err
 	}
 	s.ensureNormCheckIfNeeded(ctx, sub)
+	s.ensureAntiplagCheckIfNeeded(ctx, sub)
 
 	// Двигаем workflow
 	eventName := s.getEventNameForState(rt.CurrentStateName)
