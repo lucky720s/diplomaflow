@@ -289,7 +289,12 @@ func (h *Handler) BatchGetUserPreviews(ctx context.Context, req *authv1.BatchGet
 			internal = v[0]
 		}
 	}
-	if internal != "team_service" {
+	// Internal-only RPC: обогащение карточек данными пользователей.
+	// Разрешаем сервисам, которым нужно резолвить имена/аватары по id.
+	switch internal {
+	case "team_service", "task_service":
+		// ok
+	default:
 		return nil, status.Error(codes.PermissionDenied, "forbidden")
 	}
 

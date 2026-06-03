@@ -7,6 +7,7 @@
 package task
 
 import (
+	v1_3 "github.com/lucky720s/diplomaflow/pkg/protobuf/auth/v1"
 	v1_2 "github.com/lucky720s/diplomaflow/pkg/protobuf/notification/v1"
 	"github.com/lucky720s/diplomaflow/pkg/protobuf/team/v1"
 	"go.uber.org/zap"
@@ -31,8 +32,15 @@ func InitializeApp(cfg *Config, db *gorm.DB, logger *zap.Logger) (*Handler, func
 	}
 	service := NewService(taskRepository, teamServiceClient, notificationServiceClient, logger)
 	accessChecker := NewAccessChecker(taskRepository, teamServiceClient, logger)
-	handler := NewHandler(service, accessChecker, logger)
+	authServiceClient, cleanup3, err := ProvideAuthClient(cfg)
+	if err != nil {
+		cleanup2()
+		cleanup()
+		return nil, nil, err
+	}
+	handler := NewHandler(service, accessChecker, authServiceClient, logger)
 	return handler, func() {
+		cleanup3()
 		cleanup2()
 		cleanup()
 	}, nil
@@ -61,5 +69,17 @@ func ProvideNotificationClient(cfg *Config) (v1_2.NotificationServiceClient, fun
 		return nil, nil, err
 	}
 	client := v1_2.NewNotificationServiceClient(conn)
+	return client, func() { conn.Close() }, nil
+}
+
+// ProvideAuthClient — клиент auth_service для обогащения UserPreview именами.
+func ProvideAuthClient(cfg *Config) (v1_3.AuthServiceClient, func(), error) {
+	conn, err := grpc.NewClient(
+		cfg.Services.AuthAddr, grpc.WithTransportCredentials(insecure.NewCredentials()),
+	)
+	if err != nil {
+		return nil, nil, err
+	}
+	client := v1_3.NewAuthServiceClient(conn)
 	return client, func() { conn.Close() }, nil
 }

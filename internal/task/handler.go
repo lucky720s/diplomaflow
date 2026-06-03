@@ -2,9 +2,11 @@ package task
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"time"
 
+	authv1 "github.com/lucky720s/diplomaflow/pkg/protobuf/auth/v1"
 	taskv1 "github.com/lucky720s/diplomaflow/pkg/protobuf/task/v1"
 	"go.uber.org/zap"
 	"google.golang.org/grpc/codes"
@@ -17,13 +19,15 @@ type Handler struct {
 	taskv1.UnimplementedTaskServiceServer
 	service       *Service
 	accessChecker *AccessChecker
+	authClient    authv1.AuthServiceClient
 	logger        *zap.Logger
 }
 
-func NewHandler(svc *Service, accessChecker *AccessChecker, logger *zap.Logger) *Handler {
+func NewHandler(svc *Service, accessChecker *AccessChecker, authClient authv1.AuthServiceClient, logger *zap.Logger) *Handler {
 	return &Handler{
 		service:       svc,
 		accessChecker: accessChecker,
+		authClient:    authClient,
 		logger:        logger,
 	}
 }
@@ -104,10 +108,21 @@ func (h *Handler) UpdateBoard(ctx context.Context, req *taskv1.UpdateBoardReques
 		return nil, toGRPCError(err)
 	}
 
+	var settings *BoardSettings
+	if req.Settings != nil {
+		settings = &BoardSettings{
+			DefaultColumn:      req.Settings.DefaultColumn,
+			AllowCustomColumns: req.Settings.AllowCustomColumns,
+			ShowCompleted:      req.Settings.ShowCompleted,
+			Labels:             req.Settings.Labels,
+		}
+	}
+
 	board, err := h.service.UpdateBoard(ctx, &UpdateBoardInput{
 		BoardID:     req.BoardId,
 		Name:        req.Name,
 		Description: req.Description,
+		Settings:    settings,
 		UpdateMask:  req.UpdateMask,
 	})
 	if err != nil {
@@ -305,6 +320,7 @@ func (h *Handler) GetTask(ctx context.Context, req *taskv1.GetTaskRequest) (*tas
 		resp.Watchers = append(resp.Watchers, h.userPreviewToProto(w))
 	}
 
+	h.enrichGetTask(ctx, resp)
 	return resp, nil
 }
 
@@ -417,6 +433,7 @@ func (h *Handler) ListTasks(ctx context.Context, req *taskv1.ListTasksRequest) (
 	for _, t := range tasks {
 		out.Tasks = append(out.Tasks, h.taskToProto(t))
 	}
+	h.enrichTasks(ctx, out.Tasks)
 	return out, nil
 }
 func (h *Handler) MoveTask(ctx context.Context, req *taskv1.MoveTaskRequest) (*taskv1.Task, error) {
@@ -592,7 +609,9 @@ func (h *Handler) CreateComment(ctx context.Context, req *taskv1.CreateCommentRe
 		return nil, status.Errorf(codes.Internal, "create comment: %v", err)
 	}
 
-	return h.commentToProto(comment), nil
+	pb := h.commentToProto(comment)
+	h.enrichComments(ctx, []*taskv1.Comment{pb})
+	return pb, nil
 }
 
 func (h *Handler) UpdateComment(ctx context.Context, req *taskv1.UpdateCommentRequest) (*taskv1.Comment, error) {
@@ -681,6 +700,7 @@ func (h *Handler) ListComments(ctx context.Context, req *taskv1.ListCommentsRequ
 	for _, c := range comments {
 		out.Comments = append(out.Comments, h.commentToProto(c))
 	}
+	h.enrichComments(ctx, out.Comments)
 	return out, nil
 }
 
@@ -706,7 +726,9 @@ func (h *Handler) AddAttachment(ctx context.Context, req *taskv1.AddAttachmentRe
 		return nil, status.Errorf(codes.Internal, "add attachment: %v", err)
 	}
 
-	return h.attachmentToProto(attachment), nil
+	pb := h.attachmentToProto(attachment)
+	h.enrichAttachments(ctx, []*taskv1.Attachment{pb})
+	return pb, nil
 }
 
 func (h *Handler) RemoveAttachment(ctx context.Context, req *taskv1.RemoveAttachmentRequest) (*emptypb.Empty, error) {
@@ -755,6 +777,7 @@ func (h *Handler) ListAttachments(ctx context.Context, req *taskv1.ListAttachmen
 	for _, a := range attachments {
 		out.Attachments = append(out.Attachments, h.attachmentToProto(a))
 	}
+	h.enrichAttachments(ctx, out.Attachments)
 	return out, nil
 }
 
@@ -788,6 +811,7 @@ func (h *Handler) GetTaskActivity(ctx context.Context, req *taskv1.GetTaskActivi
 	for _, a := range activities {
 		out.Activities = append(out.Activities, h.activityToProto(a))
 	}
+	h.enrichActivities(ctx, out.Activities)
 	return out, nil
 }
 
@@ -918,6 +942,7 @@ func (h *Handler) GetMyTasks(ctx context.Context, req *taskv1.GetMyTasksRequest)
 	for _, t := range tasks {
 		out.Tasks = append(out.Tasks, h.taskToProto(t))
 	}
+	h.enrichTasks(ctx, out.Tasks)
 	return out, nil
 }
 
@@ -958,6 +983,7 @@ func (h *Handler) GetOverdueTasks(ctx context.Context, req *taskv1.GetOverdueTas
 	for _, t := range tasks {
 		out.Tasks = append(out.Tasks, h.taskToProto(t))
 	}
+	h.enrichTasks(ctx, out.Tasks)
 	return out, nil
 }
 
@@ -1003,6 +1029,7 @@ func (h *Handler) GetUpcomingDeadlines(ctx context.Context, req *taskv1.GetUpcom
 	for _, t := range tasks {
 		out.Tasks = append(out.Tasks, h.taskToProto(t))
 	}
+	h.enrichTasks(ctx, out.Tasks)
 	return out, nil
 }
 
@@ -1044,6 +1071,17 @@ func (h *Handler) boardToProto(b *Board) *taskv1.Board {
 		CreatedBy:   b.CreatedBy,
 		CreatedAt:   timestamppb.New(b.CreatedAt),
 		UpdatedAt:   timestamppb.New(b.UpdatedAt),
+	}
+	if len(b.Settings) > 0 {
+		var s BoardSettings
+		if err := json.Unmarshal(b.Settings, &s); err == nil {
+			pb.Settings = &taskv1.BoardSettings{
+				DefaultColumn:      s.DefaultColumn,
+				AllowCustomColumns: s.AllowCustomColumns,
+				ShowCompleted:      s.ShowCompleted,
+				Labels:             s.Labels,
+			}
+		}
 	}
 	for _, col := range b.Columns {
 		pb.Columns = append(pb.Columns, h.columnToProto(&col))

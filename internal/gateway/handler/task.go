@@ -4,6 +4,7 @@ import (
 	"errors"
 	"net/http"
 	"strconv"
+	"strings"
 	"time"
 
 	"github.com/gin-gonic/gin"
@@ -211,6 +212,12 @@ func (h *Handler) UpdateBoard(c *gin.Context) {
 	var req struct {
 		Name        string `json:"name"`
 		Description string `json:"description"`
+		Settings    *struct {
+			DefaultColumn      string   `json:"default_column"`
+			AllowCustomColumns bool     `json:"allow_custom_columns"`
+			ShowCompleted      bool     `json:"show_completed"`
+			Labels             []string `json:"labels"`
+		} `json:"settings"`
 	}
 	if bindErr := c.ShouldBindJSON(&req); bindErr != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": bindErr.Error()})
@@ -225,12 +232,23 @@ func (h *Handler) UpdateBoard(c *gin.Context) {
 		paths = append(paths, "description")
 	}
 
-	resp, err := h.taskClient.UpdateBoard(taskCtx(c), &taskv1.UpdateBoardRequest{
+	grpcReq := &taskv1.UpdateBoardRequest{
 		BoardId:     boardID,
 		Name:        req.Name,
 		Description: req.Description,
-		UpdateMask:  &fieldmaskpb.FieldMask{Paths: paths},
-	})
+	}
+	if req.Settings != nil {
+		grpcReq.Settings = &taskv1.BoardSettings{
+			DefaultColumn:      req.Settings.DefaultColumn,
+			AllowCustomColumns: req.Settings.AllowCustomColumns,
+			ShowCompleted:      req.Settings.ShowCompleted,
+			Labels:             req.Settings.Labels,
+		}
+		paths = append(paths, "settings")
+	}
+	grpcReq.UpdateMask = &fieldmaskpb.FieldMask{Paths: paths}
+
+	resp, err := h.taskClient.UpdateBoard(taskCtx(c), grpcReq)
 	if err != nil {
 		MapGRPCError(c, err)
 		return
@@ -459,6 +477,70 @@ func (h *Handler) GetTask(c *gin.Context) {
 	c.JSON(http.StatusOK, resp)
 }
 
+// ==================== Attachments ====================
+
+func (h *Handler) ListTaskAttachments(c *gin.Context) {
+	taskID := parseInt64(c.Param("id"))
+	if taskID <= 0 {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid task id"})
+		return
+	}
+	resp, err := h.taskClient.ListAttachments(taskCtx(c), &taskv1.ListAttachmentsRequest{TaskId: taskID})
+	if err != nil {
+		MapGRPCError(c, err)
+		return
+	}
+	c.JSON(http.StatusOK, resp)
+}
+
+func (h *Handler) AddTaskAttachment(c *gin.Context) {
+	taskID := parseInt64(c.Param("id"))
+	if taskID <= 0 {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid task id"})
+		return
+	}
+	var req struct {
+		FileID   string `json:"file_id" binding:"required"`
+		FileName string `json:"file_name"`
+		FileType string `json:"file_type"`
+		FileSize int64  `json:"file_size"`
+	}
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "file_id is required"})
+		return
+	}
+	// uploaded_by сервис проставит из auth-контекста; передаём userId для совместимости.
+	resp, err := h.taskClient.AddAttachment(taskCtx(c), &taskv1.AddAttachmentRequest{
+		TaskId:     taskID,
+		FileId:     req.FileID,
+		FileName:   req.FileName,
+		FileType:   req.FileType,
+		FileSize:   req.FileSize,
+		UploadedBy: c.GetInt64("userId"),
+	})
+	if err != nil {
+		MapGRPCError(c, err)
+		return
+	}
+	c.JSON(http.StatusCreated, resp)
+}
+
+func (h *Handler) RemoveTaskAttachment(c *gin.Context) {
+	attachmentID := parseInt64(c.Param("attachment_id"))
+	if attachmentID <= 0 {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid attachment id"})
+		return
+	}
+	if _, err := h.taskClient.RemoveAttachment(taskCtx(c), &taskv1.RemoveAttachmentRequest{
+		AttachmentId: attachmentID,
+		RemovedBy:    c.GetInt64("userId"),
+	}); err != nil {
+		MapGRPCError(c, err)
+		return
+	}
+	c.JSON(http.StatusOK, gin.H{"success": true})
+}
+
 func (h *Handler) UpdateTask(c *gin.Context) {
 	taskID, err := strconv.ParseInt(c.Param("id"), 10, 64)
 	if err != nil || taskID <= 0 {
@@ -530,6 +612,36 @@ func (h *Handler) DeleteTask(c *gin.Context) {
 	c.JSON(http.StatusNoContent, nil)
 }
 
+func taskStatusFromQuery(s string) taskv1.TaskStatus {
+	switch s {
+	case "todo":
+		return taskv1.TaskStatus_TASK_STATUS_TODO
+	case "in_progress":
+		return taskv1.TaskStatus_TASK_STATUS_IN_PROGRESS
+	case "review":
+		return taskv1.TaskStatus_TASK_STATUS_REVIEW
+	case "done":
+		return taskv1.TaskStatus_TASK_STATUS_DONE
+	default:
+		return taskv1.TaskStatus_TASK_STATUS_UNSPECIFIED
+	}
+}
+
+func taskPriorityFromQuery(s string) taskv1.TaskPriority {
+	switch s {
+	case "low":
+		return taskv1.TaskPriority_TASK_PRIORITY_LOW
+	case "medium":
+		return taskv1.TaskPriority_TASK_PRIORITY_MEDIUM
+	case "high":
+		return taskv1.TaskPriority_TASK_PRIORITY_HIGH
+	case "urgent":
+		return taskv1.TaskPriority_TASK_PRIORITY_URGENT
+	default:
+		return taskv1.TaskPriority_TASK_PRIORITY_UNSPECIFIED
+	}
+}
+
 func (h *Handler) ListTasks(c *gin.Context) {
 	var boardID, columnID, assigneeID int64
 	if b := c.Query("board_id"); b != "" {
@@ -555,16 +667,27 @@ func (h *Handler) ListTasks(c *gin.Context) {
 		}
 	}
 
+	labels := c.QueryArray("labels")
+	if len(labels) == 0 {
+		if raw := c.Query("labels"); raw != "" {
+			labels = strings.Split(raw, ",")
+		}
+	}
+
 	resp, err := h.taskClient.ListTasks(taskCtx(c), &taskv1.ListTasksRequest{
-		BoardId:     boardID,
-		ColumnId:    columnID,
-		AssigneeId:  assigneeID,
-		Search:      c.Query("search"),
-		OnlyOverdue: c.Query("only_overdue") == "true",
-		SortBy:      c.Query("sort_by"),
-		SortOrder:   c.Query("sort_order"),
-		Page:        page,
-		PageSize:    pageSize,
+		BoardId:        boardID,
+		ColumnId:       columnID,
+		AssigneeId:     assigneeID,
+		Status:         taskStatusFromQuery(c.Query("status")),
+		Priority:       taskPriorityFromQuery(c.Query("priority")),
+		Labels:         labels,
+		Search:         c.Query("search"),
+		OnlyOverdue:    c.Query("only_overdue") == "true",
+		OnlyUnassigned: c.Query("only_unassigned") == "true",
+		SortBy:         c.Query("sort_by"),
+		SortOrder:      c.Query("sort_order"),
+		Page:           page,
+		PageSize:       pageSize,
 	})
 	if err != nil {
 		MapGRPCError(c, err)
@@ -783,10 +906,26 @@ func (h *Handler) GetBoardStats(c *gin.Context) {
 }
 
 func (h *Handler) GetMyTasks(c *gin.Context) {
+	page := int32(1)
+	pageSize := int32(20)
+	if p := c.Query("page"); p != "" {
+		if v, _ := strconv.ParseInt(p, 10, 32); v > 0 {
+			page = int32(v)
+		}
+	}
+	if ps := c.Query("page_size"); ps != "" {
+		if v, _ := strconv.ParseInt(ps, 10, 32); v > 0 {
+			pageSize = int32(v)
+		}
+	}
+
 	resp, err := h.taskClient.GetMyTasks(taskCtx(c), &taskv1.GetMyTasksRequest{
-		OnlyAssigned: c.Query("only_assigned") == "true",
-		Page:         1,
-		PageSize:     20,
+		OnlyAssigned:     c.Query("only_assigned") == "true",
+		OnlyCreated:      c.Query("only_created") == "true",
+		OnlyWatching:     c.Query("only_watching") == "true",
+		IncludeCompleted: c.Query("include_completed") == "true",
+		Page:             page,
+		PageSize:         pageSize,
 	})
 	if err != nil {
 		MapGRPCError(c, err)
@@ -807,6 +946,16 @@ func (h *Handler) GetOverdueTasks(c *gin.Context) {
 
 	page := int32(1)
 	pageSize := int32(20)
+	if p := c.Query("page"); p != "" {
+		if v, _ := strconv.ParseInt(p, 10, 32); v > 0 {
+			page = int32(v)
+		}
+	}
+	if ps := c.Query("page_size"); ps != "" {
+		if v, _ := strconv.ParseInt(ps, 10, 32); v > 0 {
+			pageSize = int32(v)
+		}
+	}
 
 	resp, err := h.taskClient.GetOverdueTasks(taskCtx(c), &taskv1.GetOverdueTasksRequest{
 		BoardId:    boardID,

@@ -342,6 +342,11 @@ func main() {
 			tasks.GET("/:id/comments", handler.ListTaskComments)
 			tasks.DELETE("/:id/comments/:comment_id", handler.DeleteTaskComment)
 
+			// Attachments
+			tasks.GET("/:id/attachments", handler.ListTaskAttachments)
+			tasks.POST("/:id/attachments", handler.AddTaskAttachment)
+			tasks.DELETE("/:id/attachments/:attachment_id", handler.RemoveTaskAttachment)
+
 			// Activity
 			tasks.GET("/:id/activity", handler.GetTaskActivity)
 

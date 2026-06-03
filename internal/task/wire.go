@@ -5,6 +5,7 @@ package task
 
 import (
 	"github.com/google/wire"
+	authv1 "github.com/lucky720s/diplomaflow/pkg/protobuf/auth/v1"
 	notificationv1 "github.com/lucky720s/diplomaflow/pkg/protobuf/notification/v1"
 	teamv1 "github.com/lucky720s/diplomaflow/pkg/protobuf/team/v1"
 	"go.uber.org/zap"
@@ -39,15 +40,29 @@ func ProvideNotificationClient(cfg *Config) (notificationv1.NotificationServiceC
 	return client, func() { conn.Close() }, nil
 }
 
+// ProvideAuthClient — клиент auth_service для обогащения UserPreview именами.
+func ProvideAuthClient(cfg *Config) (authv1.AuthServiceClient, func(), error) {
+	conn, err := grpc.NewClient(
+		cfg.Services.AuthAddr,
+		grpc.WithTransportCredentials(insecure.NewCredentials()),
+	)
+	if err != nil {
+		return nil, nil, err
+	}
+	client := authv1.NewAuthServiceClient(conn)
+	return client, func() { conn.Close() }, nil
+}
+
 // InitializeApp инициализирует приложение task_service
 func InitializeApp(cfg *Config, db *gorm.DB, logger *zap.Logger) (*Handler, func(), error) {
 	wire.Build(
 		NewRepository,             // db → Repository
 		ProvideTeamClient,         // cfg → TeamServiceClient
 		ProvideNotificationClient, // cfg → NotificationServiceClient
+		ProvideAuthClient,         // cfg → AuthServiceClient (обогащение UserPreview)
 		NewService,                // Repository + TeamServiceClient + NotificationServiceClient + logger → *Service
 		NewAccessChecker,          // ✅ Repository + TeamServiceClient + logger → *AccessChecker
-		NewHandler,                // *Service + *AccessChecker + logger → *Handler
+		NewHandler,                // *Service + *AccessChecker + AuthServiceClient + logger → *Handler
 	)
 	return nil, nil, nil
 }

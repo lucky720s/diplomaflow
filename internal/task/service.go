@@ -2,6 +2,7 @@ package task
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"time"
 
@@ -9,6 +10,7 @@ import (
 	teamv1 "github.com/lucky720s/diplomaflow/pkg/protobuf/team/v1"
 	"go.uber.org/zap"
 	"google.golang.org/grpc/metadata"
+	"gorm.io/datatypes"
 )
 
 type Service struct {
@@ -153,6 +155,15 @@ func (s *Service) UpdateBoard(ctx context.Context, input *UpdateBoardInput) (*Bo
 		return nil, err
 	}
 
+	applySettings := func() {
+		if input.Settings == nil {
+			return
+		}
+		if raw, mErr := json.Marshal(input.Settings); mErr == nil {
+			board.Settings = datatypes.JSON(raw)
+		}
+	}
+
 	if input.UpdateMask != nil {
 		for _, path := range input.UpdateMask.GetPaths() {
 			switch path {
@@ -160,6 +171,8 @@ func (s *Service) UpdateBoard(ctx context.Context, input *UpdateBoardInput) (*Bo
 				board.Name = input.Name
 			case "description":
 				board.Description = input.Description
+			case "settings":
+				applySettings()
 			}
 		}
 	} else {
@@ -169,6 +182,7 @@ func (s *Service) UpdateBoard(ctx context.Context, input *UpdateBoardInput) (*Bo
 		if input.Description != "" {
 			board.Description = input.Description
 		}
+		applySettings()
 	}
 
 	board.UpdatedAt = time.Now()

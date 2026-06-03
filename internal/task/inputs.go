@@ -20,6 +20,7 @@ type UpdateBoardInput struct {
 	BoardID     int64
 	Name        string
 	Description string
+	Settings    *BoardSettings
 	UpdateMask  *fieldmaskpb.FieldMask
 }
 
