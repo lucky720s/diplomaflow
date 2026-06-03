@@ -231,11 +231,11 @@ func (r *repository) GetDPSupervisors(ctx context.Context, supervisorIDs []int64
 		Email    string `gorm:"column:email"`
 	}
 	q := `
-		SELECT u.id,
-		       COALESCE(CONCAT(u.first_name, ' ', u.last_name), '') AS full_name,
-		       COALESCE(u.email, '') AS email
-		FROM users u
-		WHERE u.id IN (?) AND u.deleted_at IS NULL`
+	SELECT u.id,
+	       COALESCE(CONCAT(u.first_name, ' ', u.last_name), '') AS full_name,
+	       COALESCE(u.email, '') AS email
+	FROM users u
+	WHERE u.id IN (?)`
 	var rows []row
 	if err := r.db.WithContext(ctx).Raw(q, supervisorIDs).Scan(&rows).Error; err != nil {
 		return nil, err
