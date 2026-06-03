@@ -8,6 +8,7 @@ import (
 	"strings"
 	"time"
 
+	"gorm.io/datatypes"
 	"gorm.io/gorm"
 )
 
@@ -717,10 +718,17 @@ func (r *repository) CountTeamsBySupervisor(ctx context.Context, supervisorID in
 // ==================== Activities ====================
 
 func (r *repository) LogActivity(ctx context.Context, activity *AdminActivity) error {
-	activity.CreatedAt = time.Now()
+	if activity == nil {
+		return nil
+	}
+	if len(activity.Metadata) == 0 {
+		activity.Metadata = datatypes.JSON([]byte(`{}`))
+	}
+	if activity.CreatedAt.IsZero() {
+		activity.CreatedAt = time.Now().UTC()
+	}
 	return r.db.WithContext(ctx).Create(activity).Error
 }
-
 func (r *repository) GetRecentActivities(ctx context.Context, departmentID int64, limit int) ([]*AdminActivity, error) {
 	// department filter isn't stored in admin_activities by default; keep simple
 	var activities []*AdminActivity

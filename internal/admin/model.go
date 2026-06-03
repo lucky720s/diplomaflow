@@ -131,9 +131,19 @@ type AdminActivity struct {
 	ActorID      int64          `gorm:"index;not null"`
 	TargetID     int64          `gorm:"index"`
 	TargetType   string         `gorm:"size:50"`
-	Metadata     datatypes.JSON `gorm:"type:jsonb"`
+	Metadata     datatypes.JSON `gorm:"type:jsonb;not null;default:'{}'"`
 
 	CreatedAt time.Time
+}
+
+func (a *AdminActivity) BeforeCreate(tx *gorm.DB) error {
+	if len(a.Metadata) == 0 {
+		a.Metadata = datatypes.JSON([]byte(`{}`))
+	}
+	if a.CreatedAt.IsZero() {
+		a.CreatedAt = time.Now().UTC()
+	}
+	return nil
 }
 
 // ==================== DTOs for admin panel ====================

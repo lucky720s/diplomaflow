@@ -1,0 +1,6 @@
+BEGIN;
+
+ALTER TABLE admin_activities
+    ALTER COLUMN metadata DROP DEFAULT;
+
+COMMIT;
