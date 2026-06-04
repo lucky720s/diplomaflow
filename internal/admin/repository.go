@@ -21,7 +21,7 @@ type Repository interface {
 	UpdateGrade(ctx context.Context, grade *Grade) error
 	CreateGradeHistory(ctx context.Context, history *GradeHistory) error
 	GetGradeHistory(ctx context.Context, projectID, stepID int64) ([]*GradeHistory, error)
-
+	MarkPreDefenseWorkflowSubmissionReviewed(ctx context.Context, projectID, teamID, reviewerID int64, statusValue, comment string) error
 	// Topic Registrations
 	CreateTopicRegistration(ctx context.Context, reg *TopicRegistration) error
 	GetTopicRegistration(ctx context.Context, id string) (*TopicRegistration, error)
@@ -1981,4 +1981,38 @@ func (r *repository) PreDefenseDocumentExists(ctx context.Context, submissionID,
 		Count(&count).Error
 
 	return count > 0, err
+}
+func (r *repository) MarkPreDefenseWorkflowSubmissionReviewed(
+	ctx context.Context,
+	projectID, teamID, reviewerID int64,
+	statusValue, comment string,
+) error {
+	if projectID <= 0 || teamID <= 0 {
+		return nil
+	}
+
+	now := time.Now()
+
+	return r.db.WithContext(ctx).
+		Table("admin_submissions").
+		Where(`
+			project_id = ?
+			AND team_id = ?
+			AND status = 'pending'
+			AND step_id IN (
+				SELECT id
+				FROM states
+				WHERE UPPER(COALESCE(name, '')) LIKE '%PRE_DEFENSE%'
+				   OR UPPER(COALESCE(display_name, '')) LIKE '%PRE_DEFENSE%'
+				   OR UPPER(COALESCE(name, '')) LIKE '%ПРЕДЗАЩИТ%'
+				   OR UPPER(COALESCE(display_name, '')) LIKE '%ПРЕДЗАЩИТ%'
+			)
+		`, projectID, teamID).
+		Updates(map[string]interface{}{
+			"status":         statusValue,
+			"reviewed_by":    reviewerID,
+			"reviewed_at":    now,
+			"review_comment": comment,
+			"updated_at":     now,
+		}).Error
 }
