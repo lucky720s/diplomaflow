@@ -1810,16 +1810,39 @@ func (s *Service) SubmitDocumentForStep(ctx context.Context, req *SubmitDocument
 		// if _, err := s.repo.EnsureNormControlCheckForSubmission(ctx, sub.ID); err != nil {
 		//     return nil, status.Errorf(codes.Internal, "ensure norm control check: %v", err)
 		// }
+	}
 
-	case "PRE_DEFENSE_1_UPLOAD", "PRE_DEFENSE_2_UPLOAD", "PRE_DEFENSE":
-		// Предзащиту лучше создавать только для pre-defense upload этапов,
-		// а не для любого документа.
+	// Предзащита: реальные имена этапов загрузки материалов в workflow PI —
+	// PRE_DEFENSE_1 и PRE_DEFENSE_2 (после миграции 000005; исторически
+	// PRE_DEFENSE_1_MATERIALS / PRE_DEFENSE_2_MATERIALS, а также встречались
+	// PRE_DEFENSE_1_UPLOAD / PRE_DEFENSE_2_UPLOAD / PRE_DEFENSE).
+	// Раньше тут было точное сравнение по case, из-за чего на реальных
+	// этапах PRE_DEFENSE_1/PRE_DEFENSE_2 запись admin_pre_defense_submissions
+	// не создавалась и комиссия не могла выставить оценку.
+	// Review-этапы (PRE_DEFENSE_1_REVIEW / PRE_DEFENSE_2_REVIEW) исключаем —
+	// там студент документы не подаёт.
+	if isPreDefenseUploadState(stateName) {
 		if _, err := s.EnsurePreDefenseSubmissionForSubmission(ctx, sub); err != nil {
 			return nil, status.Errorf(codes.Internal, "ensure pre-defense submission: %v", err)
 		}
 	}
 
 	return sub, nil
+}
+
+// isPreDefenseUploadState сообщает, является ли этап загрузкой материалов
+// предзащиты (а не review-этапом голосования комиссии). Покрывает все
+// исторические и текущие имена: PRE_DEFENSE, PRE_DEFENSE_1, PRE_DEFENSE_2,
+// PRE_DEFENSE_*_MATERIALS, PRE_DEFENSE_*_UPLOAD.
+func isPreDefenseUploadState(stateName string) bool {
+	s := strings.ToUpper(strings.TrimSpace(stateName))
+	if !strings.Contains(s, "PRE_DEFENSE") && !strings.Contains(s, "PREDEFENSE") {
+		return false
+	}
+	if strings.Contains(s, "REVIEW") {
+		return false
+	}
+	return true
 }
 func (s *Service) getEventNameForState(stateName string) string {
 	mapping := map[string]string{
