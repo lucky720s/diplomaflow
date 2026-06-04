@@ -370,159 +370,114 @@ type ReviewTopicRegistrationRequest struct {
 
 func (s *Service) ReviewTopicRegistration(ctx context.Context, req *ReviewTopicRegistrationRequest) (*TopicRegistration, error) {
 	if req == nil {
-		return nil, errors.New("request is nil")
+		return nil, status.Error(codes.InvalidArgument, "request is required")
 	}
-
 	if req.RegistrationID == "" {
-		return nil, errors.New("registration_id is required")
+		return nil, status.Error(codes.InvalidArgument, "registration_id is required")
 	}
 	if req.ReviewerID <= 0 {
-		return nil, errors.New("reviewer_id is required")
+		return nil, status.Error(codes.InvalidArgument, "reviewer_id is required")
+	}
+
+	action := strings.ToLower(strings.TrimSpace(req.Action))
+	if action == "" {
+		return nil, status.Error(codes.InvalidArgument, "action is required")
 	}
 
 	reg, err := s.repo.GetTopicRegistration(ctx, req.RegistrationID)
 	if err != nil {
-		return nil, fmt.Errorf("заявление не найдено: %w", err)
+		return nil, status.Errorf(codes.NotFound, "topic registration not found: %v", err)
 	}
+	if reg == nil {
+		return nil, status.Error(codes.NotFound, "topic registration not found")
+	}
+
 	if reg.ProjectID <= 0 {
-		return nil, errors.New("topic registration has no project_id (data inconsistent)")
+		return nil, status.Error(codes.FailedPrecondition, "topic registration is not linked to project")
 	}
 
-	if reg.Status != StatusPending && reg.Status != StatusRevisionRequested {
-		return nil, status.Error(codes.FailedPrecondition,
-			"заявление не может быть рассмотрено в текущем статусе")
+	// Не даём повторно аппрувить/реджектить уже рассмотренную заявку.
+	if reg.Status == StatusApproved || reg.Status == StatusRejected {
+		return nil, status.Errorf(codes.AlreadyExists, "topic registration already reviewed with status %s", reg.Status)
 	}
 
-	now := time.Now().UTC()
+	now := time.Now()
+	reviewerID := req.ReviewerID
 
-	reviewComment := strings.TrimSpace(req.Comment)
-	workflowComment := reviewComment
+	var workflowEvent string
 
-	switch req.Action {
+	switch action {
 	case "approve":
 		reg.Status = StatusApproved
+		reg.Comment = strings.TrimSpace(req.Comment)
 		reg.RejectionReason = ""
+		reg.ReviewerID = &reviewerID
+		reg.ReviewedAt = &now
+
+		workflowEvent = "TOPIC_APPROVED"
 
 	case "reject":
-		reason := strings.TrimSpace(req.RejectionReason)
-		if reason == "" {
-			return nil, status.Error(codes.InvalidArgument, "rejection_reason is required for reject")
+		if strings.TrimSpace(req.RejectionReason) == "" && strings.TrimSpace(req.Comment) == "" {
+			return nil, status.Error(codes.InvalidArgument, "rejection reason or comment is required")
 		}
 
 		reg.Status = StatusRejected
-		reg.RejectionReason = reason
-
-		if reviewComment == "" {
-			reviewComment = reason
+		reg.Comment = strings.TrimSpace(req.Comment)
+		reg.RejectionReason = strings.TrimSpace(req.RejectionReason)
+		if reg.RejectionReason == "" {
+			reg.RejectionReason = reg.Comment
 		}
-		workflowComment = reason
+		reg.ReviewerID = &reviewerID
+		reg.ReviewedAt = &now
+
+		workflowEvent = "TOPIC_REJECTED"
 
 	case "request_changes":
-		msg := strings.TrimSpace(req.Comment)
-		if msg == "" {
-			return nil, status.Error(codes.InvalidArgument, "comment is required for request_changes")
-		}
-
 		reg.Status = StatusRevisionRequested
-		reg.RejectionReason = ""
+		reg.Comment = strings.TrimSpace(req.Comment)
+		reg.RejectionReason = strings.TrimSpace(req.RejectionReason)
+		if reg.RejectionReason == "" {
+			reg.RejectionReason = reg.Comment
+		}
+		reg.ReviewerID = &reviewerID
+		reg.ReviewedAt = &now
 
-		reviewComment = msg
-		workflowComment = msg
+		workflowEvent = "TOPIC_REJECTED"
 
 	default:
-		return nil, status.Error(codes.InvalidArgument, "недопустимое действие")
+		return nil, status.Errorf(codes.InvalidArgument, "unsupported action: %s", req.Action)
 	}
 
-	reg.ReviewerID = &req.ReviewerID
-	reg.ReviewedAt = &now
-	reg.Comment = reviewComment
-
 	if err := s.repo.UpdateTopicRegistration(ctx, reg); err != nil {
-		return nil, fmt.Errorf("не удалось обновить заявление: %w", err)
+		return nil, status.Errorf(codes.Internal, "failed to update topic registration: %v", err)
+	}
+
+	reviewComment := strings.TrimSpace(req.Comment)
+	if reviewComment == "" {
+		reviewComment = strings.TrimSpace(req.RejectionReason)
 	}
 
 	if err := s.repo.CreateTopicRegistrationReview(ctx, &TopicRegistrationReview{
 		RegistrationID: reg.ID,
 		ReviewerID:     req.ReviewerID,
-		Action:         req.Action,
+		Action:         action,
 		Comment:        reviewComment,
 	}); err != nil {
-		return nil, fmt.Errorf("не удалось сохранить историю рассмотрения темы: %w", err)
+		return nil, status.Errorf(codes.Internal, "failed to create topic registration review history: %v", err)
 	}
 
-	switch req.Action {
-	case "approve":
-		if err := s.repo.AdvanceProjectByWorkflowEvent(
-			ctx,
-			reg.ProjectID,
-			"TOPIC_APPROVED",
-			req.ReviewerID,
-			workflowComment,
-		); err != nil {
-			return nil, fmt.Errorf("topic approved but failed to advance workflow: %w", err)
-		}
-
-		if err := s.repo.SetProjectTopicRegisteredAt(ctx, reg.ProjectID, now); err != nil {
-			s.logger.Warn("Failed to set topic_registered_at",
-				zap.Error(err),
-				zap.Int64("project_id", reg.ProjectID),
-			)
-		}
-
-	case "reject", "request_changes":
-		if err := s.repo.AdvanceProjectByWorkflowEvent(
-			ctx,
-			reg.ProjectID,
-			"TOPIC_REJECTED",
-			req.ReviewerID,
-			workflowComment,
-		); err != nil {
-			return nil, fmt.Errorf("topic rejected/request_changes but failed to rollback workflow: %w", err)
-		}
+	if err := s.repo.AdvanceProjectByWorkflowEvent(
+		ctx,
+		reg.ProjectID,
+		workflowEvent,
+		req.ReviewerID,
+		reviewComment,
+	); err != nil {
+		return nil, status.Errorf(codes.FailedPrecondition, "failed to advance project workflow by %s: %v", workflowEvent, err)
 	}
 
-	_ = s.repo.LogActivity(ctx, &AdminActivity{
-		ActivityType: ActivityTypeTopicApproval,
-		Description:  fmt.Sprintf("Topic registration %s: %s", reg.ID, req.Action),
-		ActorID:      req.ReviewerID,
-		TargetID:     reg.TeamID,
-		TargetType:   "topic_registration",
-	})
-
-	switch req.Action {
-	case "approve":
-		s.notifyTeamBestEffort(ctx, reg.TeamID,
-			"Тема утверждена",
-			fmt.Sprintf("Тема: %s", reg.ProposedTopicRu),
-			"/diplom",
-			"topic_registration_approved",
-		)
-
-	case "reject":
-		reason := reg.RejectionReason
-		if reason == "" {
-			reason = "Причина не указана"
-		}
-
-		s.notifyTeamBestEffort(ctx, reg.TeamID,
-			"Тема отклонена",
-			fmt.Sprintf("Причина: %s", reason),
-			"/diplom",
-			"topic_registration_rejected",
-		)
-
-	case "request_changes":
-		msg := reg.Comment
-		if msg == "" {
-			msg = "Нужны правки"
-		}
-
-		s.notifyTeamBestEffort(ctx, reg.TeamID,
-			"Нужны правки по теме",
-			msg,
-			"/diplom",
-			"topic_registration_changes_requested",
-		)
+	if action == "approve" {
+		_ = s.repo.MarkProjectTopicRegistered(ctx, reg.ProjectID)
 	}
 
 	return reg, nil

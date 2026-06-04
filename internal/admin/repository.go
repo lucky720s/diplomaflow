@@ -179,6 +179,7 @@ type Repository interface {
 	ListSupervisorProjectFiles(ctx context.Context, projectID int64) ([]*SupervisorProjectFileRow, error)
 
 	GetStateReviewerRoles(ctx context.Context, stateID int64) ([]string, error)
+	MarkProjectTopicRegistered(ctx context.Context, projectID int64) error
 }
 
 type TopicRegistrationFilter struct {
@@ -1889,4 +1890,12 @@ func (r *repository) GetStateReviewerRoles(ctx context.Context, stateID int64) (
 	}
 
 	return roles, nil
+}
+func (r *repository) MarkProjectTopicRegistered(ctx context.Context, projectID int64) error {
+	return r.db.WithContext(ctx).Exec(`
+		UPDATE projects
+		SET topic_registered_at = COALESCE(topic_registered_at, now()),
+		    updated_at = now()
+		WHERE id = ?
+	`, projectID).Error
 }
