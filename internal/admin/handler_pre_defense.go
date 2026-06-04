@@ -106,7 +106,6 @@ func (h *Handler) GetPreDefenseSubmission(ctx context.Context, req *adminv1.GetP
 		History:    pbHistory,
 	}, nil
 }
-
 func (h *Handler) SchedulePreDefense(ctx context.Context, req *adminv1.SchedulePreDefenseRequest) (*adminv1.SchedulePreDefenseResponse, error) {
 	if req.SubmissionId == "" || req.ScheduledBy == 0 {
 		return nil, status.Error(codes.InvalidArgument, "submission_id and scheduled_by are required")
@@ -130,6 +129,11 @@ func (h *Handler) SchedulePreDefense(ctx context.Context, req *adminv1.ScheduleP
 	)
 	if err != nil {
 		h.logger.Error("SchedulePreDefense failed", zap.Error(err))
+
+		if st, ok := status.FromError(err); ok {
+			return nil, st.Err()
+		}
+
 		return nil, status.Errorf(codes.Internal, "failed to schedule pre-defense: %v", err)
 	}
 
@@ -138,7 +142,6 @@ func (h *Handler) SchedulePreDefense(ctx context.Context, req *adminv1.ScheduleP
 		Message: "Pre-defense scheduled successfully",
 	}, nil
 }
-
 func (h *Handler) GradePreDefense(ctx context.Context, req *adminv1.GradePreDefenseRequest) (*adminv1.GradePreDefenseResponse, error) {
 	if req.SubmissionId == "" || req.GradedBy == 0 {
 		return nil, status.Error(codes.InvalidArgument, "submission_id and graded_by are required")
@@ -165,6 +168,11 @@ func (h *Handler) GradePreDefense(ctx context.Context, req *adminv1.GradePreDefe
 	)
 	if err != nil {
 		h.logger.Error("GradePreDefense failed", zap.Error(err))
+
+		if st, ok := status.FromError(err); ok {
+			return nil, st.Err()
+		}
+
 		return nil, status.Errorf(codes.Internal, "failed to grade pre-defense: %v", err)
 	}
 
@@ -203,7 +211,6 @@ func (h *Handler) CompletePreDefense(ctx context.Context, req *adminv1.CompleteP
 		Message: fmt.Sprintf("Pre-defense completed with result: %s", req.Result),
 	}, nil
 }
-
 func (h *Handler) ReschedulePreDefense(ctx context.Context, req *adminv1.ReschedulePreDefenseRequest) (*adminv1.ReschedulePreDefenseResponse, error) {
 	if req.SubmissionId == "" || req.RescheduledBy == 0 {
 		return nil, status.Error(codes.InvalidArgument, "submission_id and rescheduled_by are required")
@@ -224,6 +231,11 @@ func (h *Handler) ReschedulePreDefense(ctx context.Context, req *adminv1.Resched
 	)
 	if err != nil {
 		h.logger.Error("ReschedulePreDefense failed", zap.Error(err))
+
+		if st, ok := status.FromError(err); ok {
+			return nil, st.Err()
+		}
+
 		return nil, status.Errorf(codes.Internal, "failed to reschedule pre-defense: %v", err)
 	}
 

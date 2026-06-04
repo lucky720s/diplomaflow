@@ -1426,14 +1426,19 @@ func (h *Handler) SubmitDocument(ctx context.Context, req *adminv1.SubmitDocumen
 		Comment:     req.Comment,
 	})
 	if err != nil {
-		if _, ok := status.FromError(err); ok {
-			return nil, err
+		if st, ok := status.FromError(err); ok {
+			return nil, st.Err()
 		}
 		return nil, status.Errorf(codes.Internal, "failed to submit document: %v", err)
 	}
 
 	if _, err := h.service.EnsurePreDefenseSubmissionForSubmission(ctx, sub); err != nil {
 		h.logger.Error("failed to ensure pre-defense submission after document submit", zap.Error(err))
+
+		if st, ok := status.FromError(err); ok {
+			return nil, st.Err()
+		}
+
 		return nil, status.Errorf(codes.Internal, "failed to create pre-defense submission: %v", err)
 	}
 

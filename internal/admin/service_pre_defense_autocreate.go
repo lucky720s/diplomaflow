@@ -11,6 +11,8 @@ import (
 	"gorm.io/gorm"
 )
 
+const preDefenseStatusScheduled = "scheduled"
+
 type preDefenseSubmissionData struct {
 	FileIDs []string `json:"file_ids"`
 	Comment string   `json:"comment"`
@@ -46,12 +48,17 @@ func (s *Service) EnsurePreDefenseSubmissionForSubmission(ctx context.Context, s
 			return nil, fmt.Errorf("get active pre-defense submission: %w", err)
 		}
 
+		scheduledDate := now
+
 		pd = &PreDefenseSubmission{
 			ID:              uuid.NewString(),
 			TeamID:          sub.TeamID,
 			ProjectID:       sub.ProjectID,
 			SubmittedBy:     sub.SubmittedBy,
-			Status:          StatusPending,
+			Status:          preDefenseStatusScheduled,
+			ScheduledDate:   &scheduledDate,
+			ScheduledTime:   "auto",
+			Location:        "Not specified",
 			DurationMinutes: 30,
 			SubmittedAt:     now,
 			CreatedAt:       now,
@@ -64,11 +71,11 @@ func (s *Service) EnsurePreDefenseSubmissionForSubmission(ctx context.Context, s
 
 		_ = s.repo.AddPreDefenseHistory(ctx, &PreDefenseHistory{
 			SubmissionID: pd.ID,
-			Action:       "submitted",
+			Action:       preDefenseStatusScheduled,
 			ActorID:      sub.SubmittedBy,
 			OldValue:     "",
-			NewValue:     StatusPending,
-			Comment:      "Pre-defense submission was created automatically from workflow document submission",
+			NewValue:     preDefenseStatusScheduled,
+			Comment:      "Pre-defense submission was created and auto-scheduled from workflow document submission",
 			CreatedAt:    now,
 		})
 	}
@@ -139,11 +146,13 @@ func extractPreDefenseFileIDs(sub *Submission) []string {
 		}
 
 		var fileObjects []struct {
-			ID string `json:"id"`
+			ID     string `json:"id"`
+			FileID string `json:"file_id"`
 		}
 		if err := json.Unmarshal(sub.Files, &fileObjects); err == nil {
 			for _, f := range fileObjects {
 				add(f.ID)
+				add(f.FileID)
 			}
 		}
 	}
