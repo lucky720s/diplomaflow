@@ -1825,9 +1825,44 @@ func (s *Service) SubmitDocumentForStep(ctx context.Context, req *SubmitDocument
 		if _, err := s.EnsurePreDefenseSubmissionForSubmission(ctx, sub); err != nil {
 			return nil, status.Errorf(codes.Internal, "ensure pre-defense submission: %v", err)
 		}
+
+		// Двигаем workflow с этапа загрузки материалов на review-этап предзащиты
+		// (PRE_DEFENSE_1 → PRE_DEFENSE_1_REVIEW, PRE_DEFENSE_2 → PRE_DEFENSE_2_REVIEW).
+		// Без этого проект остаётся на materials-этапе, и финальный допуск деканата
+		// (PREDEFENSE*_PASSED доступен только из *_REVIEW) не находит перехода —
+		// студента не переводит на следующий этап.
+		// Это тот же паттерн, что и для регистрации темы (TOPIC_SUBMITTED выше).
+		if eventName := preDefenseSubmitEvent(stateName); eventName != "" {
+			actorID, actorRole := s.callerFromContext(ctx, sub.SubmittedBy, "student")
+			if wfErr := s.tryPerformIfAvailable(ctx, actorID, actorRole, sub.ProjectID, eventName, map[string]interface{}{
+				"source":        "admin_service",
+				"submission_id": sub.ID,
+			}); wfErr != nil {
+				s.logger.Warn("failed to advance pre-defense workflow to review state (non-blocking)",
+					zap.Error(wfErr),
+					zap.Int64("project_id", sub.ProjectID),
+					zap.String("state", stateName),
+					zap.String("event", eventName),
+				)
+			}
+		}
 	}
 
 	return sub, nil
+}
+
+// preDefenseSubmitEvent возвращает workflow-событие подачи материалов предзащиты
+// для перехода materials → review. Устойчиво к разным именам этапов.
+func preDefenseSubmitEvent(stateName string) string {
+	s := strings.ToUpper(strings.TrimSpace(stateName))
+	switch {
+	case strings.Contains(s, "PRE_DEFENSE_1") || strings.Contains(s, "PREDEFENSE1"):
+		return "PREDEFENSE1_SUBMITTED"
+	case strings.Contains(s, "PRE_DEFENSE_2") || strings.Contains(s, "PREDEFENSE2"):
+		return "PREDEFENSE2_SUBMITTED"
+	default:
+		return ""
+	}
 }
 
 // isPreDefenseUploadState сообщает, является ли этап загрузкой материалов
@@ -1843,16 +1878,6 @@ func isPreDefenseUploadState(stateName string) bool {
 		return false
 	}
 	return true
-}
-func (s *Service) getEventNameForState(stateName string) string {
-	mapping := map[string]string{
-		"PRE_DEFENSE_1": "PREDEFENSE1_SUBMITTED",
-		"PRE_DEFENSE_2": "PREDEFENSE2_SUBMITTED",
-		"NORM_CONTROL":  "",
-		"ECONOMICS":     "ECONOMICS_SUBMITTED",
-		"ANTIPLAGIAT":   "ANTIPLAGIAT_SUBMITTED",
-	}
-	return mapping[stateName]
 }
 func (s *Service) notifyBestEffort(ctx context.Context, userID int64, title, message, link, nType string) {
 	if s.notificationClient == nil || userID <= 0 {

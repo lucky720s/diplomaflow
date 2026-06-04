@@ -2098,7 +2098,7 @@ func (r *repository) GetProjectSubmitContext(ctx context.Context, projectID int6
 	}
 
 	var exists bool
-	if err := r.db.WithContext(ctx).Raw(`
+	err = r.db.WithContext(ctx).Raw(`
 		SELECT EXISTS (
 			SELECT 1
 			FROM states s
@@ -2106,7 +2106,8 @@ func (r *repository) GetProjectSubmitContext(ctx context.Context, projectID int6
 			  AND s.workflow_id = ?
 			  AND s.deleted_at IS NULL
 		)
-	`, row.CurrentStateID, row.WorkflowID).Scan(&exists).Error; err != nil {
+	`, row.CurrentStateID, row.WorkflowID).Scan(&exists).Error
+	if err != nil {
 		return nil, err
 	}
 

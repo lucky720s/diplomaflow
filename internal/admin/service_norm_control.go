@@ -622,51 +622,6 @@ func (s *Service) NormCreateChecklist(ctx context.Context, actorID int64, name, 
 	return c, nil
 }
 
-func (s *Service) ensureNormCheckIfNeeded(ctx context.Context, sub *Submission) {
-	if sub == nil {
-		return
-	}
-
-	// Only for NORM_CONTROL step
-	type row struct{ Name string }
-	var st row
-
-	r, ok := s.repo.(*repository)
-	if !ok || r.db == nil {
-		return
-	}
-
-	// resolve step name
-	if err := r.db.WithContext(ctx).
-		Raw("SELECT name FROM states WHERE id = ? LIMIT 1", sub.StepID).
-		Scan(&st).Error; err != nil {
-		return
-	}
-
-	if st.Name != "NORM_CONTROL" {
-		return
-	}
-
-	check, err := s.repo.EnsureNormCheckForSubmission(ctx, sub.ID)
-	if err != nil || check == nil {
-		return
-	}
-
-	action := "submitted"
-	if check.DocumentVersion > 1 {
-		action = "resubmitted"
-	}
-
-	sid := sub.ID
-	_ = s.repo.AddNormHistory(ctx, &NormControlHistory{
-		ProjectID:    sub.ProjectID,
-		SubmissionID: &sid,
-		Action:       action,
-		ActorID:      &sub.SubmittedBy,
-		Comment:      "",
-	})
-}
-
 // ===== helpers (norm-control) =====
 
 func (s *Service) assertNormSubmission(ctx context.Context, submissionID string) (*Submission, error) {

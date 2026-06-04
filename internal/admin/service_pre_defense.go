@@ -3,6 +3,7 @@ package admin
 import (
 	"context"
 	"fmt"
+	"strings"
 	"time"
 
 	"github.com/google/uuid"
@@ -257,6 +258,52 @@ func (s *Service) GradePreDefense(
 		)
 	}
 
+	// Переход сразу после оценки комиссии: оценка = допуск, проект едет на
+	// следующий этап без отдельного шага деканата. Двигаем ровно текущую фазу
+	// предзащиты (по текущему состоянию проекта), допуская добивание команд,
+	// застрявших на materials-этапе. Если workflow двинулся — помечаем
+	// предзащиту завершённой (passed), чтобы повторный dean-office complete
+	// был идемпотентным и не перепрыгнул следующую фазу.
+	advanced, advErr := s.advancePreDefenseCurrentPhase(ctx, sub.ProjectID, gradedBy, comment, true, true)
+	if advErr != nil {
+		s.logger.Warn("pre-defense graded, but workflow advance failed (student not moved)",
+			zap.String("submission_id", submissionID),
+			zap.Int64("project_id", sub.ProjectID),
+			zap.Error(advErr),
+		)
+		return nil
+	}
+
+	if advanced {
+		completedNow := time.Now().UTC()
+		sub.Status = "completed"
+		sub.Result = "passed"
+		sub.ResultComment = comment
+		sub.CompletedAt = &completedNow
+		sub.UpdatedAt = completedNow
+
+		if err := s.repo.UpdatePreDefenseSubmission(ctx, sub); err != nil {
+			return fmt.Errorf("finalize pre-defense after grade: %w", err)
+		}
+
+		_ = s.repo.AddPreDefenseHistory(ctx, &PreDefenseHistory{
+			SubmissionID: submissionID,
+			Action:       "completed",
+			ActorID:      gradedBy,
+			OldValue:     "graded",
+			NewValue:     "completed",
+			Comment:      "Auto-advanced to next stage after commission grade",
+			CreatedAt:    completedNow,
+		})
+
+		s.notifyTeamBestEffort(ctx, sub.TeamID,
+			"Предзащита пройдена",
+			fmt.Sprintf("Оценка комиссии: %d. Вы переведены на следующий этап.", grade),
+			"/diplom",
+			"predefense_passed",
+		)
+	}
+
 	return nil
 }
 
@@ -275,7 +322,7 @@ func (s *Service) CompletePreDefense(ctx context.Context, submissionID string, c
 		return status.Errorf(codes.NotFound, "submission not found: %v", err)
 	}
 
-	finalStatus, workflowStatus, workflowEvents, err := buildPreDefenseCompletionPlan(result, allowResubmission)
+	finalStatus, workflowStatus, pass, err := buildPreDefenseCompletionPlan(result, allowResubmission)
 	if err != nil {
 		return err
 	}
@@ -290,54 +337,58 @@ func (s *Service) CompletePreDefense(ctx context.Context, submissionID string, c
 				sub.Result, result)
 		}
 
-		if err := s.advancePreDefenseWorkflow(ctx, sub.ProjectID, completedBy, resultComment, workflowEvents); err != nil {
-			// Для already-final статуса считаем это идемпотентным повтором:
-			// если workflow уже был двинут, transition из текущего state больше не найдётся.
-			// Если workflow ещё не был двинут, advancePreDefenseWorkflow успешно его дотолкнёт.
-			s.logger.Warn("pre-defense already final; workflow recovery was not applied or was already applied",
+		// Идемпотентная дотолкивалка: двигаем только если проект реально застрял
+		// на review-этапе предзащиты. allowFromMaterials=false исключает
+		// перепрыгивание следующей фазы, если проект уже ушёл вперёд (например
+		// после автоперехода по оценке комиссии).
+		recovered, recErr := s.advancePreDefenseCurrentPhase(ctx, sub.ProjectID, completedBy, resultComment, pass, false)
+		if recErr != nil {
+			s.logger.Warn("pre-defense already final; workflow recovery failed (treated as idempotent)",
 				zap.String("submission_id", sub.ID),
 				zap.Int64("project_id", sub.ProjectID),
 				zap.String("current_predefense_status", sub.Status),
 				zap.String("result", result),
-				zap.Error(err),
+				zap.Error(recErr),
 			)
 			return nil
 		}
 
-		now := time.Now().UTC()
-		_ = s.repo.AddPreDefenseHistory(ctx, &PreDefenseHistory{
-			SubmissionID: sub.ID,
-			Action:       "workflow_recovered",
-			ActorID:      completedBy,
-			OldValue:     sub.Status,
-			NewValue:     sub.Status,
-			Comment:      fmt.Sprintf("Workflow recovered after already completed pre-defense. Result: %s. %s", result, resultComment),
-			CreatedAt:    now,
-		})
+		if recovered {
+			now := time.Now().UTC()
+			_ = s.repo.AddPreDefenseHistory(ctx, &PreDefenseHistory{
+				SubmissionID: sub.ID,
+				Action:       "workflow_recovered",
+				ActorID:      completedBy,
+				OldValue:     sub.Status,
+				NewValue:     sub.Status,
+				Comment:      fmt.Sprintf("Workflow recovered after already completed pre-defense. Result: %s. %s", result, resultComment),
+				CreatedAt:    now,
+			})
 
-		if err := s.repo.MarkPreDefenseWorkflowSubmissionReviewed(
-			ctx,
-			sub.ProjectID,
-			sub.TeamID,
-			completedBy,
-			workflowStatus,
-			fmt.Sprintf("Pre-defense workflow recovered: %s. %s", result, resultComment),
-		); err != nil {
-			s.logger.Warn("failed to sync workflow submission after pre-defense workflow recovery",
-				zap.String("submission_id", submissionID),
-				zap.Int64("project_id", sub.ProjectID),
-				zap.Int64("team_id", sub.TeamID),
-				zap.String("workflow_status", workflowStatus),
-				zap.Error(err),
+			if err := s.repo.MarkPreDefenseWorkflowSubmissionReviewed(
+				ctx,
+				sub.ProjectID,
+				sub.TeamID,
+				completedBy,
+				workflowStatus,
+				fmt.Sprintf("Pre-defense workflow recovered: %s. %s", result, resultComment),
+			); err != nil {
+				s.logger.Warn("failed to sync workflow submission after pre-defense workflow recovery",
+					zap.String("submission_id", submissionID),
+					zap.Int64("project_id", sub.ProjectID),
+					zap.Int64("team_id", sub.TeamID),
+					zap.String("workflow_status", workflowStatus),
+					zap.Error(err),
+				)
+			}
+
+			s.notifyTeamBestEffort(ctx, sub.TeamID,
+				"Предзащита завершена",
+				fmt.Sprintf("Результат: %s. %s", sub.Status, resultComment),
+				"/diplom",
+				"predefense_completed",
 			)
 		}
-
-		s.notifyTeamBestEffort(ctx, sub.TeamID,
-			"Предзащита завершена",
-			fmt.Sprintf("Результат: %s. %s", sub.Status, resultComment),
-			"/diplom",
-			"predefense_completed",
-		)
 
 		return nil
 	}
@@ -348,7 +399,7 @@ func (s *Service) CompletePreDefense(ctx context.Context, submissionID string, c
 
 	// Главный фикс: workflow двигается до финального обновления admin_pre_defense_submissions.
 	// Если workflow не двинулся, предзащита НЕ станет completed, значит рассинхрона больше не будет.
-	if err := s.advancePreDefenseWorkflow(ctx, sub.ProjectID, completedBy, resultComment, workflowEvents); err != nil {
+	if _, err := s.advancePreDefenseCurrentPhase(ctx, sub.ProjectID, completedBy, resultComment, pass, true); err != nil {
 		return status.Errorf(codes.FailedPrecondition,
 			"failed to advance project workflow after pre-defense complete: %v", err)
 	}
@@ -406,20 +457,20 @@ func (s *Service) CompletePreDefense(ctx context.Context, submissionID string, c
 	return nil
 }
 
-func buildPreDefenseCompletionPlan(result string, allowResubmission bool) (finalStatus string, workflowStatus string, workflowEvents []string, err error) {
+func buildPreDefenseCompletionPlan(result string, allowResubmission bool) (finalStatus string, workflowStatus string, pass bool, err error) {
 	switch result {
 	case "passed":
-		return "completed", "approved", []string{"PREDEFENSE1_PASSED", "PREDEFENSE2_PASSED"}, nil
+		return "completed", "approved", true, nil
 	case "conditional":
 		// Conditional тоже считается допуском вперёд по workflow, но статус предзащиты оставляем отдельным.
-		return "conditional", "approved", []string{"PREDEFENSE1_PASSED", "PREDEFENSE2_PASSED"}, nil
+		return "conditional", "approved", true, nil
 	case "failed":
 		if allowResubmission {
-			return "failed_resubmit", "rejected", []string{"PREDEFENSE1_FAILED", "PREDEFENSE2_FAILED"}, nil
+			return "failed_resubmit", "rejected", false, nil
 		}
-		return "failed", "rejected", []string{"PREDEFENSE1_FAILED", "PREDEFENSE2_FAILED"}, nil
+		return "failed", "rejected", false, nil
 	default:
-		return "", "", nil, status.Errorf(codes.InvalidArgument, "invalid result: %s, must be 'passed', 'failed', or 'conditional'", result)
+		return "", "", false, status.Errorf(codes.InvalidArgument, "invalid result: %s, must be 'passed', 'failed', or 'conditional'", result)
 	}
 }
 
@@ -432,32 +483,77 @@ func isFinalPreDefenseStatus(statusValue string) bool {
 	}
 }
 
-func (s *Service) advancePreDefenseWorkflow(ctx context.Context, projectID, actorID int64, comment string, eventNames []string) error {
-	var lastErr error
-	for _, eventName := range eventNames {
-		if eventName == "" {
-			continue
-		}
+// preDefenseGateEvent возвращает событие gate для фазы предзащиты.
+func preDefenseGateEvent(phase int, pass bool) string {
+	switch {
+	case phase == 1 && pass:
+		return "PREDEFENSE1_PASSED"
+	case phase == 1 && !pass:
+		return "PREDEFENSE1_FAILED"
+	case phase == 2 && pass:
+		return "PREDEFENSE2_PASSED"
+	default:
+		return "PREDEFENSE2_FAILED"
+	}
+}
 
-		err := s.repo.AdvanceProjectByWorkflowEvent(ctx, projectID, eventName, actorID, comment)
-		if err == nil {
-			s.logger.Info("pre-defense workflow advanced",
-				zap.Int64("project_id", projectID),
-				zap.Int64("actor_id", actorID),
-				zap.String("event_name", eventName),
-			)
-			return nil
-		}
+// advancePreDefenseCurrentPhase двигает проект ровно на ОДНУ фазу предзащиты,
+// определяя фазу по ТЕКУЩЕМУ состоянию проекта. Это исключает перепрыгивание
+// в следующую фазу (нельзя случайно проскочить вторую предзащиту).
+//
+//	pass=true  → *_PASSED (вперёд / допуск),
+//	pass=false → *_FAILED (назад на доработку).
+//
+// allowFromMaterials=true позволяет добить команды, застрявшие на этапе
+// загрузки (materials): сначала materials → review (*_SUBMITTED), затем gate.
+// Возвращает advanced=false, если проект не находится на этапе предзащиты
+// (например workflow уже двинут) — это не ошибка.
+func (s *Service) advancePreDefenseCurrentPhase(
+	ctx context.Context,
+	projectID, actorID int64,
+	comment string,
+	pass, allowFromMaterials bool,
+) (bool, error) {
+	pctx, err := s.repo.GetProjectSubmitContext(ctx, projectID)
+	if err != nil {
+		return false, fmt.Errorf("get project state for pre-defense advance: %w", err)
+	}
+	state := strings.ToUpper(strings.TrimSpace(pctx.CurrentStateName))
 
-		lastErr = err
-		s.logger.Debug("pre-defense workflow event did not match current project state",
+	var events []string
+	switch {
+	case strings.Contains(state, "PRE_DEFENSE_1_REVIEW"):
+		events = []string{preDefenseGateEvent(1, pass)}
+	case strings.Contains(state, "PRE_DEFENSE_2_REVIEW"):
+		events = []string{preDefenseGateEvent(2, pass)}
+	case strings.Contains(state, "PRE_DEFENSE_1"):
+		if !allowFromMaterials {
+			return false, nil
+		}
+		events = []string{"PREDEFENSE1_SUBMITTED", preDefenseGateEvent(1, pass)}
+	case strings.Contains(state, "PRE_DEFENSE_2"):
+		if !allowFromMaterials {
+			return false, nil
+		}
+		events = []string{"PREDEFENSE2_SUBMITTED", preDefenseGateEvent(2, pass)}
+	default:
+		// Проект не на этапе предзащиты — двигать нечего.
+		return false, nil
+	}
+
+	for _, ev := range events {
+		if err := s.repo.AdvanceProjectByWorkflowEvent(ctx, projectID, ev, actorID, comment); err != nil {
+			return false, fmt.Errorf("advance workflow event %s (project_id=%d, state=%s): %w", ev, projectID, state, err)
+		}
+		s.logger.Info("pre-defense workflow advanced",
 			zap.Int64("project_id", projectID),
-			zap.String("event_name", eventName),
-			zap.Error(err),
+			zap.Int64("actor_id", actorID),
+			zap.String("from_state", state),
+			zap.String("event_name", ev),
 		)
 	}
 
-	return fmt.Errorf("none of workflow events matched current project state for project_id=%d, events=%v, last_error=%w", projectID, eventNames, lastErr)
+	return true, nil
 }
 
 // ReschedulePreDefense - перенос предзащиты

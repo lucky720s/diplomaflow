@@ -515,44 +515,6 @@ func (s *Service) AntiplagHistory(ctx context.Context, projectID int64) ([]*Anti
 	return s.repo.ListAntiplagHistory(ctx, projectID)
 }
 
-func (s *Service) ensureAntiplagCheckIfNeeded(ctx context.Context, sub *Submission) {
-	if sub == nil {
-		return
-	}
-
-	r, ok := s.repo.(*repository)
-	if !ok || r.db == nil {
-		return
-	}
-
-	var st struct{ Name string }
-	if err := r.db.WithContext(ctx).
-		Raw("SELECT name FROM states WHERE id = ? LIMIT 1", sub.StepID).
-		Scan(&st).Error; err != nil {
-		return
-	}
-	if st.Name != antiplagStateName {
-		return
-	}
-
-	check, err := s.repo.EnsureAntiplagCheckForSubmission(ctx, sub.ID)
-	if err != nil || check == nil {
-		return
-	}
-
-	action := "submitted"
-	if check.DocumentVersion > 1 {
-		action = "resubmitted"
-	}
-	sid := sub.ID
-	_ = s.repo.AddAntiplagHistory(ctx, &AntiplagHistory{
-		ProjectID:    sub.ProjectID,
-		SubmissionID: &sid,
-		Action:       action,
-		ActorID:      &sub.SubmittedBy,
-	})
-}
-
 // ===== helpers (antiplagiat) =====
 
 func (s *Service) rollbackAntiplagApprove(ctx context.Context, r *repository, submissionID string) {
