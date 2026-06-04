@@ -49,7 +49,7 @@ func main() {
 	)
 	adminv1.RegisterAdminServiceServer(grpcServer, h)
 	adminv1.RegisterNormControlServiceServer(grpcServer, h)
-
+	adminv1.RegisterAntiplagiatServiceServer(grpcServer, h)
 	metricsPort := os.Getenv("METRICS_PORT")
 	if metricsPort == "" {
 		metricsPort = "9190"
