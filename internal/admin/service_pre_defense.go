@@ -261,49 +261,93 @@ func (s *Service) GradePreDefense(
 }
 
 // CompletePreDefense - завершение предзащиты с результатом.
-// ВАЖНО: сначала двигаем workflow проекта, и только потом помечаем саму предзащиту completed/failed.
-// Иначе получится рассинхрон: admin_pre_defense_submissions уже completed, а projects.current_state_name
-// всё ещё PRE_DEFENSE_1_REVIEW/PRE_DEFENSE_2_REVIEW.
+//
+// Главные правила:
+//  1. Для нормального сценария status должен быть graded.
+//  2. Сначала двигаем workflow проекта, и только потом помечаем предзащиту completed/failed/conditional.
+//  3. Если старая версия backend уже успела поставить completed, но workflow не двинула,
+//     повторный вызов dean office не падает, а пытается восстановить workflow без ручных SQL-правок.
 func (s *Service) CompletePreDefense(ctx context.Context, submissionID string, completedBy int64, result, resultComment string, recommendations []string, allowResubmission bool) error {
+	_ = recommendations // сейчас рекомендации не сохраняются в модели; оставляем параметр для совместимости API.
+
 	sub, err := s.repo.GetPreDefenseSubmission(ctx, submissionID)
 	if err != nil {
 		return status.Errorf(codes.NotFound, "submission not found: %v", err)
+	}
+
+	finalStatus, workflowStatus, workflowEvents, err := buildPreDefenseCompletionPlan(result, allowResubmission)
+	if err != nil {
+		return err
+	}
+
+	// Самовосстановление после старого бага:
+	// раньше запись могла стать completed/conditional/failed, а projects.current_state_name оставался
+	// PRE_DEFENSE_1_REVIEW/PRE_DEFENSE_2_REVIEW. В таком случае повторный complete не должен требовать SQL rollback.
+	if isFinalPreDefenseStatus(sub.Status) {
+		if sub.Result != "" && sub.Result != result {
+			return status.Errorf(codes.FailedPrecondition,
+				"pre-defense already completed with result '%s', cannot complete again with result '%s'",
+				sub.Result, result)
+		}
+
+		if err := s.advancePreDefenseWorkflow(ctx, sub.ProjectID, completedBy, resultComment, workflowEvents); err != nil {
+			// Для already-final статуса считаем это идемпотентным повтором:
+			// если workflow уже был двинут, transition из текущего state больше не найдётся.
+			// Если workflow ещё не был двинут, advancePreDefenseWorkflow успешно его дотолкнёт.
+			s.logger.Warn("pre-defense already final; workflow recovery was not applied or was already applied",
+				zap.String("submission_id", sub.ID),
+				zap.Int64("project_id", sub.ProjectID),
+				zap.String("current_predefense_status", sub.Status),
+				zap.String("result", result),
+				zap.Error(err),
+			)
+			return nil
+		}
+
+		now := time.Now().UTC()
+		_ = s.repo.AddPreDefenseHistory(ctx, &PreDefenseHistory{
+			SubmissionID: sub.ID,
+			Action:       "workflow_recovered",
+			ActorID:      completedBy,
+			OldValue:     sub.Status,
+			NewValue:     sub.Status,
+			Comment:      fmt.Sprintf("Workflow recovered after already completed pre-defense. Result: %s. %s", result, resultComment),
+			CreatedAt:    now,
+		})
+
+		if err := s.repo.MarkPreDefenseWorkflowSubmissionReviewed(
+			ctx,
+			sub.ProjectID,
+			sub.TeamID,
+			completedBy,
+			workflowStatus,
+			fmt.Sprintf("Pre-defense workflow recovered: %s. %s", result, resultComment),
+		); err != nil {
+			s.logger.Warn("failed to sync workflow submission after pre-defense workflow recovery",
+				zap.String("submission_id", submissionID),
+				zap.Int64("project_id", sub.ProjectID),
+				zap.Int64("team_id", sub.TeamID),
+				zap.String("workflow_status", workflowStatus),
+				zap.Error(err),
+			)
+		}
+
+		s.notifyTeamBestEffort(ctx, sub.TeamID,
+			"Предзащита завершена",
+			fmt.Sprintf("Результат: %s. %s", sub.Status, resultComment),
+			"/diplom",
+			"predefense_completed",
+		)
+
+		return nil
 	}
 
 	if sub.Status != "graded" {
 		return status.Errorf(codes.FailedPrecondition, "cannot complete pre-defense in status '%s', must be 'graded'", sub.Status)
 	}
 
-	var finalStatus string
-	var workflowStatus string
-	var workflowEvents []string
-
-	switch result {
-	case "passed":
-		finalStatus = "completed"
-		workflowStatus = "approved"
-		workflowEvents = []string{"PREDEFENSE1_PASSED", "PREDEFENSE2_PASSED"}
-	case "conditional":
-		// Conditional тоже считается допуском вперёд по workflow, но статус предзащиты оставляем отдельным.
-		finalStatus = "conditional"
-		workflowStatus = "approved"
-		workflowEvents = []string{"PREDEFENSE1_PASSED", "PREDEFENSE2_PASSED"}
-	case "failed":
-		workflowStatus = "rejected"
-		workflowEvents = []string{"PREDEFENSE1_FAILED", "PREDEFENSE2_FAILED"}
-		if allowResubmission {
-			finalStatus = "failed_resubmit"
-		} else {
-			finalStatus = "failed"
-		}
-	default:
-		return status.Errorf(codes.InvalidArgument, "invalid result: %s, must be 'passed', 'failed', or 'conditional'", result)
-	}
-
-	// Главный фикс: не используем старый несуществующий PREDEFENSE_PASSED и не игнорируем ошибку.
-	// AdvanceProjectByWorkflowEvent сам найдёт transition из текущего current_state_id проекта.
-	// Пробуем сначала event для первой предзащиты, потом для второй. Сработает только тот,
-	// у которого from_state совпадает с текущим projects.current_state_id.
+	// Главный фикс: workflow двигается до финального обновления admin_pre_defense_submissions.
+	// Если workflow не двинулся, предзащита НЕ станет completed, значит рассинхрона больше не будет.
 	if err := s.advancePreDefenseWorkflow(ctx, sub.ProjectID, completedBy, resultComment, workflowEvents); err != nil {
 		return status.Errorf(codes.FailedPrecondition,
 			"failed to advance project workflow after pre-defense complete: %v", err)
@@ -360,6 +404,32 @@ func (s *Service) CompletePreDefense(ctx context.Context, submissionID string, c
 	)
 
 	return nil
+}
+
+func buildPreDefenseCompletionPlan(result string, allowResubmission bool) (finalStatus string, workflowStatus string, workflowEvents []string, err error) {
+	switch result {
+	case "passed":
+		return "completed", "approved", []string{"PREDEFENSE1_PASSED", "PREDEFENSE2_PASSED"}, nil
+	case "conditional":
+		// Conditional тоже считается допуском вперёд по workflow, но статус предзащиты оставляем отдельным.
+		return "conditional", "approved", []string{"PREDEFENSE1_PASSED", "PREDEFENSE2_PASSED"}, nil
+	case "failed":
+		if allowResubmission {
+			return "failed_resubmit", "rejected", []string{"PREDEFENSE1_FAILED", "PREDEFENSE2_FAILED"}, nil
+		}
+		return "failed", "rejected", []string{"PREDEFENSE1_FAILED", "PREDEFENSE2_FAILED"}, nil
+	default:
+		return "", "", nil, status.Errorf(codes.InvalidArgument, "invalid result: %s, must be 'passed', 'failed', or 'conditional'", result)
+	}
+}
+
+func isFinalPreDefenseStatus(statusValue string) bool {
+	switch statusValue {
+	case "completed", "conditional", "failed", "failed_resubmit":
+		return true
+	default:
+		return false
+	}
 }
 
 func (s *Service) advancePreDefenseWorkflow(ctx context.Context, projectID, actorID int64, comment string, eventNames []string) error {
