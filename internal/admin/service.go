@@ -1732,72 +1732,95 @@ func (s *Service) forwardCtx(ctx context.Context) context.Context {
 	return metadata.AppendToOutgoingContext(out, "x-internal-service", "admin_service")
 }
 func (s *Service) SubmitDocumentForStep(ctx context.Context, req *SubmitDocumentRequest) (*Submission, error) {
-	teamID, err := s.resolveTeamIDByProject(ctx, req.ProjectID, 0)
-	if err != nil {
-		return nil, err
+	if req == nil {
+		return nil, status.Error(codes.InvalidArgument, "request is nil")
+	}
+	if req.ProjectID <= 0 {
+		return nil, status.Error(codes.InvalidArgument, "project_id is required")
+	}
+	if req.SubmittedBy <= 0 {
+		return nil, status.Error(codes.InvalidArgument, "submitted_by is required")
+	}
+	if len(req.FileIDs) == 0 {
+		return nil, status.Error(codes.InvalidArgument, "file_ids is required")
 	}
 
-	// Получаем текущее состояние проекта
-	rt, err := s.projectClient.GetProjectRuntime(s.internalCtx(ctx),
-		&projectv1.GetProjectRuntimeRequest{ProjectId: req.ProjectID})
+	projectCtx, err := s.repo.GetProjectSubmitContext(ctx, req.ProjectID)
 	if err != nil {
-		return nil, err
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return nil, status.Errorf(codes.NotFound, "project %d not found", req.ProjectID)
+		}
+		return nil, status.Errorf(codes.Internal, "get project submit context: %v", err)
 	}
 
-	// Проверяем что текущее состояние — DOCUMENT_UPLOAD тип
-	filesJSON, _ := json.Marshal(req.FileIDs)
-	dataJSON, _ := json.Marshal(map[string]interface{}{
-		"file_ids": req.FileIDs,
-		"comment":  req.Comment,
-	})
+	if projectCtx.CurrentStateID <= 0 {
+		return nil, status.Errorf(
+			codes.FailedPrecondition,
+			"project %d has invalid current_state_id",
+			req.ProjectID,
+		)
+	}
+
+	filesJSON, err := json.Marshal(req.FileIDs)
+	if err != nil {
+		return nil, status.Errorf(codes.Internal, "marshal file ids: %v", err)
+	}
+
+	data := map[string]any{
+		"comment":            req.Comment,
+		"current_state_id":   projectCtx.CurrentStateID,
+		"current_state_name": projectCtx.CurrentStateName,
+	}
+	dataJSON, err := json.Marshal(data)
+	if err != nil {
+		return nil, status.Errorf(codes.Internal, "marshal submission data: %v", err)
+	}
+
+	now := time.Now().UTC()
 
 	sub := &Submission{
 		ID:          uuid.New().String(),
 		ProjectID:   req.ProjectID,
-		TeamID:      teamID,
-		StepID:      rt.CurrentStateId,
+		TeamID:      projectCtx.TeamID,
+		StepID:      projectCtx.CurrentStateID, // ВАЖНО: это admin_submissions.state_id
 		SubmittedBy: req.SubmittedBy,
 		Status:      StatusPending,
 		Data:        datatypes.JSON(dataJSON),
 		Files:       datatypes.JSON(filesJSON),
+		CreatedAt:   now,
+		UpdatedAt:   now,
 	}
 
 	if err := s.repo.CreateSubmission(ctx, sub); err != nil {
-		return nil, err
+		return nil, status.Errorf(codes.Internal, "create submission: %v", err)
 	}
-	s.ensureNormCheckIfNeeded(ctx, sub)
-	s.ensureAntiplagCheckIfNeeded(ctx, sub)
 
-	// Двигаем workflow
-	eventName := s.getEventNameForState(rt.CurrentStateName)
-	if eventName != "" {
-		actorID, actorRole := s.callerFromContext(ctx, req.SubmittedBy, "student")
-		_ = s.tryPerformIfAvailable(ctx, actorID, actorRole, req.ProjectID, eventName, map[string]interface{}{
-			"file_ids":      req.FileIDs,
-			"submission_id": sub.ID,
-		})
-	}
-	// notify team
-	s.notifyTeamBestEffort(ctx, teamID,
-		"Документ отправлен на проверку",
-		"Файл(ы) загружены и отправлены на рассмотрение.",
-		"/diplom",
-		"submission_submitted",
-	)
+	// Создаём профильную проверку только для нужного этапа.
+	stateName := strings.ToUpper(strings.TrimSpace(projectCtx.CurrentStateName))
 
-	// notify supervisor if assigned
-	if a, aerr := s.repo.GetSupervisorAssignment(ctx, teamID); aerr == nil && a != nil && a.SupervisorID > 0 {
-		s.notifyBestEffort(ctx, a.SupervisorID,
-			"Новый документ на проверку",
-			fmt.Sprintf("Команда %d отправила документ(ы) на проверку.", teamID),
-			fmt.Sprintf("/teacher/diploms/%d", req.ProjectID),
-			"submission_submitted_to_reviewer",
-		)
+	switch stateName {
+	case "ANTIPLAGIAT", "ANTIPLAGIAT_UPLOAD", "ANTI_PLAGIAT", "ANTIPLAGIAT_CHECK", "CHECK_ANTIPLAGIAT":
+		if _, err := s.repo.EnsureAntiplagCheckForSubmission(ctx, sub.ID); err != nil {
+			return nil, status.Errorf(codes.Internal, "ensure antiplagiat check: %v", err)
+		}
+
+	case "NORM_CONTROL", "NORMO_CONTROL":
+		// Если у тебя есть аналогичная функция для нормоконтроля — оставь её тут.
+		// Например:
+		// if _, err := s.repo.EnsureNormControlCheckForSubmission(ctx, sub.ID); err != nil {
+		//     return nil, status.Errorf(codes.Internal, "ensure norm control check: %v", err)
+		// }
+
+	case "PRE_DEFENSE_1_UPLOAD", "PRE_DEFENSE_2_UPLOAD", "PRE_DEFENSE":
+		// Предзащиту лучше создавать только для pre-defense upload этапов,
+		// а не для любого документа.
+		if _, err := s.EnsurePreDefenseSubmissionForSubmission(ctx, sub); err != nil {
+			return nil, status.Errorf(codes.Internal, "ensure pre-defense submission: %v", err)
+		}
 	}
 
 	return sub, nil
 }
-
 func (s *Service) getEventNameForState(stateName string) string {
 	mapping := map[string]string{
 		"PRE_DEFENSE_1": "PREDEFENSE1_SUBMITTED",

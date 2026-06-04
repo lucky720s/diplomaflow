@@ -32,7 +32,7 @@ type Repository interface {
 	GetTopicRegistrationReviews(ctx context.Context, registrationID string) ([]*TopicRegistrationReview, error)
 	AdvanceProjectByWorkflowEvent(ctx context.Context, projectID int64, eventName string, actorID int64, comment string) error
 	CountPendingTopicRegistrations(ctx context.Context, departmentID int64) (int64, error)
-
+	GetProjectSubmitContext(ctx context.Context, projectID int64) (*ProjectSubmitContext, error)
 	// Submissions
 	CreateSubmission(ctx context.Context, sub *Submission) error
 	GetSubmission(ctx context.Context, id string) (*Submission, error)
@@ -192,6 +192,14 @@ type TopicRegistrationFilter struct {
 	Status       string
 	Limit        int
 	Offset       int
+}
+type ProjectSubmitContext struct {
+	ProjectID        int64
+	TeamID           int64
+	WorkflowID       int64
+	CurrentStateID   int64
+	CurrentStateName string
+	Status           string
 }
 
 type SubmissionFilter struct {
@@ -2015,4 +2023,74 @@ func (r *repository) MarkPreDefenseWorkflowSubmissionReviewed(
 			"review_comment": comment,
 			"updated_at":     now,
 		}).Error
+}
+func (r *repository) GetProjectSubmitContext(ctx context.Context, projectID int64) (*ProjectSubmitContext, error) {
+	var row ProjectSubmitContext
+
+	err := r.db.WithContext(ctx).Raw(`
+		SELECT
+			p.id AS project_id,
+			COALESCE(p.team_id, 0) AS team_id,
+			COALESCE(p.workflow_id, 0) AS workflow_id,
+			COALESCE(p.current_state_id, 0) AS current_state_id,
+			COALESCE(p.current_state_name, '') AS current_state_name,
+			COALESCE(p.status, '') AS status
+		FROM projects p
+		WHERE p.id = ?
+		  AND p.deleted_at IS NULL
+		LIMIT 1
+	`, projectID).Scan(&row).Error
+	if err != nil {
+		return nil, err
+	}
+
+	if row.ProjectID == 0 {
+		return nil, gorm.ErrRecordNotFound
+	}
+
+	// Если current_state_id почему-то пустой, пробуем восстановить по current_state/current_state_name.
+	if row.CurrentStateID == 0 {
+		err = r.db.WithContext(ctx).Raw(`
+			SELECT s.id
+			FROM projects p
+			JOIN states s
+			  ON s.workflow_id = p.workflow_id
+			 AND s.deleted_at IS NULL
+			 AND (
+				 s.name = p.current_state_name
+				 OR s.name = p.current_state
+				 OR s.display_name = p.current_state_name
+			 )
+			WHERE p.id = ?
+			  AND p.deleted_at IS NULL
+			ORDER BY s.order_index
+			LIMIT 1
+		`, projectID).Scan(&row.CurrentStateID).Error
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	if row.CurrentStateID == 0 {
+		return nil, fmt.Errorf("project %d has empty current_state_id/current_state_name, cannot create admin_submissions", projectID)
+	}
+
+	var exists bool
+	if err := r.db.WithContext(ctx).Raw(`
+		SELECT EXISTS (
+			SELECT 1
+			FROM states s
+			WHERE s.id = ?
+			  AND s.workflow_id = ?
+			  AND s.deleted_at IS NULL
+		)
+	`, row.CurrentStateID, row.WorkflowID).Scan(&exists).Error; err != nil {
+		return nil, err
+	}
+
+	if !exists {
+		return nil, fmt.Errorf("project %d current_state_id=%d does not exist in states for workflow_id=%d", projectID, row.CurrentStateID, row.WorkflowID)
+	}
+
+	return &row, nil
 }
