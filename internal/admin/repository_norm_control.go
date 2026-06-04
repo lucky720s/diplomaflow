@@ -89,46 +89,86 @@ func (r *repository) EnsureNormCheckForSubmission(ctx context.Context, submissio
 
 	return r.GetNormCheck(ctx, submissionID)
 }
-
 func (r *repository) ListNormChecks(ctx context.Context, filter NormCheckFilter) ([]*NormControlCheck, int64, error) {
-	var list []*NormControlCheck
-	var total int64
+	limit := filter.Limit
+	if limit <= 0 {
+		limit = 20
+	}
+	if limit > 100 {
+		limit = 100
+	}
 
-	q := r.db.WithContext(ctx).Model(&NormControlCheck{}).
-		Joins("JOIN projects p ON p.id = norm_control_checks.project_id")
+	offset := filter.Offset
+	if offset < 0 {
+		offset = 0
+	}
+
+	args := make([]interface{}, 0)
+	where := "WHERE 1=1"
 
 	if filter.DepartmentID > 0 {
-		q = q.Where("p.department_id = ?", filter.DepartmentID)
-	}
-	if filter.Status != "" {
-		q = q.Where("norm_control_checks.status = ?", filter.Status)
-	}
-	if filter.TeamID > 0 {
-		q = q.Where("norm_control_checks.team_id = ?", filter.TeamID)
-	}
-	if filter.CheckerID > 0 {
-		q = q.Where("norm_control_checks.checker_id = ?", filter.CheckerID)
+		where += " AND p.department_id = ?"
+		args = append(args, filter.DepartmentID)
 	}
 
-	if err := q.Count(&total).Error; err != nil {
+	if filter.TeamID > 0 {
+		where += " AND nc.team_id = ?"
+		args = append(args, filter.TeamID)
+	}
+
+	if filter.CheckerID > 0 {
+		where += " AND nc.checker_id = ?"
+		args = append(args, filter.CheckerID)
+	}
+
+	if filter.Status != "" {
+		where += " AND nc.status = ?"
+		args = append(args, filter.Status)
+	} else {
+		// Главное исправление:
+		// pending endpoint по умолчанию возвращает только активные проверки.
+		where += " AND nc.status IN ('submitted', 'in_review')"
+	}
+
+	countSQL := `
+		SELECT COUNT(*) FROM (
+			SELECT DISTINCT ON (nc.project_id, nc.step_id)
+				nc.submission_id
+			FROM norm_control_checks nc
+			JOIN projects p ON p.id = nc.project_id
+			` + where + `
+			ORDER BY nc.project_id, nc.step_id, nc.created_at DESC
+		) x
+	`
+
+	var total int64
+	if err := r.db.WithContext(ctx).Raw(countSQL, args...).Scan(&total).Error; err != nil {
 		return nil, 0, err
 	}
 
-	if filter.Limit <= 0 {
-		filter.Limit = 20
-	}
-	if filter.Offset < 0 {
-		filter.Offset = 0
+	listSQL := `
+		SELECT *
+		FROM (
+			SELECT DISTINCT ON (nc.project_id, nc.step_id)
+				nc.*
+			FROM norm_control_checks nc
+			JOIN projects p ON p.id = nc.project_id
+			` + where + `
+			ORDER BY nc.project_id, nc.step_id, nc.created_at DESC
+		) x
+		ORDER BY x.created_at DESC
+		LIMIT ? OFFSET ?
+	`
+
+	listArgs := append(args, limit, offset)
+
+	var checks []*NormControlCheck
+	if err := r.db.WithContext(ctx).Raw(listSQL, listArgs...).Scan(&checks).Error; err != nil {
+		return nil, 0, err
 	}
 
-	err := q.Order("norm_control_checks.created_at DESC").
-		Limit(filter.Limit).
-		Offset(filter.Offset).
-		Find(&list).Error
-
-	return list, total, err
+	return checks, total, nil
 }
-
 func (r *repository) GetNormCheck(ctx context.Context, submissionID string) (*NormControlCheck, error) {
 	var c NormControlCheck
 	err := r.db.WithContext(ctx).First(&c, "submission_id = ?", submissionID).Error

@@ -31,24 +31,34 @@ func deptIDFromMD(ctx context.Context) int64 {
 	}
 	return 0
 }
-
 func (h *Handler) ListPendingDocuments(ctx context.Context, req *adminv1.ListPendingDocumentsRequest) (*adminv1.ListPendingDocumentsResponse, error) {
 	deptID := deptIDFromMD(ctx)
 	if deptID == 0 {
 		return nil, status.Error(codes.PermissionDenied, "department_id is required in metadata")
 	}
+
 	page := int(req.Page)
 	if page <= 0 {
 		page = 1
 	}
+
 	pageSize := int(req.PageSize)
 	if pageSize <= 0 {
 		pageSize = 20
 	}
+	if pageSize > 100 {
+		pageSize = 100
+	}
 
+	statusFilter := req.Status
+
+	// ВАЖНО:
+	// /norm-control/pending по умолчанию НЕ должен возвращать approved/returned историю.
+	// Если фронт явно передал status=approved, тогда можно вернуть approved.
+	// Но без status показываем только активные проверки.
 	filter := NormCheckFilter{
 		DepartmentID: deptID,
-		Status:       req.Status,
+		Status:       statusFilter,
 		TeamID:       req.TeamId,
 		CheckerID:    req.CheckerId,
 		Limit:        pageSize,
@@ -67,6 +77,12 @@ func (h *Handler) ListPendingDocuments(ctx context.Context, req *adminv1.ListPen
 			continue
 		}
 
+		// Дополнительная защита на уровне handler:
+		// даже если repo случайно вернул approved/returned, в pending endpoint не отдаём.
+		if statusFilter == "" && c.Status != "submitted" && c.Status != "in_review" {
+			continue
+		}
+
 		fileID := ""
 		if c.PrimaryFileID != nil {
 			fileID = *c.PrimaryFileID
@@ -76,13 +92,14 @@ func (h *Handler) ListPendingDocuments(ctx context.Context, req *adminv1.ListPen
 		if c.TeamID != nil {
 			teamID = *c.TeamID
 		}
+
 		checkerID := int64(0)
 		if c.CheckerID != nil {
 			checkerID = *c.CheckerID
 		}
 
 		out.Documents = append(out.Documents, &adminv1.PendingDocument{
-			Id:          c.SubmissionID, // IMPORTANT: this is submission_id
+			Id:          c.SubmissionID,
 			ProjectId:   c.ProjectID,
 			TeamId:      teamID,
 			Status:      c.Status,
