@@ -523,6 +523,9 @@ services:
       # внутри контейнера пусть слушает 3000, а наружу мы дадим 3001
       - GF_SERVER_HTTP_ADDR=0.0.0.0
       - GF_SERVER_HTTP_PORT=3000
+      # Grafana отдаётся из подпути /metric за nginx (https://diploma-flow.iitu.kz/metric)
+      - GF_SERVER_ROOT_URL=https://diploma-flow.iitu.kz/metric/
+      - GF_SERVER_SERVE_FROM_SUB_PATH=true
     volumes:
       - grafana_data:/var/lib/grafana
       - ./deploy/grafana/provisioning:/etc/grafana/provisioning:ro
