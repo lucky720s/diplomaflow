@@ -1718,7 +1718,6 @@ func (r *repository) GetStateHistory(ctx context.Context, projectID int64) ([]*S
 	}
 	return rows, nil
 }
-
 func (r *repository) AdvanceProjectByWorkflowEvent(
 	ctx context.Context,
 	projectID int64,
@@ -1746,6 +1745,9 @@ func (r *repository) AdvanceProjectByWorkflowEvent(
 
 		if p.ID == 0 {
 			return fmt.Errorf("project %d not found", projectID)
+		}
+		if p.WorkflowID == 0 || p.CurrentStateID == 0 {
+			return fmt.Errorf("project %d has invalid workflow/current state", projectID)
 		}
 
 		type transitionRow struct {
@@ -1787,9 +1789,12 @@ func (r *repository) AdvanceProjectByWorkflowEvent(
 			return err
 		}
 
-		if toStateName == "" {
+		if strings.TrimSpace(toStateName) == "" {
 			return fmt.Errorf("target state %d not found", tr.ToStateID)
 		}
+
+		fromStateName := strings.TrimSpace(p.CurrentStateName)
+		cleanComment := strings.TrimSpace(comment)
 
 		if err := tx.Exec(`
 			UPDATE projects
@@ -1797,15 +1802,20 @@ func (r *repository) AdvanceProjectByWorkflowEvent(
 				current_state_id = ?,
 				current_state_name = ?,
 				status = ?,
+				topic_registered_at = CASE
+					WHEN ?::text = 'TOPIC_APPROVED'
+						THEN COALESCE(topic_registered_at, now())
+					ELSE topic_registered_at
+				END,
 				data = jsonb_set(
 					COALESCE(data, '{}'::jsonb),
-					'{wf,last_transition}',
+					'{wf,last_transition}'::text[],
 					jsonb_build_object(
-						'transition_id', ?,
-						'event_name', ?,
-						'from_state', ?,
-						'to_state', ?,
-						'performed_by', ?,
+						'transition_id', ?::bigint,
+						'event_name', ?::text,
+						'from_state', ?::text,
+						'to_state', ?::text,
+						'performed_by', ?::bigint,
 						'performed_at', now()
 					),
 					true
@@ -1816,9 +1826,10 @@ func (r *repository) AdvanceProjectByWorkflowEvent(
 			tr.ToStateID,
 			toStateName,
 			toStateName,
+			eventName,
 			tr.ID,
 			eventName,
-			p.CurrentStateName,
+			fromStateName,
 			toStateName,
 			actorID,
 			projectID,
@@ -1841,9 +1852,17 @@ func (r *repository) AdvanceProjectByWorkflowEvent(
 				created_at
 			)
 			VALUES (
-				?, ?, ?, ?, ?, ?, 'completed', ?, ?,
+				?::bigint,
+				?::bigint,
+				?::bigint,
+				?::text,
+				?::text,
+				?::text,
+				'completed',
+				?::bigint,
+				?::text,
 				jsonb_build_object(
-					'transition_id', ?,
+					'transition_id', ?::bigint,
 					'source', 'topic_registration_review'
 				),
 				now()
@@ -1852,11 +1871,11 @@ func (r *repository) AdvanceProjectByWorkflowEvent(
 			projectID,
 			tr.FromStateID,
 			tr.ToStateID,
-			p.CurrentStateName,
+			fromStateName,
 			toStateName,
 			eventName,
 			actorID,
-			comment,
+			cleanComment,
 			tr.ID,
 		).Error; err != nil {
 			return err
