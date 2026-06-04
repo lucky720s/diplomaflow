@@ -2037,7 +2037,6 @@ func (r *repository) GetProjectSubmitContext(ctx context.Context, projectID int6
 			COALESCE(p.status, '') AS status
 		FROM projects p
 		WHERE p.id = ?
-		  AND p.deleted_at IS NULL
 		LIMIT 1
 	`, projectID).Scan(&row).Error
 	if err != nil {
@@ -2048,7 +2047,7 @@ func (r *repository) GetProjectSubmitContext(ctx context.Context, projectID int6
 		return nil, gorm.ErrRecordNotFound
 	}
 
-	// Если current_state_id почему-то пустой, пробуем восстановить по current_state/current_state_name.
+	// Если current_state_id пустой или битый, восстанавливаем его по current_state_name/status.
 	if row.CurrentStateID == 0 {
 		err = r.db.WithContext(ctx).Raw(`
 			SELECT s.id
@@ -2057,12 +2056,35 @@ func (r *repository) GetProjectSubmitContext(ctx context.Context, projectID int6
 			  ON s.workflow_id = p.workflow_id
 			 AND s.deleted_at IS NULL
 			 AND (
-				 s.name = p.current_state_name
-				 OR s.name = p.current_state
-				 OR s.display_name = p.current_state_name
+				 UPPER(COALESCE(s.name, '')) = UPPER(COALESCE(p.current_state_name, ''))
+				 OR UPPER(COALESCE(s.display_name, '')) = UPPER(COALESCE(p.current_state_name, ''))
+				 OR UPPER(COALESCE(s.name, '')) = UPPER(COALESCE(p.status, ''))
 			 )
 			WHERE p.id = ?
-			  AND p.deleted_at IS NULL
+			ORDER BY s.order_index
+			LIMIT 1
+		`, projectID).Scan(&row.CurrentStateID).Error
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	// Если всё ещё не нашли, отдельно пробуем найти ANTIPLAGIAT в workflow проекта.
+	if row.CurrentStateID == 0 {
+		err = r.db.WithContext(ctx).Raw(`
+			SELECT s.id
+			FROM projects p
+			JOIN states s
+			  ON s.workflow_id = p.workflow_id
+			 AND s.deleted_at IS NULL
+			WHERE p.id = ?
+			  AND UPPER(COALESCE(s.name, '')) IN (
+				  'ANTIPLAGIAT',
+				  'ANTIPLAGIAT_UPLOAD',
+				  'ANTI_PLAGIAT',
+				  'ANTIPLAGIAT_CHECK',
+				  'CHECK_ANTIPLAGIAT'
+			  )
 			ORDER BY s.order_index
 			LIMIT 1
 		`, projectID).Scan(&row.CurrentStateID).Error
@@ -2089,7 +2111,49 @@ func (r *repository) GetProjectSubmitContext(ctx context.Context, projectID int6
 	}
 
 	if !exists {
-		return nil, fmt.Errorf("project %d current_state_id=%d does not exist in states for workflow_id=%d", projectID, row.CurrentStateID, row.WorkflowID)
+		// current_state_id в projects есть, но он не принадлежит workflow или уже не существует.
+		// Восстанавливаем по current_state_name/status.
+		var fixedStateID int64
+
+		err = r.db.WithContext(ctx).Raw(`
+			SELECT s.id
+			FROM projects p
+			JOIN states s
+			  ON s.workflow_id = p.workflow_id
+			 AND s.deleted_at IS NULL
+			 AND (
+				 UPPER(COALESCE(s.name, '')) = UPPER(COALESCE(p.current_state_name, ''))
+				 OR UPPER(COALESCE(s.display_name, '')) = UPPER(COALESCE(p.current_state_name, ''))
+				 OR UPPER(COALESCE(s.name, '')) = UPPER(COALESCE(p.status, ''))
+			 )
+			WHERE p.id = ?
+			ORDER BY s.order_index
+			LIMIT 1
+		`, projectID).Scan(&fixedStateID).Error
+		if err != nil {
+			return nil, err
+		}
+
+		if fixedStateID == 0 {
+			return nil, fmt.Errorf("project %d current_state_id=%d does not exist in states for workflow_id=%d", projectID, row.CurrentStateID, row.WorkflowID)
+		}
+
+		row.CurrentStateID = fixedStateID
+
+		_ = r.db.WithContext(ctx).Exec(`
+			UPDATE projects
+			SET current_state_id = ?, updated_at = NOW()
+			WHERE id = ?
+		`, row.CurrentStateID, projectID).Error
+	}
+
+	if row.CurrentStateName == "" {
+		_ = r.db.WithContext(ctx).Raw(`
+			SELECT COALESCE(name, '')
+			FROM states
+			WHERE id = ?
+			LIMIT 1
+		`, row.CurrentStateID).Scan(&row.CurrentStateName).Error
 	}
 
 	return &row, nil
