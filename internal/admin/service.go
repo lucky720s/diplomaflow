@@ -373,6 +373,13 @@ func (s *Service) ReviewTopicRegistration(ctx context.Context, req *ReviewTopicR
 		return nil, errors.New("request is nil")
 	}
 
+	if req.RegistrationID == "" {
+		return nil, errors.New("registration_id is required")
+	}
+	if req.ReviewerID <= 0 {
+		return nil, errors.New("reviewer_id is required")
+	}
+
 	reg, err := s.repo.GetTopicRegistration(ctx, req.RegistrationID)
 	if err != nil {
 		return nil, fmt.Errorf("заявление не найдено: %w", err)
@@ -380,72 +387,99 @@ func (s *Service) ReviewTopicRegistration(ctx context.Context, req *ReviewTopicR
 	if reg.ProjectID <= 0 {
 		return nil, errors.New("topic registration has no project_id (data inconsistent)")
 	}
+
 	if reg.Status != StatusPending && reg.Status != StatusRevisionRequested {
 		return nil, status.Error(codes.FailedPrecondition,
 			"заявление не может быть рассмотрено в текущем статусе")
 	}
 
-	actorID, actorRole := s.callerFromContext(ctx, req.ReviewerID, "commission")
+	now := time.Now().UTC()
+
+	reviewComment := strings.TrimSpace(req.Comment)
+	workflowComment := reviewComment
 
 	switch req.Action {
 	case "approve":
-		_ = s.tryPerformIfAvailable(ctx, actorID, actorRole, reg.ProjectID, "TOPIC_SUBMITTED", map[string]interface{}{
-			"source":          "admin_service",
-			"registration_id": reg.ID,
-			"auto":            true,
-		})
-		_ = s.tryPerformIfAvailable(ctx, actorID, actorRole, reg.ProjectID, "TOPIC_APPROVED", map[string]interface{}{
-			"source":          "admin_service",
-			"registration_id": reg.ID,
-			"reviewer_id":     req.ReviewerID,
-			"comment":         req.Comment,
-		})
 		reg.Status = StatusApproved
-		if err := s.repo.SetProjectTopicRegisteredAt(ctx, reg.ProjectID, time.Now().UTC()); err != nil {
+		reg.RejectionReason = ""
+
+	case "reject":
+		reason := strings.TrimSpace(req.RejectionReason)
+		if reason == "" {
+			return nil, status.Error(codes.InvalidArgument, "rejection_reason is required for reject")
+		}
+
+		reg.Status = StatusRejected
+		reg.RejectionReason = reason
+
+		if reviewComment == "" {
+			reviewComment = reason
+		}
+		workflowComment = reason
+
+	case "request_changes":
+		msg := strings.TrimSpace(req.Comment)
+		if msg == "" {
+			return nil, status.Error(codes.InvalidArgument, "comment is required for request_changes")
+		}
+
+		reg.Status = StatusRevisionRequested
+		reg.RejectionReason = ""
+
+		reviewComment = msg
+		workflowComment = msg
+
+	default:
+		return nil, status.Error(codes.InvalidArgument, "недопустимое действие")
+	}
+
+	reg.ReviewerID = &req.ReviewerID
+	reg.ReviewedAt = &now
+	reg.Comment = reviewComment
+
+	if err := s.repo.UpdateTopicRegistration(ctx, reg); err != nil {
+		return nil, fmt.Errorf("не удалось обновить заявление: %w", err)
+	}
+
+	if err := s.repo.CreateTopicRegistrationReview(ctx, &TopicRegistrationReview{
+		RegistrationID: reg.ID,
+		ReviewerID:     req.ReviewerID,
+		Action:         req.Action,
+		Comment:        reviewComment,
+	}); err != nil {
+		return nil, fmt.Errorf("не удалось сохранить историю рассмотрения темы: %w", err)
+	}
+
+	switch req.Action {
+	case "approve":
+		if err := s.repo.AdvanceProjectByWorkflowEvent(
+			ctx,
+			reg.ProjectID,
+			"TOPIC_APPROVED",
+			req.ReviewerID,
+			workflowComment,
+		); err != nil {
+			return nil, fmt.Errorf("topic approved but failed to advance workflow: %w", err)
+		}
+
+		if err := s.repo.SetProjectTopicRegisteredAt(ctx, reg.ProjectID, now); err != nil {
 			s.logger.Warn("Failed to set topic_registered_at",
 				zap.Error(err),
 				zap.Int64("project_id", reg.ProjectID),
 			)
 		}
 
-	case "reject":
-		_ = s.tryPerformIfAvailable(ctx, actorID, actorRole, reg.ProjectID, "TOPIC_SUBMITTED", map[string]interface{}{
-			"source":          "admin_service",
-			"registration_id": reg.ID,
-			"auto":            true,
-		})
-		_ = s.tryPerformIfAvailable(ctx, actorID, actorRole, reg.ProjectID, "TOPIC_REJECTED", map[string]interface{}{
-			"source":           "admin_service",
-			"registration_id":  reg.ID,
-			"reviewer_id":      req.ReviewerID,
-			"rejection_reason": req.RejectionReason,
-			"comment":          req.Comment,
-		})
-		reg.Status = StatusRejected
-		reg.RejectionReason = req.RejectionReason
-
-	case "request_changes":
-		reg.Status = StatusRevisionRequested
-
-	default:
-		return nil, errors.New("недопустимое действие")
+	case "reject", "request_changes":
+		if err := s.repo.AdvanceProjectByWorkflowEvent(
+			ctx,
+			reg.ProjectID,
+			"TOPIC_REJECTED",
+			req.ReviewerID,
+			workflowComment,
+		); err != nil {
+			return nil, fmt.Errorf("topic rejected/request_changes but failed to rollback workflow: %w", err)
+		}
 	}
-
-	now := time.Now()
-	reg.ReviewerID = &req.ReviewerID
-	reg.ReviewedAt = &now
-	reg.Comment = req.Comment
-
-	if err := s.repo.UpdateTopicRegistration(ctx, reg); err != nil {
-		return nil, fmt.Errorf("не удалось обновить заявление: %w", err)
-	}
-
-	_ = s.repo.CreateTopicRegistrationReview(ctx, &TopicRegistrationReview{
-		RegistrationID: reg.ID,
-		ReviewerID:     req.ReviewerID,
-		Action:         req.Action,
-		Comment:        req.Comment,
-	})
 
 	_ = s.repo.LogActivity(ctx, &AdminActivity{
 		ActivityType: ActivityTypeTopicApproval,
@@ -454,6 +488,7 @@ func (s *Service) ReviewTopicRegistration(ctx context.Context, req *ReviewTopicR
 		TargetID:     reg.TeamID,
 		TargetType:   "topic_registration",
 	})
+
 	switch req.Action {
 	case "approve":
 		s.notifyTeamBestEffort(ctx, reg.TeamID,
@@ -462,22 +497,26 @@ func (s *Service) ReviewTopicRegistration(ctx context.Context, req *ReviewTopicR
 			"/diplom",
 			"topic_registration_approved",
 		)
+
 	case "reject":
-		reason := req.RejectionReason
+		reason := reg.RejectionReason
 		if reason == "" {
 			reason = "Причина не указана"
 		}
+
 		s.notifyTeamBestEffort(ctx, reg.TeamID,
 			"Тема отклонена",
 			fmt.Sprintf("Причина: %s", reason),
 			"/diplom",
 			"topic_registration_rejected",
 		)
+
 	case "request_changes":
-		msg := req.Comment
+		msg := reg.Comment
 		if msg == "" {
 			msg = "Нужны правки"
 		}
+
 		s.notifyTeamBestEffort(ctx, reg.TeamID,
 			"Нужны правки по теме",
 			msg,
@@ -488,7 +527,33 @@ func (s *Service) ReviewTopicRegistration(ctx context.Context, req *ReviewTopicR
 
 	return reg, nil
 }
+func (s *Service) CanSupervisorReviewSubmissionState(ctx context.Context, stateID int64) (bool, error) {
+	if stateID <= 0 {
+		return false, status.Error(codes.InvalidArgument, "state_id is required")
+	}
 
+	roles, err := s.repo.GetStateReviewerRoles(ctx, stateID)
+	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return false, status.Error(codes.NotFound, "workflow state not found")
+		}
+		return false, err
+	}
+
+	// Safe default: if no review_config/reviewer_roles exists, do not allow.
+	if len(roles) == 0 {
+		return false, nil
+	}
+
+	for _, role := range roles {
+		switch strings.ToLower(strings.TrimSpace(role)) {
+		case "teacher", "supervisor":
+			return true, nil
+		}
+	}
+
+	return false, nil
+}
 func (s *Service) ListTopicRegistrations(ctx context.Context, filter TopicRegistrationFilter) ([]*TopicRegistration, int64, error) {
 	return s.repo.ListTopicRegistrations(ctx, filter)
 }

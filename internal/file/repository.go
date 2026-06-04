@@ -19,6 +19,8 @@ type Repository interface {
 	// norm-control check (as primary file or in the file_ids set) or by an
 	// admin submission's files list — i.e. it was sent for norm-control review.
 	IsFileOnNormControl(ctx context.Context, fileID string) (bool, error)
+	IsFileOnAntiplagiat(ctx context.Context, fileID string) (bool, error)
+	IsFileOnCommission(ctx context.Context, fileID string) (bool, error)
 }
 
 type repository struct {
@@ -92,6 +94,47 @@ func (r *repository) IsFileOnNormControl(ctx context.Context, fileID string) (bo
 		)`
 	var ok bool
 	if err := r.db.WithContext(ctx).Raw(q, fileID, fileID, fileID).Scan(&ok).Error; err != nil {
+		return false, err
+	}
+	return ok, nil
+}
+func (r *repository) IsFileOnAntiplagiat(ctx context.Context, fileID string) (bool, error) {
+	if fileID == "" {
+		return false, nil
+	}
+
+	const q = `
+		SELECT EXISTS (
+			SELECT 1 FROM antiplag_checks c
+			 WHERE c.primary_file_id = ?
+			    OR c.file_ids @> to_jsonb(?::text)
+			UNION ALL
+			SELECT 1 FROM admin_submissions s
+			 WHERE s.files @> to_jsonb(?::text)
+		)`
+
+	var ok bool
+	if err := r.db.WithContext(ctx).Raw(q, fileID, fileID, fileID).Scan(&ok).Error; err != nil {
+		return false, err
+	}
+	return ok, nil
+}
+func (r *repository) IsFileOnCommission(ctx context.Context, fileID string) (bool, error) {
+	if fileID == "" {
+		return false, nil
+	}
+
+	const q = `
+		SELECT EXISTS (
+			SELECT 1 FROM admin_pre_defense_documents d
+			 WHERE d.id = ?
+			UNION ALL
+			SELECT 1 FROM admin_submissions s
+			 WHERE s.files @> to_jsonb(?::text)
+		)`
+
+	var ok bool
+	if err := r.db.WithContext(ctx).Raw(q, fileID, fileID).Scan(&ok).Error; err != nil {
 		return false, err
 	}
 	return ok, nil

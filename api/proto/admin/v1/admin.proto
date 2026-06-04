@@ -104,6 +104,22 @@ service AdminService {
   rpc ListDepartmentProgressTeams(ListDepartmentProgressTeamsRequest) returns (ListDepartmentProgressTeamsResponse);
   rpc GetDepartmentProgressTeamDetails(GetDepartmentProgressTeamDetailsRequest) returns (DepartmentProgressTeamDetailsResponse);
 
+  // ==================== Supervisor Projects (supervisor-facing) ====================
+  // Projects owned by the calling supervisor only. Ownership = projects.team_id ->
+  // admin_supervisor_assignments.supervisor_id. supervisor_id comes from the JWT
+  // (gateway), never from the client. Admin role bypasses ownership.
+  rpc CheckSupervisorProjectAccess(CheckSupervisorProjectAccessRequest) returns (CheckSupervisorProjectAccessResponse);
+  rpc ListSupervisorProjects(ListSupervisorProjectsRequest) returns (ListSupervisorProjectsResponse);
+  rpc GetSupervisorProjectDetails(GetSupervisorProjectDetailsRequest) returns (GetSupervisorProjectDetailsResponse);
+  rpc ListSupervisorProjectSubmissions(ListSupervisorProjectSubmissionsRequest) returns (ListSubmissionsResponse);
+  rpc GetSupervisorProjectSubmission(GetSupervisorProjectSubmissionRequest) returns (GetSubmissionResponse);
+  rpc GetSupervisorProjectGrades(GetSupervisorProjectGradesRequest) returns (GetProjectGradesResponse);
+  rpc GetSupervisorProjectGradingHistory(GetSupervisorProjectGradingHistoryRequest) returns (GetGradingHistoryResponse);
+  rpc GetSupervisorProjectWorkflowHistory(GetSupervisorProjectWorkflowHistoryRequest) returns (SupervisorProjectWorkflowHistoryResponse);
+  rpc ListSupervisorProjectFiles(ListSupervisorProjectFilesRequest) returns (SupervisorProjectFilesResponse);
+  rpc GetSupervisorProjectTimeline(GetSupervisorProjectTimelineRequest) returns (SupervisorProjectTimelineResponse);
+  rpc ReviewSupervisorProjectSubmission(ReviewSupervisorProjectSubmissionRequest) returns (ReviewSubmissionResponse);
+
 }
 
 // ==================== Topic Registration Messages ====================
@@ -372,6 +388,11 @@ message StepStatus {
   string status = 3; // pending, submitted, approved, rejected
   google.protobuf.Timestamp completed_at = 4;
   GradeInfo grade = 5;
+  // Enriched fields (additive, used by supervisor project workflow view).
+  string display_name = 6;
+  string step_type = 7;
+  int32 order_index = 8;
+  string submission_status = 9;
 }
 
 message UpdateTeamAdminRequest {
@@ -1426,4 +1447,205 @@ message DepartmentProgressTeamDetailsResponse {
   repeated DepartmentProgressPreDefense pre_defenses = 9;
   repeated GradeInfo grades = 10;
   repeated UnifiedHistoryItem history = 11;
+}
+
+// ==================== Supervisor Projects Messages ====================
+
+message CheckSupervisorProjectAccessRequest {
+  int64 supervisor_id = 1 [(validate.rules).int64.gt = 0];
+  int64 project_id = 2 [(validate.rules).int64.gt = 0];
+}
+
+message CheckSupervisorProjectAccessResponse {
+  bool exists = 1;
+  bool has_access = 2;
+}
+
+message SupervisorProjectStats {
+  int32 submissions_count = 1;
+  int32 pending_reviews_count = 2;
+  int32 files_count = 3;
+  int32 grades_count = 4;
+  google.protobuf.Timestamp last_activity_at = 5;
+}
+
+message SupervisorProjectListItem {
+  int64 id = 1;
+  string title = 2;
+  string description = 3;
+  string status = 4;
+  int64 current_state_id = 5;
+  string current_state_name = 6;
+  string current_state_display_name = 7;
+  int32 progress_percent = 8;
+  TeamAdminInfo team = 9;
+  SupervisorInfo supervisor = 10;
+  SupervisorProjectStats stats = 11;
+  google.protobuf.Timestamp created_at = 12;
+  google.protobuf.Timestamp updated_at = 13;
+}
+
+message ListSupervisorProjectsRequest {
+  int64 supervisor_id = 1 [(validate.rules).int64.gt = 0];
+  string status = 2;
+  string current_state = 3;
+  string search = 4;
+  int32 page = 5;
+  int32 page_size = 6;
+  string sort = 7;  // updated_at | created_at | title
+  string order = 8; // asc | desc
+  string caller_role = 9; // admin bypass; set by gateway, not client
+}
+
+message ListSupervisorProjectsResponse {
+  repeated SupervisorProjectListItem projects = 1;
+  int64 total_count = 2;
+  int32 page = 3;
+  int32 page_size = 4;
+}
+
+message GetSupervisorProjectDetailsRequest {
+  int64 supervisor_id = 1 [(validate.rules).int64.gt = 0];
+  int64 project_id = 2 [(validate.rules).int64.gt = 0];
+  string caller_role = 3; // admin bypass; set by gateway, not client
+}
+
+message SupervisorProjectDetail {
+  int64 id = 1;
+  string title = 2;
+  string description = 3;
+  string status = 4;
+  int64 current_state_id = 5;
+  string current_state_name = 6;
+  string current_state_display_name = 7;
+  string topic_kz = 8;
+  string topic_ru = 9;
+  string topic_en = 10;
+  google.protobuf.Timestamp topic_registered_at = 11;
+  google.protobuf.Timestamp created_at = 12;
+  google.protobuf.Timestamp updated_at = 13;
+}
+
+message SupervisorProjectWorkflow {
+  int64 workflow_id = 1;
+  string workflow_name = 2;
+  int64 current_state_id = 3;
+  string current_state_name = 4;
+  int32 progress_percent = 5;
+  repeated StepStatus steps = 6;
+}
+
+message SupervisorProjectPermissions {
+  bool can_review_submissions = 1;
+  bool can_grade = 2;
+  bool can_download_files = 3;
+  bool can_change_workflow = 4;
+  bool can_finalize_stage = 5;
+}
+
+message GetSupervisorProjectDetailsResponse {
+  SupervisorProjectDetail project = 1;
+  TeamAdminInfo team = 2;
+  SupervisorProjectWorkflow workflow = 3;
+  repeated SubmissionInfo submissions = 4;
+  repeated GradeInfo grades = 5;
+  repeated UnifiedHistoryItem history = 6;
+  SupervisorProjectPermissions permissions = 7;
+}
+
+message ListSupervisorProjectSubmissionsRequest {
+  int64 supervisor_id = 1 [(validate.rules).int64.gt = 0];
+  int64 project_id = 2 [(validate.rules).int64.gt = 0];
+  int64 step_id = 3;
+  string status = 4;
+  int32 page = 5;
+  int32 page_size = 6;
+  string caller_role = 7;
+}
+
+message GetSupervisorProjectSubmissionRequest {
+  int64 supervisor_id = 1 [(validate.rules).int64.gt = 0];
+  int64 project_id = 2 [(validate.rules).int64.gt = 0];
+  string submission_id = 3 [(validate.rules).string.min_len = 1];
+  string caller_role = 4;
+}
+
+message GetSupervisorProjectGradesRequest {
+  int64 supervisor_id = 1 [(validate.rules).int64.gt = 0];
+  int64 project_id = 2 [(validate.rules).int64.gt = 0];
+  string caller_role = 3;
+}
+
+message GetSupervisorProjectGradingHistoryRequest {
+  int64 supervisor_id = 1 [(validate.rules).int64.gt = 0];
+  int64 project_id = 2 [(validate.rules).int64.gt = 0];
+  int64 step_id = 3;
+  string caller_role = 4;
+}
+
+message GetSupervisorProjectWorkflowHistoryRequest {
+  int64 supervisor_id = 1 [(validate.rules).int64.gt = 0];
+  int64 project_id = 2 [(validate.rules).int64.gt = 0];
+  string caller_role = 3;
+}
+
+message SupervisorProjectWorkflowHistoryResponse {
+  repeated UnifiedHistoryItem history = 1;
+}
+
+message ListSupervisorProjectFilesRequest {
+  int64 supervisor_id = 1 [(validate.rules).int64.gt = 0];
+  int64 project_id = 2 [(validate.rules).int64.gt = 0];
+  string caller_role = 3;
+}
+
+message SupervisorProjectFile {
+  string id = 1;
+  string file_name = 2;
+  string display_name = 3;
+  string file_type = 4;
+  int64 size = 5;
+  string download_url = 6;
+  int64 uploaded_by = 7;
+  string uploaded_by_name = 8;
+  google.protobuf.Timestamp uploaded_at = 9;
+  string submission_id = 10;
+  int64 step_id = 11;
+  string step_name = 12;
+}
+
+message SupervisorProjectFilesResponse {
+  repeated SupervisorProjectFile files = 1;
+  int64 total_count = 2;
+}
+
+message GetSupervisorProjectTimelineRequest {
+  int64 supervisor_id = 1 [(validate.rules).int64.gt = 0];
+  int64 project_id = 2 [(validate.rules).int64.gt = 0];
+  string caller_role = 3;
+}
+
+message SupervisorTimelineEvent {
+  string id = 1;
+  string type = 2; // workflow | submission | grade | review
+  string title = 3;
+  string description = 4;
+  int64 actor_id = 5;
+  string actor_name = 6;
+  google.protobuf.Timestamp created_at = 7;
+  google.protobuf.Struct metadata = 8;
+}
+
+message SupervisorProjectTimelineResponse {
+  repeated SupervisorTimelineEvent events = 1;
+}
+
+message ReviewSupervisorProjectSubmissionRequest {
+  int64 supervisor_id = 1 [(validate.rules).int64.gt = 0];
+  int64 project_id = 2 [(validate.rules).int64.gt = 0];
+  string submission_id = 3 [(validate.rules).string.min_len = 1];
+  string action = 4 [(validate.rules).string = {in: ["approve", "reject", "request_changes"]}];
+  string comment = 5;
+  int32 grade = 6 [(validate.rules).int32 = {gte: 0, lte: 100}];
+  string caller_role = 7;
 }

@@ -431,6 +431,19 @@ func main() {
 			supervisorsPanel.GET("/topic-registrations", handler.ListSupervisorTopicRegistrations)
 			supervisorsPanel.GET("/submissions", handler.ListSupervisorSubmissions)
 			supervisorsPanel.POST("/topic-registrations/:id/review", handler.ReviewTopicRegistration)
+
+			// Supervisor Projects (supervisor-facing, owner-scoped via JWT).
+			supervisorsPanel.GET("/projects", handler.ListSupervisorProjects)
+			supervisorsPanel.GET("/projects/:project_id", handler.GetSupervisorProjectDetails)
+			supervisorsPanel.GET("/projects/:project_id/submissions", handler.ListSupervisorProjectSubmissions)
+			supervisorsPanel.GET("/projects/:project_id/submissions/:submission_id", handler.GetSupervisorProjectSubmission)
+			supervisorsPanel.GET("/projects/:project_id/grades", handler.GetSupervisorProjectGrades)
+			supervisorsPanel.GET("/projects/:project_id/grading-history", handler.GetSupervisorProjectGradingHistory)
+			supervisorsPanel.GET("/projects/:project_id/workflow-history", handler.GetSupervisorProjectWorkflowHistory)
+			supervisorsPanel.GET("/projects/:project_id/files", handler.ListSupervisorProjectFiles)
+			supervisorsPanel.GET("/projects/:project_id/timeline", handler.GetSupervisorProjectTimeline)
+			supervisorsPanel.POST("/projects/:project_id/submissions/:submission_id/review", handler.ReviewSupervisorProjectSubmission)
+			supervisorsPanel.POST("/projects/:project_id/states/:state_id/review", handler.SubmitSupervisorStateReview)
 		}
 
 		students := v1.Group("/students")

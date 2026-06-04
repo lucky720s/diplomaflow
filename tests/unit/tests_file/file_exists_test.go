@@ -81,7 +81,3 @@ func (r *memRepo) DeleteMetadata(ctx context.Context, id string) error {
 func (r *memRepo) CanAccessViaProject(ctx context.Context, userID, projectID int64) (bool, error) {
 	return false, nil
 }
-
-func (r *memRepo) IsFileOnNormControl(ctx context.Context, fileID string) (bool, error) {
-	return false, nil
-}

@@ -20,60 +20,71 @@ import (
 const _ = grpc.SupportPackageIsVersion9
 
 const (
-	AdminService_GetDashboard_FullMethodName                     = "/admin.v1.AdminService/GetDashboard"
-	AdminService_GetDepartmentStats_FullMethodName               = "/admin.v1.AdminService/GetDepartmentStats"
-	AdminService_ListStudents_FullMethodName                     = "/admin.v1.AdminService/ListStudents"
-	AdminService_GetStudent_FullMethodName                       = "/admin.v1.AdminService/GetStudent"
-	AdminService_ListAllTeams_FullMethodName                     = "/admin.v1.AdminService/ListAllTeams"
-	AdminService_GetTeamDetails_FullMethodName                   = "/admin.v1.AdminService/GetTeamDetails"
-	AdminService_UpdateTeamAdmin_FullMethodName                  = "/admin.v1.AdminService/UpdateTeamAdmin"
-	AdminService_DeleteTeamAdmin_FullMethodName                  = "/admin.v1.AdminService/DeleteTeamAdmin"
-	AdminService_ListSupervisors_FullMethodName                  = "/admin.v1.AdminService/ListSupervisors"
-	AdminService_AssignSupervisor_FullMethodName                 = "/admin.v1.AdminService/AssignSupervisor"
-	AdminService_CreateSupervisorRequest_FullMethodName          = "/admin.v1.AdminService/CreateSupervisorRequest"
-	AdminService_CreateSupervisorRequestByTeam_FullMethodName    = "/admin.v1.AdminService/CreateSupervisorRequestByTeam"
-	AdminService_ListSupervisorRequests_FullMethodName           = "/admin.v1.AdminService/ListSupervisorRequests"
-	AdminService_GetSupervisorRequest_FullMethodName             = "/admin.v1.AdminService/GetSupervisorRequest"
-	AdminService_RespondToSupervisorRequest_FullMethodName       = "/admin.v1.AdminService/RespondToSupervisorRequest"
-	AdminService_ListMySupervisorRequests_FullMethodName         = "/admin.v1.AdminService/ListMySupervisorRequests"
-	AdminService_CancelSupervisorRequest_FullMethodName          = "/admin.v1.AdminService/CancelSupervisorRequest"
-	AdminService_SubmitTopicRegistration_FullMethodName          = "/admin.v1.AdminService/SubmitTopicRegistration"
-	AdminService_ListTopicRegistrations_FullMethodName           = "/admin.v1.AdminService/ListTopicRegistrations"
-	AdminService_ReviewTopicRegistration_FullMethodName          = "/admin.v1.AdminService/ReviewTopicRegistration"
-	AdminService_GetTopicRegistration_FullMethodName             = "/admin.v1.AdminService/GetTopicRegistration"
-	AdminService_SubmitPreDefense_FullMethodName                 = "/admin.v1.AdminService/SubmitPreDefense"
-	AdminService_ListPreDefenseSubmissions_FullMethodName        = "/admin.v1.AdminService/ListPreDefenseSubmissions"
-	AdminService_GetPreDefenseSubmission_FullMethodName          = "/admin.v1.AdminService/GetPreDefenseSubmission"
-	AdminService_SchedulePreDefense_FullMethodName               = "/admin.v1.AdminService/SchedulePreDefense"
-	AdminService_GradePreDefense_FullMethodName                  = "/admin.v1.AdminService/GradePreDefense"
-	AdminService_CompletePreDefense_FullMethodName               = "/admin.v1.AdminService/CompletePreDefense"
-	AdminService_ReschedulePreDefense_FullMethodName             = "/admin.v1.AdminService/ReschedulePreDefense"
-	AdminService_ListScheduledPreDefenses_FullMethodName         = "/admin.v1.AdminService/ListScheduledPreDefenses"
-	AdminService_AddPreDefenseCommissionMember_FullMethodName    = "/admin.v1.AdminService/AddPreDefenseCommissionMember"
-	AdminService_RemovePreDefenseCommissionMember_FullMethodName = "/admin.v1.AdminService/RemovePreDefenseCommissionMember"
-	AdminService_ListSubmissions_FullMethodName                  = "/admin.v1.AdminService/ListSubmissions"
-	AdminService_GetSubmission_FullMethodName                    = "/admin.v1.AdminService/GetSubmission"
-	AdminService_ReviewSubmission_FullMethodName                 = "/admin.v1.AdminService/ReviewSubmission"
-	AdminService_GetProjectGrades_FullMethodName                 = "/admin.v1.AdminService/GetProjectGrades"
-	AdminService_SetStepGrade_FullMethodName                     = "/admin.v1.AdminService/SetStepGrade"
-	AdminService_GetGradingHistory_FullMethodName                = "/admin.v1.AdminService/GetGradingHistory"
-	AdminService_GetWorkflowProgress_FullMethodName              = "/admin.v1.AdminService/GetWorkflowProgress"
-	AdminService_GetTeamProgress_FullMethodName                  = "/admin.v1.AdminService/GetTeamProgress"
-	AdminService_ListPendingReviews_FullMethodName               = "/admin.v1.AdminService/ListPendingReviews"
-	AdminService_ListAvailableTeams_FullMethodName               = "/admin.v1.AdminService/ListAvailableTeams"
-	AdminService_SubmitDocument_FullMethodName                   = "/admin.v1.AdminService/SubmitDocument"
-	AdminService_GetSupervisorSettings_FullMethodName            = "/admin.v1.AdminService/GetSupervisorSettings"
-	AdminService_UpdateSupervisorMaxTeams_FullMethodName         = "/admin.v1.AdminService/UpdateSupervisorMaxTeams"
-	AdminService_CreateTeamAdmin_FullMethodName                  = "/admin.v1.AdminService/CreateTeamAdmin"
-	AdminService_ListProjectsAdmin_FullMethodName                = "/admin.v1.AdminService/ListProjectsAdmin"
-	AdminService_GetProjectAdmin_FullMethodName                  = "/admin.v1.AdminService/GetProjectAdmin"
-	AdminService_CreateProjectAdmin_FullMethodName               = "/admin.v1.AdminService/CreateProjectAdmin"
-	AdminService_UpdateProjectAdmin_FullMethodName               = "/admin.v1.AdminService/UpdateProjectAdmin"
-	AdminService_ArchiveProjectAdmin_FullMethodName              = "/admin.v1.AdminService/ArchiveProjectAdmin"
-	AdminService_DeleteArchivedProjectAdmin_FullMethodName       = "/admin.v1.AdminService/DeleteArchivedProjectAdmin"
-	AdminService_GetDepartmentProgressSummary_FullMethodName     = "/admin.v1.AdminService/GetDepartmentProgressSummary"
-	AdminService_ListDepartmentProgressTeams_FullMethodName      = "/admin.v1.AdminService/ListDepartmentProgressTeams"
-	AdminService_GetDepartmentProgressTeamDetails_FullMethodName = "/admin.v1.AdminService/GetDepartmentProgressTeamDetails"
+	AdminService_GetDashboard_FullMethodName                        = "/admin.v1.AdminService/GetDashboard"
+	AdminService_GetDepartmentStats_FullMethodName                  = "/admin.v1.AdminService/GetDepartmentStats"
+	AdminService_ListStudents_FullMethodName                        = "/admin.v1.AdminService/ListStudents"
+	AdminService_GetStudent_FullMethodName                          = "/admin.v1.AdminService/GetStudent"
+	AdminService_ListAllTeams_FullMethodName                        = "/admin.v1.AdminService/ListAllTeams"
+	AdminService_GetTeamDetails_FullMethodName                      = "/admin.v1.AdminService/GetTeamDetails"
+	AdminService_UpdateTeamAdmin_FullMethodName                     = "/admin.v1.AdminService/UpdateTeamAdmin"
+	AdminService_DeleteTeamAdmin_FullMethodName                     = "/admin.v1.AdminService/DeleteTeamAdmin"
+	AdminService_ListSupervisors_FullMethodName                     = "/admin.v1.AdminService/ListSupervisors"
+	AdminService_AssignSupervisor_FullMethodName                    = "/admin.v1.AdminService/AssignSupervisor"
+	AdminService_CreateSupervisorRequest_FullMethodName             = "/admin.v1.AdminService/CreateSupervisorRequest"
+	AdminService_CreateSupervisorRequestByTeam_FullMethodName       = "/admin.v1.AdminService/CreateSupervisorRequestByTeam"
+	AdminService_ListSupervisorRequests_FullMethodName              = "/admin.v1.AdminService/ListSupervisorRequests"
+	AdminService_GetSupervisorRequest_FullMethodName                = "/admin.v1.AdminService/GetSupervisorRequest"
+	AdminService_RespondToSupervisorRequest_FullMethodName          = "/admin.v1.AdminService/RespondToSupervisorRequest"
+	AdminService_ListMySupervisorRequests_FullMethodName            = "/admin.v1.AdminService/ListMySupervisorRequests"
+	AdminService_CancelSupervisorRequest_FullMethodName             = "/admin.v1.AdminService/CancelSupervisorRequest"
+	AdminService_SubmitTopicRegistration_FullMethodName             = "/admin.v1.AdminService/SubmitTopicRegistration"
+	AdminService_ListTopicRegistrations_FullMethodName              = "/admin.v1.AdminService/ListTopicRegistrations"
+	AdminService_ReviewTopicRegistration_FullMethodName             = "/admin.v1.AdminService/ReviewTopicRegistration"
+	AdminService_GetTopicRegistration_FullMethodName                = "/admin.v1.AdminService/GetTopicRegistration"
+	AdminService_SubmitPreDefense_FullMethodName                    = "/admin.v1.AdminService/SubmitPreDefense"
+	AdminService_ListPreDefenseSubmissions_FullMethodName           = "/admin.v1.AdminService/ListPreDefenseSubmissions"
+	AdminService_GetPreDefenseSubmission_FullMethodName             = "/admin.v1.AdminService/GetPreDefenseSubmission"
+	AdminService_SchedulePreDefense_FullMethodName                  = "/admin.v1.AdminService/SchedulePreDefense"
+	AdminService_GradePreDefense_FullMethodName                     = "/admin.v1.AdminService/GradePreDefense"
+	AdminService_CompletePreDefense_FullMethodName                  = "/admin.v1.AdminService/CompletePreDefense"
+	AdminService_ReschedulePreDefense_FullMethodName                = "/admin.v1.AdminService/ReschedulePreDefense"
+	AdminService_ListScheduledPreDefenses_FullMethodName            = "/admin.v1.AdminService/ListScheduledPreDefenses"
+	AdminService_AddPreDefenseCommissionMember_FullMethodName       = "/admin.v1.AdminService/AddPreDefenseCommissionMember"
+	AdminService_RemovePreDefenseCommissionMember_FullMethodName    = "/admin.v1.AdminService/RemovePreDefenseCommissionMember"
+	AdminService_ListSubmissions_FullMethodName                     = "/admin.v1.AdminService/ListSubmissions"
+	AdminService_GetSubmission_FullMethodName                       = "/admin.v1.AdminService/GetSubmission"
+	AdminService_ReviewSubmission_FullMethodName                    = "/admin.v1.AdminService/ReviewSubmission"
+	AdminService_GetProjectGrades_FullMethodName                    = "/admin.v1.AdminService/GetProjectGrades"
+	AdminService_SetStepGrade_FullMethodName                        = "/admin.v1.AdminService/SetStepGrade"
+	AdminService_GetGradingHistory_FullMethodName                   = "/admin.v1.AdminService/GetGradingHistory"
+	AdminService_GetWorkflowProgress_FullMethodName                 = "/admin.v1.AdminService/GetWorkflowProgress"
+	AdminService_GetTeamProgress_FullMethodName                     = "/admin.v1.AdminService/GetTeamProgress"
+	AdminService_ListPendingReviews_FullMethodName                  = "/admin.v1.AdminService/ListPendingReviews"
+	AdminService_ListAvailableTeams_FullMethodName                  = "/admin.v1.AdminService/ListAvailableTeams"
+	AdminService_SubmitDocument_FullMethodName                      = "/admin.v1.AdminService/SubmitDocument"
+	AdminService_GetSupervisorSettings_FullMethodName               = "/admin.v1.AdminService/GetSupervisorSettings"
+	AdminService_UpdateSupervisorMaxTeams_FullMethodName            = "/admin.v1.AdminService/UpdateSupervisorMaxTeams"
+	AdminService_CreateTeamAdmin_FullMethodName                     = "/admin.v1.AdminService/CreateTeamAdmin"
+	AdminService_ListProjectsAdmin_FullMethodName                   = "/admin.v1.AdminService/ListProjectsAdmin"
+	AdminService_GetProjectAdmin_FullMethodName                     = "/admin.v1.AdminService/GetProjectAdmin"
+	AdminService_CreateProjectAdmin_FullMethodName                  = "/admin.v1.AdminService/CreateProjectAdmin"
+	AdminService_UpdateProjectAdmin_FullMethodName                  = "/admin.v1.AdminService/UpdateProjectAdmin"
+	AdminService_ArchiveProjectAdmin_FullMethodName                 = "/admin.v1.AdminService/ArchiveProjectAdmin"
+	AdminService_DeleteArchivedProjectAdmin_FullMethodName          = "/admin.v1.AdminService/DeleteArchivedProjectAdmin"
+	AdminService_GetDepartmentProgressSummary_FullMethodName        = "/admin.v1.AdminService/GetDepartmentProgressSummary"
+	AdminService_ListDepartmentProgressTeams_FullMethodName         = "/admin.v1.AdminService/ListDepartmentProgressTeams"
+	AdminService_GetDepartmentProgressTeamDetails_FullMethodName    = "/admin.v1.AdminService/GetDepartmentProgressTeamDetails"
+	AdminService_CheckSupervisorProjectAccess_FullMethodName        = "/admin.v1.AdminService/CheckSupervisorProjectAccess"
+	AdminService_ListSupervisorProjects_FullMethodName              = "/admin.v1.AdminService/ListSupervisorProjects"
+	AdminService_GetSupervisorProjectDetails_FullMethodName         = "/admin.v1.AdminService/GetSupervisorProjectDetails"
+	AdminService_ListSupervisorProjectSubmissions_FullMethodName    = "/admin.v1.AdminService/ListSupervisorProjectSubmissions"
+	AdminService_GetSupervisorProjectSubmission_FullMethodName      = "/admin.v1.AdminService/GetSupervisorProjectSubmission"
+	AdminService_GetSupervisorProjectGrades_FullMethodName          = "/admin.v1.AdminService/GetSupervisorProjectGrades"
+	AdminService_GetSupervisorProjectGradingHistory_FullMethodName  = "/admin.v1.AdminService/GetSupervisorProjectGradingHistory"
+	AdminService_GetSupervisorProjectWorkflowHistory_FullMethodName = "/admin.v1.AdminService/GetSupervisorProjectWorkflowHistory"
+	AdminService_ListSupervisorProjectFiles_FullMethodName          = "/admin.v1.AdminService/ListSupervisorProjectFiles"
+	AdminService_GetSupervisorProjectTimeline_FullMethodName        = "/admin.v1.AdminService/GetSupervisorProjectTimeline"
+	AdminService_ReviewSupervisorProjectSubmission_FullMethodName   = "/admin.v1.AdminService/ReviewSupervisorProjectSubmission"
 )
 
 // AdminServiceClient is the client API for AdminService service.
@@ -153,6 +164,21 @@ type AdminServiceClient interface {
 	GetDepartmentProgressSummary(ctx context.Context, in *DepartmentProgressSummaryRequest, opts ...grpc.CallOption) (*DepartmentProgressSummaryResponse, error)
 	ListDepartmentProgressTeams(ctx context.Context, in *ListDepartmentProgressTeamsRequest, opts ...grpc.CallOption) (*ListDepartmentProgressTeamsResponse, error)
 	GetDepartmentProgressTeamDetails(ctx context.Context, in *GetDepartmentProgressTeamDetailsRequest, opts ...grpc.CallOption) (*DepartmentProgressTeamDetailsResponse, error)
+	// ==================== Supervisor Projects (supervisor-facing) ====================
+	// Projects owned by the calling supervisor only. Ownership = projects.team_id ->
+	// admin_supervisor_assignments.supervisor_id. supervisor_id comes from the JWT
+	// (gateway), never from the client. Admin role bypasses ownership.
+	CheckSupervisorProjectAccess(ctx context.Context, in *CheckSupervisorProjectAccessRequest, opts ...grpc.CallOption) (*CheckSupervisorProjectAccessResponse, error)
+	ListSupervisorProjects(ctx context.Context, in *ListSupervisorProjectsRequest, opts ...grpc.CallOption) (*ListSupervisorProjectsResponse, error)
+	GetSupervisorProjectDetails(ctx context.Context, in *GetSupervisorProjectDetailsRequest, opts ...grpc.CallOption) (*GetSupervisorProjectDetailsResponse, error)
+	ListSupervisorProjectSubmissions(ctx context.Context, in *ListSupervisorProjectSubmissionsRequest, opts ...grpc.CallOption) (*ListSubmissionsResponse, error)
+	GetSupervisorProjectSubmission(ctx context.Context, in *GetSupervisorProjectSubmissionRequest, opts ...grpc.CallOption) (*GetSubmissionResponse, error)
+	GetSupervisorProjectGrades(ctx context.Context, in *GetSupervisorProjectGradesRequest, opts ...grpc.CallOption) (*GetProjectGradesResponse, error)
+	GetSupervisorProjectGradingHistory(ctx context.Context, in *GetSupervisorProjectGradingHistoryRequest, opts ...grpc.CallOption) (*GetGradingHistoryResponse, error)
+	GetSupervisorProjectWorkflowHistory(ctx context.Context, in *GetSupervisorProjectWorkflowHistoryRequest, opts ...grpc.CallOption) (*SupervisorProjectWorkflowHistoryResponse, error)
+	ListSupervisorProjectFiles(ctx context.Context, in *ListSupervisorProjectFilesRequest, opts ...grpc.CallOption) (*SupervisorProjectFilesResponse, error)
+	GetSupervisorProjectTimeline(ctx context.Context, in *GetSupervisorProjectTimelineRequest, opts ...grpc.CallOption) (*SupervisorProjectTimelineResponse, error)
+	ReviewSupervisorProjectSubmission(ctx context.Context, in *ReviewSupervisorProjectSubmissionRequest, opts ...grpc.CallOption) (*ReviewSubmissionResponse, error)
 }
 
 type adminServiceClient struct {
@@ -703,6 +729,116 @@ func (c *adminServiceClient) GetDepartmentProgressTeamDetails(ctx context.Contex
 	return out, nil
 }
 
+func (c *adminServiceClient) CheckSupervisorProjectAccess(ctx context.Context, in *CheckSupervisorProjectAccessRequest, opts ...grpc.CallOption) (*CheckSupervisorProjectAccessResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(CheckSupervisorProjectAccessResponse)
+	err := c.cc.Invoke(ctx, AdminService_CheckSupervisorProjectAccess_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *adminServiceClient) ListSupervisorProjects(ctx context.Context, in *ListSupervisorProjectsRequest, opts ...grpc.CallOption) (*ListSupervisorProjectsResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(ListSupervisorProjectsResponse)
+	err := c.cc.Invoke(ctx, AdminService_ListSupervisorProjects_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *adminServiceClient) GetSupervisorProjectDetails(ctx context.Context, in *GetSupervisorProjectDetailsRequest, opts ...grpc.CallOption) (*GetSupervisorProjectDetailsResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(GetSupervisorProjectDetailsResponse)
+	err := c.cc.Invoke(ctx, AdminService_GetSupervisorProjectDetails_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *adminServiceClient) ListSupervisorProjectSubmissions(ctx context.Context, in *ListSupervisorProjectSubmissionsRequest, opts ...grpc.CallOption) (*ListSubmissionsResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(ListSubmissionsResponse)
+	err := c.cc.Invoke(ctx, AdminService_ListSupervisorProjectSubmissions_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *adminServiceClient) GetSupervisorProjectSubmission(ctx context.Context, in *GetSupervisorProjectSubmissionRequest, opts ...grpc.CallOption) (*GetSubmissionResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(GetSubmissionResponse)
+	err := c.cc.Invoke(ctx, AdminService_GetSupervisorProjectSubmission_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *adminServiceClient) GetSupervisorProjectGrades(ctx context.Context, in *GetSupervisorProjectGradesRequest, opts ...grpc.CallOption) (*GetProjectGradesResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(GetProjectGradesResponse)
+	err := c.cc.Invoke(ctx, AdminService_GetSupervisorProjectGrades_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *adminServiceClient) GetSupervisorProjectGradingHistory(ctx context.Context, in *GetSupervisorProjectGradingHistoryRequest, opts ...grpc.CallOption) (*GetGradingHistoryResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(GetGradingHistoryResponse)
+	err := c.cc.Invoke(ctx, AdminService_GetSupervisorProjectGradingHistory_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *adminServiceClient) GetSupervisorProjectWorkflowHistory(ctx context.Context, in *GetSupervisorProjectWorkflowHistoryRequest, opts ...grpc.CallOption) (*SupervisorProjectWorkflowHistoryResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(SupervisorProjectWorkflowHistoryResponse)
+	err := c.cc.Invoke(ctx, AdminService_GetSupervisorProjectWorkflowHistory_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *adminServiceClient) ListSupervisorProjectFiles(ctx context.Context, in *ListSupervisorProjectFilesRequest, opts ...grpc.CallOption) (*SupervisorProjectFilesResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(SupervisorProjectFilesResponse)
+	err := c.cc.Invoke(ctx, AdminService_ListSupervisorProjectFiles_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *adminServiceClient) GetSupervisorProjectTimeline(ctx context.Context, in *GetSupervisorProjectTimelineRequest, opts ...grpc.CallOption) (*SupervisorProjectTimelineResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(SupervisorProjectTimelineResponse)
+	err := c.cc.Invoke(ctx, AdminService_GetSupervisorProjectTimeline_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *adminServiceClient) ReviewSupervisorProjectSubmission(ctx context.Context, in *ReviewSupervisorProjectSubmissionRequest, opts ...grpc.CallOption) (*ReviewSubmissionResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(ReviewSubmissionResponse)
+	err := c.cc.Invoke(ctx, AdminService_ReviewSupervisorProjectSubmission_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // AdminServiceServer is the server API for AdminService service.
 // All implementations must embed UnimplementedAdminServiceServer
 // for forward compatibility.
@@ -780,6 +916,21 @@ type AdminServiceServer interface {
 	GetDepartmentProgressSummary(context.Context, *DepartmentProgressSummaryRequest) (*DepartmentProgressSummaryResponse, error)
 	ListDepartmentProgressTeams(context.Context, *ListDepartmentProgressTeamsRequest) (*ListDepartmentProgressTeamsResponse, error)
 	GetDepartmentProgressTeamDetails(context.Context, *GetDepartmentProgressTeamDetailsRequest) (*DepartmentProgressTeamDetailsResponse, error)
+	// ==================== Supervisor Projects (supervisor-facing) ====================
+	// Projects owned by the calling supervisor only. Ownership = projects.team_id ->
+	// admin_supervisor_assignments.supervisor_id. supervisor_id comes from the JWT
+	// (gateway), never from the client. Admin role bypasses ownership.
+	CheckSupervisorProjectAccess(context.Context, *CheckSupervisorProjectAccessRequest) (*CheckSupervisorProjectAccessResponse, error)
+	ListSupervisorProjects(context.Context, *ListSupervisorProjectsRequest) (*ListSupervisorProjectsResponse, error)
+	GetSupervisorProjectDetails(context.Context, *GetSupervisorProjectDetailsRequest) (*GetSupervisorProjectDetailsResponse, error)
+	ListSupervisorProjectSubmissions(context.Context, *ListSupervisorProjectSubmissionsRequest) (*ListSubmissionsResponse, error)
+	GetSupervisorProjectSubmission(context.Context, *GetSupervisorProjectSubmissionRequest) (*GetSubmissionResponse, error)
+	GetSupervisorProjectGrades(context.Context, *GetSupervisorProjectGradesRequest) (*GetProjectGradesResponse, error)
+	GetSupervisorProjectGradingHistory(context.Context, *GetSupervisorProjectGradingHistoryRequest) (*GetGradingHistoryResponse, error)
+	GetSupervisorProjectWorkflowHistory(context.Context, *GetSupervisorProjectWorkflowHistoryRequest) (*SupervisorProjectWorkflowHistoryResponse, error)
+	ListSupervisorProjectFiles(context.Context, *ListSupervisorProjectFilesRequest) (*SupervisorProjectFilesResponse, error)
+	GetSupervisorProjectTimeline(context.Context, *GetSupervisorProjectTimelineRequest) (*SupervisorProjectTimelineResponse, error)
+	ReviewSupervisorProjectSubmission(context.Context, *ReviewSupervisorProjectSubmissionRequest) (*ReviewSubmissionResponse, error)
 	mustEmbedUnimplementedAdminServiceServer()
 }
 
@@ -951,6 +1102,39 @@ func (UnimplementedAdminServiceServer) ListDepartmentProgressTeams(context.Conte
 }
 func (UnimplementedAdminServiceServer) GetDepartmentProgressTeamDetails(context.Context, *GetDepartmentProgressTeamDetailsRequest) (*DepartmentProgressTeamDetailsResponse, error) {
 	return nil, status.Error(codes.Unimplemented, "method GetDepartmentProgressTeamDetails not implemented")
+}
+func (UnimplementedAdminServiceServer) CheckSupervisorProjectAccess(context.Context, *CheckSupervisorProjectAccessRequest) (*CheckSupervisorProjectAccessResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method CheckSupervisorProjectAccess not implemented")
+}
+func (UnimplementedAdminServiceServer) ListSupervisorProjects(context.Context, *ListSupervisorProjectsRequest) (*ListSupervisorProjectsResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method ListSupervisorProjects not implemented")
+}
+func (UnimplementedAdminServiceServer) GetSupervisorProjectDetails(context.Context, *GetSupervisorProjectDetailsRequest) (*GetSupervisorProjectDetailsResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method GetSupervisorProjectDetails not implemented")
+}
+func (UnimplementedAdminServiceServer) ListSupervisorProjectSubmissions(context.Context, *ListSupervisorProjectSubmissionsRequest) (*ListSubmissionsResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method ListSupervisorProjectSubmissions not implemented")
+}
+func (UnimplementedAdminServiceServer) GetSupervisorProjectSubmission(context.Context, *GetSupervisorProjectSubmissionRequest) (*GetSubmissionResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method GetSupervisorProjectSubmission not implemented")
+}
+func (UnimplementedAdminServiceServer) GetSupervisorProjectGrades(context.Context, *GetSupervisorProjectGradesRequest) (*GetProjectGradesResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method GetSupervisorProjectGrades not implemented")
+}
+func (UnimplementedAdminServiceServer) GetSupervisorProjectGradingHistory(context.Context, *GetSupervisorProjectGradingHistoryRequest) (*GetGradingHistoryResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method GetSupervisorProjectGradingHistory not implemented")
+}
+func (UnimplementedAdminServiceServer) GetSupervisorProjectWorkflowHistory(context.Context, *GetSupervisorProjectWorkflowHistoryRequest) (*SupervisorProjectWorkflowHistoryResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method GetSupervisorProjectWorkflowHistory not implemented")
+}
+func (UnimplementedAdminServiceServer) ListSupervisorProjectFiles(context.Context, *ListSupervisorProjectFilesRequest) (*SupervisorProjectFilesResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method ListSupervisorProjectFiles not implemented")
+}
+func (UnimplementedAdminServiceServer) GetSupervisorProjectTimeline(context.Context, *GetSupervisorProjectTimelineRequest) (*SupervisorProjectTimelineResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method GetSupervisorProjectTimeline not implemented")
+}
+func (UnimplementedAdminServiceServer) ReviewSupervisorProjectSubmission(context.Context, *ReviewSupervisorProjectSubmissionRequest) (*ReviewSubmissionResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method ReviewSupervisorProjectSubmission not implemented")
 }
 func (UnimplementedAdminServiceServer) mustEmbedUnimplementedAdminServiceServer() {}
 func (UnimplementedAdminServiceServer) testEmbeddedByValue()                      {}
@@ -1945,6 +2129,204 @@ func _AdminService_GetDepartmentProgressTeamDetails_Handler(srv interface{}, ctx
 	return interceptor(ctx, in, info, handler)
 }
 
+func _AdminService_CheckSupervisorProjectAccess_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(CheckSupervisorProjectAccessRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(AdminServiceServer).CheckSupervisorProjectAccess(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: AdminService_CheckSupervisorProjectAccess_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(AdminServiceServer).CheckSupervisorProjectAccess(ctx, req.(*CheckSupervisorProjectAccessRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _AdminService_ListSupervisorProjects_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(ListSupervisorProjectsRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(AdminServiceServer).ListSupervisorProjects(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: AdminService_ListSupervisorProjects_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(AdminServiceServer).ListSupervisorProjects(ctx, req.(*ListSupervisorProjectsRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _AdminService_GetSupervisorProjectDetails_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetSupervisorProjectDetailsRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(AdminServiceServer).GetSupervisorProjectDetails(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: AdminService_GetSupervisorProjectDetails_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(AdminServiceServer).GetSupervisorProjectDetails(ctx, req.(*GetSupervisorProjectDetailsRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _AdminService_ListSupervisorProjectSubmissions_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(ListSupervisorProjectSubmissionsRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(AdminServiceServer).ListSupervisorProjectSubmissions(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: AdminService_ListSupervisorProjectSubmissions_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(AdminServiceServer).ListSupervisorProjectSubmissions(ctx, req.(*ListSupervisorProjectSubmissionsRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _AdminService_GetSupervisorProjectSubmission_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetSupervisorProjectSubmissionRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(AdminServiceServer).GetSupervisorProjectSubmission(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: AdminService_GetSupervisorProjectSubmission_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(AdminServiceServer).GetSupervisorProjectSubmission(ctx, req.(*GetSupervisorProjectSubmissionRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _AdminService_GetSupervisorProjectGrades_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetSupervisorProjectGradesRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(AdminServiceServer).GetSupervisorProjectGrades(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: AdminService_GetSupervisorProjectGrades_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(AdminServiceServer).GetSupervisorProjectGrades(ctx, req.(*GetSupervisorProjectGradesRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _AdminService_GetSupervisorProjectGradingHistory_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetSupervisorProjectGradingHistoryRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(AdminServiceServer).GetSupervisorProjectGradingHistory(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: AdminService_GetSupervisorProjectGradingHistory_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(AdminServiceServer).GetSupervisorProjectGradingHistory(ctx, req.(*GetSupervisorProjectGradingHistoryRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _AdminService_GetSupervisorProjectWorkflowHistory_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetSupervisorProjectWorkflowHistoryRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(AdminServiceServer).GetSupervisorProjectWorkflowHistory(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: AdminService_GetSupervisorProjectWorkflowHistory_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(AdminServiceServer).GetSupervisorProjectWorkflowHistory(ctx, req.(*GetSupervisorProjectWorkflowHistoryRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _AdminService_ListSupervisorProjectFiles_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(ListSupervisorProjectFilesRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(AdminServiceServer).ListSupervisorProjectFiles(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: AdminService_ListSupervisorProjectFiles_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(AdminServiceServer).ListSupervisorProjectFiles(ctx, req.(*ListSupervisorProjectFilesRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _AdminService_GetSupervisorProjectTimeline_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetSupervisorProjectTimelineRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(AdminServiceServer).GetSupervisorProjectTimeline(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: AdminService_GetSupervisorProjectTimeline_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(AdminServiceServer).GetSupervisorProjectTimeline(ctx, req.(*GetSupervisorProjectTimelineRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _AdminService_ReviewSupervisorProjectSubmission_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(ReviewSupervisorProjectSubmissionRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(AdminServiceServer).ReviewSupervisorProjectSubmission(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: AdminService_ReviewSupervisorProjectSubmission_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(AdminServiceServer).ReviewSupervisorProjectSubmission(ctx, req.(*ReviewSupervisorProjectSubmissionRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // AdminService_ServiceDesc is the grpc.ServiceDesc for AdminService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -2167,6 +2549,50 @@ var AdminService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "GetDepartmentProgressTeamDetails",
 			Handler:    _AdminService_GetDepartmentProgressTeamDetails_Handler,
+		},
+		{
+			MethodName: "CheckSupervisorProjectAccess",
+			Handler:    _AdminService_CheckSupervisorProjectAccess_Handler,
+		},
+		{
+			MethodName: "ListSupervisorProjects",
+			Handler:    _AdminService_ListSupervisorProjects_Handler,
+		},
+		{
+			MethodName: "GetSupervisorProjectDetails",
+			Handler:    _AdminService_GetSupervisorProjectDetails_Handler,
+		},
+		{
+			MethodName: "ListSupervisorProjectSubmissions",
+			Handler:    _AdminService_ListSupervisorProjectSubmissions_Handler,
+		},
+		{
+			MethodName: "GetSupervisorProjectSubmission",
+			Handler:    _AdminService_GetSupervisorProjectSubmission_Handler,
+		},
+		{
+			MethodName: "GetSupervisorProjectGrades",
+			Handler:    _AdminService_GetSupervisorProjectGrades_Handler,
+		},
+		{
+			MethodName: "GetSupervisorProjectGradingHistory",
+			Handler:    _AdminService_GetSupervisorProjectGradingHistory_Handler,
+		},
+		{
+			MethodName: "GetSupervisorProjectWorkflowHistory",
+			Handler:    _AdminService_GetSupervisorProjectWorkflowHistory_Handler,
+		},
+		{
+			MethodName: "ListSupervisorProjectFiles",
+			Handler:    _AdminService_ListSupervisorProjectFiles_Handler,
+		},
+		{
+			MethodName: "GetSupervisorProjectTimeline",
+			Handler:    _AdminService_GetSupervisorProjectTimeline_Handler,
+		},
+		{
+			MethodName: "ReviewSupervisorProjectSubmission",
+			Handler:    _AdminService_ReviewSupervisorProjectSubmission_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

@@ -41,3 +41,10 @@ func (m *MockRepository) IsFileOnNormControl(ctx context.Context, fileID string)
 	args := m.Called(ctx, fileID)
 	return args.Bool(0), args.Error(1)
 }
+func (m *MockRepository) IsFileOnAntiplagiat(ctx context.Context, fileID string) (bool, error) {
+	return false, nil
+}
+
+func (m *MockRepository) IsFileOnCommission(ctx context.Context, fileID string) (bool, error) {
+	return false, nil
+}

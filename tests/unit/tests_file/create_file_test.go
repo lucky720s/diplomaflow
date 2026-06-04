@@ -42,3 +42,14 @@ func TestUploadFlow_StartCommitResolve(t *testing.T) {
 
 	require.Equal(t, filepath.Clean(finalPath), filepath.Clean(p))
 }
+func (m *memRepo) IsFileOnNormControl(ctx context.Context, fileID string) (bool, error) {
+	return false, nil
+}
+
+func (m *memRepo) IsFileOnAntiplagiat(ctx context.Context, fileID string) (bool, error) {
+	return false, nil
+}
+
+func (m *memRepo) IsFileOnCommission(ctx context.Context, fileID string) (bool, error) {
+	return false, nil
+}

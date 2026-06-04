@@ -3,6 +3,7 @@ package admin
 import (
 	"context"
 	"database/sql"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"strings"
@@ -29,6 +30,7 @@ type Repository interface {
 	UpdateTopicRegistration(ctx context.Context, reg *TopicRegistration) error
 	CreateTopicRegistrationReview(ctx context.Context, review *TopicRegistrationReview) error
 	GetTopicRegistrationReviews(ctx context.Context, registrationID string) ([]*TopicRegistrationReview, error)
+	AdvanceProjectByWorkflowEvent(ctx context.Context, projectID int64, eventName string, actorID int64, comment string) error
 	CountPendingTopicRegistrations(ctx context.Context, departmentID int64) (int64, error)
 
 	// Submissions
@@ -169,6 +171,14 @@ type Repository interface {
 	GetDPPreDefenses(ctx context.Context, projectID int64) ([]*DPPreDefense, error)
 	GetDPProjectDepartmentID(ctx context.Context, projectID int64) (int64, error)
 	GetDPUnifiedHistory(ctx context.Context, projectID, teamID int64) ([]*UnifiedHistoryItem, error)
+
+	// ==================== Supervisor Projects (supervisor-facing) ====================
+	IsSupervisorOfProject(ctx context.Context, supervisorID, projectID int64) (exists bool, owned bool, err error)
+	ListSupervisorProjects(ctx context.Context, f SupervisorProjectsFilter) ([]*SupervisorProjectRow, int64, error)
+	GetSupervisorProjectHead(ctx context.Context, projectID int64) (*SupervisorProjectHead, error)
+	ListSupervisorProjectFiles(ctx context.Context, projectID int64) ([]*SupervisorProjectFileRow, error)
+
+	GetStateReviewerRoles(ctx context.Context, stateID int64) ([]string, error)
 }
 
 type TopicRegistrationFilter struct {
@@ -1706,4 +1716,177 @@ func (r *repository) GetStateHistory(ctx context.Context, projectID int64) ([]*S
 		return nil, err
 	}
 	return rows, nil
+}
+
+func (r *repository) AdvanceProjectByWorkflowEvent(
+	ctx context.Context,
+	projectID int64,
+	eventName string,
+	actorID int64,
+	comment string,
+) error {
+	return r.db.WithContext(ctx).Transaction(func(tx *gorm.DB) error {
+		type projectRow struct {
+			ID               int64
+			WorkflowID       int64
+			CurrentStateID   int64
+			CurrentStateName string
+		}
+
+		var p projectRow
+		if err := tx.Raw(`
+			SELECT id, workflow_id, current_state_id, current_state_name
+			FROM projects
+			WHERE id = ?
+			FOR UPDATE
+		`, projectID).Scan(&p).Error; err != nil {
+			return err
+		}
+
+		if p.ID == 0 {
+			return fmt.Errorf("project %d not found", projectID)
+		}
+
+		type transitionRow struct {
+			ID          int64
+			FromStateID int64
+			ToStateID   int64
+			EventName   string
+		}
+
+		var tr transitionRow
+		if err := tx.Raw(`
+			SELECT id, from_state_id, to_state_id, event_name
+			FROM transitions
+			WHERE workflow_id = ?
+			  AND from_state_id = ?
+			  AND event_name = ?
+			LIMIT 1
+		`, p.WorkflowID, p.CurrentStateID, eventName).Scan(&tr).Error; err != nil {
+			return err
+		}
+
+		if tr.ID == 0 {
+			return fmt.Errorf(
+				"transition not found: project_id=%d workflow_id=%d from_state_id=%d event_name=%s",
+				projectID,
+				p.WorkflowID,
+				p.CurrentStateID,
+				eventName,
+			)
+		}
+
+		var toStateName string
+		if err := tx.Raw(`
+			SELECT name
+			FROM states
+			WHERE id = ?
+			LIMIT 1
+		`, tr.ToStateID).Scan(&toStateName).Error; err != nil {
+			return err
+		}
+
+		if toStateName == "" {
+			return fmt.Errorf("target state %d not found", tr.ToStateID)
+		}
+
+		if err := tx.Exec(`
+			UPDATE projects
+			SET
+				current_state_id = ?,
+				current_state_name = ?,
+				status = ?,
+				data = jsonb_set(
+					COALESCE(data, '{}'::jsonb),
+					'{wf,last_transition}',
+					jsonb_build_object(
+						'transition_id', ?,
+						'event_name', ?,
+						'from_state', ?,
+						'to_state', ?,
+						'performed_by', ?,
+						'performed_at', now()
+					),
+					true
+				),
+				updated_at = now()
+			WHERE id = ?
+		`,
+			tr.ToStateID,
+			toStateName,
+			toStateName,
+			tr.ID,
+			eventName,
+			p.CurrentStateName,
+			toStateName,
+			actorID,
+			projectID,
+		).Error; err != nil {
+			return err
+		}
+
+		if err := tx.Exec(`
+			INSERT INTO state_histories (
+				project_id,
+				from_state_id,
+				to_state_id,
+				from_state_name,
+				to_state_name,
+				event_name,
+				status,
+				changed_by,
+				comment,
+				metadata,
+				created_at
+			)
+			VALUES (
+				?, ?, ?, ?, ?, ?, 'completed', ?, ?,
+				jsonb_build_object(
+					'transition_id', ?,
+					'source', 'topic_registration_review'
+				),
+				now()
+			)
+		`,
+			projectID,
+			tr.FromStateID,
+			tr.ToStateID,
+			p.CurrentStateName,
+			toStateName,
+			eventName,
+			actorID,
+			comment,
+			tr.ID,
+		).Error; err != nil {
+			return err
+		}
+
+		return nil
+	})
+}
+func (r *repository) GetStateReviewerRoles(ctx context.Context, stateID int64) ([]string, error) {
+	if stateID <= 0 {
+		return nil, nil
+	}
+
+	var raw []byte
+	err := r.db.WithContext(ctx).
+		Table("states").
+		Select("COALESCE(config->'review_config'->'reviewer_roles', '[]'::jsonb)").
+		Where("id = ?", stateID).
+		Scan(&raw).Error
+	if err != nil {
+		return nil, err
+	}
+
+	if len(raw) == 0 {
+		return nil, nil
+	}
+
+	var roles []string
+	if err := json.Unmarshal(raw, &roles); err != nil {
+		return nil, err
+	}
+
+	return roles, nil
 }
