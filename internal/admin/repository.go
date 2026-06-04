@@ -180,6 +180,9 @@ type Repository interface {
 
 	GetStateReviewerRoles(ctx context.Context, stateID int64) ([]string, error)
 	MarkProjectTopicRegistered(ctx context.Context, projectID int64) error
+	IsPreDefenseState(ctx context.Context, stateID int64) (bool, error)
+	GetActivePreDefenseByProjectTeam(ctx context.Context, projectID, teamID int64) (*PreDefenseSubmission, error)
+	PreDefenseDocumentExists(ctx context.Context, submissionID, documentID string) (bool, error)
 }
 
 type TopicRegistrationFilter struct {
@@ -1917,4 +1920,65 @@ func (r *repository) MarkProjectTopicRegistered(ctx context.Context, projectID i
 		    updated_at = now()
 		WHERE id = ?
 	`, projectID).Error
+}
+func (r *repository) IsPreDefenseState(ctx context.Context, stateID int64) (bool, error) {
+	if stateID <= 0 {
+		return false, nil
+	}
+
+	var count int64
+	err := r.db.WithContext(ctx).
+		Table("states").
+		Where(`
+			id = ?
+			AND (
+				UPPER(COALESCE(name, '')) LIKE ?
+				OR UPPER(COALESCE(display_name, '')) LIKE ?
+				OR UPPER(COALESCE(name, '')) LIKE ?
+				OR UPPER(COALESCE(display_name, '')) LIKE ?
+			)
+		`,
+			stateID,
+			"%PRE_DEFENSE%",
+			"%PRE_DEFENSE%",
+			"%ПРЕДЗАЩИТ%",
+			"%ПРЕДЗАЩИТ%",
+		).
+		Count(&count).Error
+
+	return count > 0, err
+}
+
+func (r *repository) GetActivePreDefenseByProjectTeam(ctx context.Context, projectID, teamID int64) (*PreDefenseSubmission, error) {
+	var sub PreDefenseSubmission
+
+	err := r.db.WithContext(ctx).
+		Where(
+			"project_id = ? AND team_id = ? AND status IN ?",
+			projectID,
+			teamID,
+			[]string{"pending", "scheduled"},
+		).
+		Order("created_at DESC").
+		First(&sub).Error
+
+	if err != nil {
+		return nil, err
+	}
+
+	return &sub, nil
+}
+
+func (r *repository) PreDefenseDocumentExists(ctx context.Context, submissionID, documentID string) (bool, error) {
+	if submissionID == "" || documentID == "" {
+		return false, nil
+	}
+
+	var count int64
+	err := r.db.WithContext(ctx).
+		Table("admin_pre_defense_documents").
+		Where("submission_id = ? AND id = ?", submissionID, documentID).
+		Count(&count).Error
+
+	return count > 0, err
 }

@@ -1407,6 +1407,7 @@ func (h *Handler) ListAvailableTeams(ctx context.Context, req *adminv1.ListAvail
 		TotalCount: total,
 	}, nil
 }
+
 func (h *Handler) SubmitDocument(ctx context.Context, req *adminv1.SubmitDocumentRequest) (*adminv1.SubmitDocumentResponse, error) {
 	if req.ProjectId == 0 {
 		return nil, status.Error(codes.InvalidArgument, "project_id is required")
@@ -1431,6 +1432,11 @@ func (h *Handler) SubmitDocument(ctx context.Context, req *adminv1.SubmitDocumen
 		return nil, status.Errorf(codes.Internal, "failed to submit document: %v", err)
 	}
 
+	if _, err := h.service.EnsurePreDefenseSubmissionForSubmission(ctx, sub); err != nil {
+		h.logger.Error("failed to ensure pre-defense submission after document submit", zap.Error(err))
+		return nil, status.Errorf(codes.Internal, "failed to create pre-defense submission: %v", err)
+	}
+
 	return &adminv1.SubmitDocumentResponse{
 		Success:      true,
 		SubmissionId: sub.ID,
@@ -1438,6 +1444,7 @@ func (h *Handler) SubmitDocument(ctx context.Context, req *adminv1.SubmitDocumen
 		Message:      "Document submitted successfully",
 	}, nil
 }
+
 func (h *Handler) GetSupervisorSettings(ctx context.Context, req *adminv1.GetSupervisorSettingsRequest) (*adminv1.GetSupervisorSettingsResponse, error) {
 	if req.SupervisorId <= 0 {
 		return nil, status.Error(codes.InvalidArgument, "supervisor_id is required")
