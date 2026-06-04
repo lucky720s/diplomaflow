@@ -3,11 +3,27 @@ package handler
 import (
 	"net/http"
 	"strconv"
+	"strings"
 
 	"github.com/gin-gonic/gin"
 	workflowv1 "github.com/lucky720s/diplomaflow/pkg/protobuf/workflow/v1"
 	"google.golang.org/grpc/metadata"
 )
+
+// deptRolesHeader joins the caller's department roles (from JWT, set by
+// AuthMiddleware) into a comma-separated metadata value so downstream services
+// can authorize against department roles — not just the base role.
+func deptRolesHeader(c *gin.Context) string {
+	v, ok := c.Get("deptRoles")
+	if !ok || v == nil {
+		return ""
+	}
+	arr, ok := v.([]string)
+	if !ok {
+		return ""
+	}
+	return strings.Join(arr, ",")
+}
 
 // SubmitReview — преподаватель/комиссия выставляет оценку или допуск по стэйту.
 // POST /projects/:id/states/:state_id/review
@@ -17,6 +33,7 @@ func (h *Handler) SubmitReview(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid project id"})
 		return
 	}
+
 	stateID, err := strconv.ParseInt(c.Param("state_id"), 10, 64)
 	if err != nil || stateID <= 0 {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid state id"})
@@ -40,6 +57,7 @@ func (h *Handler) SubmitReview(c *gin.Context) {
 		c.Request.Context(),
 		"x-user-id", strconv.FormatInt(userID, 10),
 		"x-user-role", roleSlug,
+		"x-user-dept-roles", deptRolesHeader(c),
 	)
 
 	req := &workflowv1.SubmitReviewRequest{
@@ -85,6 +103,7 @@ func (h *Handler) GetStateReviews(c *gin.Context) {
 		c.Request.Context(),
 		"x-user-id", strconv.FormatInt(userID, 10),
 		"x-user-role", roleSlug,
+		"x-user-dept-roles", deptRolesHeader(c),
 	)
 
 	resp, err := h.workflowClient.GetStateReviews(ctx, &workflowv1.GetStateReviewsRequest{

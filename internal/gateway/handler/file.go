@@ -112,10 +112,23 @@ func (h *Handler) DownloadFile(c *gin.Context) {
 
 	ctx := outgoingCtx(c)
 
-	// Resolve name + MIME from file metadata (prefer the unified contract).
+	// Resolve name + MIME from file metadata AND enforce access control before
+	// streaming. GetFileInfo runs the same CanAccessFile check the download RPC
+	// does, but as a unary call its error (PermissionDenied/NotFound) surfaces
+	// here — before any status/headers are written. The streaming DownloadFile
+	// RPC reports access errors only on the first Recv(), by which point the
+	// gateway has already committed a 200 + Content-Disposition, leaking an
+	// empty "successful" attachment for forbidden/missing files. So we gate on
+	// GetFileInfo and fail fast with the correct 403/404.
+	info, infoErr := h.fileClient.GetFileInfo(ctx, &filev1.GetFileInfoRequest{Id: id})
+	if infoErr != nil {
+		MapGRPCError(c, infoErr)
+		return
+	}
+
 	fileName := "file"
 	mimeType := "application/octet-stream"
-	if info, infoErr := h.fileClient.GetFileInfo(ctx, &filev1.GetFileInfoRequest{Id: id}); infoErr == nil && info != nil {
+	if info != nil {
 		if info.File != nil {
 			if info.File.FileName != "" {
 				fileName = info.File.FileName

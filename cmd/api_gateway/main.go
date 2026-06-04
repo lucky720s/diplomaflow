@@ -191,8 +191,15 @@ func main() {
 			adminPanel.GET("/pre-defenses/schedule", handler.ListScheduledPreDefensesGW)
 			adminPanel.GET("/pre-defenses/:id", handler.GetPreDefenseSubmissionGW)
 			adminPanel.POST("/pre-defenses/:id/schedule", handler.SchedulePreDefenseGW)
-			adminPanel.POST("/pre-defenses/:id/grade", handler.GradePreDefenseGW)
-			adminPanel.POST("/pre-defenses/:id/complete", handler.CompletePreDefenseGW)
+			// Pre-defense grading is a commission action; finalization is a
+			// dean_office action. RBAC above admits admin/teacher; these
+			// per-route guards narrow it to the correct department role
+			// (admin passes as an explicit, audited override). A plain teacher
+			// or a supervisor without the dept role gets 403.
+			adminPanel.POST("/pre-defenses/:id/grade",
+				middleware.RequireDepartmentRole("commission"), handler.GradePreDefenseGW)
+			adminPanel.POST("/pre-defenses/:id/complete",
+				middleware.RequireDepartmentRole("dean_office"), handler.CompletePreDefenseGW)
 			adminPanel.POST("/pre-defenses/:id/reschedule", handler.ReschedulePreDefenseGW)
 			adminPanel.POST("/pre-defenses/:id/commission", handler.AddPreDefenseCommissionMemberGW)
 			adminPanel.DELETE("/pre-defenses/:id/commission/:user_id", handler.RemovePreDefenseCommissionMemberGW)
@@ -473,6 +480,30 @@ func main() {
 
 			norm.GET("/checklists", handler.NormListChecklists)
 			norm.POST("/checklists", handler.NormCreateChecklist)
+		}
+
+		// Commission: pre-defense review (grading). Only the `commission`
+		// department role (admin override allowed). Commission grades but does
+		// NOT finalize the workflow — that is dean_office's job.
+		commission := v1.Group("/commission")
+		commission.Use(middleware.AuthMiddleware(cfg.JWTSecret))
+		commission.Use(middleware.RequireDepartmentRole("commission"))
+		{
+			commission.GET("/pre-defenses", handler.ListPreDefenseSubmissionsGW)
+			commission.GET("/pre-defenses/:id", handler.GetPreDefenseSubmissionGW)
+			commission.POST("/pre-defenses/:id/grade", handler.GradePreDefenseGW)
+		}
+
+		// Dean Office: final administrative decision on pre-defense. Only the
+		// `dean_office` department role (admin override allowed). Finalization
+		// runs the workflow transition centrally via the admin/workflow service.
+		deanOffice := v1.Group("/dean-office")
+		deanOffice.Use(middleware.AuthMiddleware(cfg.JWTSecret))
+		deanOffice.Use(middleware.RequireDepartmentRole("dean_office"))
+		{
+			deanOffice.GET("/pre-defenses", handler.ListPreDefenseSubmissionsGW)
+			deanOffice.GET("/pre-defenses/:id", handler.GetPreDefenseSubmissionGW)
+			deanOffice.POST("/pre-defenses/:id/complete", handler.CompletePreDefenseGW)
 		}
 
 		//antiplagiat

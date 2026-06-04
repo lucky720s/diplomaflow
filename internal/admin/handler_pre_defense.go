@@ -192,6 +192,9 @@ func (h *Handler) CompletePreDefense(ctx context.Context, req *adminv1.CompleteP
 	)
 	if err != nil {
 		h.logger.Error("CompletePreDefense failed", zap.Error(err))
+		if st, ok := status.FromError(err); ok {
+			return nil, st.Err()
+		}
 		return nil, status.Errorf(codes.Internal, "failed to complete pre-defense: %v", err)
 	}
 

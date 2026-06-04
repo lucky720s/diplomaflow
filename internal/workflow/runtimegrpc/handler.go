@@ -6,6 +6,7 @@ import (
 	"errors"
 	"fmt"
 	"strconv"
+	"strings"
 
 	"github.com/lucky720s/diplomaflow/internal/workflow"
 	"github.com/lucky720s/diplomaflow/internal/workflow/engine"
@@ -35,6 +36,7 @@ func New(base *workflow.Handler, eng *engine.WorkflowEngine, reviewSvc *workflow
 type callerInfo struct {
 	UserID      int64
 	UserRole    string
+	DeptRoles   []string
 	InternalSvc string
 }
 
@@ -52,6 +54,13 @@ func getCaller(ctx context.Context) callerInfo {
 	}
 	if v := md.Get("x-user-role"); len(v) > 0 {
 		ci.UserRole = v[0]
+	}
+	for _, v := range md.Get("x-user-dept-roles") {
+		for _, r := range strings.Split(v, ",") {
+			if r = strings.TrimSpace(r); r != "" {
+				ci.DeptRoles = append(ci.DeptRoles, r)
+			}
+		}
 	}
 	if v := md.Get("x-internal-service"); len(v) > 0 {
 		ci.InternalSvc = v[0]
@@ -291,12 +300,13 @@ func (h *Handler) SubmitReview(ctx context.Context, req *workflowv1.SubmitReview
 	}
 
 	sreq := &workflow.SubmitReviewRequest{
-		ProjectID:  req.ProjectId,
-		StateID:    req.StateId,
-		ReviewerID: req.UserId,
-		RoleSlug:   req.RoleSlug,
-		Decision:   req.Decision,
-		Comment:    req.Comment,
+		ProjectID:   req.ProjectId,
+		StateID:     req.StateId,
+		ReviewerID:  req.UserId,
+		RoleSlug:    req.RoleSlug,
+		CallerRoles: ci.DeptRoles,
+		Decision:    req.Decision,
+		Comment:     req.Comment,
 	}
 	if req.HasScore {
 		s := req.Score

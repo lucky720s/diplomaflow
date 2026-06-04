@@ -23,6 +23,11 @@ type SubmitReviewRequest struct {
 	StateID    int64
 	ReviewerID int64
 	RoleSlug   string
+	// CallerRoles are the caller's department roles (from JWT DeptRoles). The
+	// review is allowed if RoleSlug OR any CallerRole is in reviewer_roles, so a
+	// `teacher` carrying the `commission` department role can review a
+	// commission-only state. The recorded role is the matched reviewer role.
+	CallerRoles []string
 	// Для grade_type = "admission"
 	Decision string // "approved" | "rejected"
 	// Для grade_type = "score"
@@ -68,8 +73,11 @@ func (s *ReviewService) SubmitReview(ctx context.Context, req *SubmitReviewReque
 		return nil, errors.New("state has no review_config")
 	}
 
-	// Проверяем что роль разрешена
-	if !s.roleAllowed(req.RoleSlug, rc.ReviewerRoles) {
+	// Проверяем что роль разрешена. Кандидаты: базовая роль + департаментские
+	// роли из JWT. Записываем именно совпавшую reviewer-роль (например
+	// "commission"), а не базовую "teacher".
+	matchedRole, ok := s.matchReviewerRole(req.RoleSlug, req.CallerRoles, rc.ReviewerRoles)
+	if !ok {
 		return nil, fmt.Errorf("%w: %s", ErrReviewNotAllowed, req.RoleSlug)
 	}
 
@@ -78,7 +86,7 @@ func (s *ReviewService) SubmitReview(ctx context.Context, req *SubmitReviewReque
 		ProjectID:  req.ProjectID,
 		StateID:    req.StateID,
 		ReviewerID: req.ReviewerID,
-		RoleSlug:   req.RoleSlug,
+		RoleSlug:   matchedRole,
 		Comment:    req.Comment,
 	}
 
@@ -229,4 +237,20 @@ func (s *ReviewService) roleAllowed(roleSlug string, allowed []string) bool {
 		}
 	}
 	return false
+}
+
+// matchReviewerRole returns the first of the caller's roles (base RoleSlug plus
+// department roles) that appears in the allowed reviewer_roles set. The matched
+// role is what gets recorded on the review, so audit reflects the capability
+// actually exercised (e.g. "commission") rather than the base role.
+func (s *ReviewService) matchReviewerRole(roleSlug string, callerRoles, allowed []string) (string, bool) {
+	if s.roleAllowed(roleSlug, allowed) {
+		return roleSlug, true
+	}
+	for _, r := range callerRoles {
+		if s.roleAllowed(r, allowed) {
+			return r, true
+		}
+	}
+	return "", false
 }

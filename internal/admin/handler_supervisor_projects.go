@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"net/url"
 
 	adminv1 "github.com/lucky720s/diplomaflow/pkg/protobuf/admin/v1"
 	"go.uber.org/zap"
@@ -637,7 +638,7 @@ func parseSubmissionFiles(raw []byte) []fileAttachment {
 }
 
 func downloadURLForFile(id string) string {
-	return fmt.Sprintf("/api/v1/files/%s", id)
+	return fmt.Sprintf("/api/v1/files/%s?download=1", url.PathEscape(id))
 }
 
 func firstNonEmpty(vals ...string) string {

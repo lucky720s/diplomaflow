@@ -73,6 +73,39 @@ func AuthMiddleware(secret string) gin.HandlerFunc {
 	}
 }
 
+// RequireDepartmentRole authorizes a request only when the caller holds at
+// least one of the given *department* roles (from JWT DeptRoles). Unlike
+// RBACMiddleware it never accepts a base role match — a plain `teacher` is not a
+// `commission` or `dean_office`. A base-role `admin` is allowed through as an
+// explicit override and is flagged in context ("adminOverride") so handlers can
+// record it in audit/history.
+func RequireDepartmentRole(roles ...string) gin.HandlerFunc {
+	required := make(map[string]struct{}, len(roles))
+	for _, r := range roles {
+		required[r] = struct{}{}
+	}
+
+	return func(c *gin.Context) {
+		// Admin override — explicit, auditable, never silent.
+		if c.GetString("role") == "admin" {
+			c.Set("adminOverride", true)
+			c.Next()
+			return
+		}
+		if v, ok := c.Get("deptRoles"); ok && v != nil {
+			if arr, ok := v.([]string); ok {
+				for _, dr := range arr {
+					if _, ok := required[dr]; ok {
+						c.Next()
+						return
+					}
+				}
+			}
+		}
+		c.AbortWithStatusJSON(http.StatusForbidden, gin.H{"error": "forbidden: required department role"})
+	}
+}
+
 func RBACMiddleware(allowedRoles ...string) gin.HandlerFunc {
 	allowed := make(map[string]struct{}, len(allowedRoles))
 	for _, r := range allowedRoles {
