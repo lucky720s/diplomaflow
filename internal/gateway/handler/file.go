@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"mime"
 	"net/http"
 	"path/filepath"
 	"strconv"
@@ -52,13 +53,36 @@ func (h *Handler) UploadFile(c *gin.Context) {
 		MapGRPCError(c, err)
 		return
 	}
+	ext := strings.ToLower(filepath.Ext(header.Filename))
+	mimeType := mime.TypeByExtension(ext)
 
-	ext := filepath.Ext(header.Filename)
+	if mimeType == "" {
+		switch ext {
+		case ".docx":
+			mimeType = "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+		case ".doc":
+			mimeType = "application/msword"
+		case ".pdf":
+			mimeType = "application/pdf"
+		case ".xlsx":
+			mimeType = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+		case ".xls":
+			mimeType = "application/vnd.ms-excel"
+		case ".pptx":
+			mimeType = "application/vnd.openxmlformats-officedocument.presentationml.presentation"
+		case ".ppt":
+			mimeType = "application/vnd.ms-powerpoint"
+		case ".txt":
+			mimeType = "text/plain; charset=utf-8"
+		default:
+			mimeType = "application/octet-stream"
+		}
+	}
 
 	if err := stream.Send(&filev1.UploadFileRequest{ //nolint:govet
 		Data: &filev1.UploadFileRequest_Info{
 			Info: &filev1.FileInfo{
-				FileType:  ext,
+				FileType:  mimeType,
 				FileName:  header.Filename,
 				UserId:    userID,
 				ProjectId: projectID,
