@@ -1805,11 +1805,11 @@ func (s *Service) SubmitDocumentForStep(ctx context.Context, req *SubmitDocument
 		}
 
 	case "NORM_CONTROL", "NORMO_CONTROL":
-		// Если у тебя есть аналогичная функция для нормоконтроля — оставь её тут.
-		// Например:
-		// if _, err := s.repo.EnsureNormControlCheckForSubmission(ctx, sub.ID); err != nil {
-		//     return nil, status.Errorf(codes.Internal, "ensure norm control check: %v", err)
-		// }
+		// Создаём запись нормоконтроля, иначе документ не попадёт в очередь
+		// проверки учителя (она читает из norm_control_checks).
+		if _, err := s.repo.EnsureNormCheckForSubmission(ctx, sub.ID); err != nil {
+			return nil, status.Errorf(codes.Internal, "ensure norm control check: %v", err)
+		}
 	}
 
 	// Предзащита: реальные имена этапов загрузки материалов в workflow PI —
