@@ -1768,24 +1768,35 @@ func (r *repository) AdvanceProjectByWorkflowEvent(
 			EventName   string
 		}
 
+		// Ищем переход по событию и текущему состоянию — по id ИЛИ по имени
+		// состояния, предпочитая точное совпадение id. Матч по имени нужен,
+		// если projects.current_state_id «уехал» относительно фактического
+		// состояния (дрейф id после пере-сидов/ручных правок), но
+		// current_state_name остаётся корректным.
 		var tr transitionRow
 		if err := tx.Raw(`
-			SELECT id, from_state_id, to_state_id, event_name
-			FROM transitions
-			WHERE workflow_id = ?
-			  AND from_state_id = ?
-			  AND event_name = ?
+			SELECT t.id, t.from_state_id, t.to_state_id, t.event_name
+			FROM transitions t
+			JOIN states s ON s.id = t.from_state_id AND s.deleted_at IS NULL
+			WHERE t.workflow_id = ?
+			  AND t.event_name = ?
+			  AND (
+			        t.from_state_id = ?
+			        OR UPPER(TRIM(COALESCE(s.name, ''))) = UPPER(TRIM(COALESCE(?, '')))
+			      )
+			ORDER BY (t.from_state_id = ?) DESC
 			LIMIT 1
-		`, p.WorkflowID, p.CurrentStateID, eventName).Scan(&tr).Error; err != nil {
+		`, p.WorkflowID, eventName, p.CurrentStateID, p.CurrentStateName, p.CurrentStateID).Scan(&tr).Error; err != nil {
 			return err
 		}
 
 		if tr.ID == 0 {
 			return fmt.Errorf(
-				"transition not found: project_id=%d workflow_id=%d from_state_id=%d event_name=%s",
+				"transition not found: project_id=%d workflow_id=%d from_state_id=%d current_state_name=%q event_name=%s",
 				projectID,
 				p.WorkflowID,
 				p.CurrentStateID,
+				p.CurrentStateName,
 				eventName,
 			)
 		}
