@@ -371,8 +371,9 @@ func (s *Service) NormApprove(ctx context.Context, submissionID string, actorID 
 		return nil, err
 	}
 
-	// 2) Workflow transition от имени лидера команды (student)
-	leaderID, teamID, err := s.normTeamLeader(ctx, check.ProjectID, check.TeamID)
+	// 2) Workflow transition. teamID нужен для уведомления; лидера тут не
+	//    используем — двигаем напрямую (см. ниже).
+	_, teamID, err := s.normTeamLeader(ctx, check.ProjectID, check.TeamID)
 	if err != nil {
 		// откатить approve, чтобы не оставлять approved
 		_ = r.db.WithContext(ctx).Transaction(func(tx *gorm.DB) error {
@@ -399,10 +400,12 @@ func (s *Service) NormApprove(ctx context.Context, submissionID string, actorID 
 		return nil, err
 	}
 
-	wfErr := s.tryPerformIfAvailable(ctx, leaderID, "student", check.ProjectID, "NORMCONTROL_SUBMITTED", map[string]interface{}{
-		"source":        "admin_service",
-		"submission_id": submissionID,
-	})
+	// Двигаем workflow напрямую (NORM_CONTROL → ECONOMICS по событию
+	// NORMCONTROL_SUBMITTED). tryPerformIfAvailable шёл через движок с проверкой
+	// ролей/условий и молча пропускал переход — проект застревал на NORM_CONTROL,
+	// и студент грузил файл заново. Прямой вызов ищет переход по from_state+event
+	// и не блокируется условиями (тот же паттерн, что у предзащиты и тем).
+	wfErr := s.repo.AdvanceProjectByWorkflowEvent(ctx, check.ProjectID, "NORMCONTROL_SUBMITTED", actorID, comment)
 	if wfErr != nil {
 		_ = r.db.WithContext(ctx).Transaction(func(tx *gorm.DB) error {
 			_ = tx.Model(&NormControlCheck{}).

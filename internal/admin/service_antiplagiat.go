@@ -368,17 +368,21 @@ func (s *Service) AntiplagApprove(ctx context.Context, submissionID string, acto
 		return nil, err
 	}
 
-	// 2) Workflow transition от имени лидера команды (student)
-	leaderID, teamID, err := s.antiplagTeamLeader(ctx, check.ProjectID, check.TeamID)
+	// 2) Workflow transition. teamID нужен для уведомления; лидера тут не
+	//    используем — двигаем напрямую (см. ниже).
+	_, teamID, err := s.antiplagTeamLeader(ctx, check.ProjectID, check.TeamID)
 	if err != nil {
 		s.rollbackAntiplagApprove(ctx, r, submissionID)
 		return nil, err
 	}
 
-	wfErr := s.tryPerformIfAvailable(ctx, leaderID, "student", check.ProjectID, antiplagEventApprove, map[string]interface{}{
-		"source":        "admin_service",
-		"submission_id": submissionID,
-	})
+	// Двигаем workflow напрямую (ANTIPLAGIAT → DEFENSE по событию
+	// ANTIPLAGIAT_SUBMITTED). tryPerformIfAvailable шёл через движок, а у этого
+	// перехода после миграции 000016 есть условия (роль dean_office + поля
+	// review-голосования) — под ролью "student" они не проходят, и переход молча
+	// пропускался: проект застревал на ANTIPLAGIAT. Прямой вызов ищет переход по
+	// from_state+event и не блокируется условиями (как у предзащиты/нормоконтроля).
+	wfErr := s.repo.AdvanceProjectByWorkflowEvent(ctx, check.ProjectID, antiplagEventApprove, actorID, comment)
 	if wfErr != nil {
 		s.rollbackAntiplagApprove(ctx, r, submissionID)
 		return nil, status.Errorf(codes.Internal, "workflow transition failed: %v", wfErr)
