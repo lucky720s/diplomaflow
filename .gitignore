@@ -27,3 +27,4 @@ go.work.sum
 diplomaflow_deploy
 diplomaflow_deploy.pub
 txt
+.env.example
