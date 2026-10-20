@@ -29,4 +29,4 @@ go.work.sum
 .state/
 diplomaflow_deploy
 diplomaflow_deploy.pub
-txt
+txt.env.example
